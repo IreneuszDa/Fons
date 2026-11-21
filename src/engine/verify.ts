@@ -49,6 +49,7 @@ import {
   type StrengthCard,
   type TechStatus,
   type Verdict,
+  type VideoAnalysis,
 } from "../shared/contracts";
 import type { VerificationStage } from "../shared/chat";
 import type { AppConfig } from "../server/config";
@@ -65,7 +66,7 @@ import {
   type OpenAnswer,
 } from "./answer";
 import { MAX_FRAGMENTS_PER_CLAIM, prepareEvidence, runAssessment, toAssessments, type PreparedRecord } from "./assess";
-import { checkUnits, extractClaims, isLongInput, roleQueryFor, type ExtractedClaim, type OpenQuestion } from "./claims";
+import { MAX_CLAIMS_LONG, checkUnits, extractClaims, isLongInput, roleQueryFor, type ExtractedClaim, type OpenQuestion } from "./claims";
 import { buildCompoundReasonPl, buildJustification, buildSummaryPl, smoothJustification, type DecisionLike } from "./justify";
 import { aggregateCompound, type PartOutcome } from "./verdict/compound";
 import { createLlmProviders } from "./llm";
@@ -85,7 +86,10 @@ import {
   nonEeaPl,
   warning,
 } from "./messages";
-import { normalizeInput } from "./normalize";
+import { normalizeInput, userNoteBesideUrl } from "./normalize";
+import { createGeminiVideoAnalyzer } from "./video/gemini";
+import { createSocialVideoLoader, loadSocialCaption, socialVideoPlatform } from "./video/social-source";
+import { readVideo, type VideoServices } from "./video/intake";
 import {
   createCorpusStore,
   createRetrievalBranches,
@@ -106,7 +110,7 @@ import type { CreateBranchesOptions } from "./retrieval";
 
 type Database = BetterSqlite3.Database;
 
-export const PIPELINE_VERSION = "engine-2026.11.22-11";
+export const PIPELINE_VERSION = "engine-2026.11.22-12-video";
 
 const PER_BRANCH_TIMEOUT_MS = 4000;
 /** Live search (paid, slow) only for the first units in importance order; the rest use the corpus. */
@@ -175,6 +179,7 @@ export interface EngineDeps {
   db: Database;
   branches: RetrievalBranch[];
   fetchPage: typeof fetchPage;
+  video?: VideoServices;
   now: () => Date;
   verdictMode: "rules" | "model_proposed";
   /** Optional, off by default: smoothing of the template justification by the fast model (validated). */
@@ -206,6 +211,10 @@ export function createEngineDeps(
     db,
     branches,
     fetchPage,
+    video: cfg.geminiApiKey ? {
+      load: createSocialVideoLoader(cfg.socialKitApiKey),
+      analyze: createGeminiVideoAnalyzer({ apiKey: cfg.geminiApiKey, model: cfg.geminiVideoModel }),
+    } : { loadCaption: loadSocialCaption },
     now: () => new Date(),
     verdictMode: cfg.verdictMode,
     smoothing: false,
@@ -448,6 +457,7 @@ class Run {
   private readonly startedStages = new Set<VerificationStage>();
   echo = "";
   claims: Claim[] = [];
+  videoAnalysis?: VideoAnalysis;
   verifierUsed = false;
   inputMode: InputMode = "claim";
   /** Router decisions and failed attempts of this request (filled by llm/router.ts). */
@@ -534,9 +544,8 @@ class Run {
     this.timings.total = Math.round(performance.now() - this.started);
     // Paid live search (web_search tokens + call fees) recorded in the request scope (retrieval/live-usage.ts).
     const models = [...this.models, ...this.route.usages, ...liveUsageModels()];
-    const us = models.filter((m) => processingRegionFor(m.provider, this.deps) === "us");
-    const usage = us.find((m) => m.purpose === "vision") ?? us[0];
-    if (usage) this.warn("non_eea_processing", nonEeaPl(providerBrand(usage.provider), usage.purpose === "vision"));
+    const processingWarning = modelProcessingWarning(models, this.deps);
+    if (processingWarning) this.warn(processingWarning.kind, processingWarning.textPl);
     const ok = fields.status === "OK";
     const sourceActivity = this.sourceActivity();
     const degraded = sourceActivity.branches.filter(b => b.status === "partial" || b.status === "unavailable");
@@ -553,13 +562,15 @@ class Run {
       status: fields.status,
       ...(fields.statusMessagePl ? { statusMessagePl: fields.statusMessagePl } : {}),
       inputKind: this.req.kind,
+      ...(this.videoAnalysis && { videoAnalysis: this.videoAnalysis }),
       inputEchoMasked: this.echo,
       claims: this.claims,
       verdicts: ok ? (fields.verdicts ?? []) : [],
       mainVerdict: ok ? (fields.mainVerdict ?? null) : null,
       summaryPl: fields.summaryPl ?? fields.statusMessagePl ?? "",
       warnings: this.warnings,
-      transparencyPl: buildTransparencyPl({
+      transparencyPl: (this.videoAnalysis?.status === "analyzed"
+        ? "Google Gemini odczytał dźwięk i obraz nagrania. Znaczniki czasu wskazują pochodzenie twierdzeń w materiale. " : "") + buildTransparencyPl({
         mode: this.deps.verdictMode,
         main: this.deps.llm,
         verifier: this.deps.verifier,
@@ -585,9 +596,17 @@ class Run {
   }
 }
 
+export function modelProcessingWarning(models: ModelUsage[], deps: EngineDeps): ReportWarning | undefined {
+  const us = models.filter(m => processingRegionFor(m.provider, deps) === "us");
+  const image = us.find(m => m.purpose === "vision" || m.purpose === "image_question");
+  const usage = image ?? us[0];
+  return usage ? { kind: "non_eea_processing", textPl: nonEeaPl(providerBrand(usage.provider), !!image) } : undefined;
+}
+
 function processingRegionFor(providerName: string, deps: EngineDeps): string {
   if (deps.llm.name === providerName) return processingRegion(deps.llm);
   if (deps.verifier.name === providerName) return processingRegion(deps.verifier);
+  if (providerName === "gemini") return "unspecified";
   return providerName === "anthropic" || providerName === "openai" ? "us" : "local";
 }
 
@@ -763,16 +782,40 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
 
   run.echo = safeMask(req.kind === "url" ? (req.url ?? req.text ?? "") : req.kind === "image" ? "[obraz]" : (req.text ?? ""));
 
+  const url = req.kind === "url" ? (req.url ?? req.text ?? "").trim() : "";
+  const platform = url && socialVideoPlatform(url);
+  let videoClaims: ExtractedClaim[] | undefined;
+  let normalized = opts.normalized;
+  if (platform) {
+    const started = performance.now();
+    const video = await readVideo(url, platform, userNoteBesideUrl(req, url), deps.video, stage => run.stage(stage), signal);
+    run.time("video", started);
+    run.echo = safeMask(video.url);
+    run.videoAnalysis = video.analysis;
+    run.events.push(...video.hits);
+    if (video.hits.length) run.warn("injection_detected", WARNING_PL.injection);
+    if (video.usage) run.models.push(video.usage);
+    if (video.message) return run.stop("NIEPELNE", video.message);
+    videoClaims = video.claims;
+    run.claims = videoClaims.map(c => c.claim);
+    if (!videoClaims.length) {
+      return run.stop("DOPRECYZUJ", "Po analizie filmu nie udało się wskazać konkretnego twierdzenia do sprawdzenia. Możesz podać zdanie, które masz na myśli.");
+    }
+    const text = videoClaims.map(c => c.claim.text).join("\n");
+    // A repost can be archival. Dates spoken in the clip are never resolved against submission time.
+    normalized = {
+      kind: "url", text, textResolvedDates: text, submittedUrl: run.echo,
+      receivedAt: receivedAt.toISOString(), piiMasked: true, detectorHits: [], warnings: [],
+    };
+  }
+
   // Scenario J: no key → NIEPELNE, never a verdict, never provider text.
   if (!deps.llm.available) return run.stop("NIEPELNE", STATUS_PL.llmNotConfigured);
   if (faults.has("llm_down")) return run.stop("NIEPELNE", STATUS_PL.llmDown);
 
   // ── 1. normalize ──
   let t = performance.now();
-  let normalized: NormalizedInput;
-  if (opts.normalized) {
-    normalized = opts.normalized;
-  } else {
+  if (!normalized) {
     const n = await normalizeInput(
       { kind: req.kind, text: req.text, url: req.url, images: req.images, receivedAt: req.receivedAt },
       { fetchPage: deps.fetchPage, llm, receivedAt, ocrDown: faults.has("ocr_down"), signal },
@@ -815,8 +858,10 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   let extracted: ExtractedClaim[];
   let claimLimit = Number.POSITIVE_INFINITY;
   try {
-    const res = await extractClaims(llm, normalized.textResolvedDates, signal);
-    run.models.push(res.usage);
+    const res = videoClaims
+      ? { claims: videoClaims, inputMode: "claim" as const, claimLimit: MAX_CLAIMS_LONG, rejected: [], usage: undefined, question: undefined }
+      : await extractClaims(llm, normalized.textResolvedDates, signal);
+    if (res.usage) run.models.push(res.usage);
     extracted = res.claims;
     claimLimit = res.claimLimit;
     // Links and images are always checked as claims (their content is the subject, not a question to us).

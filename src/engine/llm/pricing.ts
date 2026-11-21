@@ -38,11 +38,19 @@ const FALLBACK_BY_PROVIDER: Record<string, Price> = {
   anthropic: { inputPerMTok: 4, outputPerMTok: 20, estimate: true },
   mistral: { inputPerMTok: 2, outputPerMTok: 6, estimate: true },
   openai: { inputPerMTok: 2, outputPerMTok: 10, estimate: true },
+  gemini: { inputPerMTok: 1.5, outputPerMTok: 7.5, estimate: true },
   fake: { inputPerMTok: 0, outputPerMTok: 0, estimate: false },
 };
 
 export function priceFor(model: string, provider: string): Price {
   const m = model.toLowerCase();
+  // Standard list price, including thinking tokens. Google scheduled the promotion to end on 2026-12-31.
+  // https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash
+  if (provider === "gemini" && /^gemini-3\.8-flash(?:$|-\d)/.test(m)) {
+    return Date.now() < Date.UTC(2027, 0, 1)
+      ? { inputPerMTok: 0.75, outputPerMTok: 3.75, estimate: false }
+      : { inputPerMTok: 1.5, outputPerMTok: 7.5, estimate: false };
+  }
   // Longest matching prefix wins ("claude-opus-5-5" before "claude-opus-5").
   let best: { prefix: string; price: Price } | undefined;
   for (const p of PRICES) {

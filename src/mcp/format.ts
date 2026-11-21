@@ -68,6 +68,7 @@ export function reportView(report: VerdictReport, resultUrl: string | undefined)
     mainVerdict: report.mainVerdict,
     mainVerdictLabelPl: report.mainVerdict ? VERDICT_LABEL_PL[report.mainVerdict] : null,
     inputMode: report.inputMode,
+    ...(report.videoAnalysis && { videoAnalysis: report.videoAnalysis }),
     summaryPl: report.summaryPl,
     claims: report.claims.map((c) => {
       const v = report.verdicts.find((x) => x.claimId === c.id);

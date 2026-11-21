@@ -6,6 +6,7 @@ import { STATUS_PL } from "./messages";
 import { failingBranch, memoryBranch, memoryStore, type FetchedPage } from "./testing/stubs";
 import { LIVE_SEARCH_PURPOSE, recordLiveUsage, runWithLiveScope, withLiveUsage } from "./retrieval/live-usage";
 import { PIPELINE_VERSION, cacheKeyFor, gateProposedVerdict, verifyInput, type EngineDeps, type VerifyRequest } from "./verify";
+import { chat, makeEnv } from "../server/testkit";
 
 // Other modules (security, corpus, retrieval, verdict) are replaced by local stubs.
 vi.mock("./ports", async () => await import("./testing/stubs"));
@@ -70,6 +71,91 @@ function textReq(text: string, extra: Partial<VerifyRequest> = {}): VerifyReques
 function evidenceUrls(r: VerdictReport): string[] {
   return r.verdicts.flatMap((v) => v.evidence.map((e) => e.url));
 }
+
+describe("social video verification", () => {
+  const url = "https://www.instagram.com/reel/ABC123/";
+  const req = textReq("Sprawdź wysokość pensji.", { kind: "url", url: url + "?igsh=private" });
+  const load = async () => ({
+    platform: "instagram" as const, url, caption: "Kontakt: redakcja@example.org.",
+    bytes: Buffer.from("clip"), mimeType: "video/mp4" as const, durationSeconds: 15,
+  });
+  const data = {
+    transcript: [{ seconds: 4, text: WAGE_CLAIM }],
+    observations: [{ seconds: 0, text: "Na ekranie widać planszę z wynagrodzeniem." }],
+    claims: [{ source: "speech" as const, seconds: 4, text: WAGE_CLAIM, quote: WAGE_CLAIM, temporalKind: "stan" as const, date: "2026" }],
+  };
+  const usage = { purpose: "video", provider: "gemini", model: "test", inputTokens: 25, outputTokens: 12, costUsd: 0.01, latencyMs: 5 };
+
+  it("uses the timed assertion, checks independent records and retains usage and masked material", async () => {
+    const deps = makeDeps();
+    const analyze = vi.fn(async () => ({ data, usage }));
+    deps.video = { load, analyze };
+    const onActivity = vi.fn();
+    const r = await verifyInput({ ...req, onActivity }, deps);
+    expect(r).toMatchObject({ status: "OK", mainVerdict: "POTWIERDZONE", inputEchoMasked: url,
+      videoAnalysis: { status: "analyzed", transcript: data.transcript, claimOrigins: [{ claimId: "c1", seconds: 4, source: "speech" }] } });
+    expect(analyze).toHaveBeenCalledWith(expect.objectContaining({ focus: req.text }), undefined);
+    expect(JSON.stringify(r)).not.toMatch(/redakcja@example|igsh=private/);
+    expect(r.verdicts[0]!.evidence[0]!.url).toBe(WAGE_RECORD.url);
+    expect(r.models).toContainEqual(usage);
+    expect(onActivity.mock.calls.flat()).toEqual(["fetching_video", "analyzing_video", "searching", "assessing", "checking_quotes"]);
+  });
+
+  it("retains observations for a clip without checkable claims and never treats its own content as evidence", async () => {
+    const deps = makeDeps({ records: [] });
+    deps.video = { load, analyze: async () => ({ data, usage }) };
+    const r = await verifyInput(req, deps);
+    expect(r.mainVerdict).toBe("BRAK_DOWODOW");
+    expect(r.verdicts[0]!.evidence).toEqual([]);
+    // A candidate at another timestamp does not occur in that segment.
+    deps.video.analyze = async () => ({ usage, data: { ...data, claims: data.claims.map(c => ({ ...c, seconds: 9 })) } });
+    const empty = await verifyInput(req, deps);
+    expect(empty).toMatchObject({ status: "DOPRECYZUJ", mainVerdict: null, claims: [],
+      videoAnalysis: { status: "analyzed", observations: data.observations, claimOrigins: [] } });
+  });
+
+  it("saves the video report from chat and reuses it for another share link to the same post", async () => {
+    const deps = makeDeps();
+    const analyze = vi.fn(async () => ({ data, usage }));
+    deps.video = { load, analyze };
+    const env = makeEnv({ engine: req => verifyInput(req, deps) });
+    try {
+      const first = await chat(env, { text: url + "?igsh=first" });
+      const report = first.json.reply.report!;
+      expect(report.mainVerdict).toBe("POTWIERDZONE");
+      const saved = await env.app.request("/api/report/" + report.token);
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toMatchObject({ videoAnalysis: report.videoAnalysis });
+      const second = await chat(env, { text: url + "?igsh=second" });
+      expect(second.json.reply.report).toMatchObject({ cacheHit: true, videoAnalysis: report.videoAnalysis });
+      expect(second.json.reply.report!.token).not.toBe(report.token);
+      expect(analyze).toHaveBeenCalledTimes(1);
+    } finally {
+      env.db.close();
+    }
+  });
+
+  it("keeps missing configuration, inaccessible posts and provider failures distinct from verdicts", async () => {
+    const deps = makeDeps();
+    const disabled = await verifyInput(req, deps);
+    expect(disabled).toMatchObject({ status: "NIEPELNE", mainVerdict: null, videoAnalysis: { status: "unavailable" } });
+    deps.video = { loadCaption: async () => ({ url, caption: "Opis bez nagrania." }) };
+    const descriptionOnly = await verifyInput(req, deps);
+    expect(descriptionOnly).toMatchObject({ status: "NIEPELNE", mainVerdict: null, models: [],
+      videoAnalysis: { status: "unavailable", caption: "Opis bez nagrania.", transcript: [] } });
+    const analyze = vi.fn(async () => { throw new Error("private provider error"); });
+    deps.video = { load: async () => { throw new Error("private platform error"); }, analyze };
+    const blocked = await verifyInput(req, deps);
+    expect(analyze).not.toHaveBeenCalled();
+    deps.video.load = load;
+    const failed = await verifyInput(req, deps);
+    expect(failed.videoAnalysis?.caption).toContain("Kontakt");
+    for (const report of [blocked, failed]) {
+      expect(report).toMatchObject({ status: "NIEPELNE", verdicts: [], mainVerdict: null });
+      expect(JSON.stringify(report)).not.toContain("private");
+    }
+  });
+});
 
 describe("verifyInput — happy path", () => {
   it("confirms a claim from a primary record, with fields copied from the corpus", async () => {

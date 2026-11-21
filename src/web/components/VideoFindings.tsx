@@ -2,9 +2,8 @@ import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import type { VerdictReport } from "../../shared/contracts";
+import type { Claim, VideoAnalysis } from "../../shared/contracts";
 
-type VideoAnalysis = NonNullable<VerdictReport["videoAnalysis"]>;
 type ClaimOrigin = VideoAnalysis["claimOrigins"][number];
 
 const originLabels: Record<ClaimOrigin["source"], string> = {
@@ -49,7 +48,7 @@ function TimedPassages({ title, entries, empty }: {
   );
 }
 
-export function VideoFindings({ analysis }: { analysis: VideoAnalysis }) {
+export function VideoFindings({ analysis, pendingClaims = [] }: { analysis: VideoAnalysis; pendingClaims?: Claim[] }) {
   return (
     <VStack gap={2}>
       <Heading level={4}>{analysis.platform === "tiktok" ? "Film z TikToka" : "Film z Instagrama"}</Heading>
@@ -63,6 +62,17 @@ export function VideoFindings({ analysis }: { analysis: VideoAnalysis }) {
           <TimedPassages title="Transkrypcja" entries={analysis.transcript} empty="Nie rozpoznano wypowiedzi w nagraniu." />
           <TimedPassages title="Obraz i napisy" entries={analysis.observations} empty="Brak odczytanych szczegółów obrazu." />
         </>
+      )}
+      {pendingClaims.length > 0 && (
+        <List edge="flush" density="compact" hasDividers header={<Text weight="semibold">Twierdzenia bez oceny</Text>}>
+          {pendingClaims.map(claim => {
+            const origin = analysis.claimOrigins.find(item => item.claimId === claim.id);
+            return (
+              <ListItem key={claim.id} label={<Text wordBreak="break-word">{claim.text}</Text>}
+                description={origin && <VideoClaimOrigin origin={origin} />} />
+            );
+          })}
+        </List>
       )}
     </VStack>
   );

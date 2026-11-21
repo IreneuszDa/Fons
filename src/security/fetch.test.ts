@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, type Server } from "node:http";
 import { gzipSync } from "node:zlib";
 import type { AddressInfo } from "node:net";
-import { FetchBlockedError, fetchPage, isPublicIp, USER_AGENT, type FetchOptions, type Resolver } from "./fetch";
+import { FetchBlockedError, fetchPage, fetchPublicResource, isPublicIp, USER_AGENT, type FetchOptions, type Resolver } from "./fetch";
 
 async function blocked(p: Promise<unknown>): Promise<string> {
   try {
@@ -275,6 +275,25 @@ describe("fetchPage — against a local server", () => {
   it("follows a same-host redirect and re-validates it", async () => {
     const page = await fetchPage(u("/redirect-ok"), local());
     expect(page.finalUrl).toBe(u("/page"));
+  });
+
+  it("enforces the media caller's URL policy again before a redirected request", async () => {
+    const visited: string[] = [];
+    const result = fetchPublicResource(u("/redirect-ok"), {
+      ...local(), mimeTypes: ["text/html"], allowUrl: url => {
+        visited.push(url.pathname);
+        return url.pathname === "/redirect-ok";
+      },
+    });
+    expect(await blocked(result)).toBe("scheme");
+    expect(visited).toEqual(["/redirect-ok", "/page"]);
+  });
+
+  it("does not follow redirects on a credentialed provider POST", async () => {
+    const result = fetchPublicResource(u("/redirect-ok"), {
+      ...local(), mimeTypes: ["application/json"], postJson: { body: { format: "mp4" }, headers: { "x-access-key": "test-key" } },
+    });
+    expect(await blocked(result)).toBe("redirects");
   });
 
   it("blocks a redirect to a literal private IP", async () => {

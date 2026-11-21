@@ -19,6 +19,9 @@ export interface AppConfig {
   anthropicApiKey?: string;
   mistralApiKey?: string;
   openaiApiKey?: string;
+  geminiApiKey?: string;
+  geminiVideoModel?: string;
+  socialKitApiKey?: string;
   /** "eu" = eu.api.openai.com (projekt OpenAI z rezydencją danych w UE); puste = przetwarzanie w USA. */
   openaiDataResidency?: string;
   /** Model główny (ocena dowodów). */
@@ -97,6 +100,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   const anthropicApiKey = nonEmpty(e.ANTHROPIC_API_KEY);
   const mistralApiKey = nonEmpty(e.MISTRAL_API_KEY);
   const openaiApiKey = nonEmpty(e.OPENAI_API_KEY);
+  const googleVisionApiKey = nonEmpty(e.GOOGLE_VISION_API_KEY);
+  const reverseImageProvider = nonEmpty(e.REVERSE_IMAGE_PROVIDER) ?? (googleVisionApiKey ? "google_vision" : "off");
   const keyed: Record<ProviderName, boolean> = {
     anthropic: !!anthropicApiKey,
     mistral: !!mistralApiKey,
@@ -123,6 +128,9 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     anthropicApiKey,
     mistralApiKey,
     openaiApiKey,
+    geminiApiKey: nonEmpty(e.GEMINI_API_KEY),
+    geminiVideoModel: nonEmpty(e.GEMINI_VIDEO_MODEL),
+    socialKitApiKey: nonEmpty(e.SOCIALKIT_API_KEY),
     openaiDataResidency: nonEmpty(e.OPENAI_DATA_RESIDENCY),
     modelMain: nonEmpty(e.MODEL_MAIN) ?? DEFAULT_MODELS[llmProvider].main,
     modelFast: nonEmpty(e.MODEL_FAST) ?? DEFAULT_MODELS[llmProvider].fast,
@@ -134,9 +142,9 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     ipDailyTokenShare: e.IP_DAILY_TOKEN_SHARE !== undefined ? Number(e.IP_DAILY_TOKEN_SHARE) : undefined,
     rateLimitPerMinute: Number(e.RATE_LIMIT_PER_MINUTE ?? 10),
     liveSearch: e.LIVE_SEARCH === "on",
-    reverseImageProvider: e.REVERSE_IMAGE_PROVIDER === "google_vision" ? "google_vision" : "off",
+    reverseImageProvider: reverseImageProvider === "google_vision" ? "google_vision" : "off",
     reverseImageDailyCap: Number(e.REVERSE_IMAGE_DAILY_CAP ?? 500),
-    googleVisionApiKey: nonEmpty(e.GOOGLE_VISION_API_KEY),
+    googleVisionApiKey,
     factCheckApiKey: nonEmpty(e.FACTCHECK_API_KEY),
     smsSimulator: e.SMS_SIM !== "off",
     alertWebhookUrl: nonEmpty(e.ALERT_WEBHOOK_URL),

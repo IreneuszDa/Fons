@@ -5,6 +5,7 @@
  */
 import { createHash } from "node:crypto";
 import { VerdictReport } from "../shared/contracts";
+import { socialVideoPlatform } from "../engine/video/social-source";
 import type { Db, EngineRequest, ServerContext } from "./context";
 import { sha256Hex } from "./util";
 
@@ -59,6 +60,11 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest): string 
   let normalized: string;
   if (req.kind === "url" && req.url) {
     normalized = canonicalUrl(req.url);
+    if (socialVideoPlatform(req.url)) {
+      const post = new URL(req.url);
+      normalized = JSON.stringify([post.hostname, post.pathname, ctx.cfg.geminiVideoModel ?? "default",
+        !!ctx.cfg.geminiApiKey, !!ctx.cfg.socialKitApiKey]);
+    }
     // The same article can be submitted for different claims.
     if (req.text?.trim()) {
       const note = normalizeText(ctx.security.resolveRelativeDates(ctx.security.maskPii(req.text).text, receivedAt));
@@ -68,7 +74,7 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest): string 
     const h = createHash("sha256");
     for (const img of req.images ?? []) h.update(img.mime).update(img.base64);
     const caption = ctx.security.maskPii(req.text ?? "").text;
-    normalized = JSON.stringify(["image-analysis-v2", h.digest("hex"), normalizeText(ctx.security.resolveRelativeDates(caption, receivedAt)), !!req.imageOptions?.searchWeb, req.imageFocus]);
+    normalized = JSON.stringify(["image-analysis-v4", h.digest("hex"), normalizeText(ctx.security.resolveRelativeDates(caption, receivedAt)), req.imageOptions?.searchWeb, req.imageFocus]);
   } else {
     const masked = ctx.security.maskPii(req.text ?? "").text;
     normalized = normalizeText(ctx.security.resolveRelativeDates(masked, receivedAt));
@@ -118,7 +124,7 @@ export function putCached(
     /* starsza baza bez tabeli nagrobków — zachowanie jak dawniej */
   }
   const ttl =
-    report.unavailableBranches.length > 0 ? CACHE_TTL_DEGRADED_MS : (opts.liveSearch || report.imageAnalysis?.images.some(image => image.search)) ? CACHE_TTL_LIVE_MS : CACHE_TTL_MS;
+    report.unavailableBranches.length > 0 ? CACHE_TTL_DEGRADED_MS : (opts.liveSearch || report.videoAnalysis || report.imageAnalysis?.images.some(image => image.search)) ? CACHE_TTL_LIVE_MS : CACHE_TTL_MS;
   // Wynik współdzielony: bez identyfikatorów śledzących pierwszego zgłaszającego w adresie wejścia.
   const stored: VerdictReport = {
     ...report,

@@ -62,7 +62,7 @@ export default function ChatLanding({ onSubmit, isDisabled }: { onSubmit: Submit
                 Cześć, jestem Fons.
               </Text>
               <Text as="p" color="secondary">
-                Wklej wiadomość lub link, także do publicznego filmu z TikToka lub Instagrama. Sprawdzę, co o zawartych w nim twierdzeniach mówią źródła.
+                O czym chcesz porozmawiać? Wklej wiadomość lub link, również do publicznego filmu z TikToka lub Instagrama. Sprawdzę, co mówią źródła.
               </Text>
             </VStack>
 

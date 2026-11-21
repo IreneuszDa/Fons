@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { useAnnounce } from "@astryxdesign/core/hooks";
 import { ApiError, NETWORK_ERROR_PL, sendChat, type ChatInput } from "../api";
 import { announcementFor } from "../lib/report";
+import { imagePreviewSrc } from "../lib/attachment";
 import ChatConversation, { progressLabels, type ChatEntry, type PendingPhase } from "./ChatConversation";
 import ChatLanding from "./ChatLanding";
 
@@ -50,7 +51,11 @@ export default function ChatPage() {
   const submit = useCallback(
     (input: ChatInput, fileName?: string) => {
       if (busy.current) return;
-      setEntries((prev) => [...prev, { id: nextId(), role: "user", text: input.text ?? "", fileName }]);
+      const entry: ChatEntry = {
+        id: nextId(), role: "user", text: input.text ?? "", fileName,
+        imageSrc: input.image ? imagePreviewSrc(input.image) : undefined,
+      };
+      setEntries((prev) => [...prev, entry]);
       void run(input);
     },
     [run],

@@ -13,7 +13,7 @@
  */
 import { z } from "zod";
 import { ImageProvenance } from "./image-provenance";
-import { ImageSearchResult } from "./image-search";
+import { ImageCitation, ImageSearchResult } from "./image-search";
 
 // ───────────────────────────── Enumy ─────────────────────────────
 
@@ -360,6 +360,21 @@ export const SourceActivity = z.object({
 });
 export type SourceActivity = z.infer<typeof SourceActivity>;
 
+const VideoSegment = z.object({ seconds: z.number().nonnegative(), text: z.string() });
+export const VideoAnalysis = z.object({
+  platform: z.enum(["tiktok", "instagram"]),
+  status: z.enum(["analyzed", "unavailable"]),
+  caption: z.string(),
+  transcript: z.array(VideoSegment),
+  observations: z.array(VideoSegment),
+  claimOrigins: z.array(z.object({
+    claimId: z.string(),
+    source: z.enum(["speech", "onscreen", "visual", "caption"]),
+    seconds: z.number().nonnegative().nullable(),
+  })),
+});
+export type VideoAnalysis = z.infer<typeof VideoAnalysis>;
+
 /** Kanoniczny raport — ten sam dla każdego kanału. Renderery kanałów to szablony bez LLM. */
 export const VerdictReport = z.object({
   id: z.string(),
@@ -415,8 +430,14 @@ export const VerdictReport = z.object({
     .optional(),
   imageAnalysis: z.object({
     only: z.boolean(),
+    focus: z.enum(["copies", "origin"]).optional(),
     images: z.array(z.object({ provenance: ImageProvenance, search: ImageSearchResult.optional() })),
+    visual: z.object({
+      mode: z.enum(["visual", "identity"]),
+      citations: z.array(ImageCitation),
+    }).optional(),
   }).optional(),
+  videoAnalysis: VideoAnalysis.optional(),
   cacheHit: z.boolean().default(false),
 });
 export type VerdictReport = z.infer<typeof VerdictReport>;

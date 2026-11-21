@@ -3,6 +3,7 @@
  * sprawa moderatora). Wszystko, co dotyczy użytkownika, powstaje DOPIERO po udanym zapisie.
  */
 import { VerdictReport, type ConversationReply, type InboundMessage } from "../../shared/contracts";
+import { socialVideoPlatform } from "../../engine/video/social-source";
 import { appendRun } from "../audit";
 import { addTokens, budgetExceeded } from "../budget";
 import { computeCacheKey, getCached, putCached } from "../cache";
@@ -13,8 +14,9 @@ import { observeVerification } from "../observability/http";
 import { saveReport } from "../reports";
 import { saveSessionState, type SessionRow } from "../sessions";
 import { newRequestId, newToken, safeHttpUrl, truncate } from "../util";
-import { analyzeImage, UnreadableImage, wantsOnlyImageAnalysis } from "./analyze-image";
+import { analyzeImage, UnreadableImage } from "./analyze-image";
 import type { InboundOptions } from "./index";
+import { linksIn } from "./history";
 import { BUDGET_TEXT, CASE_FAILED_TEXT, IMAGE_REJECTED_TEXT, QR, TECH_ERROR_TEXT, TOO_LONG_TEXT, answerText, caseNote, statusTextFor, verdictText } from "./templates";
 
 const URL_ONLY = /^https?:\/\/\S+$/i;
@@ -61,6 +63,21 @@ export function buildEngineRequest(msg: InboundMessage, ctx: ServerContext): Bui
 
   if (text.length > ctx.options.maxInputChars) {
     return { reject: statusReply(TOO_LONG_TEXT(ctx.options.maxInputChars)), logInput: "", mediaRefs };
+  }
+  // Mobile share sheets include the scheme, but a post address pasted by hand can start at the host.
+  const withScheme = text.replace(/(?<!\S)(?:[\w-]+\.)*(?:tiktok\.com|instagram\.com|instagr\.am)\//gi, host => "https://" + host);
+  const links = linksIn(withScheme);
+  const videos = links.filter(url => socialVideoPlatform(url));
+  if (videos.length && links.length > 1) {
+    return { reject: statusReply("Wklej osobno link do filmu, który chcesz sprawdzić."), logInput: "", mediaRefs };
+  }
+  if (videos[0]) {
+    const url = videos[0];
+    const focus = withScheme.replace(url, "").trim();
+    return {
+      req: { kind: "url", url, ...(focus && { text: focus }), channel: msg.channel, receivedAt: msg.receivedAt },
+      logInput: logUrl(url), mediaRefs,
+    };
   }
   if (URL_ONLY.test(text)) {
     return {
@@ -160,7 +177,8 @@ export async function runVerification(
     cacheHit = true;
   } else {
     // Rozmowa mogła właśnie wyczerpać budżet. Trafienia w cache pozostają bezpłatne.
-    if (!(req.kind === "image" && wantsOnlyImageAnalysis(req)) && (opts.clientOverBudget?.() || budgetExceeded(ctx.db, ctx.cfg, now))) {
+    const needsModel = req.kind !== "image" || (req.imageFocus !== "origin" && req.imageFocus !== "copies");
+    if (needsModel && (opts.clientOverBudget?.() || budgetExceeded(ctx.db, ctx.cfg, now))) {
       logRun({ status: "NIEPELNE", verdict: null, cacheHit: false, input: built.logInput });
       return statusReply(BUDGET_TEXT);
     }

@@ -12,6 +12,18 @@
 
 ## Co potrafi
 
+### Filmy z TikToka i Instagrama
+
+Wklej w czacie link do publicznego filmu. Możesz dopisać pytanie o wybrany fragment. Fons pobierze opis i nagranie, a Google Gemini odczyta mowę, obraz i napisy. Raport zawiera transkrypcję w języku nagrania, obserwacje ze znacznikami czasu i wyniki sprawdzenia maksymalnie sześciu twierdzeń. Przy każdym twierdzeniu znajdziesz jego pochodzenie oraz dostępne dowody z katalogu Fons.
+
+Ustaw `GEMINI_API_KEY` w serwerowym `.env` i uruchom ponownie API. Domyślnym modelem jest `gemini-3.8-flash`. Możesz go zmienić przez `GEMINI_VIDEO_MODEL`. Do sprawdzenia twierdzeń potrzebny jest również skonfigurowany dostawca modeli Fons. Nagranie wraz z dźwiękiem trafia do Google. Przy plikach powyżej 12 MiB Fons używa Gemini Files API i po analizie wysyła żądanie usunięcia pliku. W bazie Fons pozostaje raport z odczytanym tekstem.
+
+Limit analizy wynosi 10 minut i 64 MiB. Domyślnie Fons pobiera media udostępnione publicznie przez platformę. Przy pustym `GEMINI_API_KEY` pobiera jedynie dostępny opis posta. Gdy film jest niedostępny, w czacie można wkleić transkrypcję lub treść posta. [Analiza wideo w Gemini API](https://ai.google.dev/gemini-api/docs/video-understanding)
+
+Opcjonalnie ustaw `SOCIALKIT_API_KEY`, aby pobierać publiczne filmy z TikToka przez SocialKit. W tym trybie adres posta trafia do tego dostawcy. Fons zamawia plik MP4 w 480p. Dostawca podaje limit 30 MB i nalicza własne kredyty za każdą rozpoczętą minutę nagrania. [TikTok Video Download API](https://docs.socialkit.dev/api-reference/tiktok-download-api)
+
+### Funkcje Fons
+
 | Obszar | Co to znaczy w praktyce | Gdzie w kodzie |
 |---|---|---|
 | **Potok RAG** | twierdzenia → wyszukiwanie hybrydowe → ocena dowodów → kontrola cytatów → reguły werdyktu → odpowiedź z cytatem. Szybki model wydziela twierdzenia i rozpoznaje, czy to twierdzenie, pytanie tak/nie, czy pytanie otwarte. Główny model czyta tylko znalezione fragmenty. Kod sprawdza, że cytat występuje dosłownie w zapisanym rekordzie, a werdykt liczą reguły 1–9. | `src/engine/` · [VERDICT-RULES](docs/VERDICT-RULES.md) |
@@ -128,7 +140,7 @@ Jedna usługa w TypeScript (Node 22): Hono (API i serwowanie WWW), SQLite (bette
                                   └► runs (łańcuch hashy) · metryki · sprawy moderatora
 ```
 
-**Przepływ danych.** Wejście jest maskowane (PII), zanim trafi do modelu lub logu. Model widzi tylko zamaskowany tekst i fragmenty źródeł w blokach z ogranicznikiem. Tytuły, linki, daty i wydawcy w odpowiedzi pochodzą z bazy, nigdy z tekstu modelu. Raport jest zapisywany z tokenem nadawcy i usuwany po 30 dniach.
+**Przepływ danych.** Fons maskuje dane identyfikacyjne w tekście przed oceną twierdzeń i zapisem raportu. Przy analizie wideo Gemini otrzymuje obraz i dźwięk, w których mogą być widoczne lub słyszalne dane osobowe. Tekst transkrypcji podlega maskowaniu po odczycie. Tytuły, linki, daty i wydawcy cytowanych źródeł pochodzą z bazy. Raport jest zapisywany z tokenem nadawcy i usuwany po 30 dniach.
 
 ### Moduły
 
@@ -237,7 +249,9 @@ Spinacz obok pola wiadomości umożliwia wysłanie jednego pliku do 5 MiB, z opi
 
 Pytanie „Czy ten obraz wygenerowała AI?” uruchamia lokalne sprawdzenie oryginalnego pliku. Fons weryfikuje osadzone poświadczenie C2PA i zaufanie do wystawcy. Podpisana deklaracja może wskazywać na wygenerowanie całego obrazu albo edycję z użyciem AI. W pliku bez podpisu Fons szuka edytowalnej deklaracji IPTC. Brak obu oznaczeń pozostawia pochodzenie nieustalone. Przy weryfikacji tekstu na obrazie model wizyjny otrzymuje kopię obrazu bez osadzonych metadanych. Dane widoczne w samych pikselach pozostają widoczne dla dostawcy.
 
-Opcja **Szukaj tego obrazu w Google** wysyła zmniejszoną kopię bez metadanych do Cloud Vision Web Detection. Dla publicznego adresu pełnego dopasowania Fons odpytuje też Google Fact Check Tools o powiązane publikacje. W Google Cloud włącz obie usługi. Na serwerze ustaw `REVERSE_IMAGE_PROVIDER=google_vision`, `GOOGLE_VISION_API_KEY` i `FACTCHECK_API_KEY`. Dzienny limit wywołań Vision określa `REVERSE_IMAGE_DAILY_CAP`. [Cloud Vision Web Detection](https://docs.cloud.google.com/vision/docs/detecting-web) · [Fact Check Tools](https://developers.google.com/fact-check/tools/api/reference/rest/v1alpha1/claims/imageSearch)
+Wysłane zdjęcie pojawia się przy wiadomości w czacie. Przy pytaniach o widoczne przedmioty, napisy lub kolory Fons analizuje obraz. Gdy pytanie dotyczy osoby lub wcześniejszej publikacji, sam dobiera wyszukiwanie obrazem. Przy ustalaniu tożsamości szuka podpisu powiązanego z tą samą fotografią w wiarygodnym źródle. Sprawdza również, czy Kancelaria Prezydenta opublikowała dokładnie tę fotografię jako portret w oficjalnym biogramie.
+
+Cloud Vision Web Detection otrzymuje zmniejszoną kopię bez metadanych. Dla publicznego adresu pełnego dopasowania Fons odpytuje także Google Fact Check Tools o powiązane publikacje. Aby korzystać z tych usług, włącz ich API i ustaw na serwerze `GOOGLE_VISION_API_KEY` oraz `FACTCHECK_API_KEY`. Dzienny limit wyszukiwań określa `REVERSE_IMAGE_DAILY_CAP`. Administrator może wyłączyć wyszukiwanie obrazem przez `REVERSE_IMAGE_PROVIDER=off`. [Cloud Vision Web Detection](https://docs.cloud.google.com/vision/docs/detecting-web) · [Fact Check Tools](https://developers.google.com/fact-check/tools/api/reference/rest/v1alpha1/claims/imageSearch)
 
 Google oferuje także probabilistyczny klasyfikator obrazów pod nazwą **AI Content Detection API**. Usługa wymaga przyjęcia projektu do programu Private Preview. Według oficjalnego formularza Google nabór nowych uczestników jest obecnie wstrzymany (sprawdzono 21.11.2026). [Dokumentacja](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/ai-content-detection) · [Stan naboru](https://docs.google.com/forms/d/e/1FAIpQLScj_8Im1G0A1DsJBfqT7mVN4ZaSKbP58D1PNrx3lnKr4Zt6jg/viewform)
 

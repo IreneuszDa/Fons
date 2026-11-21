@@ -81,8 +81,8 @@ function ReportView({ report }: { report: VerdictReport }) {
         </Text>
         <Blockquote>{report.inputEchoMasked}</Blockquote>
       </VStack>
-      {report.imageAnalysis && <ImageFindings analysis={report.imageAnalysis} expanded />}
-      {report.imageAnalysis && report.status !== "OK" && <ReportWarnings warnings={report.warnings} />}
+      {report.imageAnalysis?.only && <ImageFindings analysis={report.imageAnalysis} summaryPl={report.summaryPl} expanded />}
+      {report.imageAnalysis && !report.imageAnalysis.visual && report.status !== "OK" && <ReportWarnings warnings={report.warnings} />}
       {report.imageAnalysis?.only ? <TransparencyBlock report={report} /> : report.status === "OK" && isOpenQuestion(report) ? (
         <AnswerCard report={report} showResultLink={false} />
       ) : report.status === "OK" && report.mainVerdict ? (
@@ -97,7 +97,7 @@ function ReportView({ report }: { report: VerdictReport }) {
           />
           {report.videoAnalysis && (
             <>
-              <VideoFindings analysis={report.videoAnalysis} />
+              <VideoFindings analysis={report.videoAnalysis} pendingClaims={report.claims} />
               <ReportWarnings warnings={report.warnings} />
             </>
           )}

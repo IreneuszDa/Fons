@@ -1,7 +1,7 @@
 import type { ConversationReply } from "./contracts";
 
 export const CHAT_STREAM_CONTENT_TYPE = "application/x-ndjson";
-export const VERIFICATION_STAGES = ["searching", "assessing", "checking_quotes"] as const;
+export const VERIFICATION_STAGES = ["fetching_video", "analyzing_video", "searching", "assessing", "checking_quotes"] as const;
 export type VerificationStage = (typeof VERIFICATION_STAGES)[number];
 
 export interface ChatResponse {

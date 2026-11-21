@@ -7,6 +7,11 @@ export type DraftAttachment = { name: string } & (
 
 export const FILE_ACCEPT = [...IMAGE_MIMES, ...DOCUMENT_MIMES, ".txt", ".pdf", ".jpg", ".jpeg", ".png", ".webp"].join(",");
 export const FILE_HINT = "JPG, PNG, WebP, PDF lub TXT, do 5 MB";
+
+export function imagePreviewSrc(image: ChatImage): string {
+  return `data:${image.mime};base64,${image.base64}`;
+}
+
 const extensionMime: Record<string, string> = {
   jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", pdf: "application/pdf", txt: "text/plain",
 };

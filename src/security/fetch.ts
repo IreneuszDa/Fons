@@ -61,7 +61,7 @@ export class FetchBlockedError extends Error {
   readonly reason: FetchBlockedReason;
   /** Message safe for users (Polish). */
   readonly userMessagePl: string;
-  constructor(reason: FetchBlockedReason, detail?: string) {
+  constructor(reason: FetchBlockedReason, detail?: string, readonly httpStatus?: number) {
     super(detail ? `${reason}: ${detail}` : reason);
     this.name = "FetchBlockedError";
     this.reason = reason;
@@ -248,12 +248,17 @@ function charsetOf(contentType: string, head: Buffer): string {
 
 // ─────────────────────────── main ───────────────────────────
 
-/**
- * Fetches a public web page safely and extracts its text.
- * Throws FetchBlockedError for every policy violation; other errors (DNS failure, connection reset)
- * propagate as ordinary Errors.
- */
-export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<FetchedPage> {
+interface ResourceOptions extends FetchOptions {
+  mimeTypes: readonly string[];
+  accept?: string;
+  /** A fixed provider API may receive JSON with a credential. Never redirect that request. */
+  postJson?: { body: object; headers: Record<string, string> };
+  /** Checked before the initial request and every redirect, in addition to the public IP policy. */
+  allowUrl?: (url: URL) => boolean;
+}
+
+/** Bounded bytes from a public URL. All consumers share the socket-pinned address policy. */
+export async function fetchPublicResource(url: string, opts: ResourceOptions) {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
   const allowedPorts = opts.allowedPorts ?? [80, 443];
@@ -274,17 +279,20 @@ export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<F
   try {
     let current = validateUrl(url, allowedPorts, allowed);
     for (let redirects = 0; ; redirects++) {
+      if (opts.allowUrl && !opts.allowUrl(current)) throw new FetchBlockedError("scheme", "unexpected origin");
       let res: Dispatcher.ResponseData;
       try {
         res = await request(current, {
-          method: "GET",
+          method: opts.postJson ? "POST" : "GET",
           dispatcher: agent,
           signal,
+          ...(opts.postJson ? { body: JSON.stringify(opts.postJson.body) } : {}),
           headers: {
             "user-agent": USER_AGENT,
-            accept: opts.acceptJson ? "application/json,text/html;q=0.9,text/plain;q=0.8" : "text/html,application/xhtml+xml,text/plain;q=0.9",
+            accept: opts.accept ?? opts.mimeTypes.join(","),
             "accept-encoding": "gzip, deflate, br",
             "accept-language": "pl,en;q=0.7",
+            ...(opts.postJson ? { "content-type": "application/json", ...opts.postJson.headers } : {}),
           },
         });
       } catch (err) {
@@ -295,6 +303,7 @@ export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<F
       if (status >= 300 && status < 400 && status !== 304) {
         const loc = res.headers.location;
         discard(res.body);
+        if (opts.postJson) throw new FetchBlockedError("redirects", "provider POST");
         const location = Array.isArray(loc) ? loc[0] : loc;
         if (!location) throw new FetchBlockedError("http_error", `redirect without location (${status})`);
         if (redirects >= MAX_REDIRECTS) throw new FetchBlockedError("redirects", `> ${MAX_REDIRECTS}`);
@@ -303,14 +312,13 @@ export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<F
       }
       if (status < 200 || status >= 300) {
         discard(res.body);
-        throw new FetchBlockedError("http_error", String(status));
+        throw new FetchBlockedError("http_error", String(status), status);
       }
 
       const ctHeader = res.headers["content-type"];
       const contentType = (Array.isArray(ctHeader) ? ctHeader[0] : ctHeader) ?? "";
       const mime = contentType.split(";")[0]!.trim().toLowerCase();
-      const isJson = !!opts.acceptJson && mime === "application/json";
-      if (!isJson && !ACCEPTED_TYPES.includes(mime)) {
+      if (!opts.mimeTypes.includes(mime)) {
         discard(res.body);
         throw new FetchBlockedError("content_type", mime || "missing");
       }
@@ -328,17 +336,7 @@ export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<F
       } catch (err) {
         throw findBlocked(err) ?? (timeoutCtl.signal.aborted ? new FetchBlockedError("timeout") : err);
       }
-      const text = new TextDecoder(charsetOf(contentType, buf)).decode(buf);
-
-      if (isJson) {
-        return { finalUrl: current.href, status, contentType, rawText: text, cleanText: text, hiddenSegments: [] };
-      }
-      if (mime === "text/plain") {
-        const ex = extractFromPlainText(text);
-        return { finalUrl: current.href, status, contentType, ...ex };
-      }
-      const ex = extractFromHtml(text, current.href);
-      return { finalUrl: current.href, status, contentType, rawHtml: text, ...ex };
+      return { finalUrl: current.href, status, contentType, mime, bytes: buf };
     }
   } catch (err) {
     const blocked = findBlocked(err);
@@ -349,4 +347,15 @@ export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<F
     clearTimeout(timer);
     agent.destroy().catch(() => {});
   }
+}
+
+/** Fetch a public page and extract its text. Binary files are never accepted as text. */
+export async function fetchPage(url: string, opts: FetchOptions = {}): Promise<FetchedPage> {
+  const mimeTypes = opts.acceptJson ? ["application/json", ...ACCEPTED_TYPES] : ACCEPTED_TYPES;
+  const accept = opts.acceptJson ? "application/json,text/html;q=0.9,text/plain;q=0.8" : "text/html,application/xhtml+xml,text/plain;q=0.9";
+  const { finalUrl, status, contentType, mime, bytes } = await fetchPublicResource(url, { ...opts, mimeTypes, accept });
+  const text = new TextDecoder(charsetOf(contentType, bytes)).decode(bytes);
+  if (mime === "application/json") return { finalUrl, status, contentType, rawText: text, cleanText: text, hiddenSegments: [] };
+  if (mime === "text/plain") return { finalUrl, status, contentType, ...extractFromPlainText(text) };
+  return { finalUrl, status, contentType, rawHtml: text, ...extractFromHtml(text, finalUrl) };
 }

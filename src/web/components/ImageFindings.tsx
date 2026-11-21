@@ -4,11 +4,12 @@ import { Link } from "@astryxdesign/core/Link";
 import { Text } from "@astryxdesign/core/Text";
 import type { VerdictReport } from "../../shared/contracts";
 import type { ImageSearchResult } from "../../shared/image-search";
+import { paragraphs } from "../lib/format";
 import { safeUrl } from "../lib/safeUrl";
 
 const matchLabel = { page: "Strona z obrazem", full: "Cały obraz", partial: "Fragment obrazu" };
 
-function GoogleFindings({ search, expanded }: { search: ImageSearchResult; expanded: boolean }) {
+export function GoogleFindings({ search, expanded }: { search: ImageSearchResult; expanded: boolean }) {
   return (
     <VStack gap={2}>
       <Text as="p">{search.messagePl}</Text>
@@ -46,10 +47,32 @@ function GoogleFindings({ search, expanded }: { search: ImageSearchResult; expan
   );
 }
 
-export function ImageFindings({ analysis, expanded = false }: {
+export function ImageFindings({ analysis, summaryPl, expanded = false }: {
   analysis: NonNullable<VerdictReport["imageAnalysis"]>;
+  summaryPl: string;
   expanded?: boolean;
 }) {
+  if (analysis.visual) return (
+    <VStack gap={2}>
+      {paragraphs(summaryPl).map((p, i) => <Text key={i} as="p">{p}</Text>)}
+      {analysis.visual.citations.map(({ title, url, quote }) => {
+        const href = safeUrl(url);
+        return (
+          <VStack key={url + quote} gap={0.5}>
+            {href ? <Link href={href} isExternalLink newTabLabel="(otwiera się w nowej karcie)">{title}</Link> : <Text>{title}</Text>}
+            {quote !== title && !summaryPl.includes(quote) && <Text as="p" type="supporting" color="secondary">„{quote}”</Text>}
+          </VStack>
+        );
+      })}
+    </VStack>
+  );
+  if (analysis.focus === "copies") return (
+    <VStack gap={2}>
+      {analysis.images.map(({ search }, index) => search
+        ? <GoogleFindings key={index} search={search} expanded={expanded} />
+        : <Text as="p" key={index}>{summaryPl}</Text>)}
+    </VStack>
+  );
   return (
     <VStack gap={3}>
       {analysis.images.map(({ provenance, search }, index) => (

@@ -67,7 +67,12 @@ export const CASE_FAILED_TEXT = "Nie udało się teraz zapisać sprawy. Możesz 
 
 export function verdictText(report: VerdictReport, note?: string): string {
   const lines: string[] = [];
-  if (report.mainVerdict) lines.push(`Wynik: ${VERDICT_LABEL_PL[report.mainVerdict]}.`);
+  if (report.mainVerdict) {
+    const claim = report.videoAnalysis && report.claims.find(c => c.isMain);
+    lines.push(claim
+      ? `Główne twierdzenie z filmu „${claim.text}” — ${VERDICT_LABEL_PL[report.mainVerdict]}.`
+      : `Wynik: ${VERDICT_LABEL_PL[report.mainVerdict]}.`);
+  }
   lines.push(report.summaryPl);
   for (const w of report.warnings) lines.push(`Uwaga: ${w.textPl}`);
   if (note) lines.push(note);
@@ -112,6 +117,13 @@ function searchSummary(report: VerdictReport): string {
 }
 
 export function sourcesText(report: VerdictReport, resultUrl?: string): string {
+  const visual = report.imageAnalysis?.visual;
+  if (visual) {
+    if (!visual.citations.length) return visual.mode === "identity"
+      ? "Nie mam publikacji z podpisem, który wskazywałby osobę na tym zdjęciu."
+      : "Ta odpowiedź dotyczy tego, co widać na przesłanym obrazie.";
+    return visual.citations.map(({ title, url, quote }) => [title, `„${quote}”`, safeHttpUrl(url)].filter(Boolean).join("\n")).join("\n\n");
+  }
   if (report.imageAnalysis?.only) {
     const links = report.imageAnalysis.images.flatMap(({ search }) => [
       ...(search?.matches ?? []).map(match => match.url ?? match.host),

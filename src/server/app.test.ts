@@ -3,6 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { FakeLlmProvider } from "../engine/llm/fake";
+import { STATUS_PL } from "../engine/messages";
+import { makeTestDeps } from "../mcp/testkit";
+import { initCorpusSchema } from "../corpus/store";
 import { chat, chatModelUsage as usage, makeEnv, makeReport } from "./testkit";
 
 function onePagePdf(): Buffer {
@@ -36,7 +40,7 @@ describe("pliki wysłane do /api/chat", () => {
   it("przekazuje podpis i piksele bez metadanych do weryfikacji oraz rozróżnia podpisy w cache", async () => {
     const google = vi.fn<typeof fetch>();
     const env = makeEnv({ fetch: google, cfg: { reverseImageProvider: "google_vision", googleVisionApiKey: "test" } });
-    const message = { image, text: "Czy na zdjęciu widać Warszawę?" };
+    const message = { image, text: "Sprawdź prawdziwość wiadomości o Warszawie ze zrzutu." };
     const first = await chat(env, message);
     expect(first.status).toBe(200);
     expect(first.json.reply).toMatchObject({ kind: "verdict", report: { imageAnalysis: { only: false } } });
@@ -47,11 +51,71 @@ describe("pliki wysłane do /api/chat", () => {
     expect(JSON.stringify(first.json)).not.toContain(image.base64);
     expect(JSON.stringify(first.json)).not.toContain("private@example.com");
     expect((await chat(env, message, first.cookie)).json.reply.report.cacheHit).toBe(true);
-    const different = await chat(env, { image, text: "Czy tu widać Gdańsk?" }, first.cookie);
+    const different = await chat(env, { image, text: "Sprawdź prawdziwość wiadomości o Gdańsku ze zrzutu." }, first.cookie);
     expect(different.json.reply.report.cacheHit).toBe(false);
     expect(env.calls).toHaveLength(2);
     expect(google).not.toHaveBeenCalled();
     expect(env.ctx.media.size).toBe(0);
+  });
+
+  it("odpowiada na pytanie o zawartość załączonego zdjęcia z pikseli", async () => {
+    const google = vi.fn<typeof fetch>();
+    const env = makeEnv({ fetch: google, cfg: { reverseImageProvider: "google_vision", googleVisionApiKey: "test" } });
+    let pixels: Buffer | undefined;
+    const provider = new FakeLlmProvider({ supportsVision: true, override: req => {
+      pixels = Buffer.from(req.images![0]!.base64, "base64");
+      return { answerPl: "Obraz jest zielony.", citationIndex: -1 };
+    } });
+    initCorpusSchema(env.db);
+    env.ctx.engineDeps = { ...makeTestDeps(env.db), llm: provider };
+    const message = { image, text: "Jaki kolor widzisz?" };
+    const first = await chat(env, message);
+    expect(first.json.reply).toMatchObject({ kind: "image_analysis", textPl: "Obraz jest zielony.", report: {
+      mainVerdict: null, claims: [], models: [{ purpose: "image_question" }], imageAnalysis: { only: true, visual: { mode: "visual" } },
+    } });
+    const metadata = await sharp(pixels!).metadata();
+    expect(metadata).toMatchObject({ format: "jpeg", width: 30, height: 20 });
+    expect(metadata.exif).toBeUndefined();
+    expect((await chat(env, message, first.cookie)).json.reply.report.cacheHit).toBe(true);
+    expect(provider.calls).toHaveLength(1);
+    expect(google).not.toHaveBeenCalled();
+    expect(env.calls).toHaveLength(0);
+    expect(env.ctx.media.size).toBe(0);
+  });
+
+  it("sam szuka publikacji z fotografią przy pytaniu o prezydenta i respektuje wyłączenie Google", async () => {
+    const google = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ responses: [{ webDetection: {} }] }));
+    const env = makeEnv({ fetch: google, cfg: { reverseImageProvider: "google_vision", googleVisionApiKey: "test" } });
+    initCorpusSchema(env.db);
+    env.ctx.engineDeps = { ...makeTestDeps(env.db), llm: new FakeLlmProvider({
+      supportsVision: true, override: () => ({ subject: "person", printedLabel: "" }),
+    }) };
+    const message = { image, text: "Czy to jest Prezydent polski?" };
+    const first = await chat(env, message);
+    expect(first.json.reply).toMatchObject({ kind: "image_analysis", textPl: expect.stringContaining("podpisu"), report: {
+      mainVerdict: null, claims: [], imageAnalysis: { only: true, visual: { mode: "identity" }, images: [{ search: { status: "ok" } }] },
+    } });
+    expect(first.json.reply.textPl).not.toMatch(/C2PA|IPTC|Żadne wiarygodne źródło/);
+    const optOut = await chat(env, { ...message, imageOptions: { searchWeb: false } }, first.cookie);
+    expect(optOut.json.reply.report.cacheHit).toBe(false);
+    expect(optOut.json.reply.report.imageAnalysis.images[0].search).toBeUndefined();
+    const byText = await chat(env, { image, text: "Kto to jest? Nie wysyłaj tego zdjęcia do Google." }, first.cookie);
+    expect(byText.json.reply.report.imageAnalysis.images[0].search).toBeUndefined();
+    expect(google).toHaveBeenCalledOnce();
+    expect(env.calls).toHaveLength(0);
+  });
+
+  it("opisuje zdjęcie bez wiadomości, jeżeli odczyt nie wykrył na nim tekstu", async () => {
+    const env = makeEnv({ engine: () => makeReport({
+      status: "DOPRECYZUJ", statusMessagePl: STATUS_PL.imageUnreadable, mainVerdict: null, verdicts: [], claims: [], models: [],
+    }) });
+    const llm = new FakeLlmProvider({ supportsVision: true, override: () => ({ answerPl: "Widzę zielony prostokąt.", citationIndex: -1 }) });
+    initCorpusSchema(env.db);
+    env.ctx.engineDeps = { ...makeTestDeps(env.db), llm };
+    const result = await chat(env, { image });
+    expect(result.json.reply).toMatchObject({ kind: "image_analysis", textPl: "Widzę zielony prostokąt.", report: {
+      imageAnalysis: { only: true, visual: { mode: "visual" } },
+    } });
   });
 
   it("agent rozpoznaje pytanie o pochodzenie i może do niego wrócić po usunięciu pliku", async () => {
@@ -69,7 +133,7 @@ describe("pliki wysłane do /api/chat", () => {
     expect(env.calls).toHaveLength(0);
   });
 
-  it("pokazuje pochodzenie bez wywołania OCR i dodaje wyniki Google dopiero po zgodzie", async () => {
+  it("sprawdza lokalne poświadczenia bez OCR, obsługuje też jawne żądanie wyszukania kopii", async () => {
     const google = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ responses: [{ webDetection: {
       pagesWithMatchingImages: [{ url: "https://www.nato.int/archive", pageTitle: "Archiwum" }],
     } }] }));
@@ -92,6 +156,21 @@ describe("pliki wysłane do /api/chat", () => {
     expect(google).toHaveBeenCalledOnce();
     expect(env.calls).toHaveLength(0);
     expect(env.ctx.media.size).toBe(0);
+  });
+
+  it("sam wyszukuje kopie na prośbę w rozmowie i zwraca zapamiętane adresy w kolejnej turze", async () => {
+    const page = "https://www.nato.int/archive";
+    const google = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ responses: [{ webDetection: {
+      pagesWithMatchingImages: [{ url: page, pageTitle: "Archiwum" }],
+    } }] }));
+    const env = makeEnv({ fetch: google, cfg: { reverseImageProvider: "google_vision", googleVisionApiKey: "test" } });
+    env.ctx.conversationAgent = vi.fn().mockResolvedValue({ kind: "image_copies", usage });
+    const first = await chat(env, { image, text: "Gdzie w sieci pojawiło się to zdjęcie?" });
+    expect(first.json.reply.report.imageAnalysis).toMatchObject({ only: true, focus: "copies", images: [{ search: { status: "ok" } }] });
+    const next = await chat(env, { text: "Na jakiej stronie są kopie?" }, first.cookie);
+    expect(next.json.reply).toMatchObject({ kind: "sources", textPl: page });
+    expect(google).toHaveBeenCalledOnce();
+    expect(env.calls).toHaveLength(0);
   });
 
   it.each([

@@ -19,14 +19,14 @@ export interface ConversationInput {
 export type ConversationDecision =
   | { kind: "reply"; text: string }
   | { kind: "verify"; query: string | null }
-  | { kind: "sources" | "why" | "image_origin" };
+  | { kind: "sources" | "why" | "image_origin" | "image_copies" | "image_identity" | "image_visual" | "image_context" };
 
 export type ConversationAgent = (input: ConversationInput) => Promise<ConversationDecision & { usage: ModelUsage }>;
 
 // All three providers accept a root object with required, nullable fields. Validate the
 // action-specific payload locally without relying on conditional JSON Schema support.
 const Decision = z.object({
-  kind: z.enum(["reply", "verify", "sources", "why", "image_origin"]),
+  kind: z.enum(["reply", "verify", "sources", "why", "image_origin", "image_copies", "image_identity", "image_visual", "image_context"]),
   text: z.string().nullable(),
   query: z.string().nullable(),
 }).refine(({ kind, text, query }) => {
@@ -50,9 +50,15 @@ verify — uruchom silnik dla pytania o sprawdzalny fakt, konkretnego twierdzeni
 
 sources lub why — gdy rozmówca prosi o źródła ostatniego wyniku, użyj sources. Na pytanie, jak przebiegło konkretne sprawdzenie, dlaczego wybrano źródła lub skąd wziął się wniosek, wybierz why. Pokaże zapisane działania i podstawę odpowiedzi. Nie wymyślaj przebiegu, wyszukiwań ani wewnętrznego toku myślenia. Oba pola tekstowe mają być null. Krótkie „dlaczego?” może dotyczyć też zwykłej wypowiedzi: wtedy odpowiedz rozmówcy w reply. Jeżeli wyniku jeszcze nie ma, użyj reply i ustal, co sprawdzić.
 
-image_origin — gdy rozmówca pyta o pochodzenie, generowanie lub edycję AI załączonego obrazu albo obrazu z ostatniego raportu. Gdy dołącza zdjęcie wyłącznie do szukania jego kopii, także użyj image_origin. Fakt dotyczący treści obrazu sprawdzasz przez verify. Jeśli chce wyszukać kopie wcześniej wysłanego obrazu, poproś o ponowne dołączenie go z opcją wyszukiwania w Google. Oba pola tekstowe dla image_origin mają być null.
+Gdy ktoś dołącza zdjęcie, dobierz narzędzie do jego pytania. Sam wybierasz wyszukiwanie obrazem, bez pytania o zgodę na wybór narzędzia.
+image_visual — pytanie o widoczny przedmiot, scenę, kolor, liczbę lub odczytanie napisu, np. „Co to za rower?”, „Czy to kot?” lub „Co tu napisano?”.
+image_identity — pytanie, kto jest na fotografii, czy jest to określona osoba albo czy osoba pełni określoną funkcję, np. „Czy to jest prezydent Polski?”. Silnik szuka publikacji z podpisem tego samego zdjęcia.
+image_context — gdzie lub kiedy wykonano zdjęcie, co to za konkretne wydarzenie, czy dany podpis opisuje fotografię lub inną kwestię, w której przyda się wyszukanie publikacji z tym samym obrazem.
+image_origin — pochodzenie pliku, poświadczenia, generowanie lub edycja AI. image_copies — samodzielne szukanie oryginalnej publikacji, autora albo kopii w internecie.
+verify dla obrazu oznacza sprawdzenie prawdziwości wiadomości, cytatu, nagłówka lub twierdzenia zapisanego na zrzucie ekranu. Pytanie „Czy to jest prezydent?” dotyczy osoby, a „Czy prezydent podpisał tę ustawę?” dotyczy faktu.
+Pola text i query dla czynności image_* mają być null. Jeśli rozmówca dopytuje o zdjęcie z wcześniejszej wiadomości, korzystaj z ustaleń w rozmowie. Gdy pytanie wymaga ponownego obejrzenia pikseli, będzie potrzebny plik.
 
-W czacie można dołączyć JPG, PNG, WebP, PDF z tekstem lub TXT (jeden plik do 5 MiB). Fons sprawdza twierdzenia z tekstu i czyta poświadczenia pochodzenia obrazów. Podpis może potwierdzić deklarację użycia AI. Przy braku deklaracji pochodzenie pozostaje nieustalone. Opcja „Szukaj tego obrazu w Google” przy załączniku wyszukuje kopie i powiązane weryfikacje. Gdy pytanie dotyczy pliku, którego jeszcze nie otrzymałeś, poproś o dołączenie go spinaczem.
+W czacie można dołączyć JPG, PNG, WebP, PDF z tekstem lub TXT (jeden plik do 5 MiB). Fons może odczytać poświadczenia pochodzenia obrazów. Podpis może potwierdzić deklarację użycia AI. Przy braku deklaracji pochodzenie pozostaje nieustalone. Gdy pytanie dotyczy pliku, którego jeszcze nie otrzymałeś, poproś o dołączenie go spinaczem.
 
 Masz katalog źródeł i sprawdzasz m.in. komunikaty urzędowe. Nie masz bieżących pomiarów ani prognoz pogody. Przy „jaka jest pogoda?” bez znanej miejscowości dopytaj o nią raz. Gdy osoba poda miejsce, wyjaśnij krótko, gdzie można sprawdzić lokalną pogodę (np. w serwisie IMGW). Jeżeli natomiast pyta o konkretny alert lub przesyła komunikat, możesz użyć verify. Nigdy nie wymyślaj temperatur, źródeł, linków ani wyników. Nie obiecuj działań, do których nie masz narzędzia.
 

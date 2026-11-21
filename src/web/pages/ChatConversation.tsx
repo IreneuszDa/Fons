@@ -1,6 +1,6 @@
 // Scaffolded from the Astryx `ai-chat` page template; frame, density and composer docking kept,
 // the artifact side panel and demo content removed (verdicts render inline in the transcript).
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Avatar } from "@astryxdesign/core/Avatar";
 import { Button } from "@astryxdesign/core/Button";
@@ -12,6 +12,7 @@ import {
   ChatToolCalls,
 } from "@astryxdesign/core/Chat";
 import { HStack, Layout, LayoutContent, VStack } from "@astryxdesign/core/Layout";
+import { useLightbox } from "@astryxdesign/core/Lightbox";
 import { Link } from "@astryxdesign/core/Link";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
@@ -28,7 +29,7 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { PaperClipIcon } from "@heroicons/react/24/outline";
 
 export type ChatEntry =
-  | { id: string; role: "user"; text: string; fileName?: string }
+  | { id: string; role: "user"; text: string; fileName?: string; imageSrc?: string }
   | { id: string; role: "assistant"; reply: ConversationReply }
   | { id: string; role: "error"; text: string; retry?: () => void };
 
@@ -37,7 +38,7 @@ export type PendingPhase = "responding" | "verifying" | "image" | VerificationSt
 export const progressLabels = {
   verifying: "Rozpoczynam sprawdzanie…",
   image: "Analizuję obraz…",
-  fetching_video: "Pobieram film i opis posta…",
+  fetching_video: "Odczytuję post…",
   analyzing_video: "Odczytuję obraz i wypowiedzi z filmu…",
   searching: "Szukam źródeł…",
   assessing: "Czytam znalezione fragmenty…",
@@ -45,6 +46,24 @@ export const progressLabels = {
 } satisfies Record<Exclude<PendingPhase, "responding">, string>;
 
 const replyAnchorId = (entryId: string | undefined) => `odpowiedz-${entryId ?? ""}`;
+
+function SentImage({ src, name }: { src: string; name?: string }) {
+  const [failed, setFailed] = useState(false);
+  const alt = name ? `Przesłane zdjęcie: ${name}` : "Przesłane zdjęcie";
+  const lightbox = useLightbox({ media: { src, alt }, hasZoom: true });
+  if (failed) return <Text type="supporting">{name ?? "Zdjęcie"} · podgląd niedostępny</Text>;
+  return <>
+    <img src={src} alt={alt} {...lightbox.triggerProps}
+      aria-label={name ? `Powiększ zdjęcie ${name}` : "Powiększ zdjęcie"}
+      onError={() => setFailed(true)}
+      style={{
+        display: "block", width: "auto", height: "auto", maxWidth: "min(82%, 20rem)",
+        maxHeight: "min(42svh, 20rem)", borderRadius: "var(--radius-chat)", cursor: "zoom-in",
+      }}
+    />
+    {lightbox.isOpen && lightbox.element}
+  </>;
+}
 
 export default function ChatConversation({
   entries,
@@ -94,12 +113,13 @@ export default function ChatConversation({
                     if (e.role === "user") {
                       return (
                         <ChatMessage key={e.id} sender="user">
-                          <ChatMessageBubble>
+                          {e.imageSrc && <SentImage src={e.imageSrc} name={e.fileName} />}
+                          {(e.text || (!e.imageSrc && e.fileName)) && <ChatMessageBubble>
                             <VStack gap={1}>
-                              {e.fileName && <Token label={e.fileName} icon={<Icon icon={PaperClipIcon} size="sm" />} />}
+                              {!e.imageSrc && e.fileName && <Token label={e.fileName} icon={<Icon icon={PaperClipIcon} size="sm" />} />}
                               {e.text && <Text>{e.text}</Text>}
                             </VStack>
-                          </ChatMessageBubble>
+                          </ChatMessageBubble>}
                         </ChatMessage>
                       );
                     }

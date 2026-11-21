@@ -196,6 +196,22 @@ describe("source activity", () => {
 });
 
 describe("image analysis", () => {
+  it("opens with the visual answer and its caption, keeping file diagnostics behind the disclosure", () => {
+    const analysis: NonNullable<VerdictReport["imageAnalysis"]> = {
+      only: true, images: [{ provenance: { credential: "absent", declaration: "none", basis: "none", textPl: "Brak podpisu C2PA." } }],
+      visual: { mode: "identity", citations: [{ url: "https://www.prezydent.pl/galeria", title: "Galeria z uroczystości", quote: "Prezydent podczas uroczystości." }] },
+    };
+    const summaryPl = "Podpis wydawcy wskazuje prezydenta Polski.";
+    const report = { ...FIXTURE_REPLIES.potwierdzone!.report!, mainVerdict: null, verdicts: [], claims: [], summaryPl, imageAnalysis: analysis };
+    const out = html({ kind: "image_analysis", report, textPl: summaryPl, quickReplies: [] });
+    expect(out).toContain(summaryPl);
+    expect(out).toContain('href="https://www.prezydent.pl/galeria"');
+    expect(out).toContain("„Prezydent podczas uroczystości.”");
+    expect(out.indexOf(summaryPl)).toBeLessThan(out.indexOf("Jak sprawdziłem"));
+    expect(out.split("Jak sprawdziłem")[0]).not.toContain("C2PA");
+    expect(out).not.toContain("Ocena głównego twierdzenia");
+  });
+
   it("shows provenance and the publisher's own rating in chat and expands public matches in the report", () => {
     const analysis: NonNullable<VerdictReport["imageAnalysis"]> = {
       only: true,
@@ -215,7 +231,7 @@ describe("image analysis", () => {
     };
     const report = { ...FIXTURE_REPLIES.potwierdzone!.report!, imageAnalysis: analysis };
     const chat = html({ kind: "image_analysis", textPl: "", report, quickReplies: [] });
-    const full = renderToStaticMarkup(createElement(ImageFindings, { analysis, expanded: true }));
+    const full = renderToStaticMarkup(createElement(ImageFindings, { analysis, summaryPl: report.summaryPl, expanded: true }));
     for (const output of [chat, full]) {
       expect(output).toContain("Pochodzenie obrazu jest nieznane.");
       expect(output).toContain("Redakcja testowa");
@@ -226,6 +242,48 @@ describe("image analysis", () => {
     expect(full).toContain("media.example.org");
     expect(full).not.toContain('href="https://media.example.org');
     expect(full).toContain('href="https://news.example.org/artykul"');
+  });
+});
+
+describe("social video analysis", () => {
+  const analysis: NonNullable<VerdictReport["videoAnalysis"]> = {
+    platform: "tiktok", status: "analyzed", caption: "Opis autora",
+    transcript: [{ seconds: 65, text: "Wypowiedź z nagrania" }],
+    observations: [{ seconds: 0, text: "Na ekranie jest mapa." }],
+    claimOrigins: [{ claimId: "c1", source: "speech", seconds: 65 }, { claimId: "c2", source: "caption", seconds: null }],
+  };
+
+  it("ties the verdict to the main claim and shows where each claim appeared", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
+    reply.report!.videoAnalysis = analysis;
+    const out = html(reply);
+    for (const label of ["Ocena głównego twierdzenia z filmu", "Film z TikToka", "Transkrypcja", "Obraz i napisy", "Wypowiedź · 1:05", "Opis posta"]) {
+      expect(out).toContain(label);
+    }
+    expect(announcementFor(reply)).toMatch(/^Ocena głównego twierdzenia z filmu/);
+  });
+
+  it("preserves a recovered caption on a failed video read without implying that audio or frames were analyzed", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.niepelne!);
+    reply.report!.videoAnalysis = { ...analysis, platform: "instagram", status: "unavailable", transcript: [], observations: [], claimOrigins: [] };
+    const out = html(reply);
+    expect(out).toContain("Film z Instagrama");
+    expect(out).toContain("Opis posta");
+    expect(out).not.toContain("Transkrypcja");
+    expect(out).not.toContain("Nie rozpoznano wypowiedzi");
+    expect(out).not.toContain("Ocena głównego twierdzenia z filmu");
+  });
+
+  it("keeps extracted claims available if verification fails after the video was read", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.niepelne!);
+    const report = reply.report!;
+    report.videoAnalysis = analysis;
+    report.claims = [structuredClone(FIXTURE_REPLIES.potwierdzone!.report!.claims[0]!)];
+    const out = html(reply);
+    expect(out).toContain("Twierdzenia bez oceny");
+    expect(out).toContain(report.claims[0]!.text);
+    expect(out).toContain("Wypowiedź · 1:05");
+    expect(out).not.toContain("Ocena głównego twierdzenia z filmu");
   });
 });
 
@@ -270,6 +328,8 @@ describe("chat helpers", () => {
     expect(renderChat("searching")).toContain("Szukam źródeł…");
     expect(renderChat("assessing")).toContain("Czytam znalezione fragmenty…");
     expect(renderChat("checking_quotes")).toContain("Sprawdzam cytaty…");
+    expect(renderChat("fetching_video")).toContain("Odczytuję post…");
+    expect(renderChat("analyzing_video")).toContain("Odczytuję obraz i wypowiedzi z filmu…");
     expect(verifying).not.toContain("astryx-status-dot");
     expect(verifying).not.toContain(">Fons<");
     const image = renderChat("image");
@@ -277,6 +337,22 @@ describe("chat helpers", () => {
     expect(image).not.toContain("Szukam źródeł…");
     expect(renderChat(null)).not.toContain("astryx-chat-tool-calls");
     expect(renderChat(null)).not.toContain("astryx-status-dot");
+  });
+
+  it("shows a zoomable sent photo above its caption and keeps document filenames", () => {
+    const imageSrc = "data:image/png;base64,AAAA";
+    const out = renderToStaticMarkup(createElement(ChatConversation, {
+      entries: [
+        { id: "photo", role: "user", text: "Co to jest?", fileName: "zdjęcie.png", imageSrc },
+        { id: "file", role: "user", text: "", fileName: "rachunek.pdf" },
+      ],
+      pending: "image", onSubmit: () => undefined, onAction: () => undefined,
+    }));
+    expect(out).toContain(`src="${imageSrc}"`);
+    expect(out).toContain('aria-label="Powiększ zdjęcie zdjęcie.png"');
+    expect(out.indexOf(`src="${imageSrc}"`)).toBeLessThan(out.indexOf("Co to jest?"));
+    expect(out).not.toContain(">zdjęcie.png<");
+    expect(out).toContain(">rachunek.pdf<");
   });
 
   it("offers the same attachment picker on the landing page and during a conversation", () => {

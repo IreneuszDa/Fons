@@ -1,6 +1,6 @@
 # Analiza obrazu w Fons: plan
 
-> **Stan wdrożenia.** W czacie działają załączniki, OCR, weryfikacja osadzonego podpisu C2PA, odczyt IPTC DigitalSourceType i opcjonalne wyszukiwanie przez Google Vision oraz Fact Check Tools. Dalsze sekcje opisują pełny plan. [Obecne możliwości i konfiguracja](../README.md#pliki-w-czacie)
+> **Stan wdrożenia.** Czat dobiera odczyt obrazu, sprawdzenie pochodzenia i wyszukiwanie w Google do pytania użytkownika. Przy pytaniu o tożsamość Fons szuka podpisu powiązanego z tym samym zdjęciem. Opis przełącznika Google w dalszej części dokumentu pochodzi z pierwotnego planu. [Obecne możliwości i konfiguracja](../README.md#pliki-w-czacie)
 > **Stan wiedzy:** 21.11.2026.
 > **Jak powstał:** 6 ścieżek researchu (wykrywanie AI, wyszukiwanie wcześniejszych wystąpień, „kto to jest” i prawo, datowanie, OCR i bezpieczeństwo, integracja z kodem) oraz dwie recenzje krytyczne (prawo i prywatność; zgodność z zadaniem i wykonalność). Uwagi recenzentów są naniesione.
 > **Kontrakty i zależności:** zmiany w `src/shared/contracts.ts` i nowe pakiety npm wymagają zgody orkiestratora (`docs/MODULES.md`).

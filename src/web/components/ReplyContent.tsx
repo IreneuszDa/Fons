@@ -35,16 +35,17 @@ export function QuickReplies({
 
 /** Assistant reply body: verdict card, answer card, status notice (never verdict styling) or plain text. */
 export function ReplyContent({ reply, anchorId, animateText = false }: { reply: ConversationReply; anchorId?: string; animateText?: boolean }) {
-  const analysis = reply.report?.imageAnalysis;
-  if (analysis) return (
+  const report = reply.report;
+  const analysis = report?.imageAnalysis;
+  if (analysis && report) return (
     <VStack gap={3}>
-      <ImageFindings analysis={analysis} />
-      {reply.report && (analysis.only || (reply.kind === "status" && reply.report.status === "DOPRECYZUJ")) &&
-        <TransparencyBlock report={reply.report} />}
-      {!analysis.only && (reply.kind === "status" && reply.report?.status === "DOPRECYZUJ"
-        ? <Text as="p">{reply.report.statusMessagePl || reply.textPl}</Text>
+      {analysis.only && <ImageFindings analysis={analysis} summaryPl={report.summaryPl} />}
+      {(analysis.only || (reply.kind === "status" && report.status === "DOPRECYZUJ")) &&
+        <TransparencyBlock report={report} />}
+      {!analysis.only && (reply.kind === "status" && report.status === "DOPRECYZUJ"
+        ? <Text as="p">{report.statusMessagePl || reply.textPl}</Text>
         : <ReplyBody reply={reply} anchorId={anchorId} />)}
-      {reply.kind === "status" && reply.report && <ReportWarnings warnings={reply.report.warnings} />}
+      {reply.kind === "status" && !analysis.visual && <ReportWarnings warnings={report.warnings} />}
     </VStack>
   );
   if (animateText && reply.kind === "help" && !reply.report && reply.textPl.length <= 600) {
@@ -84,7 +85,7 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
         <StatusNotice title={STATUS_KEY_TITLE_PL[key]} message={message} hint={reply.report?.videoAnalysis ? undefined : hint} />
         {reply.report?.videoAnalysis && (
           <>
-            <VideoFindings analysis={reply.report.videoAnalysis} />
+            <VideoFindings analysis={reply.report.videoAnalysis} pendingClaims={reply.report.claims} />
             <ReportWarnings warnings={reply.report.warnings} />
           </>
         )}

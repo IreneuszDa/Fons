@@ -1,12 +1,13 @@
 import type { ConversationDecision } from "../../engine/llm/conversation";
 import { MAX_TEXT_CHARS } from "../../engine/normalize";
+import { socialVideoPlatform } from "../../engine/video/social-source";
 import type { ConversationReply, InboundMessage } from "../../shared/contracts";
 import { addTokens, budgetExceeded } from "../budget";
 import type { ServerContext } from "../context";
 import { getReportForSender } from "../reports";
 import type { SessionRow } from "../sessions";
 import { canVerifyWithoutDialogue, conversationReply, localConversationKind } from "./agent";
-import { wantsOnlyImageAnalysis } from "./analyze-image";
+import { obviousImageFocus, resolveImageFocus } from "./image-intent";
 import { readDocument } from "./document";
 import { linksIn, maskedConversationText, resolveUserLink } from "./history";
 import type { InboundOptions } from "./index";
@@ -57,8 +58,15 @@ ${content}` : content;
   if (built.reject) return built.reject;
   const req = built.req!;
   const verifyOriginal = () => runVerification(ctx, msg, session, { req, logInput: built.logInput }, opts);
-  if (ctx.security.hasInjection?.(msg.text)) return verifyOriginal();
-  if (req.kind === "image" && (!msg.text.trim() || wantsOnlyImageAnalysis(req))) return verifyOriginal();
+  if (req.kind === "url" && req.url && socialVideoPlatform(req.url)) return verifyOriginal();
+  if (ctx.security.hasInjection?.(msg.text)) {
+    if (req.kind === "image") req.imageFocus = "claims";
+    return verifyOriginal();
+  }
+  if (req.kind === "image") {
+    req.imageFocus = obviousImageFocus(req);
+    if (req.imageFocus) return verifyOriginal();
+  }
 
   const text = maskedConversationText(ctx, msg.text.trim(), session.id);
   const history = session.state.history ?? [];
@@ -79,7 +87,7 @@ ${content}` : content;
     }
   }
   if (req.kind === "image") {
-    if (decision?.kind === "image_origin") req.imageFocus = "origin";
+    req.imageFocus = resolveImageFocus(req, decision);
     return verifyOriginal();
   }
   if (!decision) {
@@ -102,6 +110,19 @@ ${content}` : content;
       quickReplies: [], resultUrl: resultUrlFor(ctx, previous.token),
     };
     return { kind: "help", textPl: "Dołącz obraz spinaczem, a sprawdzę, co jego plik mówi o pochodzeniu.", quickReplies: [] };
+  }
+  if (decision.kind === "image_copies" || decision.kind === "image_visual" || decision.kind === "image_identity" || decision.kind === "image_context") {
+    if (decision.kind === "image_copies" && previous?.imageAnalysis) {
+      const searches = previous.imageAnalysis.images.flatMap(image => image.search?.status === "ok" ? [image.search] : []);
+      if (searches.length) {
+        const links = searches.flatMap(search => search.matches.map(match => match.url ?? match.host));
+        return {
+          kind: "sources", textPl: links.length ? [...new Set(links)].join("\n") : "Google nie znalazło kopii tego zdjęcia w swoim indeksie.",
+          resultUrl: resultUrlFor(ctx, previous.token), quickReplies: [QR.why],
+        };
+      }
+    }
+    return { kind: "help", textPl: "Dołącz zdjęcie do tej wiadomości, żebym mógł je sprawdzić.", quickReplies: [] };
   }
   if (decision.kind === "reply") return { kind: "help", textPl: decision.text, quickReplies: [] };
   if (decision.kind !== "verify") return reportReply(decision.kind, ctx, session);

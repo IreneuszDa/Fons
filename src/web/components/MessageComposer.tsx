@@ -1,7 +1,6 @@
 import { useId, useRef, useState } from "react";
 import { Card } from "@astryxdesign/core/Card";
 import { ChatComposerDrawer, ChatComposerInput, ChatSendButton, type ChatComposerInputHandle } from "@astryxdesign/core/Chat";
-import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { Icon } from "@astryxdesign/core/Icon";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { HStack, StackItem, VStack } from "@astryxdesign/core/Layout";
@@ -10,7 +9,7 @@ import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { DocumentTextIcon, PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { MAX_CHAT_TEXT_CHARS } from "../../shared/attachments";
 import type { ChatInput } from "../api";
-import { FILE_ACCEPT, FILE_HINT, prepareAttachment, type DraftAttachment } from "../lib/attachment";
+import { FILE_ACCEPT, FILE_HINT, imagePreviewSrc, prepareAttachment, type DraftAttachment } from "../lib/attachment";
 
 export type SubmitMessage = (input: ChatInput, fileName?: string) => void;
 
@@ -18,7 +17,6 @@ export function MessageComposer({ onSubmit, isDisabled = false }: { onSubmit: Su
   const [text, setText] = useState("");
   const [attachment, setAttachment] = useState<DraftAttachment | null>(null);
   const [reading, setReading] = useState(false);
-  const [searchWeb, setSearchWeb] = useState(false);
   const [fileError, setFileError] = useState("");
   const [editorFocused, setEditorFocused] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
@@ -42,7 +40,6 @@ export function MessageComposer({ onSubmit, isDisabled = false }: { onSubmit: Su
       const next = await prepareAttachment(files[0]!);
       if (version !== selection.current) return;
       setAttachment(next);
-      setSearchWeb(false);
     } catch (err) {
       if (version === selection.current) setFileError(err instanceof Error ? err.message : "Nie udało się odczytać pliku.");
     } finally {
@@ -55,7 +52,6 @@ export function MessageComposer({ onSubmit, isDisabled = false }: { onSubmit: Su
     setReading(false);
     setAttachment(null);
     setFileError("");
-    setSearchWeb(false);
     editor.current?.focus();
   }
 
@@ -65,14 +61,12 @@ export function MessageComposer({ onSubmit, isDisabled = false }: { onSubmit: Su
     const input: ChatInput = caption ? { text: caption } : {};
     if (attachment?.kind === "image") {
       input.image = attachment.content;
-      input.imageOptions = { searchWeb };
     } else if (attachment?.kind === "document") {
       input.document = attachment.content;
     }
     onSubmit(input, attachment?.name);
     setText("");
     setAttachment(null);
-    setSearchWeb(false);
     setFileError("");
   }
 
@@ -83,7 +77,7 @@ export function MessageComposer({ onSubmit, isDisabled = false }: { onSubmit: Su
           <VStack gap={2} width="100%">
             <HStack gap={2} vAlign="center">
               {attachment.kind === "image"
-                ? <Thumbnail src={`data:${attachment.content.mime};base64,${attachment.content.base64}`} alt="" />
+                ? <Thumbnail src={imagePreviewSrc(attachment.content)} alt="" />
                 : <Icon icon={DocumentTextIcon} size="md" color="secondary" />}
               <StackItem size="fill">
                 <Text size="sm" maxLines={1}>{attachment.name}</Text>
@@ -98,13 +92,7 @@ export function MessageComposer({ onSubmit, isDisabled = false }: { onSubmit: Su
               />
             </HStack>
             {attachment.kind === "image" && (
-              <CheckboxInput
-                label="Szukaj tego obrazu w Google"
-                description="Po zaznaczeniu obraz zostanie wysłany do Google w celu znalezienia kopii."
-                value={searchWeb}
-                onChange={setSearchWeb}
-                isDisabled={isDisabled}
-              />
+              <Text type="supporting" color="secondary">Fons może wysłać obraz do Google, żeby znaleźć jego źródło.</Text>
             )}
           </VStack>
         </ChatComposerDrawer>

@@ -34,6 +34,21 @@ describe("intencje (jednostkowo)", () => {
 });
 
 describe("asystent przed weryfikacją", () => {
+  it("od razu sprawdza link do filmu z opisem i z zachowaniem fokusu użytkownika", async () => {
+    const env = makeEnv();
+    const agent = vi.fn<ConversationAgent>();
+    env.ctx.conversationAgent = agent;
+    const url = "https://www.tiktok.com/@konto/video/7123456789012345678";
+    const { json } = await chat(env, { text: "Sprawdź napisy w tym filmie " + url });
+    expect(json.reply.kind).toBe("verdict");
+    expect(agent).not.toHaveBeenCalled();
+    expect(env.calls).toMatchObject([{ kind: "url", url, text: "Sprawdź napisy w tym filmie" }]);
+    await chat(env, { text: "www.instagram.com/reel/ABC123/" });
+    expect(env.calls[1]).toMatchObject({ kind: "url", url: "https://www.instagram.com/reel/ABC123/" });
+    const multiple = await chat(env, { text: url + " https://www.instagram.com/reel/ABC123/" });
+    expect(multiple.json.reply.kind).toBe("status");
+    expect(env.calls).toHaveLength(2);
+  });
   it("wyjaśnia zapisany przebieg również po przerwaniu sprawdzenia", async () => {
     const report = makeReport();
     report.status = "NIEPELNE";

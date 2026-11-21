@@ -9,6 +9,7 @@ import { countLabel, formatDate, formatDateTime, formatDuration, paragraphs } fr
 import { SOURCE_TYPE_PL } from "../lib/report";
 import { safeUrl } from "../lib/safeUrl";
 import { SourceTitle } from "./Evidence";
+import { GoogleFindings } from "./ImageFindings";
 
 const PURPOSE_PL: Record<string, string> = {
   claims: "wydzielenie twierdzeń",
@@ -17,6 +18,8 @@ const PURPOSE_PL: Record<string, string> = {
   smooth: "wygładzenie tekstu",
   router: "rozpoznanie prośby",
   vision: "odczyt obrazu",
+  image_question: "odpowiedź na pytanie o obraz",
+  image_caption: "odczyt podpisów ze źródeł",
   video_analysis: "odczyt obrazu i dźwięku z filmu",
   open_answer: "wybór cytatu-odpowiedzi",
 };
@@ -89,10 +92,9 @@ function ImageActivity({ analysis }: { analysis: NonNullable<VerdictReport["imag
         <VStack key={index} gap={1}>
           {analysis.images.length > 1 && <Text weight="semibold">Obraz {index + 1}</Text>}
           <Text as="p">{provenance.textPl}</Text>
-          {search && <Text as="p">{search.status === "ok"
-            ? `Google Cloud Vision · ${countLabel(search.matches.length, "dopasowanie", "dopasowania", "dopasowań")}` : search.messagePl}</Text>}
-          {search?.factCheckStatus === "ok" && <Text as="p">Google Fact Check Tools · {countLabel(search.factChecks.length, "powiązana publikacja", "powiązane publikacje", "powiązanych publikacji")}</Text>}
-          {search?.factCheckMessagePl && <Text as="p">{search.factCheckMessagePl}</Text>}
+          {search && (analysis.visual || !analysis.only
+            ? <GoogleFindings search={search} expanded />
+            : <Text as="p">{search.messagePl}</Text>)}
         </VStack>
       ))}
     </VStack>
@@ -109,6 +111,7 @@ export function TransparencyBlock({ report }: { report: VerdictReport }) {
         {report.sourceActivity && <SearchActivity activity={report.sourceActivity} />}
         {!report.imageAnalysis?.only && <CitedPassages report={report} />}
         {paragraphs(report.transparencyPl).map((p, i) => <Text key={i} as="p">{p}</Text>)}
+        {report.imageAnalysis?.visual && report.warnings.map((warning, i) => <Text key={i} as="p" color="secondary">{warning.textPl}</Text>)}
         {!report.imageAnalysis?.only && <Link href="/zrodla">Katalog źródeł i kryteria wyboru</Link>}
         <Collapsible defaultIsOpen={false} chevronPosition="start" trigger={<Text type="supporting">Szczegóły techniczne</Text>}>
           <VStack gap={2}>

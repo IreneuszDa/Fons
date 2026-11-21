@@ -5,6 +5,7 @@ import { catalogSourceForUrl } from "../../corpus/catalog";
 import type { ImageSearchResult } from "../../shared/image-search";
 import type { ServerContext } from "../context";
 import { dayKey } from "../util";
+import { readMatchedCaptions } from "./image-captions";
 
 type Image = { mime: string; base64: string };
 const LIMIT = 20;
@@ -112,7 +113,7 @@ async function findFactChecks(ctx: ServerContext, fullImage: URL, out: ImageSear
 const cooldownUntil = new WeakMap<ServerContext, number>();
 const limited = () => result("unavailable", "Wyszukiwanie obrazem w Google osiągnęło limit. Spróbuj później.");
 
-export async function searchImage(image: Image, ctx: ServerContext): Promise<ImageSearchResult> {
+export async function searchImage(image: Image, ctx: ServerContext, options: { readCaptions?: boolean } = {}): Promise<ImageSearchResult> {
   if (ctx.cfg.reverseImageProvider !== "google_vision") return result("disabled", "Wyszukiwanie obrazem w Google jest wyłączone.");
   if (!ctx.cfg.googleVisionApiKey) return result("unavailable", "Do wyszukiwania obrazem potrzebny jest klucz Google Cloud Vision API.");
   if ((cooldownUntil.get(ctx) ?? 0) > ctx.now().getTime()) return limited();
@@ -153,7 +154,11 @@ export async function searchImage(image: Image, ctx: ServerContext): Promise<Ima
       if (!out.matches.length) out.messagePl = "Google Cloud Vision nie zwróciło dopasowań w swoim indeksie.";
       const fullImages = [...web.fullMatchingImages, ...web.pagesWithMatchingImages.flatMap(page => page.fullMatchingImages ?? [])];
       const fullImage = fullImages.map(i => publicUrl(i.url)).find(url => url !== undefined);
-      if (fullImage) await findFactChecks(ctx, fullImage, out);
+      const [captions] = await Promise.all([
+        options.readCaptions ? readMatchedCaptions(ctx, web.pagesWithMatchingImages, web.fullMatchingImages) : undefined,
+        fullImage ? findFactChecks(ctx, fullImage, out) : undefined,
+      ]);
+      if (captions) out.captions = captions;
       return out;
     }
   } catch {

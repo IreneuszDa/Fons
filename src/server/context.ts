@@ -28,7 +28,7 @@ export interface EngineRequest {
   url?: string;
   images?: { mime: string; base64: string }[];
   imageOptions?: { searchWeb?: boolean };
-  imageFocus?: "origin";
+  imageFocus?: "origin" | "copies" | "identity" | "visual" | "context" | "claims";
   onActivity?: (stage: VerificationStage) => void;
   channel: ChannelId;
   receivedAt: string;
