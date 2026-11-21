@@ -1,0 +1,207 @@
+# Jawna tabela mapowania ocen fact-checków na klasy werdyktu Prawdowida (PLAN §4, rekordy o stałej roli).
+#
+# Zasady:
+#  - klucz = etykieta oceny dosłownie jak u wydawcy; porównanie bez wielkości liter, bez diakrytyków
+#    i bez interpunkcji na brzegach ("Fałsz" == "FALSZ" == "fałsz.");
+#  - verdict = klasa werdyktu albo null (ocena znana, ale nie rozstrzyga);
+#  - binary: true TYLKO dla jednoznacznych ocen prawda/fałsz. Tylko takie silnik odwraca przy negacji tezy
+#    ("X nie jest prawdą" + ocena "Fałsz" -> POTWIERDZONE). Oceny stopniowe i kontekstowe zawsze mają binary: false;
+#  - ocena spoza tabeli => mapped: null, binary: false (nie rozstrzyga) - to zachowanie domyślne, nie wpis w tabeli;
+#  - sources.<sourceId>.use = lista tablic sprawdzanych po kolei; pierwsze trafienie wygrywa.
+#
+# Status weryfikacji etykiet (stan 2026-11-21):
+#  - pravda_pl, euvsdisinfo, tablice angielskie i DW: etykiety ZAOBSERWOWANE w danych feedu DataCommons / na stronie bazy;
+#  - demagog: etykiety ZAOBSERWOWANE w odpowiedziach Google Fact Check Tools API (9338 recenzji z demagog.org.pl, 2015–2026;
+#    Fałsz, Prawda, Manipulacja, Brakujący kontekst / Brak kontekstu, Nieweryfikowalne, Częściowa prawda, Częściowy fałsz,
+#    Przerobione zdjęcie / film / wideo / nagranie, Satyra; wielkość liter, ogonki i kropka na końcu bez znaczenia);
+#    „Przeważnie prawda/fałsz” wpisano wg opublikowanej skali wypowiedzi;
+#  - afp_sprawdzam, konkret24: tablice wg opublikowanych skal ocen wydawców, ale serwisy są zablokowane dla botów,
+#    więc etykiet nie dało się potwierdzić maszynowo - wpisano tylko etykiety jednoznaczne; reszta => null.
+version: 1
+
+tables:
+  # ---- Wspólne etykiety angielskie ClaimReview (ocena wg wydawcy, mapowanie konserwatywne) ----
+  claimreview_en:
+    "True":              { verdict: POTWIERDZONE, binary: true }
+    "Correct":           { verdict: POTWIERDZONE, binary: true }
+    "Accurate":          { verdict: POTWIERDZONE, binary: true }
+    "Mostly True":       { verdict: POTWIERDZONE, binary: false }
+    "Mostly Correct":    { verdict: POTWIERDZONE, binary: false }
+    "Mostly Accurate":   { verdict: POTWIERDZONE, binary: false }
+    "Half True":         { verdict: WPROWADZAJACE, binary: false }
+    "Half Truth":        { verdict: WPROWADZAJACE, binary: false }
+    "Partly True":       { verdict: WPROWADZAJACE, binary: false }
+    "Partially True":    { verdict: WPROWADZAJACE, binary: false }
+    "Mixture":           { verdict: WPROWADZAJACE, binary: false }
+    "Mixed":             { verdict: WPROWADZAJACE, binary: false }
+    "Partly False":      { verdict: WPROWADZAJACE, binary: false }
+    "Partially False":   { verdict: WPROWADZAJACE, binary: false }
+    "Misleading":        { verdict: WPROWADZAJACE, binary: false }
+    "Mostly Misleading": { verdict: WPROWADZAJACE, binary: false }
+    "Missing Context":   { verdict: WPROWADZAJACE, binary: false }
+    "Lacks Context":     { verdict: WPROWADZAJACE, binary: false }
+    "Out of Context":    { verdict: WPROWADZAJACE, binary: false }
+    "Needs Context":     { verdict: WPROWADZAJACE, binary: false }
+    "Exaggerated":       { verdict: WPROWADZAJACE, binary: false }
+    "Distorted":         { verdict: WPROWADZAJACE, binary: false }
+    "Outdated":          { verdict: WPROWADZAJACE, binary: false }
+    "Out of Date":       { verdict: WPROWADZAJACE, binary: false }
+    "Altered":           { verdict: WPROWADZAJACE, binary: false }
+    "Manipulated":       { verdict: WPROWADZAJACE, binary: false }
+    "Mostly False":      { verdict: FALSZYWE, binary: false }
+    "False":             { verdict: FALSZYWE, binary: true }
+    "Incorrect":         { verdict: FALSZYWE, binary: true }
+    "Pants on Fire":     { verdict: FALSZYWE, binary: false }
+    "Fake":              { verdict: FALSZYWE, binary: false }
+    "Fabricated":        { verdict: FALSZYWE, binary: false }
+    "Hoax":              { verdict: FALSZYWE, binary: false }
+    "Scam":              { verdict: FALSZYWE, binary: false }
+    "False Claim":       { verdict: FALSZYWE, binary: false }
+    "Unproven":          { verdict: BRAK_DOWODOW, binary: false }
+    "Unverified":        { verdict: BRAK_DOWODOW, binary: false }
+    "Unverifiable":      { verdict: BRAK_DOWODOW, binary: false }
+    "Unsubstantiated":   { verdict: BRAK_DOWODOW, binary: false }
+    "No Evidence":       { verdict: BRAK_DOWODOW, binary: false }
+    "Not Enough Evidence": { verdict: BRAK_DOWODOW, binary: false }
+    "Undetermined":      { verdict: BRAK_DOWODOW, binary: false }
+    "Satire":            { verdict: NIE_PODLEGA, binary: false }
+    "Parody":            { verdict: NIE_PODLEGA, binary: false }
+    "Opinion":           { verdict: NIE_PODLEGA, binary: false }
+    # Etykiety FactCheck.org i PolitiFact zaobserwowane w feedzie
+    "Distorts the Facts": { verdict: WPROWADZAJACE, binary: false }
+    "Spins the Facts":   { verdict: WPROWADZAJACE, binary: false }
+    "Not the Whole Story": { verdict: WPROWADZAJACE, binary: false }
+    "Cherry Picks":      { verdict: WPROWADZAJACE, binary: false }
+    "Exaggerates":       { verdict: WPROWADZAJACE, binary: false }
+    "Needs More Context": { verdict: WPROWADZAJACE, binary: false }
+    "This is Misleading": { verdict: WPROWADZAJACE, binary: false }
+    "Unsupported":       { verdict: BRAK_DOWODOW, binary: false }
+    "This is Accurate":  { verdict: POTWIERDZONE, binary: true }
+    "Largely Correct":   { verdict: POTWIERDZONE, binary: false }
+    "This is Wrong":     { verdict: FALSZYWE, binary: true }
+    "Wrong":             { verdict: FALSZYWE, binary: true }
+    "Inaccurate":        { verdict: FALSZYWE, binary: true }
+    # "Disputed", "Full Flop", "Half Flip", "No Flip" oceniają spójność stanowiska, nie prawdziwość tezy => brak wpisu => null
+
+  # ---- Niemiecki (dpa Faktencheck, DW) ----
+  claimreview_de:
+    "Richtig":              { verdict: POTWIERDZONE, binary: true }
+    "Wahr":                 { verdict: POTWIERDZONE, binary: true }
+    "Stimmt":               { verdict: POTWIERDZONE, binary: true }
+    "Weitgehend richtig":   { verdict: POTWIERDZONE, binary: false }
+    "Teilweise richtig":    { verdict: WPROWADZAJACE, binary: false }
+    "Teilweise falsch":     { verdict: WPROWADZAJACE, binary: false }
+    "Irreführend":          { verdict: WPROWADZAJACE, binary: false }
+    "Fehlender Kontext":    { verdict: WPROWADZAJACE, binary: false }
+    "Falsch":               { verdict: FALSZYWE, binary: true }
+    "Stimmt nicht":         { verdict: FALSZYWE, binary: true }
+    "Gefälscht":            { verdict: FALSZYWE, binary: false }
+    "Unbelegt":             { verdict: BRAK_DOWODOW, binary: false }
+    "Nicht belegt":         { verdict: BRAK_DOWODOW, binary: false }
+    "Satire":               { verdict: NIE_PODLEGA, binary: false }
+
+  # ---- Inne języki spotykane w feedzie (niderlandzki, francuski, hiszpański) ----
+  claimreview_other:
+    "Onjuist":              { verdict: FALSZYWE, binary: true }
+    "Juist":                { verdict: POTWIERDZONE, binary: true }
+    "Misleidend":           { verdict: WPROWADZAJACE, binary: false }
+    "Ontbrekende context":  { verdict: WPROWADZAJACE, binary: false }
+    "Faux":                 { verdict: FALSZYWE, binary: true }
+    "Vrai":                 { verdict: POTWIERDZONE, binary: true }
+    "Trompeur":             { verdict: WPROWADZAJACE, binary: false }
+    "Partiellement faux":   { verdict: WPROWADZAJACE, binary: false }
+    "Falso":                { verdict: FALSZYWE, binary: true }
+    "Verdadero":            { verdict: POTWIERDZONE, binary: true }
+    "Engañoso":             { verdict: WPROWADZAJACE, binary: false }
+    "No hay evidencia":     { verdict: BRAK_DOWODOW, binary: false }
+    "No hay pruebas":       { verdict: BRAK_DOWODOW, binary: false }
+
+  # ---- Wspólne etykiety polskie (fallback dla źródeł spoza listy, np. z pakietu organizatora) ----
+  claimreview_pl_common:
+    "Prawda":                 { verdict: POTWIERDZONE, binary: true }
+    "Prawdziwe":              { verdict: POTWIERDZONE, binary: true }
+    "Fałsz":                  { verdict: FALSZYWE, binary: true }
+    "Fałszywe":               { verdict: FALSZYWE, binary: true }
+    "Nieprawda":              { verdict: FALSZYWE, binary: true }
+    "Manipulacja":            { verdict: WPROWADZAJACE, binary: false }
+    "Wprowadzające w błąd":   { verdict: WPROWADZAJACE, binary: false }
+    "Brak kontekstu":         { verdict: WPROWADZAJACE, binary: false }
+    "Nieweryfikowalne":       { verdict: BRAK_DOWODOW, binary: false }
+    "Brak dowodów":           { verdict: BRAK_DOWODOW, binary: false }
+    "Satyra":                 { verdict: NIE_PODLEGA, binary: false }
+
+  # ---- Stowarzyszenie Pravda (pravda.org.pl) - etykiety zaobserwowane w feedzie ----
+  # "Zrealizowane" (obietnica spełniona) i "Fact-Checked" opisują obietnice/status, nie prawdziwość tezy => brak wpisu => null
+  pravda_pl:
+    "Prawda":                      { verdict: POTWIERDZONE, binary: true }
+    "Fałsz":                       { verdict: FALSZYWE, binary: true }
+    "Manipulacja":                 { verdict: WPROWADZAJACE, binary: false }
+    "Nieweryfikowalne":            { verdict: BRAK_DOWODOW, binary: false }
+    "Niedające się zweryfikować":  { verdict: BRAK_DOWODOW, binary: false }
+
+  # ---- Demagog (skala oceny wypowiedzi + skala fake newsów; dane z Google Fact Check Tools API) ----
+  # Etykiety kontekstowe i „przerobione” media mapujemy jak w tablicy angielskiej (Missing Context / Altered => WPROWADZAJACE).
+  demagog:
+    "Prawda":                 { verdict: POTWIERDZONE, binary: true }
+    "Przeważnie prawda":      { verdict: POTWIERDZONE, binary: false }
+    "Częściowa prawda":       { verdict: WPROWADZAJACE, binary: false }
+    "Manipulacja":            { verdict: WPROWADZAJACE, binary: false }
+    "Manipulacja kontekstem": { verdict: WPROWADZAJACE, binary: false }
+    "Brakujący kontekst":     { verdict: WPROWADZAJACE, binary: false }
+    "Brak kontekstu":         { verdict: WPROWADZAJACE, binary: false }
+    "Częściowy fałsz":        { verdict: WPROWADZAJACE, binary: false }
+    "Przerobione zdjęcie":    { verdict: WPROWADZAJACE, binary: false }
+    "Przerobione zdjęcia":    { verdict: WPROWADZAJACE, binary: false }
+    "Przerobiony obraz":      { verdict: WPROWADZAJACE, binary: false }
+    "Przerobiony film":       { verdict: WPROWADZAJACE, binary: false }
+    "Przerobione wideo":      { verdict: WPROWADZAJACE, binary: false }
+    "Przerobione nagranie":   { verdict: WPROWADZAJACE, binary: false }
+    "Przerobiona grafika":    { verdict: WPROWADZAJACE, binary: false }
+    "Częściowo fałszywe":     { verdict: WPROWADZAJACE, binary: false }
+    "Przeważnie fałsz":       { verdict: FALSZYWE, binary: false }
+    "Fałsz":                  { verdict: FALSZYWE, binary: true }
+    "Nieweryfikowalne":       { verdict: BRAK_DOWODOW, binary: false }
+    "Satyra":                 { verdict: NIE_PODLEGA, binary: false }
+
+  # ---- AFP Sprawdzam ----
+  afp_sprawdzam:
+    "Prawda":                  { verdict: POTWIERDZONE, binary: true }
+    "Fałsz":                   { verdict: FALSZYWE, binary: true }
+    "Fałszywe":                { verdict: FALSZYWE, binary: true }
+    "Zmanipulowane":           { verdict: WPROWADZAJACE, binary: false }
+    "Wprowadzające w błąd":    { verdict: WPROWADZAJACE, binary: false }
+    "Mylące":                  { verdict: WPROWADZAJACE, binary: false }
+    "Brak kontekstu":          { verdict: WPROWADZAJACE, binary: false }
+    "Częściowo fałszywe":      { verdict: WPROWADZAJACE, binary: false }
+    "Satyra":                  { verdict: NIE_PODLEGA, binary: false }
+    "Nieweryfikowalne":        { verdict: BRAK_DOWODOW, binary: false }
+
+  # ---- Konkret24 (TVN24) ----
+  konkret24:
+    "Prawda":                  { verdict: POTWIERDZONE, binary: true }
+    "Fałsz":                   { verdict: FALSZYWE, binary: true }
+    "Nieprawda":               { verdict: FALSZYWE, binary: true }
+    "Manipulacja":             { verdict: WPROWADZAJACE, binary: false }
+    "Częściowo prawda":        { verdict: WPROWADZAJACE, binary: false }
+    "Brak dowodów":            { verdict: BRAK_DOWODOW, binary: false }
+
+  # ---- EUvsDisinfo: wpis o prefiksie DISINFO to narracja sklasyfikowana jako dezinformacja.
+  #      binary: false celowo - zaprzeczenie takiej tezy NIE oznacza, że jest prawdziwa. ----
+  euvsdisinfo:
+    "DISINFO":   { verdict: FALSZYWE, binary: false }
+    "Disproof":  { verdict: FALSZYWE, binary: false }
+
+sources:
+  pravda-pl:        { use: [pravda_pl, claimreview_en] }
+  dpa-factchecking: { use: [claimreview_de, claimreview_en, claimreview_other] }
+  dw-factcheck:     { use: [claimreview_en, claimreview_de, claimreview_other] }
+  factcheck-org:    { use: [claimreview_en, claimreview_other] }
+  politifact:       { use: [claimreview_en] }
+  demagog:          { use: [demagog] }
+  afp-sprawdzam:    { use: [afp_sprawdzam, claimreview_en] }
+  konkret24:        { use: [konkret24] }
+  fakehunter:       { use: [claimreview_en] }
+  euvsdisinfo:      { use: [euvsdisinfo] }
+
+# Źródło spoza listy powyżej (np. z pakietu organizatora): wspólne etykiety angielskie, polskie, niemieckie i inne.
+fallbackTables: [claimreview_en, claimreview_pl_common, claimreview_de, claimreview_other]

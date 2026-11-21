@@ -1,0 +1,1 @@
+Kodowanie base64 zamienia dane binarne na tekst. Na przykład słowo „Polska” po zakodowaniu wygląda tak: UG9sc2th. Programiści używają tego kodowania m.in. w załącznikach e-mail.

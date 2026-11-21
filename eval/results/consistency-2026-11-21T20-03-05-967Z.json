@@ -1,0 +1,714 @@
+{
+  "startedAt": "2026-11-21T20:03:05.967Z",
+  "finishedAt": "2026-11-21T20:07:18.486Z",
+  "pairs": [
+    {
+      "caseId": "G01",
+      "scenario": "G",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:2be4d332e735",
+          "nato:7001a3734fd9"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:2be4d332e735",
+          "nato:7001a3734fd9"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "G02",
+      "scenario": "G",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "FALSZYWE",
+        "recordIds": [
+          "nato:653bb9fb2a79",
+          "sejm-eli:4e4a38fc1e82"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "FALSZYWE",
+        "recordIds": [
+          "nato:653bb9fb2a79",
+          "sejm-eli:4e4a38fc1e82"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "G03",
+      "scenario": "G",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "E01",
+      "scenario": "E",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:2be4d332e735",
+          "nato:653bb9fb2a79"
+        ],
+        "securityEvents": 3,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:2be4d332e735",
+          "nato:653bb9fb2a79"
+        ],
+        "securityEvents": 3,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "E02",
+      "scenario": "E",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 1,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 1,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "E04",
+      "scenario": "E",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 16,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 16,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "E06",
+      "scenario": "E",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 2,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 2,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "E03",
+      "scenario": "E",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:27f244d0e759",
+          "nato:50f5e0c1aa22"
+        ],
+        "securityEvents": 5,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:27f244d0e759",
+          "nato:50f5e0c1aa22"
+        ],
+        "securityEvents": 5,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "E05",
+      "scenario": "E",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:5761499f864c"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:5761499f864c"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "J01",
+      "scenario": "J",
+      "web": {
+        "channel": "web",
+        "replyKind": "status",
+        "status": "NIEPELNE",
+        "mainVerdict": null,
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "status",
+        "status": "NIEPELNE",
+        "mainVerdict": null,
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "J02",
+      "scenario": "J",
+      "web": {
+        "channel": "web",
+        "replyKind": "status",
+        "status": "NIEPELNE",
+        "mainVerdict": null,
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "status",
+        "status": "NIEPELNE",
+        "mainVerdict": null,
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "J03",
+      "scenario": "J",
+      "web": {
+        "channel": "web",
+        "replyKind": "status",
+        "status": "NIEPELNE",
+        "mainVerdict": null,
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "status",
+        "status": "NIEPELNE",
+        "mainVerdict": null,
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "J05",
+      "scenario": "J",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:254cbf7f60d8"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:254cbf7f60d8"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "A01",
+      "scenario": "A",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:2be4d332e735"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:2be4d332e735"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "A02",
+      "scenario": "A",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:5761499f864c"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:5761499f864c"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "A04",
+      "scenario": "A",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:50f5e0c1aa22"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "nato:50f5e0c1aa22"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "A06",
+      "scenario": "A",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "A08",
+      "scenario": "A",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "A10",
+      "scenario": "A",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "D01",
+      "scenario": "D",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "D02",
+      "scenario": "D",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "D04",
+      "scenario": "D",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "B01",
+      "scenario": "B",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "B02",
+      "scenario": "B",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "WPROWADZAJACE",
+        "recordIds": [
+          "nato:2be4d332e735",
+          "nato:7001a3734fd9"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "WPROWADZAJACE",
+        "recordIds": [
+          "nato:2be4d332e735",
+          "nato:7001a3734fd9"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "I01",
+      "scenario": "I",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:5761499f864c"
+        ],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "recordIds": [
+          "eu-portal:5761499f864c"
+        ],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    },
+    {
+      "caseId": "I02",
+      "scenario": "I",
+      "web": {
+        "channel": "web",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": false
+      },
+      "cli": {
+        "channel": "cli",
+        "replyKind": "verdict",
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "recordIds": [],
+        "securityEvents": 0,
+        "cacheHit": true
+      },
+      "consistent": true,
+      "reasons": []
+    }
+  ],
+  "triple": {
+    "caseId": "E01",
+    "requestsWithEvents": 3,
+    "expected": 3,
+    "ok": true
+  },
+  "h": [
+    {
+      "group": "H-olsztyn",
+      "newCases": 1,
+      "verdicts": [
+        "BRAK_DOWODOW",
+        "BRAK_DOWODOW"
+      ],
+      "problems": [],
+      "ok": true
+    },
+    {
+      "group": "H-elblag",
+      "newCases": 2,
+      "verdicts": [
+        "BRAK_DOWODOW",
+        "BRAK_DOWODOW"
+      ],
+      "problems": [
+        "utworzono 2 spraw zamiast co najwyżej jednej"
+      ],
+      "ok": false
+    }
+  ]
+}

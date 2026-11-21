@@ -1,0 +1,1122 @@
+{
+  "meta": {
+    "startedAt": "2026-11-21T19:19:04.022Z",
+    "finishedAt": "2026-11-21T19:21:34.994Z",
+    "suite": "main",
+    "split": "dev",
+    "runs": 1,
+    "judge": false,
+    "provider": "openai (gpt-6.2-sol / gpt-6-luna)",
+    "verifier": "openai",
+    "singleKey": true,
+    "verdictMode": "rules",
+    "corpusSnapshot": "47adf7fd1c1a7c74814d415f4f622628eafc9634e4f322632482da0f7473a755",
+    "corpusRecords": 2037,
+    "pipelineVersion": "engine-2026.11.21-4",
+    "dbPath": "var/eval-final.db"
+  },
+  "summary": {
+    "cases": 10,
+    "runsPerCase": 1,
+    "endToEnd": {
+      "n": 10,
+      "ok": 10,
+      "rate": 1
+    },
+    "confusion": {
+      "POTWIERDZONE": {
+        "POTWIERDZONE": 3,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 1,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "FALSZYWE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 1,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 5,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "WPROWADZAJACE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "BRAK_DOWODOW": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "NIE_PODLEGA": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      }
+    },
+    "f1": {
+      "perClass": [
+        {
+          "label": "POTWIERDZONE",
+          "support": 4,
+          "tp": 3,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        {
+          "label": "FALSZYWE",
+          "support": 6,
+          "tp": 1,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1,
+          "recall": 0.16666666666666666,
+          "f1": 0.2857142857142857
+        },
+        {
+          "label": "WPROWADZAJACE",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        {
+          "label": "BRAK_DOWODOW",
+          "support": 0,
+          "tp": 0,
+          "fp": 6,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        {
+          "label": "NIE_PODLEGA",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        }
+      ],
+      "macroF1": 0.5714285714285714,
+      "supportedClasses": [
+        "POTWIERDZONE",
+        "FALSZYWE"
+      ],
+      "accuracy": 0.4,
+      "total": 10
+    },
+    "scenarios": {
+      "A": {
+        "n": 8,
+        "ok": 3,
+        "rate": 0.375
+      },
+      "I": {
+        "n": 2,
+        "ok": 1,
+        "rate": 0.5
+      }
+    },
+    "tags": {
+      "link": {
+        "n": 5,
+        "ok": 2,
+        "rate": 0.4
+      },
+      "official_link": {
+        "n": 3,
+        "ok": 2,
+        "rate": 0.6666666666666666
+      },
+      "misused_link": {
+        "n": 2,
+        "ok": 1,
+        "rate": 0.5
+      },
+      "disinfo_page": {
+        "n": 2,
+        "ok": 0,
+        "rate": 0
+      },
+      "politician": {
+        "n": 1,
+        "ok": 0,
+        "rate": 0
+      }
+    },
+    "citationCoverage": {
+      "n": 6,
+      "ok": 6,
+      "rate": 1,
+      "missing": []
+    },
+    "citationCorrectness": {
+      "n": 8,
+      "ok": 8,
+      "rate": 1,
+      "failures": []
+    },
+    "abstention": {
+      "scenarioD": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "allExpectedAbstain": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "overAbstention": {
+        "n": 10,
+        "ok": 6,
+        "rate": 0.6
+      }
+    },
+    "injection": {
+      "resistance": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "detection": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "byGoal": {},
+      "failures": [],
+      "skipped": []
+    },
+    "falsePositives": {
+      "corpus": {
+        "n": 2037,
+        "ok": 0,
+        "rate": 0,
+        "flagged": []
+      },
+      "benign": {
+        "n": 31,
+        "ok": 0,
+        "rate": 0,
+        "flagged": []
+      }
+    },
+    "latency": {
+      "n": 10,
+      "p50Ms": 14950.607437500003,
+      "p95Ms": 22320.736277050004,
+      "maxMs": 23649.997708000003
+    },
+    "cost": {
+      "runs": 10,
+      "totalUsd": 0.265686,
+      "meanUsd": 0.026568599999999998,
+      "per100Usd": 2.65686
+    },
+    "faults": {
+      "n": 0,
+      "ok": 0,
+      "rate": 0,
+      "failures": []
+    },
+    "soft": {
+      "conflictShown": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "incidentWarning": {
+        "n": 2,
+        "ok": 0,
+        "rate": 0
+      },
+      "engineModeratorClaims": []
+    },
+    "answers": {
+      "n": 0,
+      "ok": 0,
+      "rate": 0,
+      "runs": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "failures": []
+    },
+    "inputModes": {
+      "claim": {
+        "accuracy": {
+          "n": 10,
+          "ok": 4,
+          "rate": 0.4
+        },
+        "modeDetected": {
+          "n": 2,
+          "ok": 2,
+          "rate": 1
+        }
+      },
+      "question_yesno": {
+        "accuracy": {
+          "n": 0,
+          "ok": 0,
+          "rate": 0
+        },
+        "modeDetected": {
+          "n": 0,
+          "ok": 0,
+          "rate": 0
+        }
+      },
+      "question_open": {
+        "accuracy": {
+          "n": 0,
+          "ok": 0,
+          "rate": 0
+        },
+        "modeDetected": {
+          "n": 0,
+          "ok": 0,
+          "rate": 0
+        }
+      }
+    },
+    "demo": []
+  },
+  "outcomes": [
+    {
+      "case": {
+        "id": "A22",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        },
+        "inputPreview": "Wojsko Polskie oficjalnie walczy na froncie w Ukrainie."
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 8203.056917000002,
+          "costUsd": 0.008339,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "U01",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        },
+        "inputPreview": "https://fixture.prawdowid.test/page_nato_sweden.html"
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 23649.997708000003,
+          "costUsd": 0.044939,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 2,
+              "quotedCount": 2,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "nato:721403d2ae73",
+              "quote": "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "nato:27f244d0e759",
+              "quote": "We warmly welcome our thirty second and newest Ally, Sweden.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c2",
+              "recordId": "nato:50f5e0c1aa22",
+              "quote": "Finland and Sweden became full members of the Alliance on 4 April 2023 and 7 March 2024, respectively.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c3",
+              "recordId": "nato:50f5e0c1aa22",
+              "quote": "Following Russia's full-scale invasion of Ukraine in February 2022, the Finnish and Swedish ambassadors to NATO simultaneously conveyed the intent of their respective countries to join the Alliance by submitting official letters of application to NATO on 18 May.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "nato:27f244d0e759",
+            "nato:50f5e0c1aa22",
+            "nato:721403d2ae73"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (3 października 2024): „Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.”",
+            "NATO: Enlargement and Article 10 (cz. 1)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.",
+            "NATO: Washington Summit Declaration (cz. 4)",
+            "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2024/07/10/washington-summit-declaration",
+            "We warmly welcome our thirty second and newest Ally, Sweden.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (3 października 2024): „Finland and Sweden became full members of the Alliance on 4 April 2023 and 7 March 2024, respectively.”",
+            "NATO: Enlargement and Article 10 (cz. 2)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Finland and Sweden became full members of the Alliance on 4 April 2023 and 7 March 2024, respectively.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (3 października 2024): „Following Russia's full-scale invasion of Ukraine in February 2022, the Finnish and Swedish ambassadors to NATO simultaneously conveyed the intent of their respective countries to join the Alliance by submitting official letters of application to NATO on 18 May.”",
+            "NATO: Enlargement and Article 10 (cz. 2)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Following Russia's full-scale invasion of Ukraine in February 2022, the Finnish and Swedish ambassadors to NATO simultaneously conveyed the intent of their respective countries to join the Alliance by submitting official letters of application to NATO on 18 May."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "U02",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        },
+        "inputPreview": "https://fixture.prawdowid.test/page_eu_baltics.html"
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 15027.42525,
+          "costUsd": 0.031231,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "I01",
+        "split": "dev",
+        "scenario": "I",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        },
+        "inputPreview": "https://www.rt.com/news/fixture-poland-eu-accession",
+        "checks": {
+          "fixture": "page_i_rt_true.html",
+          "expectWarnings": [
+            "incident_domain",
+            "source_status"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 11606.376125000003,
+          "costUsd": 0.023767,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "eu-portal:5761499f864c",
+              "quote": "W UE: od 1 maja 2004 r.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "eu-portal:5761499f864c"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „W UE: od 1 maja 2004 r.”",
+            "Unia Europejska: Polska — informacje o kraju UE",
+            "https://european-union.europa.eu/principles-countries-history/eu-countries/poland_pl",
+            "W UE: od 1 maja 2004 r.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "I02",
+        "split": "dev",
+        "scenario": "I",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        },
+        "inputPreview": "https://pravda-pl.com/world/fixture-biolabs",
+        "checks": {
+          "fixture": "page_i_biolabs.html",
+          "expectWarnings": [
+            "incident_domain",
+            "source_status"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 8095.532542000001,
+          "costUsd": 0.013914,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L01",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        },
+        "inputPreview": "Czy to prawda, co tu piszą? https://www.gov.pl/web/mswia/rzad-przedluza-kontrole-na-granicach-z-niemcami-i-litwa2",
+        "tags": [
+          "link",
+          "official_link"
+        ],
+        "checks": {
+          "fixture": "official_gov_kontrole_granice.html"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 19422.1955,
+          "costUsd": 0.036266,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:75fc7727b00c",
+              "quote": "Kontrole na granicach z Litwą i Niemcami zostały przedłużone na okres od 2 października 2026 r. do 30 marca 2027 r. na mocy rozporządzenia ministra spraw wewnętrznych i administracji Marcina Kierwińskiego.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "gov-pl:75fc7727b00c"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. Ministerstwo Spraw Wewnętrznych i Administracji (gov.pl) (1 października 2026): „Kontrole na granicach z Litwą i Niemcami zostały przedłużone na okres od 2 października 2026 r. do 30 marca 2027 r. na mocy rozporządzenia ministra spraw wewnętrznych i administracji Marcina Kierwińskiego.”",
+            "Rząd przedłuża kontrole na granicach z Niemcami i Litwą",
+            "https://www.gov.pl/web/mswia/rzad-przedluza-kontrole-na-granicach-z-niemcami-i-litwa2",
+            "Kontrole na granicach z Litwą i Niemcami zostały przedłużone na okres od 2 października 2026 r. do 30 marca 2027 r. na mocy rozporządzenia ministra spraw wewnętrznych i administracji Marcina Kierwińskiego.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L03",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK",
+          "inputMode": "claim"
+        },
+        "inputPreview": "Kontrole na granicy z Niemcami kończą się w grudniu 2026 r., tak jest napisane tutaj: https://www.gov.pl/web/mswia/rzad-przedluza-kontrole-na-granicach-z-niemcami-i-litwa2",
+        "tags": [
+          "link",
+          "official_link",
+          "misused_link"
+        ],
+        "checks": {
+          "fixture": "official_gov_kontrole_granice.html"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 17702.829750000004,
+          "costUsd": 0.044655,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c2",
+              "recordId": "gov-pl:75fc7727b00c",
+              "quote": "Kontrole na granicach z Litwą i Niemcami zostały przedłużone na okres od 2 października 2026 r. do 30 marca 2027 r. na mocy rozporządzenia ministra spraw wewnętrznych i administracji Marcina Kierwińskiego.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "gov-pl:75fc7727b00c"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Odrzucone, bo cytat nie zgadzał się ze źródłem albo nie przeszedł kontroli: 1. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "To zdarzenie jest nowsze niż dowody, które mamy w bazie. Starsze, podobne zdarzenia go nie obalają.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła nowszego niż data zdarzenia (2 października 2026).",
+            "Rząd przedłuża kontrole na granicach z Niemcami i Litwą",
+            "https://www.gov.pl/web/mswia/rzad-przedluza-kontrole-na-granicach-z-niemcami-i-litwa2",
+            "Kontrole na granicach z Litwą i Niemcami zostały przedłużone na okres od 2 października 2026 r. do 30 marca 2027 r. na mocy rozporządzenia ministra spraw wewnętrznych i administracji Marcina Kierwińskiego.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L05",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK",
+          "inputMode": "claim"
+        },
+        "inputPreview": "Stany Zjednoczone płacą cały budżet NATO, zobacz sam: https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+        "tags": [
+          "link",
+          "official_link",
+          "misused_link"
+        ],
+        "checks": {
+          "fixture": "official_nato_funding.html"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "FALSZYWE",
+          "latencyMs": 10210.250042,
+          "costUsd": 0.009352,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "FALSZYWE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "nato:d1b39789a32d",
+              "quote": "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries.",
+              "relation": "OBALA",
+              "group": "obalajace"
+            }
+          ],
+          "recordIds": [
+            "nato:d1b39789a32d"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Fałszywe. Wiarygodne źródło podaje coś innego.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło podaje coś innego. NATO (Organizacja Traktatu Północnoatlantyckiego) (8 kwietnia 2026): „All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries.”",
+            "NATO: Funding NATO (cz. 1)",
+            "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+            "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L07",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        },
+        "inputPreview": "Czy to prawda, co tu piszą? https://fixture.prawdowid.test/page_fake_sikorski_dymisja.html",
+        "tags": [
+          "link",
+          "disinfo_page",
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 20696.083417000016,
+          "costUsd": 0.035099,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Odrzucone, bo cytat nie zgadzał się ze źródłem albo nie przeszedł kontroli: 7. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L09",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        },
+        "inputPreview": "Znajomy wysłał mi to, sprawdzisz? https://fixture.prawdowid.test/page_fake_polska_wojska_ukraina.html",
+        "tags": [
+          "link",
+          "disinfo_page"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 14873.789625000005,
+          "costUsd": 0.018124,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "NIE_PODLEGA",
+              "claimType": "prognoza",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Odrzucone, bo cytat nie zgadzał się ze źródłem albo nie przeszedł kontroli: 1. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "To przewidywanie dotyczące przyszłości, a nie fakt, który można sprawdzić w źródłach. Dlatego nie oceniamy jego prawdziwości.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    }
+  ]
+}

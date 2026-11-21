@@ -1,0 +1,1729 @@
+{
+  "meta": {
+    "startedAt": "2026-11-21T17:41:29.763Z",
+    "finishedAt": "2026-11-21T17:43:40.681Z",
+    "suite": "main",
+    "split": "all",
+    "runs": 1,
+    "judge": false,
+    "provider": "openai (gpt-6.2-sol / gpt-6-luna)",
+    "verifier": "openai",
+    "singleKey": true,
+    "verdictMode": "rules",
+    "corpusSnapshot": "85036d545ab044db104b791e8ca0110d30d072c6202785763f40f1cefb8d2583",
+    "corpusRecords": 1052,
+    "pipelineVersion": "engine-2026.11.21-2",
+    "dbPath": "var/eval-agent.db"
+  },
+  "summary": {
+    "cases": 19,
+    "runsPerCase": 1,
+    "endToEnd": {
+      "n": 19,
+      "ok": 19,
+      "rate": 1
+    },
+    "confusion": {
+      "POTWIERDZONE": {
+        "POTWIERDZONE": 3,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 2,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "FALSZYWE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 3,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "WPROWADZAJACE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 2,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "BRAK_DOWODOW": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "NIE_PODLEGA": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      }
+    },
+    "f1": {
+      "perClass": [
+        {
+          "label": "POTWIERDZONE",
+          "support": 5,
+          "tp": 3,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1,
+          "recall": 0.6,
+          "f1": 0.7499999999999999
+        },
+        {
+          "label": "FALSZYWE",
+          "support": 3,
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
+        },
+        {
+          "label": "WPROWADZAJACE",
+          "support": 2,
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        {
+          "label": "BRAK_DOWODOW",
+          "support": 0,
+          "tp": 0,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        {
+          "label": "NIE_PODLEGA",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        }
+      ],
+      "macroF1": 0.5833333333333334,
+      "supportedClasses": [
+        "POTWIERDZONE",
+        "FALSZYWE",
+        "WPROWADZAJACE"
+      ],
+      "accuracy": 0.6,
+      "total": 10
+    },
+    "scenarios": {
+      "A": {
+        "n": 19,
+        "ok": 8,
+        "rate": 0.42105263157894735
+      }
+    },
+    "tags": {
+      "politician": {
+        "n": 18,
+        "ok": 7,
+        "rate": 0.3888888888888889
+      },
+      "outdated": {
+        "n": 2,
+        "ok": 0,
+        "rate": 0
+      },
+      "fresh": {
+        "n": 1,
+        "ok": 0,
+        "rate": 0
+      },
+      "link": {
+        "n": 2,
+        "ok": 2,
+        "rate": 1
+      },
+      "disinfo_page": {
+        "n": 1,
+        "ok": 1,
+        "rate": 1
+      },
+      "rated_claim": {
+        "n": 2,
+        "ok": 2,
+        "rate": 1
+      },
+      "official_link": {
+        "n": 1,
+        "ok": 1,
+        "rate": 1
+      }
+    },
+    "citationCoverage": {
+      "n": 8,
+      "ok": 8,
+      "rate": 1,
+      "missing": []
+    },
+    "citationCorrectness": {
+      "n": 29,
+      "ok": 29,
+      "rate": 1,
+      "failures": []
+    },
+    "abstention": {
+      "scenarioD": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "allExpectedAbstain": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "overAbstention": {
+        "n": 10,
+        "ok": 4,
+        "rate": 0.4
+      }
+    },
+    "injection": {
+      "resistance": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "detection": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "byGoal": {},
+      "failures": [],
+      "skipped": []
+    },
+    "falsePositives": {
+      "corpus": {
+        "n": 1052,
+        "ok": 0,
+        "rate": 0,
+        "flagged": []
+      },
+      "benign": {
+        "n": 31,
+        "ok": 0,
+        "rate": 0,
+        "flagged": []
+      }
+    },
+    "latency": {
+      "n": 19,
+      "p50Ms": 5333.209999999999,
+      "p95Ms": 16727.972695899993,
+      "maxMs": 17687.915583999995
+    },
+    "cost": {
+      "runs": 19,
+      "totalUsd": 0.21212899999999998,
+      "meanUsd": 0.011164684210526315,
+      "per100Usd": 1.1164684210526314
+    },
+    "faults": {
+      "n": 0,
+      "ok": 0,
+      "rate": 0,
+      "failures": []
+    },
+    "soft": {
+      "conflictShown": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "incidentWarning": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "engineModeratorClaims": []
+    },
+    "answers": {
+      "n": 9,
+      "ok": 2,
+      "rate": 0.2222222222222222,
+      "runs": {
+        "n": 9,
+        "ok": 2,
+        "rate": 0.2222222222222222
+      },
+      "failures": [
+        {
+          "caseId": "P03",
+          "run": 1,
+          "reason": "no_answer"
+        },
+        {
+          "caseId": "P05",
+          "run": 1,
+          "reason": "no_answer"
+        },
+        {
+          "caseId": "P07",
+          "run": 1,
+          "reason": "no_answer"
+        },
+        {
+          "caseId": "P13",
+          "run": 1,
+          "reason": "no_answer"
+        },
+        {
+          "caseId": "P15",
+          "run": 1,
+          "reason": "no_answer"
+        },
+        {
+          "caseId": "P08",
+          "run": 1,
+          "reason": "no_answer"
+        },
+        {
+          "caseId": "P12",
+          "run": 1,
+          "reason": "no_answer"
+        }
+      ]
+    },
+    "inputModes": {
+      "claim": {
+        "accuracy": {
+          "n": 2,
+          "ok": 2,
+          "rate": 1
+        },
+        "modeDetected": {
+          "n": 2,
+          "ok": 1,
+          "rate": 0.5
+        }
+      },
+      "question_yesno": {
+        "accuracy": {
+          "n": 8,
+          "ok": 4,
+          "rate": 0.5
+        },
+        "modeDetected": {
+          "n": 8,
+          "ok": 7,
+          "rate": 0.875
+        }
+      },
+      "question_open": {
+        "accuracy": {
+          "n": 9,
+          "ok": 2,
+          "rate": 0.2222222222222222
+        },
+        "modeDetected": {
+          "n": 9,
+          "ok": 9,
+          "rate": 1
+        }
+      }
+    },
+    "demo": []
+  },
+  "outcomes": [
+    {
+      "case": {
+        "id": "P01",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy Radosław Sikorski jest ministrem spraw zagranicznych?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 10717.5585,
+          "costUsd": 0.010458,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 7,
+              "quotedCount": 7,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:0009e767e0b3",
+              "quote": "wicepremier, minister spraw zagranicznych Radosław Sikorski",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:baeb65be9ee2",
+              "quote": "Wicepremier, Minister Spraw Zagranicznych RP Radosław Sikorski",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:89f36712ad3a",
+              "quote": "Wicepremier, minister spraw zagranicznych Radosław Sikorski",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:46d0bc089646",
+              "quote": "Wicepremier, minister spraw zagranicznych Radosław Sikorski",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:6f9aba41b224",
+              "quote": "Wicepremier, minister spraw zagranicznych Radosław Sikorski",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:d18d994d5bbf",
+              "quote": "Wicepremier Minister Spraw Zagranicznych RP Radosław Sikorski",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:936fe1641c7f",
+              "quote": "Wicepremiera, Ministra Spraw Zagranicznych RP Radosława Sikorskiego",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "gov-pl:0009e767e0b3",
+            "gov-pl:46d0bc089646",
+            "gov-pl:6f9aba41b224",
+            "gov-pl:89f36712ad3a",
+            "gov-pl:936fe1641c7f",
+            "gov-pl:baeb65be9ee2",
+            "gov-pl:d18d994d5bbf"
+          ],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Radosław Sikorski jest ministrem spraw zagranicznych.”. Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. Ministerstwo Spraw Zagranicznych (gov.pl) (2 września 2026): „wicepremier, minister spraw zagranicznych Radosław Sikorski”",
+            "Wicepremier Radosław Sikorski na nieformalnym spotkaniu unijnych szefów dyplomacji - Gymnich w Irlandii",
+            "https://www.gov.pl/web/dyplomacja/wicepremier-radoslaw-sikorski-na-nieformalnym-spotkaniu-unijnych-szefow-dyplomacji--gymnich-w-irlandii",
+            "wicepremier, minister spraw zagranicznych Radosław Sikorski",
+            "Wicepremier Radosław Sikorski z wizytą w Kijowie",
+            "https://www.gov.pl/web/dyplomacja/wicepremier-radoslaw-sikorski-z-wizyta-w-kijowie2",
+            "Wicepremier, Minister Spraw Zagranicznych RP Radosław Sikorski",
+            "Wicepremier Radosław Sikorski na Radzie FAC",
+            "https://www.gov.pl/web/dyplomacja/wicepremier-radoslaw-sikorski-na-radzie-fac",
+            "Wicepremier, minister spraw zagranicznych Radosław Sikorski",
+            "Wicepremier Radosław Sikorski na GZERO Summit w Londynie",
+            "https://www.gov.pl/web/dyplomacja/wicepremier-radoslaw-sikorski-na-gzero-summit-w-londynie",
+            "Wicepremier, minister spraw zagranicznych Radosław Sikorski",
+            "Spotkanie wicepremiera Radosława Sikorskiego z delegacją Senatu USA",
+            "https://www.gov.pl/web/dyplomacja/spotkanie-wicepremiera-radoslawa-sikorskiego-z-delegacja-senatu-usa",
+            "Wicepremier, minister spraw zagranicznych Radosław Sikorski",
+            "Inauguracja debaty generalnej 81. sesji Zgromadzenia Ogólnego ONZ w Nowym Jorku z udziałem wicepremiera Radosława Sikorskiego",
+            "https://www.gov.pl/web/dyplomacja/inauguracja-debaty-generalnej-81-sesji-zgromadzenia-ogolnego-onz-w-nowym-jorku-z-udzialem-wicepremiera-radoslawa-sikorskiego",
+            "Wicepremier Minister Spraw Zagranicznych RP Radosław Sikorski",
+            "Spotkanie szefów dyplomacji Polski i Ukrainy",
+            "https://www.gov.pl/web/dyplomacja/spotkanie-szefow-dyplomacji-polski-i-ukrainy4",
+            "Wicepremiera, Ministra Spraw Zagranicznych RP Radosława Sikorskiego"
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P03",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Czarzast"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto jest marszałkiem Sejmu?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 4450.227084,
+          "costUsd": 0.009292,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P05",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Kidaw"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto jest marszałkiem Senatu?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 2588.2699170000014,
+          "costUsd": 0.006933,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P07",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "von der Leyen"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto stoi na czele Komisji Europejskiej?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 2974.510957999999,
+          "costUsd": 0.007789,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P09",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "WPROWADZAJACE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy Mateusz Morawiecki należy do klubu PiS?",
+        "tags": [
+          "politician",
+          "outdated"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 5333.209999999999,
+          "costUsd": 0.007378,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Mateusz Morawiecki należy do klubu PiS.”. Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P11",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy Władysław Kosiniak-Kamysz jest ministrem obrony narodowej?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 6325.018791999999,
+          "costUsd": 0.00885,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Władysław Kosiniak-Kamysz jest ministrem obrony narodowej.”. Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P13",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Domańsk"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto jest ministrem finansów?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 2559.584625000003,
+          "costUsd": 0.006749,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P14",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy Andrzej Domański jest wicepremierem?",
+        "tags": [
+          "politician",
+          "fresh"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 6159.3169169999965,
+          "costUsd": 0.00736,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Andrzej Domański jest wicepremierem.”. Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P15",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Razem"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Do jakiego klubu albo koła w Sejmie należy Adrian Zandberg?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 3514.8304999999964,
+          "costUsd": 0.008405,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L07",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        },
+        "inputPreview": "Czy to prawda, co tu piszą? https://fixture.prawdowid.test/page_fake_sikorski_dymisja.html",
+        "tags": [
+          "link",
+          "disinfo_page",
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "FALSZYWE",
+          "latencyMs": 17687.915583999995,
+          "costUsd": 0.032497,
+          "securityEvents": 1,
+          "securityPatterns": [
+            "delimiter_imitation"
+          ],
+          "warnings": [
+            "injection_detected",
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "FALSZYWE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:89f36712ad3a",
+              "quote": "Wicepremier, minister spraw zagranicznych Radosław Sikorski uczestniczył w posiedzeniu Rady do Spraw Zagranicznych (FAC) 16 listopada w Brukseli.",
+              "relation": "OBALA",
+              "group": "obalajace"
+            }
+          ],
+          "recordIds": [
+            "gov-pl:89f36712ad3a"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Fałszywe. Wiarygodne źródło podaje coś innego. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "W materiale wykryto próbę wpłynięcia na działanie systemu. Zignorowaliśmy ją.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło podaje coś innego. Ministerstwo Spraw Zagranicznych (gov.pl) (16 listopada 2026): „Wicepremier, minister spraw zagranicznych Radosław Sikorski uczestniczył w posiedzeniu Rady do Spraw Zagranicznych (FAC) 16 listopada w Brukseli.”",
+            "Wicepremier Radosław Sikorski na Radzie FAC",
+            "https://www.gov.pl/web/dyplomacja/wicepremier-radoslaw-sikorski-na-radzie-fac",
+            "Wicepremier, minister spraw zagranicznych Radosław Sikorski uczestniczył w posiedzeniu Rady do Spraw Zagranicznych (FAC) 16 listopada w Brukseli.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "R01",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        },
+        "inputPreview": "Trump mówi, że Stany Zjednoczone płaciły za 100% NATO. To prawda?",
+        "tags": [
+          "rated_claim",
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "FALSZYWE",
+          "latencyMs": 10983.516792000002,
+          "costUsd": 0.008792,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "FALSZYWE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 3,
+              "quotedCount": 3,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "dw-factcheck:f9732623b592",
+              "quote": "\"Until I came along,\" the US \"was paying for virtually 100% of NATO,\" Trump said, adding, \"We paid for, in my opinion, 100% of NATO.\"",
+              "relation": "OBALA",
+              "group": "obalajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "factcheck-org:bebbc2669a1c",
+              "quote": "“We paid for, in my opinion, 100% of NATO because they weren’t paying their bills.”",
+              "relation": "OBALA",
+              "group": "obalajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "nato:d1b39789a32d",
+              "quote": "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries.",
+              "relation": "OBALA",
+              "group": "obalajace"
+            }
+          ],
+          "recordIds": [
+            "dw-factcheck:f9732623b592",
+            "factcheck-org:bebbc2669a1c",
+            "nato:d1b39789a32d"
+          ],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Stany Zjednoczone płaciły za 100% NATO.”. Ocena głównego twierdzenia: Fałszywe. Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „False”).",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „False”). Deutsche Welle - DW Fact Check (22 stycznia 2026): „\"Until I came along,\" the US \"was paying for virtually 100% of NATO,\" Trump said, adding, \"We paid for, in my opinion, 100% of NATO.\"”",
+            "Deutsche Welle - DW Fact Check: \"Until I came along,\" the US \"was paying for virtually 100% of NATO,\" Trump said, adding, \"We paid for, in my opinion, 100% of NATO.\"",
+            "https://www.dw.com/en/fact-check-trumps-speech-at-the-world-economic-forum/a-75601073",
+            "\"Until I came along,\" the US \"was paying for virtually 100% of NATO,\" Trump said, adding, \"We paid for, in my opinion, 100% of NATO.\"",
+            "FactCheck.org (Annenberg Public Policy Center): “We paid for, in my opinion, 100% of NATO because they weren’t paying their bills.”",
+            "https://www.factcheck.org/2026/01/trumps-claims-about-greenland/",
+            "“We paid for, in my opinion, 100% of NATO because they weren’t paying their bills.”",
+            "NATO: Funding NATO (cz. 1)",
+            "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+            "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P02",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy Donald Tusk jest premierem?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 9115.328666000001,
+          "costUsd": 0.009417,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 6,
+              "quotedCount": 6,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:b02607c5e451",
+              "quote": "powiedział Premier Donald Tusk.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:9425383671b4",
+              "quote": "podkreślił Premier Donald Tusk po zakończeniu dwudniowego spotkania",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:cddc0c20f44e",
+              "quote": "powiedział Premier Donald Tusk w Warszawie",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:3b8edea5952a",
+              "quote": "powiedział Premier Donald Tusk przed wylotem na spotkanie Koalicji Chętnych",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:836dc5691c0c",
+              "quote": "W dniach 24-26 października 2026 r. premier Donald Tusk złożył oficjalną wizytę w Wietnamie",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "gov-pl:2718e58c3671",
+              "quote": "powiedział Premier Donald Tusk.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "gov-pl:2718e58c3671",
+            "gov-pl:3b8edea5952a",
+            "gov-pl:836dc5691c0c",
+            "gov-pl:9425383671b4",
+            "gov-pl:b02607c5e451",
+            "gov-pl:cddc0c20f44e"
+          ],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Donald Tusk jest premierem.”. Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. Kancelaria Prezesa Rady Ministrów (gov.pl) (17 listopada 2026): „powiedział Premier Donald Tusk.”",
+            "Premier: Zdecydowaliśmy o zamrożeniu cen gazu",
+            "https://www.gov.pl/web/premier/premier-zdecydowalismy-o-zamrozeniu-cen-gazu",
+            "powiedział Premier Donald Tusk.",
+            "Premier po szczycie w Dublinie: Polska będzie odgrywała kluczową rolę w negocjacjach w sprawie Ukrainy",
+            "https://www.gov.pl/web/premier/premier-po-szczycie-w-dublinie-polska-bedzie-odgrywala-kluczowa-role-w-negocjacjach-w-sprawie-ukrainy",
+            "podkreślił Premier Donald Tusk po zakończeniu dwudniowego spotkania",
+            "Budujemy bezpieczeństwo energetyczne razem z sojusznikami. Inwestycje, dywersyfikacja i współpraca transatlantycka",
+            "https://www.gov.pl/web/premier/budujemy-bezpieczenstwo-energetyczne-razem-z-sojusznikami-inwestycje-dywersyfikacja-i-wspolpraca-transatlantycka",
+            "powiedział Premier Donald Tusk w Warszawie",
+            "Sprawiedliwy pokój dla Ukrainy fundamentem bezpieczeństwa Europy",
+            "https://www.gov.pl/web/premier/sprawiedliwy-pokoj-dla-ukrainy-fundamentem-bezpieczenstwa-europy",
+            "powiedział Premier Donald Tusk przed wylotem na spotkanie Koalicji Chętnych",
+            "Polska i Wietnam podnoszą relacje dwustronne do rangi partnerstwa strategicznego",
+            "https://www.gov.pl/web/dyplomacja/polska-i-wietnam-podnosza-relacje-dwustronne-do-rangi-partnerstwa-strategicznego",
+            "W dniach 24-26 października 2026 r. premier Donald Tusk złożył oficjalną wizytę w Wietnamie",
+            "Rosyjskie obiekty naruszyły polską przestrzeń powietrzną. Kolejna odsłona rosyjskiej eskalacji",
+            "https://www.gov.pl/web/premier/rosyjskie-obiekty-naruszyly-polska-przestrzen-powietrzna-kolejna-odslona-rosyjskiej-eskalacji",
+            "powiedział Premier Donald Tusk."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P04",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Rutte"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto jest sekretarzem generalnym NATO?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 4102.21154199999,
+          "costUsd": 0.006419,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Odpowiedź znaleźliśmy w źródle z katalogu Fons: NATO (Organizacja Traktatu Północnoatlantyckiego) (8 października 2026). Cytujemy je dosłownie — przeczytaj źródło i oceń sam.",
+            "Model gpt-6.2-sol — OpenAI wskazał fragment źródła, który odpowiada na pytanie. Kod sprawdził, że cytat występuje dosłownie w źródle z katalogu, i wstawił wydawcę, datę i link z bazy. Model gpt-6-luna — OpenAI sprawdził, czy cytat odpowiada na pytanie — to ten sam dostawca (tryb jednego klucza). Odpowiedź nie pochodzi z wiedzy modelu. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Według NATO (Organizacja Traktatu Północnoatlantyckiego) (8 października 2026): «NATO Secretary General Mark Rutte with Ukrainian President Volodymyr Zelenskyy in Kyiv on 3 February 2026.»",
+            "NATO: Relations with Ukraine (cz. 1)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/relations-with-ukraine",
+            "NATO Secretary General Mark Rutte with Ukrainian President Volodymyr Zelenskyy in Kyiv on 3 February 2026."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open",
+          "answer": {
+            "text": "Według NATO (Organizacja Traktatu Północnoatlantyckiego) (8 października 2026): «NATO Secretary General Mark Rutte with Ukrainian President Volodymyr Zelenskyy in Kyiv on 3 February 2026.»",
+            "quotes": [
+              {
+                "recordId": "nato:ff818c85ccc6",
+                "quote": "NATO Secretary General Mark Rutte with Ukrainian President Volodymyr Zelenskyy in Kyiv on 3 February 2026."
+              }
+            ],
+            "quotesVerified": true
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P06",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Nawrock"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto jest prezydentem Polski?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 3701.641917000001,
+          "costUsd": 0.006226,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "archival_material",
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Odpowiedź znaleźliśmy w źródle z katalogu Fons: Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (21 listopada 2025). Cytujemy je dosłownie — przeczytaj źródło i oceń sam. Uwaga: to materiał sprzed ponad roku, stan mógł się zmienić.",
+            "Model gpt-6.2-sol — OpenAI wskazał fragment źródła, który odpowiada na pytanie. Kod sprawdził, że cytat występuje dosłownie w źródle z katalogu, i wstawił wydawcę, datę i link z bazy. Model gpt-6-luna — OpenAI sprawdził, czy cytat odpowiada na pytanie — to ten sam dostawca (tryb jednego klucza). Odpowiedź nie pochodzi z wiedzy modelu. Przeczytaj źródło sam.",
+            "Źródło odpowiedzi pochodzi z 21 listopada 2025, czyli sprzed ponad roku. Pytasz o stan obecny, a ten mógł się zmienić — sprawdź datę i aktualne informacje u źródła.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Według Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (21 listopada 2025): «Prezydent Rzeczypospolitej Polskiej: K. Nawrocki»",
+            "Ustawa z dnia 21 listopada 2025 r. o ratyfikacji Porozumienia wykonawczego między Rządem Rzeczypospolitej Polskiej a Rządem Stanów Zjednoczonych Ameryki do Umowy międz... (Dz.U. 2025 poz. 1841) — art. 2",
+            "https://api.sejm.gov.pl/eli/acts/DU/2025/1841/text/O/D20251841.pdf",
+            "Prezydent Rzeczypospolitej Polskiej: K. Nawrocki"
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open",
+          "answer": {
+            "text": "Według Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (21 listopada 2025): «Prezydent Rzeczypospolitej Polskiej: K. Nawrocki»",
+            "quotes": [
+              {
+                "recordId": "sejm-eli:d99bb5014497",
+                "quote": "Prezydent Rzeczypospolitej Polskiej: K. Nawrocki"
+              }
+            ],
+            "quotesVerified": true
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P08",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Sprawiedliwo"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Do jakiego klubu parlamentarnego należy Jarosław Kaczyński?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 2840.9628749999974,
+          "costUsd": 0.006999,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P10",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "WPROWADZAJACE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy Szymon Hołownia jest marszałkiem Sejmu?",
+        "tags": [
+          "politician",
+          "outdated"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 10388.237666999994,
+          "costUsd": 0.011202,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Szymon Hołownia jest marszałkiem Sejmu.”. Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "P12",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": null,
+          "status": "OK",
+          "answerContains": [
+            "Kierwińsk"
+          ],
+          "inputMode": "question_open"
+        },
+        "inputPreview": "Kto jest ministrem spraw wewnętrznych i administracji?",
+        "tags": [
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": null,
+          "latencyMs": 3004.762167000008,
+          "costUsd": 0.008946,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, ale źródła z katalogu Fons nie odpowiadają wprost na to pytanie. Nie podajemy odpowiedzi z pamięci modelu.",
+            "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          ],
+          "sideEffects": [],
+          "inputMode": "question_open"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "L04",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "url",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy według tej strony NATO ma 32 państwa członkowskie? https://www.nato.int/en/about-us/organization/nato-member-countries",
+        "tags": [
+          "link",
+          "official_link"
+        ],
+        "checks": {
+          "fixture": "official_nato_member_countries.html"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 16621.312374999994,
+          "costUsd": 0.042374,
+          "securityEvents": 1,
+          "securityPatterns": [
+            "delimiter_imitation"
+          ],
+          "warnings": [
+            "injection_detected",
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 3,
+              "quotedCount": 3,
+              "conflicting": false
+            },
+            {
+              "claimId": "c2",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 5,
+              "quotedCount": 5,
+              "conflicting": false
+            },
+            {
+              "claimId": "c3",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": false,
+              "evidenceCount": 3,
+              "quotedCount": 3,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "nato:7001a3734fd9",
+              "quote": "At present, NATO has 32 member countries.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "nato:721403d2ae73",
+              "quote": "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "nato:5f848b7c2ae5",
+              "quote": "Since the Alliance was created in 1949, its membership has grown from the 12 founding members to today's 32 members through 10 rounds of enlargement in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c2",
+              "recordId": "nato:653bb9fb2a79",
+              "quote": "1949 - The 12 founding members\nTwelve countries from Europe and North America signed the North Atlantic Treaty on 4 April 1949 in Washington, D.C.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c2",
+              "recordId": "nato:7001a3734fd9",
+              "quote": "NATO was created by 12 countries from Europe and North America on 4 April 1949.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c2",
+              "recordId": "nato:b49e21c2a8f2",
+              "quote": "On 4 April 1949, 12 countries from Europe and North America came together in Washington, D.C. to sign the North Atlantic Treaty.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c2",
+              "recordId": "nato:5f848b7c2ae5",
+              "quote": "Since the Alliance was created in 1949, its membership has grown from the 12 founding members to today's 32 members through 10 rounds of enlargement in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c2",
+              "recordId": "nato:721403d2ae73",
+              "quote": "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c3",
+              "recordId": "nato:7001a3734fd9",
+              "quote": "NATO was created by 12 countries from Europe and North America on 4 April 1949.\nSince then, 20 more countries have joined NATO through 10 rounds of enlargement (in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024).",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c3",
+              "recordId": "nato:721403d2ae73",
+              "quote": "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c3",
+              "recordId": "nato:5f848b7c2ae5",
+              "quote": "Since the Alliance was created in 1949, its membership has grown from the 12 founding members to today's 32 members through 10 rounds of enlargement in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "nato:5f848b7c2ae5",
+            "nato:653bb9fb2a79",
+            "nato:7001a3734fd9",
+            "nato:721403d2ae73",
+            "nato:b49e21c2a8f2"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie. W wiadomości są też inne twierdzenia — ich ocena jest poniżej.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "W materiale wykryto próbę wpłynięcia na działanie systemu. Zignorowaliśmy ją.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): „At present, NATO has 32 member countries.”",
+            "NATO: NATO member countries (cz. 1)",
+            "https://www.nato.int/en/about-us/organization/nato-member-countries",
+            "At present, NATO has 32 member countries.",
+            "NATO: Enlargement and Article 10 (cz. 1)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.",
+            "NATO: Enlargement and Article 10 (cz. 8)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since the Alliance was created in 1949, its membership has grown from the 12 founding members to today's 32 members through 10 rounds of enlargement in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): „1949 - The 12 founding members\nTwelve countries from Europe and North America signed the North Atlantic Treaty on 4 April 1949 in Washington, D.C.”",
+            "NATO: NATO member countries (cz. 2)",
+            "https://www.nato.int/en/about-us/organization/nato-member-countries",
+            "1949 - The 12 founding members\nTwelve countries from Europe and North America signed the North Atlantic Treaty on 4 April 1949 in Washington, D.C.",
+            "NATO: NATO member countries (cz. 1)",
+            "https://www.nato.int/en/about-us/organization/nato-member-countries",
+            "NATO was created by 12 countries from Europe and North America on 4 April 1949.",
+            "NATO: Collective defence and Article 5 (cz. 2)",
+            "https://www.nato.int/en/what-we-do/introduction-to-nato/collective-defence-and-article-5",
+            "On 4 April 1949, 12 countries from Europe and North America came together in Washington, D.C. to sign the North Atlantic Treaty.",
+            "NATO: Enlargement and Article 10 (cz. 8)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since the Alliance was created in 1949, its membership has grown from the 12 founding members to today's 32 members through 10 rounds of enlargement in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024.",
+            "NATO: Enlargement and Article 10 (cz. 1)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): „NATO was created by 12 countries from Europe and North America on 4 April 1949.\nSince then, 20 more countries have joined NATO through 10 rounds of enlargement (in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024).”",
+            "NATO: NATO member countries (cz. 1)",
+            "https://www.nato.int/en/about-us/organization/nato-member-countries",
+            "NATO was created by 12 countries from Europe and North America on 4 April 1949.\nSince then, 20 more countries have joined NATO through 10 rounds of enlargement (in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024).",
+            "NATO: Enlargement and Article 10 (cz. 1)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since 1949, NATO’s membership has increased from 12 to 32 countries through 10 rounds of enlargement. Sweden became the latest country to join the Alliance on 7 March 2024.",
+            "NATO: Enlargement and Article 10 (cz. 8)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Since the Alliance was created in 1949, its membership has grown from the 12 founding members to today's 32 members through 10 rounds of enlargement in 1952, 1955, 1982, 1999, 2004, 2009, 2017, 2020, 2023 and 2024."
+          ],
+          "sideEffects": [],
+          "inputMode": "claim"
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "R04",
+        "split": "heldout",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK",
+          "inputMode": "question_yesno"
+        },
+        "inputPreview": "Czy to prawda, że Mark Rutte zapowiedział wyrzucenie USA z NATO, jeśli Trump odda Ukrainę Putinowi?",
+        "tags": [
+          "rated_claim",
+          "politician"
+        ]
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "FALSZYWE",
+          "latencyMs": 6963.70808299999,
+          "costUsd": 0.006043,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "FALSZYWE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "politifact:187a4bb37ec9",
+              "quote": "“NATO Secretary General Mark Rutte says that ‘if Trump surrenders Ukraine to Putin, he will personally expel the United States from the alliance.’”",
+              "relation": "OBALA",
+              "group": "obalajace"
+            }
+          ],
+          "recordIds": [
+            "politifact:187a4bb37ec9"
+          ],
+          "rendered": [
+            "Sprawdziliśmy pytanie jako twierdzenie: „Mark Rutte zapowiedział wyrzucenie USA z NATO, jeśli Trump odda Ukrainę Putinowi.”. Ocena głównego twierdzenia: Fałszywe. Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „False”).",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „False”). PolitiFact (Poynter Institute) (data nieznana): „“NATO Secretary General Mark Rutte says that ‘if Trump surrenders Ukraine to Putin, he will personally expel the United States from the alliance.’””",
+            "PolitiFact (Poynter Institute): “NATO Secretary General Mark Rutte says that ‘if Trump surrenders Ukraine to Putin, he will personally expel the United States from the",
+            "https://www.politifact.com/factchecks/2024/nov/13/threads-posts/no-nato-secretary-general-mark-rutte-didnt-say-hed/",
+            "“NATO Secretary General Mark Rutte says that ‘if Trump surrenders Ukraine to Putin, he will personally expel the United States from the alliance.’”"
+          ],
+          "sideEffects": [],
+          "inputMode": "question_yesno"
+        }
+      ]
+    }
+  ]
+}

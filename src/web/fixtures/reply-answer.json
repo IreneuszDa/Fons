@@ -1,0 +1,94 @@
+{
+  "kind": "answer",
+  "report": {
+    "pipelineVersion": "0.1.0-fixture",
+    "corpusSnapshot": "snap-2026-11-21-fixture",
+    "verdictMode": "rules",
+    "status": "OK",
+    "inputKind": "text",
+    "models": [
+      {
+        "purpose": "claims",
+        "provider": "fake",
+        "model": "fixture-small",
+        "inputTokens": 610,
+        "outputTokens": 90,
+        "latencyMs": 900,
+        "costUsd": 0.0003
+      },
+      {
+        "purpose": "assess",
+        "provider": "fake",
+        "model": "fixture-main",
+        "inputTokens": 2900,
+        "outputTokens": 300,
+        "latencyMs": 4200,
+        "costUsd": 0.004
+      }
+    ],
+    "timingsMs": {
+      "normalize": 30,
+      "claims": 900,
+      "retrieval": 700,
+      "assess": 4200,
+      "total": 5900
+    },
+    "costUsd": 0.0043,
+    "unavailableBranches": [],
+    "securityEvents": [],
+    "cacheHit": false,
+    "transparencyPl": "Na pytanie otwarte odpowiadamy tylko dosłownym cytatem ze źródła z katalogu. Kod sprawdził, że cytat naprawdę jest w źródle, i złożył zdanie odpowiedzi z cytatu, wydawcy i daty. Model nie dopisuje niczego od siebie. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "inputMode": "question_open",
+    "claims": [],
+    "verdicts": [],
+    "id": "rep_fxAnswer",
+    "createdAt": "2026-11-21T10:20:00.000Z",
+    "token": "fxOdpowiedz000000000001",
+    "inputEchoMasked": "Kiedy Szwecja dołączyła do NATO?",
+    "mainVerdict": null,
+    "summaryPl": "Znalazłem odpowiedź w źródle urzędowym. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "warnings": [
+      {
+        "kind": "archival_material",
+        "textPl": "Źródło pochodzi z 2024 roku. Sprawdź, czy informacja jest nadal aktualna."
+      }
+    ],
+    "answer": {
+      "questionPl": "Kiedy Szwecja dołączyła do NATO?",
+      "answerPl": "NATO — przykład (7 marca 2024) podaje: «Szwecja została 32. członkiem Sojuszu 7 marca 2024 r. (cytat przykładowy)»",
+      "evidence": [
+        {
+          "recordId": "fx-nato:7",
+          "title": "Szwecja 32. członkiem NATO (przykładowy rekord)",
+          "publisher": "NATO — przykład",
+          "publishedAt": "2024-03-07T00:00:00.000Z",
+          "fetchedAt": "2026-11-20T08:00:00.000Z",
+          "url": "https://example.org/nato/news/sweden-joins",
+          "quote": "Szwecja została 32. członkiem Sojuszu 7 marca 2024 r. (cytat przykładowy)",
+          "relation": "WSPIERA",
+          "aspect": "sedno",
+          "sourceType": "pierwotne",
+          "level": 1,
+          "role": "tresc",
+          "group": "wspierajace"
+        }
+      ]
+    }
+  },
+  "textPl": "NATO — przykład (7 marca 2024) podaje: «Szwecja została 32. członkiem Sojuszu 7 marca 2024 r. (cytat przykładowy)»",
+  "quickReplies": [
+    {
+      "id": "sources",
+      "labelPl": "Pokaż źródła"
+    },
+    {
+      "id": "why",
+      "labelPl": "Dlaczego tak?"
+    },
+    {
+      "id": "help",
+      "labelPl": "Pomoc"
+    }
+  ],
+  "resultUrl": "/w/fxOdpowiedz000000000001"
+}

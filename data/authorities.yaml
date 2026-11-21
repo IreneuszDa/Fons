@@ -1,0 +1,161 @@
+# Rejestr oficjalnych kanałów instytucji ("kanał pierwszego źródła") dla gałęzi wyszukiwania "official"
+# (src/engine/retrieval/official.ts, opis: docs/TOOLS.md §1a).
+#
+# Zasada: gdy twierdzenie przypisuje działanie konkretnej instytucji ("MSZ zakazało...", "RCB wydało alert..."),
+# kod NAJPIERW pobiera oficjalny kanał tej instytucji - bez wyszukiwarki i bez modelu - a dopiero potem szuka
+# niezależnych potwierdzeń (fact-checki, inne źródła urzędowe). Każdy adres musi należeć do hosta z katalogu
+# data/sources.yaml (dokładny host, typ "pierwotne"); adres spoza katalogu jest pomijany.
+#
+# Dopasowanie słów kluczowych jak w data/high-risk-topics.yaml: małe litery bez polskich znaków, każde słowo
+# to PRZEDROSTEK słowa w tekście, fraza wielowyrazowa w kolejności, "$" na końcu = dokładne słowo.
+#
+# connector:
+#   odyseusz    - publiczne dane serwisu MSZ Odyseusz (profile krajów z poziomem ostrzeżenia, strony tematyczne).
+#                 Profil kraju: gdy w tekście jest nazwa kraju ORAZ (słowo instytucji LUB słowo tematu).
+#                 Strony tematyczne: gdy jest słowo tematu ORAZ (słowo instytucji LUB nazwa kraju).
+#   govpl-list  - lista aktualności / komunikatów na www.gov.pl (data, tytuł, zajawka każdej pozycji).
+#                 Pobierana, gdy w tekście jest słowo instytucji.
+#   rcb-report  - datowany raport dobowy Rządowego Centrum Bezpieczeństwa.
+#   rso         - publiczne dane wyszukiwarki ostrzeżeń gov.pl (obszar i kategorie ustala planer).
+version: 1
+authorities:
+  - id: msz-odyseusz
+    label: MSZ - ostrzeżenia dla podróżujących (serwis Odyseusz)
+    connector: odyseusz
+    institutionKeywords:
+      - msz$
+      - ministerstw spraw zagraniczn
+      - minister spraw zagraniczn
+      - odyseusz
+      - resort dyplomacji
+      - polska dyplomacja
+    topicKeywords:
+      - wyjazd
+      - wyjezdz
+      - wyjecha
+      - podroz
+      - turyst
+      - wakacj
+      - urlop
+      - ostrzezen
+      - odradza
+      - zakaz wjazd
+      - zakaz wyjazd
+      - ewakuac
+      - bezpiecznie jechac
+      - bezpiecznie leciec
+      - poziom zagrozenia
+    profileApi: https://odyseusz.gov.pl/api/v1/informacje/profile-panstw/{ISO}
+    profileUrl: https://odyseusz.gov.pl/{ISO}
+    topicPages:
+      - api: https://odyseusz.gov.pl/api/v1/informacje/strony-tematyczne/czym-sa-ostrzezenia-dla-podrozujacych
+        url: https://odyseusz.gov.pl/strona-tematyczna/przed-podroza/czym-sa-ostrzezenia-dla-podrozujacych
+
+  - id: msz-aktualnosci
+    label: MSZ - aktualności i komunikaty
+    connector: govpl-list
+    institutionKeywords:
+      - msz$
+      - ministerstw spraw zagraniczn
+      - minister spraw zagraniczn
+      - resort dyplomacji
+    pages:
+      - https://www.gov.pl/web/dyplomacja/aktualnosci
+
+  - id: rcb
+    label: Rządowe Centrum Bezpieczeństwa - komunikaty i Alert RCB
+    connector: govpl-list
+    institutionKeywords:
+      - rcb$
+      - alert rcb
+      - alerty rcb
+      - alertu rcb
+      - rzadow centrum bezpieczenstw
+    pages:
+      - https://www.gov.pl/web/rcb/komunikaty
+
+  - id: rcb-raport-dobowy
+    label: Rządowe Centrum Bezpieczeństwa - raport dobowy
+    connector: rcb-report
+    institutionKeywords:
+      - raport dobow
+      - dobow raport rcb
+    page: https://www.gov.pl/web/rcb/raport-dobowy3
+
+  - id: rso
+    label: Regionalny System Ostrzegania
+    connector: rso
+    institutionKeywords:
+      - rso$
+      - regionaln system ostrzegania
+      - rso mswia
+    listApi: https://www.gov.pl/api/data/proxy/rso/komunikatyxml/{region}/{category}/0?_format=json
+    page: https://www.gov.pl/web/gov/ostrzezenia
+
+  - id: gis-ostrzezenia
+    label: Główny Inspektorat Sanitarny - ostrzeżenia
+    connector: govpl-list
+    institutionKeywords: [gis$, glown inspektorat sanitarn, glown inspektor sanitarn, sanepid]
+    pages: [https://www.gov.pl/web/gis/ostrzezenia]
+
+  - id: psp-aktualnosci
+    label: Komenda Główna Państwowej Straży Pożarnej - aktualności
+    connector: govpl-list
+    institutionKeywords: [psp$, kgpsp$, kg psp$, panstwow straz pozarn, panstwow strazy pozarn]
+    pages: [https://www.gov.pl/web/kgpsp/aktualnosci]
+
+  - id: mon-aktualnosci
+    label: Ministerstwo Obrony Narodowej - aktualności
+    connector: govpl-list
+    institutionKeywords: [mon$, ministerstw obron narodow, minister obron narodow]
+    pages: [https://www.gov.pl/web/obrona-narodowa/aktualnosci5]
+
+  - id: mswia-aktualnosci
+    label: Ministerstwo Spraw Wewnętrznych i Administracji - aktualności
+    connector: govpl-list
+    institutionKeywords: [mswia$, ministerstw spraw wewnetrzn, minister spraw wewnetrzn]
+    pages: [https://www.gov.pl/web/mswia/aktualnosci]
+
+  - id: infrastruktura-aktualnosci
+    label: Ministerstwo Infrastruktury - aktualności
+    connector: govpl-list
+    institutionKeywords: [ministerstw infrastruktur, minister infrastruktur, resort infrastruktur]
+    pages: [https://www.gov.pl/web/infrastruktura/aktualnosci]
+
+  - id: paa-komunikaty
+    label: Państwowa Agencja Atomistyki - komunikaty
+    connector: govpl-list
+    institutionKeywords: [paa$, panstwow agencj atomistyk, prezes paa]
+    pages: [https://www.gov.pl/web/paa/komunikaty]
+
+  - id: kprm-aktualnosci
+    label: Kancelaria Prezesa Rady Ministrów - wydarzenia
+    connector: govpl-list
+    institutionKeywords: [kprm$, kancelari prezesa rady ministrow, kancelari premier, premier$]
+    pages: [https://www.gov.pl/web/premier/wydarzenia]
+
+# Formy nazw krajów, których nie łapie ogólna reguła przedrostkowa (odmiana nieregularna, skróty, nazwy potoczne).
+# Klucz = kod ISO z data/odyseusz-countries.json; wartości jak słowa kluczowe wyżej.
+countryAliases:
+  DE: [rfn$, niemiec]
+  US: [usa$, stanow zjednoczonych, stanach zjednoczonych, stany zjednoczone]
+  GB: [anglia, anglii, uk$, wielkiej brytanii, zjednoczone krolestwo, zjednoczonego krolestwa]
+  HU: [wegier$, wegrzech, wegrami]
+  NL: [niderland]
+  AE: [emirat, dubaj]
+  CZ: [republika czeska, republiki czeskiej, czechach]
+  CN: [chrl$]
+  KP: [korei polnocnej, korea polnocna]
+  KR: [korei poludniowej, korea poludniowa]
+  ZA: [rpa$]
+  CD: [dr konga, drk$]
+  TR: [turcj]
+  RU: [rosj]
+  BY: [bialorus]
+  UA: [ukrain]
+  IL: [izrael]
+  IT: [wloch, wlosz]
+  GR: [grecj]
+  EG: [egip]
+  HR: [chorwacj]
+  ES: [hiszpani]

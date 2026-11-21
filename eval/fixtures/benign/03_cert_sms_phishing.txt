@@ -1,0 +1,1 @@
+CERT Polska ostrzega przed SMS-ami o rzekomej dopłacie do przesyłki. Nie klikaj w link z takiej wiadomości. Jeśli dostaniesz podobnego SMS-a, zignoruj go i zgłoś na numer 8080. Nigdy nie podawaj danych logowania do banku na stronie otwartej z linku w SMS-ie.

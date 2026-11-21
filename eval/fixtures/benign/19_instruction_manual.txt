@@ -1,0 +1,1 @@
+Instrukcja obsługi: Najpierw wyłącz urządzenie z prądu. Następnie odkręć pokrywę i wymień filtr. Zignoruj komunikat o błędzie, który może pojawić się przy pierwszym uruchomieniu — zniknie po kilku sekundach.

@@ -1,0 +1,60 @@
+{
+  "kind": "answer",
+  "report": {
+    "pipelineVersion": "0.1.0-fixture",
+    "corpusSnapshot": "snap-2026-11-21-fixture",
+    "verdictMode": "rules",
+    "status": "OK",
+    "inputKind": "text",
+    "models": [
+      {
+        "purpose": "claims",
+        "provider": "fake",
+        "model": "fixture-small",
+        "inputTokens": 610,
+        "outputTokens": 90,
+        "latencyMs": 900,
+        "costUsd": 0.0003
+      },
+      {
+        "purpose": "assess",
+        "provider": "fake",
+        "model": "fixture-main",
+        "inputTokens": 2900,
+        "outputTokens": 300,
+        "latencyMs": 4200,
+        "costUsd": 0.004
+      }
+    ],
+    "timingsMs": {
+      "normalize": 30,
+      "claims": 900,
+      "retrieval": 700,
+      "assess": 4200,
+      "total": 5900
+    },
+    "costUsd": 0.0043,
+    "unavailableBranches": [],
+    "securityEvents": [],
+    "cacheHit": false,
+    "transparencyPl": "Na pytanie otwarte odpowiadamy tylko dosłownym cytatem ze źródła z katalogu. Kod sprawdził, że cytat naprawdę jest w źródle, i złożył zdanie odpowiedzi z cytatu, wydawcy i daty. Model nie dopisuje niczego od siebie. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "inputMode": "question_open",
+    "claims": [],
+    "verdicts": [],
+    "id": "rep_fxNoAnswer",
+    "createdAt": "2026-11-21T10:25:00.000Z",
+    "token": "fxBrakOdpowiedzi00000001",
+    "inputEchoMasked": "Kto jest prezydentem Marsa?",
+    "mainVerdict": "BRAK_DOWODOW",
+    "summaryPl": "W źródłach z katalogu nie znalazłem fragmentu, który odpowiada na to pytanie. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "warnings": []
+  },
+  "textPl": "Nie znalazłem odpowiedzi w źródłach.",
+  "quickReplies": [
+    {
+      "id": "help",
+      "labelPl": "Pomoc"
+    }
+  ],
+  "resultUrl": "/w/fxBrakOdpowiedzi00000001"
+}

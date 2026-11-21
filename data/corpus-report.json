@@ -1,0 +1,436 @@
+{
+  "builtAt": "2026-11-21T21:44:08.490Z",
+  "node": "v22.15.0",
+  "args": {
+    "refresh": false,
+    "only": [
+      "eli",
+      "eur-lex",
+      "eurostat",
+      "nato",
+      "eu-portal",
+      "euvsdisinfo",
+      "official-pages",
+      "gus-bdl"
+    ]
+  },
+  "ingesters": [
+    {
+      "ingester": "claimreview",
+      "records": 189,
+      "incidents": 149,
+      "requests": 1,
+      "skippedCount": 434,
+      "skipped": [
+        {
+          "what": "https://www.dw.com/de/faktencheck-virales-video-zeigt-keine-folter-in-venezuela/a-75408612",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/en/fact-check-why-are-national-flags-being-raised-in-the-uk/a-73980903",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/faktencheck-keine-z%C3%B6lle-f%C3%BCr-us-importe-in-die-eu/a-73448674",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/en/russia-global-fact-checking-network-gfcn-disinformation-propaganda-v2/a-72763260",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/fake-ki-videos-zeigen-keine-festnahmen-von-migranten-fotos-aus-kontext-gerissen/a-73225961",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/en/fact-check-viral-us-iran-strikes-videos-are-fake-or-old/a-73009374",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/en/nato-expansion-east-russia-putin-ukraine/a-73030670",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/faktencheck-ist-hier-indiens-angriff-auf-pakistan-zu-sehen/a-72468406",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/faktencheck-papst-franziskus-im-visier-der-desinformation/a-72322537",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/faktencheck-falschinformationen-zum-angriff-auf-sumy/a-72251396",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/faktencheck-falschinformationen-zum-angriff-auf-sumy/a-72251396",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://www.dw.com/de/faktencheck-elon-musk-kritisiert-deutsche-justiz-zu-unrecht/a-70787593",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/luxembourg/241104-99-923384",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/belgium/241030-99-872197",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/luxembourg/241021-99-777139",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/germany/241021-99-773337",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/germany/241007-99-638781",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/switzerland/241009-99-661277",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/switzerland/241011-99-678605",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/belgium/241007-99-638693",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/luxembourg/241004-99-611582",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/netherlands/240930-99-567431",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/netherlands/240926-99-523177",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/germany/240925-99-513120",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        },
+        {
+          "what": "https://dpa-factchecking.com/austria/240924-99-505239",
+          "reason": "brak czytelnej etykiety oceny (długi opis bez znanej etykiety)"
+        }
+      ],
+      "notes": [
+        "Oceny spoza tabeli mapowania (mapped=null, nie rozstrzygają): politifact: Half Flip (1); factcheck-org: Deceptive Editing (1); factcheck-org: Debunked Rumor (1); politifact: No data to support this (1); politifact: Datos sobre la edad de inmigrantes no esta disponible (1); politifact: This is inaccurate (1); politifact: Largely true (1); politifact: Accurate numbers, but caveats (1); politifact: Incomplete account (1); politifact: Border is not open (1); politifact: Based on limited data (1); dpa-factchecking: Dieses «Vikatan»-Cover existiert nicht. (1)",
+        "Feed ClaimReview: przeczytano 100671 wpisów; hosty spoza katalogu pominięte; tytuł rekordu = \"wydawca: teza\" (feed nie zawiera tytułu strony)."
+      ],
+      "durationMs": 3668
+    },
+    {
+      "ingester": "demagog",
+      "records": 742,
+      "incidents": 0,
+      "requests": 8,
+      "skippedCount": 1,
+      "skipped": [
+        {
+          "what": "https://factchecktools.googleapis.com/v1alpha1/claims:search",
+          "reason": "3 recenzji bez daty lub starszych niż 2025-11-21"
+        }
+      ],
+      "notes": [
+        "Demagog: 742 recenzji z Google Fact Check Tools API (filtr reviewPublisherSiteFilter=demagog.org.pl, maxAgeDays=365 i lokalnie data recenzji >= 2025-11-21, limit 2000; 8 stron; recenzje innych hostów: 1, starsze/bez daty: 3, sekcje obcojęzyczne: 0); wypowiedzi 191, fake newsy 550, inne 1; daty recenzji 2025-11-24 – 2026-11-20. Bez bezpośrednich żądań do demagog.org.pl. Tekst = teza dosłownie z API; autor tezy nie jest w tytule. Etykiety spoza tabeli mapowania (mapped=null): przerobione zdjęcie lub film (1), Scam (1)."
+      ],
+      "durationMs": 2536
+    },
+    {
+      "ingester": "eeas",
+      "records": 6,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Strony raportów FIMI EEAS (streszczenia). Pełne raporty (PDF) nie są przetwarzane. Crawl-delay 10 s z robots.txt respektowany."
+      ],
+      "durationMs": 40
+    },
+    {
+      "ingester": "eli",
+      "records": 433,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Teksty ujednolicone (PDF 'U') zamieniane na tekst narzędziem pdftotext; usunięto nagłówki i stopki stron. Rekord = artykuł (max 2 kawałki po 1200 znaków)."
+      ],
+      "durationMs": 11650
+    },
+    {
+      "ingester": "eu-leadership",
+      "records": 80,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Kolegium Komisarzy: imię i nazwisko + teka dosłownie ze strony (strona nie podaje narodowości). Posłowie do PE z Polski: zdania generowane z pól API (tag generated-from-data), url = wpis posła. Rada Europejska (consilium.europa.eu) i europarl.europa.eu blokują boty (HTTP 403) — pominięte."
+      ],
+      "durationMs": 38
+    },
+    {
+      "ingester": "eu-portal",
+      "records": 69,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 1,
+      "skipped": [
+        {
+          "what": "https://european-union.europa.eu/principles-countries-history/eu-countries_pl",
+          "reason": "znaleziono 21 z 27 krajów"
+        }
+      ],
+      "notes": [
+        "Profile krajów nie podają daty publikacji — publishedAt = null; dane liczbowe na stronie mają własne adnotacje o źródle (Eurostat) i roku. Strony zbiorcze (lista krajów UE, strefa euro, rozszerzenie) mają wiersz 'Ostatnia aktualizacja strony' → publishedAt (gdy jest)."
+      ],
+      "durationMs": 242
+    },
+    {
+      "ingester": "eur-lex",
+      "records": 98,
+      "incidents": 0,
+      "requests": 3,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Treść pobrana przez Cellar (publications.europa.eu, negocjacja treści po CELEX); adres w rekordzie to strona EUR-Lex tego samego dokumentu. Wersje skonsolidowane to dokumenty informacyjne bez mocy prawnej."
+      ],
+      "durationMs": 5663
+    },
+    {
+      "ingester": "eurostat",
+      "records": 382,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Zdania wygenerowane z wartości API (tag generated-from-data); liczby dokładnie jak w odpowiedzi, flagi 'p'/'e' opisane w tekście. publishedAt = pole 'updated' zbioru."
+      ],
+      "durationMs": 20
+    },
+    {
+      "ingester": "euvsdisinfo",
+      "records": 455,
+      "incidents": 455,
+      "requests": 9,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Prefiksy wpisów na pierwszych stronach wyników: DISINFO=470; zapisujemy tylko DISINFO. Strony /report/ (HTTP 403) i paginacja (/page/N/, robots.txt) pominięte."
+      ],
+      "durationMs": 15452
+    },
+    {
+      "ingester": "factcheck-probe",
+      "records": 0,
+      "incidents": 0,
+      "requests": 3,
+      "skippedCount": 2,
+      "skipped": [
+        {
+          "what": "https://sprawdzam.afp.com",
+          "reason": "robots.txt niedostępny/zakazujący — pominięto bez pobierania treści"
+        },
+        {
+          "what": "https://fakehunter.pap.pl",
+          "reason": "strona-blokada CDN/WAF zamiast treści (HTTP 200 z wyzwaniem lub 403) — nie obchodzimy"
+        }
+      ],
+      "notes": [
+        "afp-sprawdzam (sprawdzam.afp.com): robots.txt niedostępny lub zakazuje pobrania strony głównej → nie pobieramy (traktowane jak zakaz).",
+        "fakehunter (fakehunter.pap.pl): robots.txt dostępny; / → HTTP 200 (Incapsula).",
+        "Feed ClaimReview DataCommons (z cache'u, 100671 wpisów): demagog.org.pl: 0, sprawdzam.afp.com: 0, fakehunter.pap.pl: 0, konkret24.tvn24.pl: 0, oko.press: 1 (inny host), demagog.cz: 8 (inny host), factuel.afp.com: 2 (inny host)."
+      ],
+      "durationMs": 2781
+    },
+    {
+      "ingester": "gov-pl",
+      "records": 48,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 1,
+      "skipped": [
+        {
+          "what": "https://www.gov.pl/web/dyplomacja/oswiadczenie-ministrow-po-nieformalnym-spotkaniu-rady-panstw-morza-baltyckiego-i-ukrainy",
+          "reason": "zbyt krótka treść komunikatu"
+        }
+      ],
+      "notes": [
+        "Tylko komunikaty o tematyce zagranicznej/obronnej/granicznej (filtr słów kluczowych); cytat to prefiks treści komunikatu (<= 300 znaków)."
+      ],
+      "durationMs": 244
+    },
+    {
+      "ingester": "gov-pl-officials",
+      "records": 132,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Rada Ministrów i kierownictwo MSZ: dosłowne linie z biogramów gov.pl (imię i nazwisko + funkcja + zdanie o powołaniu, <= 300 zn.); ambasadorowie: zdania generowane z wierszy rejestru 'Polskie przedstawicielstwa na świecie' (tag generated-from-data); publishedAt = najnowsza wersja strony z historii zmian gov.pl. Stan jest ważny na dzień fetchedAt."
+      ],
+      "durationMs": 224
+    },
+    {
+      "ingester": "gus-bdl",
+      "records": 70,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Zdania wygenerowane z wartości API BDL (poziom Polska); publishedAt = lastUpdate tematu BDL (gdy API go podaje; inaczej null). Bezrobocie: miary rejestrowanej (urzędy pracy), nie BAEL."
+      ],
+      "durationMs": 51
+    },
+    {
+      "ingester": "nato",
+      "records": 314,
+      "incidents": 0,
+      "requests": 3,
+      "skippedCount": 2,
+      "skipped": [
+        {
+          "what": "https://www.nato.int/en/what-we-do/deterrence-and-defence/nato-s-military-presence-in-the-east-of-the-alliance",
+          "reason": "HTTP 404"
+        },
+        {
+          "what": "https://www.nato.int/en/what-we-do/operations-and-missions/eastern-sentry",
+          "reason": "HTTP 404"
+        }
+      ],
+      "notes": [
+        "Strony nato.int zawierają linię 'Updated: <data>' (publishedAt); gdy jej brak, data ze ścieżki URL tekstu oficjalnego, inaczej null."
+      ],
+      "durationMs": 3801
+    },
+    {
+      "ingester": "official-pages",
+      "records": 91,
+      "incidents": 0,
+      "requests": 2,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Strony instytucji pobrane z listy PAGES (bez wyszukiwania). Pominięte z powodu blokad botów: consilium.europa.eu (Browser check), ohchr.org (HTTP 403), press.un.org (Client Challenge), neighbourhood-enlargement.ec.europa.eu (HTTP 403), icao.int (brak stabilnego adresu komunikatu; rozstrzygnięcie ICAO cytujemy przez UN News i rząd NL)."
+      ],
+      "durationMs": 3484
+    },
+    {
+      "ingester": "sejm-mp",
+      "records": 513,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "API Sejmu, kadencja 10: zdania o posłach i klubach generowane z pól API (tag generated-from-data), url = adres wpisu; publishedAt = null; bez danych prywatnych. Marszałek Sejmu: dosłowna linia podpisu z najnowszego obwieszczenia Marszałka Sejmu (ELI)."
+      ],
+      "durationMs": 317
+    },
+    {
+      "ingester": "state-officials",
+      "records": 7,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [
+        "Prezydent RP: nagłówek strony biografii + zdania o objęciu urzędu (dosłownie, <= 300 zn.); data z metadanych og:article:modified_time. Prezydium Senatu: „imię i nazwisko” + „funkcja” z kafelków listy (publishedAt = null — strona nie podaje daty)."
+      ],
+      "durationMs": 96
+    }
+  ],
+  "stats": {
+    "total": 3629,
+    "incidents": 604,
+    "bySource": {
+      "demagog": 742,
+      "dpa-factchecking": 35,
+      "dw-factcheck": 34,
+      "ec-commission": 27,
+      "ec-finance": 44,
+      "ec-home-affairs": 4,
+      "eeas": 6,
+      "ep-open-data": 53,
+      "eu-portal": 69,
+      "eur-lex": 98,
+      "eurostat": 382,
+      "euvsdisinfo": 455,
+      "factcheck-org": 25,
+      "gov-pl": 180,
+      "government-nl": 2,
+      "gus-bdl": 70,
+      "nato": 314,
+      "onderzoeksraad": 9,
+      "politifact": 25,
+      "pravda-pl": 70,
+      "prezydent-pl": 1,
+      "prosecutionservice": 8,
+      "sejm-eli": 946,
+      "senat-pl": 6,
+      "un-news": 24
+    },
+    "byType": {
+      "factcheck": 931,
+      "pierwotne": 2237,
+      "analiza": 461
+    },
+    "byHost": {
+      "demagog.org.pl": 742,
+      "dpa-factchecking.com": 35,
+      "www.dw.com": 34,
+      "commission.europa.eu": 27,
+      "finance.ec.europa.eu": 44,
+      "home-affairs.ec.europa.eu": 4,
+      "www.eeas.europa.eu": 6,
+      "data.europarl.europa.eu": 53,
+      "european-union.europa.eu": 69,
+      "eur-lex.europa.eu": 98,
+      "ec.europa.eu": 382,
+      "euvsdisinfo.eu": 455,
+      "www.factcheck.org": 25,
+      "www.gov.pl": 180,
+      "www.government.nl": 2,
+      "bdl.stat.gov.pl": 70,
+      "www.nato.int": 314,
+      "onderzoeksraad.nl": 9,
+      "www.politifact.com": 25,
+      "pravda.org.pl": 70,
+      "www.prezydent.pl": 1,
+      "www.prosecutionservice.nl": 8,
+      "api.sejm.gov.pl": 946,
+      "www.senat.gov.pl": 6,
+      "news.un.org": 20,
+      "ukraine.un.org": 4
+    },
+    "byLevel": {
+      "1": 2237,
+      "2": 1392
+    },
+    "byRole": {
+      "stala_rola": 1386,
+      "tresc": 2243
+    },
+    "domains": 26,
+    "withPublishedAt": 2807,
+    "newestFetchedAt": "2026-11-21T21:44:06.981Z",
+    "oldestFetchedAt": "2026-11-21T16:07:22.030Z"
+  }
+}

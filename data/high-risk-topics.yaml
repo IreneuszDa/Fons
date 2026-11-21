@@ -1,0 +1,108 @@
+# Lista tematów wysokiego ryzyka dla pętli informacji (PLAN §8).
+# Własność serwera. Nierozstrzygnięte zgłoszenie z takiego tematu uruchamia alert (webhook wskazany
+# przez administratora), nawet gdy zgłosiła je tylko jedna osoba.
+#
+# Dopasowanie: tekst jest zamieniany na małe litery bez znaków diakrytycznych (ł -> l, ą -> a ...).
+# Każde słowo kluczowe to PRZEDROSTEK słowa w tekście (np. "wybor" łapie "wybory", "wyborach",
+# "wyborczy"); fraza wielowyrazowa musi wystąpić w kolejności, każdy jej człon jako przedrostek.
+# Znak $ na końcu frazy oznacza dokładne słowo (np. "msz$" nie łapie "mszy"). Wpisuj słowa BEZ
+# polskich znaków. Unikaj bardzo krótkich przedrostków, które łapią zbyt wiele.
+version: 1
+topics:
+  - id: wybory
+    label: Wybory i referenda
+    keywords:
+      - wybor
+      - glosowan
+      - referendum
+      - karta do glosowania
+      - komisja wyborcza
+      - komisji wyborczej
+      - lokal wyborczy
+      - lokalu wyborczym
+      - pkw$
+      - fraudy wyborcze
+      - falszerstw wyborcz
+      - kandydat
+      - kampania wyborcza
+      - sfalszowan
+
+  - id: zdrowie
+    label: Zdrowie publiczne
+    keywords:
+      - szczepion
+      - szczepien
+      - epidemi
+      - pandemi
+      - zaraza
+      - zarazen
+      - wirus
+      - szczepionk
+      - lek na raka
+      - nfz$
+      - szpital
+      - skazone leki
+      - zatrucie
+      - zatruci
+      - covid
+      - grypa
+      - ospa$
+      - odra$
+
+  - id: bezpieczenstwo
+    label: Bezpieczeństwo państwa i obywateli
+    keywords:
+      - atak
+      - zamach
+      - terroryst
+      - bomba
+      - alarm bombowy
+      - ewakuacj
+      - ewakuuj
+      - ewakuowa
+      - stan wyjatkowy
+      - stan wojenny
+      - mobilizacj
+      - pobor
+      - wojsk
+      - wojn
+      - rakiet
+      - dron
+      - naruszenie przestrzeni powietrznej
+      - granica
+      - granicy
+      - cyberatak
+      - atak hakerski
+      - blackout
+      - brak pradu
+      - alert rcb
+      - rcb$
+      - strzelanin
+      - zakladnik
+
+  - id: konsularne
+    label: Sprawy konsularne i ewakuacje
+    keywords:
+      - konsul
+      - konsulat
+      - ambasad
+      - msz$
+      - ewakuacj
+      - ewakuuj
+      - ewakuowa
+      - wiza$
+      - wizy$
+      - wizowy
+      - paszport
+      - polacy za granica
+      - polakow za granica
+      - polakow w
+      - uwiezion
+      - zatrzymany polak
+      - zatrzymani polacy
+      - ostrzezenie dla podroznych
+      - zakaz wjazdu
+      - zamkniete lotnisko
+      - zamkniete granice
+      - repatriacj
+      - pomoc konsularna

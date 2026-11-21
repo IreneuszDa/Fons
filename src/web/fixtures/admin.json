@@ -1,0 +1,200 @@
+{
+  "cases": [
+    {
+      "id": "12",
+      "representativeText": "MSZ zakazało wszystkim Polakom wyjazdów do Niemiec.",
+      "status": "open",
+      "senderCount": 7,
+      "channels": [
+        "web",
+        "discord"
+      ],
+      "alertState": "recommended",
+      "createdAt": "2026-11-21T08:10:00.000Z",
+      "updatedAt": "2026-11-21T10:05:00.000Z",
+      "note": "Podobne zgłoszenia z trzech kanałów. Do decyzji: przekazać do zespołu komunikacji."
+    },
+    {
+      "id": "11",
+      "representativeText": "Inflacja w Polsce wynosi 18 procent.",
+      "status": "closed",
+      "senderCount": 2,
+      "channels": [
+        "web"
+      ],
+      "alertState": "none",
+      "createdAt": "2026-11-20T15:00:00.000Z",
+      "updatedAt": "2026-11-20T16:30:00.000Z",
+      "note": null
+    },
+    {
+      "id": "10",
+      "representativeText": "Ambasada RP w Berlinie wstrzymała wydawanie paszportów.",
+      "status": "forwarded",
+      "senderCount": 4,
+      "channels": [
+        "whatsapp",
+        "web"
+      ],
+      "alertState": "sent",
+      "createdAt": "2026-11-19T09:00:00.000Z",
+      "updatedAt": "2026-11-19T12:40:00.000Z",
+      "note": "Przekazano do konsulatu 19.11."
+    },
+    {
+      "id": "13",
+      "representativeText": "Od jutra wiza do Wielkiej Brytanii kosztuje 5000 zł.",
+      "status": "open",
+      "senderCount": 1,
+      "channels": [
+        "sms"
+      ],
+      "alertState": "none",
+      "createdAt": "2026-11-21T11:00:00.000Z",
+      "updatedAt": "2026-11-21T11:00:00.000Z",
+      "note": null
+    }
+  ],
+  "metrics": {
+    "totals": {
+      "verifications": 148,
+      "byStatus": {
+        "OK": 131,
+        "NIEPELNE": 9,
+        "AWARIA": 2,
+        "DOPRECYZUJ": 5,
+        "POZA_ZAKRESEM": 1
+      },
+      "byVerdict": {
+        "POTWIERDZONE": 41,
+        "FALSZYWE": 38,
+        "WPROWADZAJACE": 22,
+        "BRAK_DOWODOW": 24,
+        "NIE_PODLEGA": 6
+      },
+      "abstentions": 41,
+      "cacheHits": 37,
+      "injectionEvents": 14
+    },
+    "latency": {
+      "p50": 6400,
+      "p95": 14100,
+      "byStep": {
+        "normalize": {
+          "p50": 40,
+          "p95": 120
+        },
+        "claims": {
+          "p50": 1100,
+          "p95": 2600
+        },
+        "retrieval": {
+          "p50": 800,
+          "p95": 2100
+        },
+        "assess": {
+          "p50": 3900,
+          "p95": 8800
+        },
+        "verify": {
+          "p50": 1500,
+          "p95": 3300
+        },
+        "total": {
+          "p50": 6400,
+          "p95": 14100
+        }
+      }
+    },
+    "cost": {
+      "totalUsd": 1.38,
+      "per100Usd": 0.93,
+      "byModel": {
+        "openai/gpt-6.2-sol": {
+          "usd": 1.12,
+          "calls": 222
+        },
+        "openai/gpt-6-luna": {
+          "usd": 0.26,
+          "calls": 296
+        }
+      }
+    },
+    "llm": {
+      "calls": 518,
+      "tokensIn": 1843000,
+      "tokensOut": 212400,
+      "byPurpose": {
+        "claims": {
+          "calls": 111,
+          "tokensIn": 91000,
+          "tokensOut": 15500,
+          "costUsd": 0.05
+        },
+        "assess": {
+          "calls": 111,
+          "tokensIn": 1310000,
+          "tokensOut": 140000,
+          "costUsd": 1.02
+        },
+        "verifier": {
+          "calls": 111,
+          "tokensIn": 330000,
+          "tokensOut": 22000,
+          "costUsd": 0.16
+        },
+        "router": {
+          "calls": 185,
+          "tokensIn": 112000,
+          "tokensOut": 34900,
+          "costUsd": 0.15
+        }
+      }
+    },
+    "retrievalErrors": {
+      "byBranch": {
+        "live": 6,
+        "connector": 2,
+        "bm25": 0,
+        "vector": 1
+      }
+    },
+    "window": {
+      "from": "2026-11-14T00:00:00.000Z",
+      "to": "2026-11-21T10:15:00.000Z"
+    }
+  },
+  "users": [
+    {
+      "username": "moderator",
+      "role": "moderator",
+      "createdAt": "2026-11-18T08:00:00.000Z"
+    },
+    {
+      "username": "analityk",
+      "role": "analityk",
+      "createdAt": "2026-11-18T08:00:00.000Z"
+    },
+    {
+      "username": "administrator",
+      "role": "administrator",
+      "createdAt": "2026-11-18T08:00:00.000Z"
+    }
+  ],
+  "tokens": [
+    {
+      "id": "1",
+      "label": "Pulpit Grafana",
+      "createdAt": "2026-11-19T10:00:00.000Z",
+      "lastUsedAt": "2026-11-21T10:00:00.000Z",
+      "role": "analityk"
+    },
+    {
+      "id": "2",
+      "label": "Klient MCP — zespół analiz",
+      "createdAt": "2026-11-20T14:30:00.000Z",
+      "lastUsedAt": null,
+      "role": "analityk"
+    }
+  ]
+}

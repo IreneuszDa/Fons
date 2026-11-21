@@ -1,0 +1,760 @@
+# Katalog źródeł Prawdowida (CatalogSource, src/shared/contracts.ts).
+#
+# Poziom (level) jest przypisany do DOKŁADNEGO hosta: subdomena NIE dziedziczy poziomu domeny nadrzędnej
+# (np. "www.dw.com" jest w katalogu, "dw.com" ani "p.dw.com" nie są). Poziom nigdy nie pochodzi
+# z odpowiedzi modelu ani konektora.
+#
+#   level 1 — pierwotne / urzędowe (akty prawne, dane publiczne, komunikaty instytucji)
+#   level 2 — fact-check sygnatariusza IFCN/EFCSN albo analiza instytucji publicznej UE/NATO
+#   level 3 — wiarygodne źródło wtórne
+#
+# Pole ifcnEfcsn = true WYŁĄCZNIE gdy organizacja figuruje na oficjalnej liście IFCN
+# (ifcncodeofprinciples.poynter.org/signatories, zakładki "Active" lub "In Renewal") albo EFCSN
+# (members.efcsn.com/signatories) — stan sprawdzony 2026-11-21, szczegóły i zrzut list w docs/SOURCES.md.
+# Pole liveSearch = true oznacza, że host jest dopuszczony do wyszukiwania NA ŻYWO (hosty urzędowe oraz fact-checkerzy
+# IFCN/EFCSN; PLAN §3) — z wyjątkiem źródeł tylko przez API pośrednika (fetchMethod: api, np. Demagog przez Google Fact Check
+# Tools API). Gałąź live wymaga liveSearch: true. To flaga polityki, nie gwarancja dostępu: serwis może blokować boty (HTTP 403) —
+# dostawca wyszukiwania musi wtedy uznać gałąź za niedostępną, a nie obchodzić zabezpieczenie. Pole jest w kontrakcie CatalogSource.
+#
+# Wpisy bez rekordów w korpusie (recordCount = 0) są w katalogu, bo: (a) źródło jest zablokowane dla botów
+# i zostało pominięte (opis w docs/SOURCES.md), albo (b) oczekujemy go w pakiecie organizatora.
+
+- id: sejm-eli
+  hosts: [api.sejm.gov.pl]
+  publisher: Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: dziennik-ustaw
+  licence: >-
+    Akty normatywne i urzędowe dokumenty publiczne są wyłączone spod ochrony prawa autorskiego
+    (art. 4 pkt 1-2 ustawy z 4.02.1994 r. o prawie autorskim i prawach pokrewnych). Teksty ujednolicone
+    (Kancelaria Sejmu) mają charakter informacyjny i są oparte wyłącznie na tych aktach.
+  fetchMethod: api
+  updateFrequency: >-
+    przy każdym przebudowaniu korpusu (npm run corpus:build); ELI aktualizuje się na bieżąco po publikacji w Dz.U./M.P.
+  qualification: >-
+    Dziennik Ustaw i Monitor Polski to urzędowe publikatory aktów prawnych; API ELI Sejmu udostępnia ich
+    metadane i teksty (HTML - tekst ogłoszony; PDF - tekst ujednolicony). Źródło pierwotne dla pytań o to,
+    co mówi polskie prawo (sankcje, cudzoziemcy, granica, obronność, wybory). Ten sam host (api.sejm.gov.pl) to także
+    oficjalne API Sejmu: rekordy o posłach X kadencji i klubach poselskich (zdania wygenerowane z pól API, tag
+    "generated-from-data", url = dokładny adres wpisu posła/klubu) oraz rekord o Marszałku Sejmu (podpis pod
+    obwieszczeniem Marszałka Sejmu w Dz.U. - dosłowna linia "Marszałek Sejmu: ...").
+  exclusion: >-
+    Wykluczamy: akty uchylone w całości; fragmenty bez treści normatywnej ("(uchylony)"); teksty ogłoszone
+    (pierwotne) aktów, które mają nowszy tekst ujednolicony - zamiast nich używamy tekstu ujednoliconego.
+  homepage: https://api.sejm.gov.pl/eli.html
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: eur-lex
+  hosts: [eur-lex.europa.eu]
+  publisher: Urząd Publikacji Unii Europejskiej (EUR-Lex)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: eu-publications-office
+  licence: >-
+    Ponowne wykorzystywanie dokumentów UE z podaniem źródła na zasadach decyzji Komisji 2011/833/UE
+    (CC BY 4.0) i informacji prawnej EUR-Lex. Tylko Dziennik Urzędowy UE ma moc prawną.
+  fetchMethod: api
+  updateFrequency: przy przebudowaniu korpusu; konsolidacje aktów pojawiają się po każdej zmianie rozporządzenia
+  qualification: >-
+    Akty prawa UE (rozporządzenia, decyzje) w wersji skonsolidowanej lub opublikowanej w Dz.Urz. UE; pobierane
+    przez oficjalny interfejs Urzędu Publikacji (publications.europa.eu - negocjacja treści po numerze CELEX),
+    bo strony eur-lex.europa.eu są chronione przed automatycznym pobieraniem (wyzwanie WAF), którego nie obchodzimy.
+  exclusion: >-
+    Wykluczamy wersje nieobowiązujące, gdy istnieje nowsza konsolidacja; teksty nieautentyczne (poza Dz.Urz.) są
+    oznaczone w tytule rekordu jako "tekst skonsolidowany - dokument informacyjny".
+  homepage: https://eur-lex.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: eurostat
+  hosts: [ec.europa.eu]
+  publisher: Eurostat (Komisja Europejska)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: european-commission
+  licence: >-
+    CC BY 4.0 (zasady ponownego wykorzystywania Eurostatu; decyzja Komisji 2011/833/UE) - wymagane podanie źródła.
+  fetchMethod: api
+  updateFrequency: dane roczne/miesięczne; korpus odświeżany przez npm run corpus:build, pole publishedAt = data aktualizacji zbioru
+  qualification: >-
+    Oficjalna statystyka europejska (migracja i azyl, wydatki na obronność, energia, gospodarka). Rekordy to zdania
+    wygenerowane z wartości API z jawnym okresem; dokładne liczby zachowane; tag "generated-from-data";
+    url wskazuje dokładne zapytanie do API.
+  exclusion: >-
+    Wykluczamy dane oznaczone flagą niepewności (np. "p" - tymczasowe) bez adnotacji w tekście; brak wartości = brak rekordu.
+  homepage: https://ec.europa.eu/eurostat
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+  # ec.europa.eu to szeroki host (m.in. Rzecznik Komisji, presscorner, strony DG): poziom 1 źródła "Eurostat" dotyczy tylko /eurostat/.
+  pathPrefixes: ["/eurostat/"]
+
+- id: nato
+  hosts: [www.nato.int]
+  publisher: NATO (Organizacja Traktatu Północnoatlantyckiego)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: nato
+  licence: >-
+    Treści NATO (nato.int) - polityka praw autorskich NATO dopuszcza cytowanie z atrybucją; nie potwierdzono
+    maszynowo licencji otwartej, dlatego przechowujemy krótkie fragmenty (<= 1200 znaków) z linkiem do źródła.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu; strony tematyczne mają datę "Updated" w treści
+  qualification: >-
+    Oficjalne komunikaty, deklaracje szczytów i strony tematyczne Sojuszu - źródło pierwotne dla faktów o
+    członkostwie, art. 5, relacjach z Rosją i Ukrainą, wydatkach na obronność oraz o Sekretarzu Generalnym NATO
+    (strona "NATO Secretary General").
+  exclusion: >-
+    Wykluczamy strony archiwalne bez daty oraz materiały multimedialne; deklaracje cytowane tylko w fragmentach z linkiem.
+  homepage: https://www.nato.int/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: eu-portal
+  hosts: [european-union.europa.eu]
+  publisher: Portal Unii Europejskiej (Urząd Publikacji UE)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: eu-publications-office
+  licence: >-
+    Informacja prawna portalu europa.eu: ponowne wykorzystywanie treści z podaniem źródła (decyzja Komisji 2011/833/UE,
+    CC BY 4.0), o ile przy danym materiale nie zaznaczono inaczej; przechowujemy krótkie fragmenty z linkiem.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: >-
+    Oficjalny portal instytucji UE; profile państw członkowskich zawierają daty przystąpienia do UE i do strefy Schengen
+    oraz dane liczbowe z adnotacją o źródle (Eurostat).
+  exclusion: Wykluczamy strony bez bloku podstawowych informacji o kraju z datą przystąpienia i materiały redakcyjne bez wskazania źródła danych.
+  homepage: https://european-union.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+# pathPrefixes dla www.gov.pl celowo NIE ustawiamy: katalog nie rozróżnia instytucji (jedno źródło "gov-pl" z wydawcą zbiorczym),
+# a każda strona pod /web/<instytucja> to serwis organu administracji publicznej (poziom 1). Rozdzielenie na instytucje wymagałoby
+# osobnych wpisów katalogu (jeden host nie może być w dwóch wpisach) — nie jest potrzebne, dopóki wszystkie mają ten sam poziom i grupę.
+- id: gov-pl
+  hosts: [www.gov.pl]
+  publisher: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: rzad-rp
+  licence: >-
+    Informacje urzędowe i komunikaty administracji publicznej. Licencja otwarta nie jest potwierdzona, dlatego
+    stosujemy krótki cytat (<= 300 znaków) + link + wskazanie wydawcy; nie powielamy całych tekstów.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu i na żywo dla kanałów z rejestru instytucji
+  qualification: >-
+    Oficjalne oświadczenia i komunikaty polskich organów władzy (np. MSZ) - źródło pierwotne dla stanowisk
+    i decyzji Rządu RP. Ponadto strony urzędowe o osobach pełniących funkcje: skład Rady Ministrów (gov.pl/web/premier),
+    kierownictwo MSZ (gov.pl/web/dyplomacja) oraz rejestr "Polskie przedstawicielstwa na świecie" (ambasadorowie
+    i szefowie stałych przedstawicielstw; zdania wygenerowane z wierszy rejestru, tag "generated-from-data").
+    Przy zapytaniu pobieramy też komunikaty Regionalnego Systemu Ostrzegania, raport dobowy RCB,
+    ostrzeżenia GIS, komunikaty PAA i aktualności KG PSP, MON, MSWiA, Ministerstwa Infrastruktury i KPRM.
+  exclusion: >-
+    Wykluczamy treści bez daty publikacji w nagłówku, wpisy wyłącznie multimedialne oraz strony zawierające
+    dane osobowe osób prywatnych.
+  homepage: https://www.gov.pl/web/dyplomacja
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: msz-odyseusz
+  hosts: [odyseusz.gov.pl]
+  publisher: Ministerstwo Spraw Zagranicznych - serwis Odyseusz (informacje dla podróżujących)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: rzad-rp
+  licence: >-
+    Informacje urzędowe MSZ dla podróżujących. Licencja otwarta nie jest potwierdzona, dlatego stosujemy krótki
+    cytat (<= 300 znaków) + link + wskazanie wydawcy; nie powielamy całych tekstów ani nie zapisujemy ich w korpusie.
+  fetchMethod: api
+  updateFrequency: na żywo przy zapytaniu (gałąź "official"; migawka w live_snapshots, TTL 48 h)
+  qualification: >-
+    Oficjalny serwis MSZ z ostrzeżeniami dla podróżujących (poziomy 1-4 dla każdego kraju, komunikaty, zasady wjazdu).
+    Strony gov.pl "Informacje dla podróżujących" przekierowują właśnie tutaj, więc to kanał pierwszego źródła
+    dla twierdzeń typu "MSZ odradza / zakazuje wyjazdów do ...". Pobierane są wyłącznie publiczne dane profili
+    krajów i stron tematycznych wskazane w data/authorities.yaml.
+  exclusion: >-
+    Nie pobieramy danych wymagających logowania (zgłoszenia podróży, konta użytkowników) ani danych kontaktowych
+    placówek. Rekord z trafieniem detektora ataków jest odrzucany.
+  homepage: https://odyseusz.gov.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: eeas
+  hosts: [www.eeas.europa.eu]
+  publisher: Europejska Służba Działań Zewnętrznych (EEAS)
+  type: analiza
+  level: 2
+  role: tresc
+  independenceGroup: eeas
+  licence: >-
+    Strona EEAS działa na tej samej informacji prawnej co serwisy Komisji Europejskiej (european-union.europa.eu/legal-notice);
+    przechowujemy krótkie cytaty z linkiem.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: >-
+    Analizy instytucji publicznej UE o zagranicznej manipulacji informacją i ingerencją (FIMI) - raporty EEAS.
+  exclusion: >-
+    Wykluczamy strony bez daty, komunikaty prasowe niezwiązane z FIMI i materiały partnerów zewnętrznych.
+  homepage: https://www.eeas.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: euvsdisinfo
+  hosts: [euvsdisinfo.eu]
+  publisher: EUvsDisinfo (East StratCom Task Force, EEAS)
+  type: analiza
+  level: 2
+  role: stala_rola
+  independenceGroup: eeas
+  licence: >-
+    Licencja otwarta nie jest potwierdzona (serwis nie podaje jej jawnie), dlatego przechowujemy wyłącznie metadane
+    rekordu bazy (tytuł tezy dezinformacyjnej, data) + link; bez treści uzasadnień.
+  fetchMethod: html,mcp
+  updateFrequency: przy przebudowaniu korpusu (pierwsza strona wyników dla zestawu haseł lub import MCP z tokenem)
+  qualification: >-
+    Baza narracji prorosyjskiej dezinformacji prowadzona przez służbę UE; wpis o prefiksie "DISINFO" oznacza, że
+    narracja została sklasyfikowana jako dezinformacja. Przypadki importowane przez MCP służą do dopasowania narracji.
+    Do rozstrzygnięcia potrzebne są dowody spełniające wymogi PLAN §4.
+  exclusion: >-
+    Strony szczegółowe wpisów (/report/...) są chronione wyzwaniem antybotowym (HTTP 403) i NIE są pobierane;
+    paginacja (/page/N/) jest zablokowana w robots.txt - bierzemy tylko pierwszą stronę wyników każdego hasła.
+  homepage: https://euvsdisinfo.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: pravda-pl
+  hosts: [pravda.org.pl]
+  publisher: Stowarzyszenie Pravda (pravda.org.pl)
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: pravda-pl
+  licence: >-
+    Metadane ClaimReview z publicznego feedu DataCommons Fact Check Markup (CC BY 4.0, autorzy ocen: wydawca);
+    przechowujemy tezę, ocenę, krótkie uzasadnienie (<= 300 znaków) i link.
+  fetchMethod: claimreview-feed
+  updateFrequency: feed odświeżany przez DataCommons co kilka godzin; korpus przy przebudowaniu
+  qualification: >-
+    Polska organizacja fact-checkingowa na liście IFCN (Active, "Pravda", Poland, weryfikacja 25.06.2026) i EFCSN
+    (Verified, "Pravda from Poland", od 23.02.2024).
+  exclusion: >-
+    Wykluczamy oceny spoza tabeli mapowania jako rozstrzygające (zostają z mapped=null), wpisy bez tezy (claimReviewed)
+    i bez oceny.
+  homepage: https://pravda.org.pl/
+  nonEea: false
+  ifcnEfcsn: true
+  liveSearch: true
+
+- id: dpa-factchecking
+  hosts: [dpa-factchecking.com, www.dpa-factchecking.com]
+  publisher: dpa Faktencheck (Deutsche Presse-Agentur)
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: dpa
+  licence: >-
+    Metadane ClaimReview z publicznego feedu DataCommons Fact Check Markup (CC BY 4.0, autorzy ocen: wydawca);
+    tylko teza, ocena, krótki fragment i link.
+  fetchMethod: claimreview-feed
+  updateFrequency: feed odświeżany przez DataCommons co kilka godzin; korpus przy przebudowaniu
+  qualification: >-
+    Agencja dpa jest na liście IFCN (Active, "dpa Deutsche Presse-Agentur GmbH") i EFCSN (Verified, "dpa", od 27.07.2023).
+    Do korpusu trafiają tylko oceny o Polsce, Ukrainie, Rosji, Białorusi, NATO, UE i sankcjach.
+  exclusion: >-
+    Wykluczamy oceny niezwiązane z zakresem tematycznym korpusu (filtr słów kluczowych) oraz bez zrozumiałej etykiety oceny.
+  homepage: https://dpa-factchecking.com/
+  nonEea: false
+  ifcnEfcsn: true
+  liveSearch: true
+
+- id: dw-factcheck
+  hosts: [www.dw.com]
+  publisher: Deutsche Welle - DW Fact Check
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: dw
+  licence: >-
+    Metadane ClaimReview z publicznego feedu DataCommons Fact Check Markup (CC BY 4.0, autorzy ocen: wydawca);
+    tylko teza, ocena, krótki fragment uzasadnienia i link.
+  fetchMethod: claimreview-feed
+  updateFrequency: feed odświeżany przez DataCommons co kilka godzin; korpus przy przebudowaniu
+  qualification: >-
+    Deutsche Welle jest na liście IFCN (Active, weryfikacja 15.09.2026). Nie jest na liście EFCSN.
+  exclusion: >-
+    Host www.dw.com publikuje też zwykłe wiadomości - do korpusu trafiają WYŁĄCZNIE rekordy ClaimReview
+    (fact-checki) zgodne z filtrem tematycznym; zwykłe artykuły są wykluczone.
+  homepage: https://www.dw.com/en/fact-check/t-56584214
+  nonEea: false
+  ifcnEfcsn: true
+  liveSearch: true
+
+- id: factcheck-org
+  hosts: [www.factcheck.org]
+  publisher: FactCheck.org (Annenberg Public Policy Center)
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: factcheck-org
+  licence: >-
+    Metadane ClaimReview z publicznego feedu DataCommons Fact Check Markup (CC BY 4.0, autorzy ocen: wydawca);
+    tylko teza, ocena, krótki fragment i link.
+  fetchMethod: claimreview-feed
+  updateFrequency: feed odświeżany przez DataCommons co kilka godzin; korpus przy przebudowaniu
+  qualification: >-
+    FactCheck.org jest na liście IFCN (Active, weryfikacja 20.05.2026); organizacja spoza EOG.
+  exclusion: Tylko oceny zgodne z filtrem tematycznym (Polska, Ukraina, Rosja, Białoruś, NATO, UE, sankcje).
+  homepage: https://www.factcheck.org/
+  nonEea: true
+  ifcnEfcsn: true
+  liveSearch: true
+
+- id: politifact
+  hosts: [www.politifact.com]
+  publisher: PolitiFact (Poynter Institute)
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: politifact
+  licence: >-
+    Metadane ClaimReview z publicznego feedu DataCommons Fact Check Markup (CC BY 4.0, autorzy ocen: wydawca);
+    tylko teza, ocena, krótki fragment i link.
+  fetchMethod: claimreview-feed
+  updateFrequency: feed odświeżany przez DataCommons co kilka godzin; korpus przy przebudowaniu
+  qualification: PolitiFact jest na liście IFCN (Active); organizacja spoza EOG.
+  exclusion: Tylko oceny zgodne z filtrem tematycznym (Polska, Ukraina, Rosja, Białoruś, NATO, UE, sankcje).
+  homepage: https://www.politifact.com/
+  nonEea: true
+  ifcnEfcsn: true
+  liveSearch: true
+
+- id: demagog
+  hosts: [demagog.org.pl]
+  publisher: Stowarzyszenie Demagog
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: demagog-pl
+  licence: >-
+    Dane wyłącznie przez Google Fact Check Tools API (znaczniki ClaimReview publikowane przez Demagoga; warunki korzystania
+    z interfejsów API Google). Z serwisem demagog.org.pl nie łączymy się bezpośrednio. Przechowujemy tylko tezę (dosłownie z API),
+    ocenę, daty, tytuł i link do recenzji — jako odnośnik do źródła; nie trenujemy modeli (robots.txt Demagoga: ai-train=no).
+  fetchMethod: api
+  updateFrequency: >-
+    przy przebudowaniu korpusu (npm run corpus:demagog; wymaga FACTCHECK_API_KEY w .env); recenzje z ostatniego roku
+    (maxAgeDays=365, zmiana: DEMAGOG_MAX_AGE_DAYS w .env), od najnowszej, najwyżej 2000
+  qualification: >-
+    Największy polski fact-checker; na liście IFCN (Active, "Demagog Association", weryfikacja 04.10.2024) i EFCSN (Verified,
+    "DEMAGOG", od 25.05.2023). Rekordy: recenzje z claims:search Google Fact Check Tools API z filtrem
+    reviewPublisherSiteFilter=demagog.org.pl (wypowiedzi polityków i fake newsy), tylko adresy z dokładnym hostem demagog.org.pl.
+    Pomiar 2026-11-21: API zwraca 9338 recenzji Demagoga (2015–2026); z ostatniego roku zapisano 742. Okno roku, bo przy 2 latach
+    (ok. 1750 rekordów) Demagog wypierał z wyszukiwania rekordy urzędowe. Zapytanie do API zawiera tylko filtr wydawcy — żadnych
+    danych użytkowników. Link do Demagoga wklejony przez użytkownika jest pobierany raz jako przedmiot sprawdzenia (nie dowód).
+  exclusion: >-
+    Wykluczamy recenzje spoza hosta demagog.org.pl, z sekcji obcojęzycznych (/ua/), starsze niż okno, bez tezy lub oceny, z tezą
+    krótszą niż 21 znaków i z oceną bez czytelnej etykiety. Bez pobierania
+    stron Demagoga: bez treści analiz, bez wyszukiwania na żywo (liveSearch: false) i bez sondy dostępności.
+  homepage: https://demagog.org.pl/
+  nonEea: false
+  ifcnEfcsn: true
+  liveSearch: false
+
+- id: afp-sprawdzam
+  hosts: [sprawdzam.afp.com]
+  publisher: AFP Sprawdzam
+  type: factcheck
+  level: 2
+  role: stala_rola
+  independenceGroup: afp
+  licence: >-
+    Licencja nieustalona. robots.txt serwisu jest niedostępny dla klienta PrawdowidBot (HTTP 403 "Access Denied" CDN, także dla
+    strony głównej, /rss.xml i /sitemap.xml; sprawdzone 2026-11-21 curlem i klientem Node) — traktujemy to jak zakaz i
+    zabezpieczeń nie obchodzimy. Rekordy wyłącznie z pakietu organizatora.
+  fetchMethod: organizer-pack
+  updateFrequency: zależnie od pakietu organizatora
+  qualification: >-
+    AFP jest na liście IFCN (Active, "AFP Fact Check", weryfikacja 15.09.2026) i EFCSN (Verified, "AFP", od 13.07.2023).
+    Brak rekordów w korpusie, bo (1) serwis blokuje boty (jw.), (2) w feedzie ClaimReview DataCommons (stan 2026-11-21) nie ma
+    wpisów z hosta sprawdzam.afp.com - jest tylko factuel.afp.com (AFP po francusku, 2 wpisy, host spoza katalogu).
+  exclusion: Pobieranie automatyczne wyłączone do czasu zgody wydawcy lub pakietu organizatora (patrz docs/SOURCES.md, rozdz. 9).
+  homepage: https://sprawdzam.afp.com/
+  nonEea: false
+  ifcnEfcsn: true
+  liveSearch: true
+
+- id: konkret24
+  hosts: [konkret24.tvn24.pl]
+  publisher: Konkret24 (TVN24)
+  type: factcheck
+  level: 3
+  role: stala_rola
+  independenceGroup: tvn24
+  licence: Licencja nieustalona; brak rekordów w korpusie startowym - oczekiwane w pakiecie organizatora.
+  fetchMethod: organizer-pack
+  updateFrequency: zależnie od pakietu organizatora
+  qualification: >-
+    Redakcja fact-checkingowa dużego polskiego medium. NIE figuruje na listach IFCN ani EFCSN (stan 2026-11-21),
+    dlatego poziom 3 (źródło wtórne), a rekordy nie spełniają warunku "fact-check IFCN/EFCSN" z PLAN §4.
+  exclusion: Pobieranie automatyczne niewykonane w korpusie startowym.
+  homepage: https://konkret24.tvn24.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: fakehunter
+  hosts: [fakehunter.pap.pl]
+  publisher: PAP FakeHunter (Polska Agencja Prasowa)
+  type: factcheck
+  level: 3
+  role: stala_rola
+  independenceGroup: pap
+  licence: Licencja nieustalona; brak rekordów w korpusie startowym - oczekiwane w pakiecie organizatora.
+  fetchMethod: organizer-pack
+  updateFrequency: zależnie od pakietu organizatora
+  qualification: >-
+    Serwis fact-checkingowy agencji prasowej. NIE figuruje na listach IFCN ani EFCSN (stan 2026-11-21) - poziom 3.
+    Strona zwraca botom blokadę (Incapsula, HTTP 403 - sprawdzone 2026-11-21), której nie obchodzimy.
+  exclusion: Pobieranie automatyczne niewykonane (blokada botów).
+  homepage: https://fakehunter.pap.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+# ───────────── Urzędnicy i funkcjonariusze publiczni (faza 2: pytania "kto jest ...") ─────────────
+# Informacje o osobach pełniących funkcje publiczne pochodzą z oficjalnych, publicznych stron i API instytucji
+# (art. 4 pkt 1-2 prawa autorskiego nie obejmuje urzędowych dokumentów; dane o funkcji publicznej i klubie poselskim
+# są jawne z mocy prawa i publikowane przez same instytucje). Nie zapisujemy danych prywatnych (adres, e-mail, data urodzenia).
+
+- id: prezydent-pl
+  hosts: [www.prezydent.pl]
+  publisher: Kancelaria Prezydenta Rzeczypospolitej Polskiej (prezydent.pl)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: kprp
+  licence: >-
+    Oficjalna strona Prezydenta RP (informacje urzędowe). Licencja otwarta nie jest potwierdzona maszynowo, dlatego
+    stosujemy krótki dosłowny cytat (<= 300 znaków) + link + wskazanie wydawcy; nie powielamy całych tekstów.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (biogram i kompetencje Prezydenta zmieniają się rzadko; data z meta og:article:published_time)
+  qualification: >-
+    Strona urzędowa głowy państwa - źródło pierwotne dla pytań o to, kto jest Prezydentem RP i od kiedy sprawuje urząd.
+  exclusion: Wykluczamy materiały multimedialne, aktualności i strony bez jednoznacznego wskazania osoby i urzędu.
+  homepage: https://www.prezydent.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: senat-pl
+  hosts: [www.senat.gov.pl]
+  publisher: Senat Rzeczypospolitej Polskiej (senat.gov.pl)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: senat-rp
+  licence: >-
+    Oficjalna strona Senatu RP (informacje urzędowe). Licencja otwarta nie jest potwierdzona maszynowo, dlatego
+    stosujemy krótkie dosłowne fragmenty (imię i nazwisko + pełniona funkcja w Prezydium) + link. robots.txt dopuszcza
+    pobieranie stron (zakazane tylko /gfx/ i /pdf/).
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (skład Prezydium Senatu zmienia się rzadko)
+  qualification: >-
+    Strona urzędowa izby wyższej parlamentu - źródło pierwotne dla pytań o Marszałka Senatu i wicemarszałków.
+  exclusion: Wykluczamy zdjęcia, biogramy i aktualności; bierzemy tylko listę Prezydium Senatu z funkcjami.
+  homepage: https://www.senat.gov.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: ec-commission
+  hosts: [commission.europa.eu]
+  publisher: Komisja Europejska (commission.europa.eu)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: european-commission
+  licence: >-
+    Informacja prawna Komisji (commission.europa.eu/legal-notice_en): treści własne UE na tej stronie są udostępnione
+    na licencji CC BY 4.0, o ile nie zaznaczono inaczej - wymagane podanie źródła. Przechowujemy krótkie dosłowne fragmenty z linkiem.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (skład Kolegium Komisarzy zmienia się rzadko)
+  qualification: >-
+    Oficjalna strona instytucji UE - źródło pierwotne dla pytań o skład Komisji Europejskiej, jej Przewodniczącą,
+    Wysoką Przedstawiciel i polskiego komisarza.
+  exclusion: Wykluczamy komunikaty prasowe i materiały niezwiązane ze składem Kolegium.
+  homepage: https://commission.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: ep-open-data
+  hosts: [data.europarl.europa.eu]
+  publisher: Parlament Europejski - portal otwartych danych (data.europarl.europa.eu)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: european-parliament
+  licence: >-
+    Portal otwartych danych Parlamentu Europejskiego (API v2). Warunków ponownego wykorzystania nie potwierdzono maszynowo
+    na stronie API, dlatego zapisujemy wyłącznie krótkie zdania wygenerowane z pól danych (imię i nazwisko, państwo,
+    grupa polityczna) z linkiem do wpisu API; robots.txt dopuszcza /api/ z opóźnieniem 2 s (przestrzegamy).
+  fetchMethod: api
+  updateFrequency: przy przebudowaniu korpusu (lista posłów "show-current"; skład PE zmienia się w trakcie kadencji)
+  qualification: >-
+    Oficjalne dane PE o obecnych posłach do Parlamentu Europejskiego wybranych w Polsce i ich grupach politycznych w PE.
+    Rekordy są zdaniami wygenerowanymi z danych API (tag "generated-from-data"; url wskazuje wpis danego posła).
+  exclusion: Wykluczamy posłów, których nie ma na liście obecnych (mandat wygasł); brak pola = brak informacji w zdaniu.
+  homepage: https://data.europarl.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+# ───────────── Rodziny tematyczne (sankcje, wojna w Ukrainie / FIMI, statystyka GUS) ─────────────
+
+- id: ec-finance
+  hosts: [finance.ec.europa.eu]
+  publisher: Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: european-commission
+  licence: >-
+    Informacja prawna Komisji (CC BY 4.0, decyzja 2011/833/UE): ponowne wykorzystanie z podaniem źródła; przechowujemy krótkie
+    dosłowne fragmenty z linkiem. robots.txt dopuszcza pobieranie stron (sprawdzone 2026-11-21).
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu; strona o sankcjach ma wiersz "Latest update" i oś pakietów sankcji
+  qualification: >-
+    Oficjalna strona Komisji o sankcjach UE wobec Rosji i Białorusi: oś czasowa pakietów sankcji z datami przyjęcia, opis środków
+    (węgiel, ropa, SWIFT, cena maksymalna ropy) i komunikaty o przyjęciu kolejnych pakietów. Rada UE (consilium.europa.eu) blokuje boty,
+    więc to źródło zastępuje jej oś czasu sankcji.
+  exclusion: Wykluczamy strony bez daty lub opisu środków (listy podmiotów, FAQ techniczne) i pliki do pobrania.
+  homepage: https://finance.ec.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: ec-home-affairs
+  hosts: [home-affairs.ec.europa.eu]
+  publisher: Komisja Europejska - DG ds. Migracji i Spraw Wewnętrznych (home-affairs.ec.europa.eu)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: european-commission
+  licence: >-
+    Informacja prawna Komisji (CC BY 4.0, decyzja 2011/833/UE): ponowne wykorzystanie z podaniem źródła; przechowujemy krótkie
+    dosłowne fragmenty z linkiem. robots.txt dopuszcza pobieranie stron (sprawdzone 2026-11-21).
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (skład strefy Schengen zmienia się rzadko; ostatnie rozszerzenie 1.01.2025)
+  qualification: >-
+    Oficjalna strona Komisji o strefie Schengen: skład (29 państw: 25 państw UE i Islandia, Norwegia, Szwajcaria, Liechtenstein),
+    status Cypru i Irlandii, komunikat o pełnym członkostwie Bułgarii i Rumunii (1.01.2025). Źródło pierwotne dla pytań o Schengen.
+  exclusion: Wykluczamy strony o wizach, systemach informacyjnych i statystykach kontroli granicznych (poza zakresem pytań o skład strefy).
+  homepage: https://home-affairs.ec.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: un-news
+  hosts: [news.un.org, ukraine.un.org]
+  publisher: Organizacja Narodów Zjednoczonych - UN News i UN w Ukrainie
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: un
+  licence: >-
+    Treści ONZ (UN News, ukraine.un.org) - polityka ONZ dopuszcza cytowanie z podaniem źródła do celów informacyjnych; przechowujemy
+    krótkie dosłowne fragmenty (<= 1200 znaków) z linkiem. robots.txt dopuszcza pobieranie stron (sprawdzone 2026-11-21).
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (zestaw stron dobrany tematycznie, nie jest feedem)
+  qualification: >-
+    Oficjalne komunikaty ONZ o własnych ustaleniach i posiedzeniach: raport Biura Wysokiego Komisarza ds. Praw Człowieka (OHCHR)
+    o zabójstwach cywilów w obwodach kijowskim, czernihowskim i sumskim (Bucza), wystąpienia Wysokiej Przedstawiciel ds. rozbrojenia
+    w Radzie Bezpieczeństwa o braku wiedzy o programach broni biologicznej na Ukrainie, rozstrzygnięcie Rady ICAO ws. MH17.
+    Źródło pierwotne dla pytań "co ustaliła ONZ".
+  exclusion: Wykluczamy materiały wideo/audio, komentarze redakcyjne bez wskazania ustaleń instytucji i strony bez daty publikacji w metadanych.
+  homepage: https://news.un.org/
+  nonEea: true
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: onderzoeksraad
+  hosts: [onderzoeksraad.nl, www.onderzoeksraad.nl]
+  publisher: Rada ds. Bezpieczeństwa Niderlandów (Onderzoeksraad voor Veiligheid, Dutch Safety Board)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: dutch-safety-board
+  licence: >-
+    robots.txt serwisu zawiera sygnał Content-Signal: search=yes, ai-train=no, use=reference - korzystamy wyłącznie jako z indeksu
+    wyszukiwania i odnośnika (krótkie dosłowne fragmenty z linkiem; nie trenujemy modeli). Treści organu publicznego; podajemy źródło.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (ustalenia dot. MH17 są zamknięte; raport końcowy z 13.10.2015)
+  qualification: >-
+    Niezależny organ państwowy, który zbadał katastrofę lotu MH17 (17.07.2014): raport końcowy i komunikat prasowy - przyczyna (rakieta
+    Buk 9N314M) i obszar wystrzelenia. Źródło pierwotne dla pytań o przyczynę zestrzelenia MH17.
+  exclusion: Wykluczamy strony zbiorcze i multimedialne; tylko komunikat i strona dochodzenia dot. MH17.
+  homepage: https://onderzoeksraad.nl/en/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: prosecutionservice
+  hosts: [www.prosecutionservice.nl]
+  publisher: Prokuratura Niderlandów (Openbaar Ministerie) - Wspólny Zespół Śledczy JIT ws. MH17
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: dutch-prosecution
+  licence: >-
+    Treści organu publicznego (Ministerie van Justitie en Veiligheid); robots.txt dopuszcza pobieranie stron. Krótkie dosłowne fragmenty
+    z linkiem i podaniem źródła; licencja otwarta nie jest potwierdzona maszynowo.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu (strona z osią czasu śledztwa i procesu; data modyfikacji z metadanych DCTERMS)
+  qualification: >-
+    Prokuratura prowadząca śledztwo JIT i proces MH17 (wyrok z 17.11.2022): oś czasu śledztwa, ustalenia o systemie Buk i wyroku.
+    Źródło pierwotne dla pytań o ustalenia JIT i wyrok.
+  exclusion: Wykluczamy strony o sprawach niezwiązanych z MH17 i dokumenty procesowe w formie plików.
+  homepage: https://www.prosecutionservice.nl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: government-nl
+  hosts: [www.government.nl]
+  publisher: Rząd Niderlandów (government.nl)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: dutch-government
+  licence: >-
+    Treści rządu Niderlandów (rijksoverheid.nl/government.nl) są udostępniane do ponownego wykorzystania z podaniem źródła
+    (zasada otwartości informacji publicznej); przechowujemy krótkie dosłowne fragmenty z linkiem.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: >-
+    Oficjalny komunikat rządu Niderlandów (strony wnioskodawcy sprawy) o rozstrzygnięciu Rady ICAO z 12.05.2025:
+    Federacja Rosyjska odpowiedzialna za zestrzelenie lotu MH17. ICAO (icao.int) nie udostępnia komunikatu pod stabilnym adresem.
+  exclusion: Wykluczamy komunikaty niezwiązane z MH17.
+  homepage: https://www.government.nl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: gus-bdl
+  hosts: [bdl.stat.gov.pl]
+  publisher: Główny Urząd Statystyczny - Bank Danych Lokalnych (API BDL)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: gus
+  licence: >-
+    Dane GUS udostępniane na licencji CC BY 4.0 (wymagane podanie źródła: GUS). API BDL jest publiczne, bez klucza; robots.txt
+    nie zawiera ograniczeń (strona zwraca HTML). Zapytania ograniczone do poziomu "Polska" (unit-level=0), <= 1 żądanie/s.
+  fetchMethod: api
+  updateFrequency: przy przebudowaniu korpusu; pole publishedAt = data aktualizacji tematu (lastUpdate) z API, a gdy jej brak - null
+  qualification: >-
+    Oficjalna statystyka publiczna Polski: stopa bezrobocia rejestrowanego (miesięcznie), wskaźnik cen towarów i usług konsumpcyjnych
+    (średnioroczny), ludność ogółem (stan 31 XII). Zdania wygenerowane z wartości API z jawnym okresem (tag "generated-from-data").
+    Uwaga: bezrobocie rejestrowane GUS różni się od stopy bezrobocia wg BAEL (Eurostat) - rekordy nazywają miarę wprost.
+  exclusion: Wykluczamy dane na poziomie regionów i gmin, wartości bez okresu oraz wskaźniki bez jednostki w API.
+  homepage: https://bdl.stat.gov.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+# ── Źródła z wyłączonym pobieraniem automatycznym (blokada botów) - w katalogu, by poziom linków wklejonych przez użytkownika był poprawny ──
+
+- id: consilium-eu
+  hosts: [www.consilium.europa.eu]
+  publisher: Rada Unii Europejskiej / Rada Europejska (consilium.europa.eu)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: council-eu
+  licence: Licencja nieustalona (strona wyłączona z pobierania automatycznego).
+  fetchMethod: html
+  updateFrequency: nie dotyczy (brak rekordów)
+  qualification: >-
+    Komunikaty Rady UE i konkluzje Rady Europejskiej (sankcje, rozszerzenie) - źródło pierwotne. Brak rekordów: serwis zwraca botom
+    stronę "Browser check" (wyzwanie antybotowe, sprawdzone 2026-11-21), której nie obchodzimy; zastępują go finance.ec.europa.eu,
+    portal european-union.europa.eu i EUR-Lex.
+  exclusion: Pobieranie automatyczne wyłączone (blokada botów).
+  homepage: https://www.consilium.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: ohchr
+  hosts: [www.ohchr.org]
+  publisher: Biuro Wysokiego Komisarza ONZ ds. Praw Człowieka (OHCHR)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: un
+  licence: Licencja nieustalona (strona wyłączona z pobierania automatycznego).
+  fetchMethod: html
+  updateFrequency: nie dotyczy (brak rekordów)
+  qualification: >-
+    Raporty i komunikaty OHCHR oraz Komisji Śledczej Rady Praw Człowieka ds. Ukrainy (Bucza) - źródło pierwotne. Brak rekordów:
+    serwis zwraca botom HTTP 403 (sprawdzone 2026-11-21), czego nie obchodzimy; ustalenia OHCHR cytujemy przez news.un.org i ukraine.un.org.
+  exclusion: Pobieranie automatyczne wyłączone (HTTP 403).
+  homepage: https://www.ohchr.org/
+  nonEea: true
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: un-press
+  hosts: [press.un.org]
+  publisher: Centrum Prasowe ONZ (press.un.org) - protokoły posiedzeń Rady Bezpieczeństwa
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: un
+  licence: Licencja nieustalona (strona wyłączona z pobierania automatycznego).
+  fetchMethod: html
+  updateFrequency: nie dotyczy (brak rekordów)
+  qualification: >-
+    Komunikaty o posiedzeniach Rady Bezpieczeństwa (m.in. "ONZ nie ma wiedzy o programach broni biologicznej na Ukrainie"). Brak rekordów:
+    serwis zwraca botom stronę "Client Challenge" (HTTP 200 bez treści, sprawdzone 2026-11-21), której nie obchodzimy.
+  exclusion: Pobieranie automatyczne wyłączone (wyzwanie antybotowe).
+  homepage: https://press.un.org/
+  nonEea: true
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: eu-enlargement
+  hosts: [neighbourhood-enlargement.ec.europa.eu]
+  publisher: Komisja Europejska - DG ds. Sąsiedztwa i Rozszerzenia
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: european-commission
+  licence: Licencja nieustalona (strona wyłączona z pobierania automatycznego).
+  fetchMethod: html
+  updateFrequency: nie dotyczy (brak rekordów)
+  qualification: >-
+    Strony Komisji o krajach kandydujących i statusie negocjacji - źródło pierwotne. Brak rekordów: serwis zwraca botom HTTP 403
+    (sprawdzone 2026-11-21); daty statusu kandydata pobieramy z portalu european-union.europa.eu (strona "Rozszerzenie UE").
+  exclusion: Pobieranie automatyczne wyłączone (HTTP 403).
+  homepage: https://neighbourhood-enlargement.ec.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false

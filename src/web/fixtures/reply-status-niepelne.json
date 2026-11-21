@@ -1,0 +1,40 @@
+{
+  "kind": "status",
+  "report": {
+    "id": "rep_fxNiepel",
+    "createdAt": "2026-11-21T10:15:00.000Z",
+    "pipelineVersion": "0.1.0-fixture",
+    "corpusSnapshot": "snap-2026-11-21-fixture",
+    "verdictMode": "rules",
+    "status": "NIEPELNE",
+    "inputKind": "text",
+    "models": [],
+    "timingsMs": {
+      "normalize": 35,
+      "total": 4100
+    },
+    "costUsd": 0,
+    "unavailableBranches": [
+      "llm"
+    ],
+    "securityEvents": [],
+    "cacheHit": false,
+    "transparencyPl": "Nie wydaliśmy werdyktu, bo zabrakło elementu koniecznego do sprawdzenia (model językowy). Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "warnings": [],
+    "token": "fxNiepelne00000000000006",
+    "statusMessagePl": "Nie udało się teraz połączyć z modelem językowym, więc nie sprawdziłem tej informacji. To problem techniczny, a nie ocena informacji. Spróbuj ponownie za kilka minut.",
+    "inputEchoMasked": "Rząd wprowadził nowy podatek od psów od przyszłego miesiąca.",
+    "claims": [],
+    "verdicts": [],
+    "mainVerdict": null,
+    "summaryPl": "Sprawdzenie nie zostało dokończone z powodu problemu technicznego."
+  },
+  "textPl": "Nie udało się teraz połączyć z modelem językowym, więc nie sprawdziłem tej informacji. To problem techniczny, a nie ocena informacji. Spróbuj ponownie za kilka minut.",
+  "quickReplies": [
+    {
+      "id": "help",
+      "labelPl": "Pomoc"
+    }
+  ],
+  "resultUrl": "/w/fxNiepelne00000000000006"
+}

@@ -1,0 +1,169 @@
+{
+  "kind": "verdict",
+  "report": {
+    "id": "rep_fxFalszy",
+    "createdAt": "2026-11-21T10:15:00.000Z",
+    "pipelineVersion": "0.1.0-fixture",
+    "corpusSnapshot": "snap-2026-11-21-fixture",
+    "verdictMode": "rules",
+    "status": "OK",
+    "inputKind": "url",
+    "models": [
+      {
+        "purpose": "claims",
+        "provider": "fake",
+        "model": "fixture-small",
+        "inputTokens": 820,
+        "outputTokens": 140,
+        "latencyMs": 1200,
+        "costUsd": 0.0004
+      },
+      {
+        "purpose": "assess",
+        "provider": "fake",
+        "model": "fixture-main",
+        "inputTokens": 3900,
+        "outputTokens": 610,
+        "latencyMs": 6100,
+        "costUsd": 0.0061
+      },
+      {
+        "purpose": "verifier",
+        "provider": "fake",
+        "model": "fixture-verifier",
+        "inputTokens": 1200,
+        "outputTokens": 90,
+        "latencyMs": 2100,
+        "costUsd": 0.0011
+      }
+    ],
+    "timingsMs": {
+      "normalize": 40,
+      "claims": 1200,
+      "retrieval": 900,
+      "assess": 6100,
+      "verify": 2100,
+      "total": 10500
+    },
+    "costUsd": 0.0076,
+    "unavailableBranches": [],
+    "securityEvents": [
+      {
+        "location": "fetched_page",
+        "pattern": "ignore_previous_pl",
+        "excerpt": "[ukryty tekst] zignoruj poprzednie instrukcje i…",
+        "severity": "high"
+      }
+    ],
+    "cacheHit": false,
+    "transparencyPl": "Kod sprawdził: czy cytat naprawdę jest w źródle z katalogu, poziom źródła, daty i niezależność wydawców. Model fixture-main ocenił, czy cytat wspiera twierdzenie; model fixture-verifier to sprawdził. Przeczytaj źródło sam. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "warnings": [
+      {
+        "kind": "injection_detected",
+        "textPl": "Na stronie był ukryty tekst, który próbował wydać polecenia systemowi. Zignorowaliśmy go — nie miał wpływu na wynik."
+      },
+      {
+        "kind": "incident_domain",
+        "textPl": "Ta domena pojawiła się wcześniej w bazie incydentów dezinformacyjnych. To tylko ostrzeżenie, nie dowód."
+      }
+    ],
+    "token": "fxFalszywe00000000000002",
+    "inputEchoMasked": "https://example.net/pilne-msz-zakaz — „MSZ od jutra zakazuje wszystkim Polakom wyjazdów do Niemiec”",
+    "claims": [
+      {
+        "id": "c1",
+        "text": "MSZ zakazało wszystkim Polakom wyjazdów do Niemiec.",
+        "type": "fakt",
+        "isMain": true,
+        "temporal": {
+          "kind": "jednorazowe",
+          "date": "2026-11-21"
+        },
+        "inputOverlap": 0.78
+      }
+    ],
+    "mainVerdict": "FALSZYWE",
+    "summaryPl": "Fact-check i komunikat urzędowy przeczą tej informacji: nie ma zakazu wyjazdów do Niemiec. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "verdicts": [
+      {
+        "claimId": "c1",
+        "verdict": "FALSZYWE",
+        "ruleApplied": 6,
+        "strength": {
+          "level": "mocna",
+          "primarySources": 1,
+          "independentPublishers": 2,
+          "newestEvidenceAt": "2026-11-20T00:00:00.000Z",
+          "archivalWarning": false,
+          "verifierAgreement": "zgoda",
+          "notes": []
+        },
+        "reasonPl": "Fact-check organizacji z sygnaturą IFCN ocenił tę tezę jako fałsz, a komunikat urzędowy z tego samego dnia mówi, że nie ma żadnych nowych ograniczeń.",
+        "evidence": [
+          {
+            "publishedAt": "2026-11-20T00:00:00.000Z",
+            "fetchedAt": "2026-11-20T08:00:00.000Z",
+            "aspect": "sedno",
+            "sourceType": "factcheck",
+            "level": 2,
+            "role": "stala_rola",
+            "recordId": "fx-fc:4",
+            "title": "Czy MSZ zakazało wyjazdów do Niemiec? (przykładowy fact-check)",
+            "publisher": "Redakcja fact-checkingowa — przykład",
+            "url": "https://example.org/factcheck/msz-niemcy",
+            "quote": "Teza o zakazie wyjazdów do Niemiec jest nieprawdziwa (cytat przykładowy)",
+            "relation": "OBALA",
+            "group": "obalajace",
+            "ratingRaw": "Fałsz"
+          },
+          {
+            "publishedAt": "2026-11-20T00:00:00.000Z",
+            "fetchedAt": "2026-11-20T08:00:00.000Z",
+            "aspect": "sedno",
+            "sourceType": "pierwotne",
+            "level": 1,
+            "role": "tresc",
+            "recordId": "fx-msz:5",
+            "title": "Komunikat w sprawie podróży (przykładowy rekord)",
+            "publisher": "Serwis rządowy — przykład",
+            "url": "https://example.org/gov/msz/komunikat",
+            "quote": "Nie wprowadzono żadnych ograniczeń w podróżach do państw strefy Schengen (cytat przykładowy)",
+            "relation": "OBALA",
+            "group": "obalajace"
+          },
+          {
+            "publishedAt": "2026-10-02T00:00:00.000Z",
+            "fetchedAt": "2026-11-20T08:00:00.000Z",
+            "aspect": "zakres",
+            "sourceType": "pierwotne",
+            "level": 1,
+            "role": "tresc",
+            "recordId": "fx-msz:6",
+            "title": "Ostrzeżenia dla podróżujących (przykładowy rekord)",
+            "publisher": "Serwis rządowy — przykład",
+            "url": "https://example.org/gov/msz/ostrzezenia",
+            "quote": "Aktualne ostrzeżenia publikujemy wyłącznie w serwisie rządowym (cytat przykładowy)",
+            "relation": "INNY_KONTEKST",
+            "group": "kontekst"
+          }
+        ]
+      }
+    ]
+  },
+  "textPl": "Wynik: Fałszywe.",
+  "quickReplies": [
+    {
+      "id": "why",
+      "labelPl": "Dlaczego?"
+    },
+    {
+      "id": "sources",
+      "labelPl": "Źródła"
+    },
+    {
+      "id": "report",
+      "labelPl": "Zgłoś do sprawdzenia"
+    }
+  ],
+  "resultUrl": "/w/fxFalszywe00000000000002"
+}

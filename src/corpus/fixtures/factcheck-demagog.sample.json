@@ -1,0 +1,81 @@
+{
+  "claims": [
+    {
+      "text": "Rząd zlikwidował wszystkie podatki.",
+      "claimant": "Jan Polityk",
+      "claimDate": "2026-11-18T00:00:00Z",
+      "claimReview": [
+        {
+          "publisher": { "name": "Demagog", "site": "demagog.org.pl" },
+          "url": "https://demagog.org.pl/wypowiedzi/przykladowa-teza/",
+          "title": "Przykładowa teza. Sprawdzamy",
+          "reviewDate": "2026-11-19T00:00:00Z",
+          "textualRating": "Fałsz",
+          "languageCode": "pl"
+        }
+      ]
+    },
+    {
+      "text": "Zdjęcie pokazuje wczorajszy protest w Warszawie.",
+      "claimant": "Anna Prywatna",
+      "claimDate": "2026-11-15T00:00:00Z",
+      "claimReview": [
+        {
+          "publisher": { "name": "Demagog", "site": "demagog.org.pl" },
+          "url": "https://demagog.org.pl/fake_news/stare-zdjecie-protestu/",
+          "title": "Stare zdjęcie protestu. Brakujący kontekst",
+          "reviewDate": "2026-11-20T00:00:00Z",
+          "textualRating": "Brakujący kontekst.",
+          "languageCode": "pl"
+        },
+        {
+          "publisher": { "name": "Inny fact-checker", "site": "fakenews.pl" },
+          "url": "https://fakenews.pl/zdjecie-protestu/",
+          "title": "Zdjęcie protestu",
+          "reviewDate": "2026-11-21T00:00:00Z",
+          "textualRating": "Fałsz",
+          "languageCode": "pl"
+        }
+      ]
+    },
+    {
+      "text": "Szczepionki zmieniają DNA.",
+      "claimant": "Internauci",
+      "claimDate": "2023-05-02T00:00:00Z",
+      "claimReview": [
+        {
+          "publisher": { "name": "Demagog", "site": "demagog.org.pl" },
+          "url": "https://demagog.org.pl/fake_news/szczepionki-dna/",
+          "reviewDate": "2023-05-10T00:00:00Z",
+          "textualRating": "Fałsz. Szczepionki mRNA nie wnikają do jądra komórkowego i nie zmieniają DNA.",
+          "languageCode": "pl"
+        }
+      ]
+    },
+    {
+      "text": "Teza z oceną, której nie da się odczytać.",
+      "claimReview": [
+        {
+          "publisher": { "name": "Demagog", "site": "demagog.org.pl" },
+          "url": "https://demagog.org.pl/wypowiedzi/nieczytelna-ocena/",
+          "reviewDate": "2025-01-10T00:00:00Z",
+          "textualRating": "Długi opis bez znanej etykiety, który ciągnie się i ciągnie, i nie kończy się na żadnej etykiecie.",
+          "languageCode": "pl"
+        }
+      ]
+    },
+    {
+      "text": "Teza na podszywającym się hoście.",
+      "claimReview": [
+        {
+          "publisher": { "name": "Demagog", "site": "demagog.org.pl" },
+          "url": "https://demagog.org.pl.example.com/wypowiedzi/x/",
+          "reviewDate": "2026-11-01T00:00:00Z",
+          "textualRating": "Prawda",
+          "languageCode": "pl"
+        }
+      ]
+    }
+  ],
+  "nextPageToken": "STRONA-2"
+}

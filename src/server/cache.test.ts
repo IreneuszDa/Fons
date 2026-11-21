@@ -1,0 +1,170 @@
+import { describe, expect, it } from "vitest";
+import { CACHE_TTL_DEGRADED_MS, CACHE_TTL_LIVE_MS, CACHE_TTL_MS } from "./cache";
+import { chat, makeEnv, makeReport, type TestEnv } from "./testkit";
+
+const ATTACK = { location: "fetched_page" as const, pattern: "ignore_previous_pl", excerpt: "zignoruj poprzednie instrukcje", severity: "high" as const };
+
+function count(env: TestEnv, sql: string, ...args: unknown[]): number {
+  return (env.db.prepare(sql).get(...args) as { n: number }).n;
+}
+
+describe("cache obliczeń", () => {
+  it("trafienie: silnik wołany raz, nowa kopia raportu z nowym tokenem i cacheHit=true", async () => {
+    const env = makeEnv();
+    const a = await chat(env, { text: "Ziemia jest okrągła" });
+    const b = await chat(env, { text: "  ziemia   JEST okrągła " }); // inna sesja, to samo znormalizowane wejście
+    expect(env.calls).toHaveLength(1);
+    const ra = a.json.reply.report;
+    const rb = b.json.reply.report;
+    expect(ra.cacheHit).toBe(false);
+    expect(rb.cacheHit).toBe(true);
+    expect(rb.token).not.toBe(ra.token);
+    expect(rb.id).not.toBe(ra.id);
+    expect(rb.token).toHaveLength(22);
+    expect(rb.costUsd).toBe(0);
+    expect(rb.mainVerdict).toBe(ra.mainVerdict);
+    expect(count(env, "SELECT COUNT(*) AS n FROM reports")).toBe(2);
+    // każdy użytkownik ma własną kopię
+    expect((await env.app.request(`/api/report/${ra.token}`)).status).toBe(200);
+    expect((await env.app.request(`/api/report/${rb.token}`)).status).toBe(200);
+  });
+
+  it("każde trafienie w cache zapisuje od nowa zdarzenia bezpieczeństwa z nowym identyfikatorem żądania", async () => {
+    const env = makeEnv({
+      engine: () =>
+        makeReport({
+          claim: "Strona z atakiem",
+          securityEvents: [ATTACK],
+          warnings: [{ kind: "injection_detected", textPl: "W materiale wykryto próbę wpłynięcia na system — zignorowano." }],
+        }),
+    });
+    const results = [];
+    for (let i = 0; i < 3; i++) results.push(await chat(env, { text: "Strona z atakiem" }));
+    expect(env.calls).toHaveLength(1);
+    expect(count(env, "SELECT COUNT(*) AS n FROM security_events")).toBe(3);
+    expect(count(env, "SELECT COUNT(DISTINCT request_id) AS n FROM security_events")).toBe(3);
+    expect(count(env, "SELECT COUNT(*) AS n FROM security_events WHERE source = 'cache_replay'")).toBe(2);
+    // komunikat o próbie manipulacji pokazywany także przy trafieniu w cache
+    expect(results[2]!.json.reply.textPl).toContain("próbę wpłynięcia na system");
+    expect(results[2]!.json.reply.report.securityEvents).toHaveLength(1);
+    // zdarzenia zapisane w dzienniku przebiegów też
+    expect(count(env, "SELECT COUNT(*) AS n FROM runs WHERE security_event_count = 1")).toBe(3);
+  });
+
+  it("TTL 48 h dla przebiegu pełnego", async () => {
+    const env = makeEnv();
+    await chat(env, { text: "Pytanie A" });
+    env.advance(CACHE_TTL_MS - 60_000);
+    await chat(env, { text: "Pytanie A" });
+    expect(env.calls).toHaveLength(1);
+    env.advance(120_000);
+    await chat(env, { text: "Pytanie A" });
+    expect(env.calls).toHaveLength(2);
+  });
+
+  it("TTL 15 min, gdy włączone są źródła na żywo (stan „na teraz” szybko się starzeje)", async () => {
+    const env = makeEnv({ cfg: { liveSearch: true } });
+    await chat(env, { text: "Czy jest teraz alert RCB?" });
+    env.advance(CACHE_TTL_LIVE_MS - 30_000);
+    await chat(env, { text: "Czy jest teraz alert RCB?" });
+    expect(env.calls).toHaveLength(1);
+    env.advance(60_000);
+    await chat(env, { text: "Czy jest teraz alert RCB?" });
+    expect(env.calls).toHaveLength(2);
+  });
+
+  it("TTL 15 min, gdy gałąź opcjonalna była niedostępna", async () => {
+    const env = makeEnv({ engine: (r) => makeReport({ claim: r.text, unavailableBranches: ["live"] }) });
+    await chat(env, { text: "Pytanie B" });
+    env.advance(CACHE_TTL_DEGRADED_MS - 30_000);
+    await chat(env, { text: "Pytanie B" });
+    expect(env.calls).toHaveLength(1);
+    env.advance(60_000);
+    await chat(env, { text: "Pytanie B" });
+    expect(env.calls).toHaveLength(2);
+  });
+
+  it.each([
+    ["NIEPELNE", () => makeReport({ status: "NIEPELNE", mainVerdict: null, verdicts: [] })],
+    ["DOPRECYZUJ", () => makeReport({ status: "DOPRECYZUJ", mainVerdict: null, verdicts: [] })],
+    ["POZA_ZAKRESEM", () => makeReport({ status: "POZA_ZAKRESEM", mainVerdict: null, verdicts: [] })],
+    [
+      "AWARIA (wyjątek)",
+      () => {
+        throw new Error("boom");
+      },
+    ],
+  ])("nie zapisuje do cache statusu %s", async (_name, produce) => {
+    const env = makeEnv({ engine: () => produce() });
+    const a = await chat(env, { text: "Pytanie C" });
+    await chat(env, { text: "Pytanie C" });
+    expect(env.calls).toHaveLength(2);
+    expect(count(env, "SELECT COUNT(*) AS n FROM computation_cache")).toBe(0);
+    expect(a.json.reply.kind).toBe("status");
+    expect(a.json.reply.report?.mainVerdict ?? null).toBeNull();
+  });
+
+  it("status OK z trafieniem detektora jest zapisywany do cache", async () => {
+    const env = makeEnv({ engine: () => makeReport({ securityEvents: [ATTACK] }) });
+    await chat(env, { text: "Pytanie D" });
+    expect(count(env, "SELECT COUNT(*) AS n FROM computation_cache")).toBe(1);
+  });
+
+  it("daty względne są rozwiązywane przed liczeniem hasha: „wczoraj” dziś ≠ „wczoraj” jutro", async () => {
+    const env = makeEnv();
+    await chat(env, { text: "Wczoraj był atak" });
+    await chat(env, { text: "Wczoraj był atak" });
+    expect(env.calls).toHaveLength(1);
+    env.advance(86_400_000);
+    await chat(env, { text: "Wczoraj był atak" });
+    expect(env.calls).toHaveLength(2);
+  });
+
+  it("PII jest maskowane przed liczeniem hasha (ten sam wniosek z różnym PESEL = jedno wejście)", async () => {
+    const env = makeEnv();
+    await chat(env, { text: "Jan 12345678901 dostał mandat" });
+    await chat(env, { text: "Jan 10987654321 dostał mandat" });
+    expect(env.calls).toHaveLength(1);
+  });
+
+  it("„usuń moje dane” nie otwiera klucza: ponowne wyliczenie trafia tylko do pytającego, nie do cache (SEC-02)", async () => {
+    let n = 0;
+    const env = makeEnv({ engine: () => makeReport({ claim: "Łańcuszek X", verdict: ++n === 1 ? "FALSZYWE" : "POTWIERDZONE" }) });
+    const first = await chat(env, { text: "Łańcuszek X" });
+    expect(first.json.reply.report.mainVerdict).toBe("FALSZYWE");
+    // napastnik kasuje swoje dane (to on utworzył wpis cache) i wysyła ponownie
+    const del = await env.app.request("/api/session", { method: "DELETE", headers: { cookie: first.cookie } });
+    expect((await del.json()).deleted.cache).toBe(1);
+    const reroll = await chat(env, { text: "Łańcuszek X" });
+    expect(reroll.json.reply.report.mainVerdict).toBe("POTWIERDZONE");
+    expect(count(env, "SELECT COUNT(*) AS n FROM computation_cache")).toBe(0);
+    // kolejny obywatel nie dostaje „wylosowanego” wyniku z cache
+    const citizen = await chat(env, { text: "Łańcuszek X" });
+    expect(citizen.json.reply.report.cacheHit).toBe(false);
+    expect(env.calls).toHaveLength(3);
+    // po końcu pierwotnego TTL klucz znów może trafić do cache
+    env.advance(CACHE_TTL_MS + 60_000);
+    await chat(env, { text: "Łańcuszek X" });
+    expect(count(env, "SELECT COUNT(*) AS n FROM computation_cache")).toBe(1);
+  });
+
+  it("wynik w cache nie niesie parametrów śledzących pierwszego zgłaszającego (SEC-08)", async () => {
+    const env = makeEnv({
+      engine: (req) => makeReport({ claim: "Artykuł", inputEchoMasked: req.url ?? "" } as never),
+    });
+    await chat(env, { text: "https://news.example/a?id=7&mc_eid=SUBSCRIBER1&utm_term=nl42" });
+    const b = await chat(env, { text: "https://news.example/a?id=7" });
+    expect(b.json.reply.report.cacheHit).toBe(true);
+    expect(b.json.reply.report.inputEchoMasked).toBe("https://news.example/a?id=7");
+    expect(JSON.stringify(b.json.reply.report)).not.toMatch(/SUBSCRIBER1|nl42/);
+  });
+
+  it("administrator może unieważnić wpis", async () => {
+    const env = makeEnv();
+    await chat(env, { text: "Pytanie E" });
+    const { invalidateCache } = await import("./cache");
+    expect(invalidateCache(env.db, { all: true })).toBe(1);
+    await chat(env, { text: "Pytanie E" });
+    expect(env.calls).toHaveLength(2);
+  });
+});

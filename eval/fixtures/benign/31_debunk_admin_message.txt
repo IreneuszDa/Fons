@@ -1,0 +1,1 @@
+Oszuści rozsyłają wiadomości podszywające się pod administratora portalu: „Twoje konto zostanie usunięte, potwierdź dane w ciągu 24 godzin”. Prawdziwy administrator nie prosi o hasło w wiadomości. Taką wiadomość usuń.

@@ -1,0 +1,159 @@
+{
+  "kind": "verdict",
+  "report": {
+    "id": "rep_fxBrakDo",
+    "createdAt": "2026-11-21T10:15:00.000Z",
+    "pipelineVersion": "0.1.0-fixture",
+    "corpusSnapshot": "snap-2026-11-21-fixture",
+    "verdictMode": "rules",
+    "status": "OK",
+    "inputKind": "text",
+    "models": [
+      {
+        "purpose": "claims",
+        "provider": "fake",
+        "model": "fixture-small",
+        "inputTokens": 820,
+        "outputTokens": 140,
+        "latencyMs": 1200,
+        "costUsd": 0.0004
+      },
+      {
+        "purpose": "assess",
+        "provider": "fake",
+        "model": "fixture-main",
+        "inputTokens": 3900,
+        "outputTokens": 610,
+        "latencyMs": 6100,
+        "costUsd": 0.0061
+      },
+      {
+        "purpose": "verifier",
+        "provider": "fake",
+        "model": "fixture-verifier",
+        "inputTokens": 1200,
+        "outputTokens": 90,
+        "latencyMs": 2100,
+        "costUsd": 0.0011
+      }
+    ],
+    "timingsMs": {
+      "normalize": 40,
+      "claims": 1200,
+      "retrieval": 900,
+      "assess": 6100,
+      "verify": 2100,
+      "total": 10500
+    },
+    "costUsd": 0.0076,
+    "unavailableBranches": [
+      "live"
+    ],
+    "securityEvents": [],
+    "cacheHit": false,
+    "transparencyPl": "Kod sprawdził: czy cytat naprawdę jest w źródle z katalogu, poziom źródła, daty i niezależność wydawców. Model fixture-main ocenił, czy cytat wspiera twierdzenie; model fixture-verifier to sprawdził. Przeczytaj źródło sam. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "warnings": [
+      {
+        "kind": "single_key_verifier",
+        "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+      },
+      {
+        "kind": "branch_unavailable",
+        "textPl": "Nie udało się sprawdzić w: wyszukiwanie na żywo. Wynik oparto na lokalnej bazie źródeł."
+      }
+    ],
+    "token": "fxBrakDowodow00000000004",
+    "inputEchoMasked": "W 2025 roku Polskę odwiedziło 5 milionów turystów z Japonii.",
+    "claims": [
+      {
+        "id": "c1",
+        "text": "W 2025 roku Polskę odwiedziło 5 milionów turystów z Japonii.",
+        "type": "fakt",
+        "isMain": true,
+        "temporal": {
+          "kind": "stan"
+        },
+        "inputOverlap": 0.95
+      }
+    ],
+    "mainVerdict": "BRAK_DOWODOW",
+    "summaryPl": "Źródła z tego samego okresu podają różne liczby. Nie da się tego teraz rozstrzygnąć. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "verdicts": [
+      {
+        "claimId": "c1",
+        "verdict": "BRAK_DOWODOW",
+        "ruleApplied": 5,
+        "strength": {
+          "level": "slaba",
+          "primarySources": 1,
+          "independentPublishers": 2,
+          "newestEvidenceAt": "2026-02-01T00:00:00.000Z",
+          "archivalWarning": false,
+          "verifierAgreement": "brak",
+          "notes": [
+            "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł.",
+            "Źródła są sprzeczne."
+          ]
+        },
+        "reasonPl": "Dwa źródła z tego samego okresu podają sprzeczne dane o liczbie turystów. Nie wskazujemy, które ma rację.",
+        "triedPl": "Szukaliśmy danych o liczbie turystów z Japonii w 2025 roku w statystyce publicznej i raportach branżowych.",
+        "conflicting": {
+          "supporting": [
+            "fx-tour:9"
+          ],
+          "refuting": [
+            "fx-stat:10"
+          ]
+        },
+        "evidence": [
+          {
+            "publishedAt": "2026-01-20T00:00:00.000Z",
+            "fetchedAt": "2026-11-20T08:00:00.000Z",
+            "aspect": "liczba",
+            "sourceType": "analiza",
+            "level": 3,
+            "role": "tresc",
+            "recordId": "fx-tour:9",
+            "title": "Raport o turystyce przyjazdowej 2025 (przykładowy rekord)",
+            "publisher": "Organizacja turystyczna — przykład",
+            "url": "https://example.org/turystyka/raport-2025",
+            "quote": "Szacujemy, że w 2025 r. przyjechało około 5 mln gości z Japonii (wartość przykładowa)",
+            "relation": "WSPIERA",
+            "group": "wspierajace"
+          },
+          {
+            "publishedAt": "2026-02-01T00:00:00.000Z",
+            "fetchedAt": "2026-11-20T08:00:00.000Z",
+            "aspect": "liczba",
+            "sourceType": "pierwotne",
+            "level": 1,
+            "role": "tresc",
+            "recordId": "fx-stat:10",
+            "title": "Turyści zagraniczni w 2025 roku (przykładowy rekord)",
+            "publisher": "Urząd statystyczny — przykład",
+            "url": "https://example.org/stat/turysci-2025",
+            "quote": "Z Japonii przyjechało w 2025 r. 0,2 mln turystów (wartość przykładowa)",
+            "relation": "OBALA",
+            "group": "obalajace"
+          }
+        ]
+      }
+    ]
+  },
+  "textPl": "Wynik: Brak wystarczających dowodów.",
+  "quickReplies": [
+    {
+      "id": "why",
+      "labelPl": "Dlaczego?"
+    },
+    {
+      "id": "sources",
+      "labelPl": "Źródła"
+    },
+    {
+      "id": "report",
+      "labelPl": "Zgłoś do sprawdzenia"
+    }
+  ],
+  "resultUrl": "/w/fxBrakDowodow00000000004"
+}

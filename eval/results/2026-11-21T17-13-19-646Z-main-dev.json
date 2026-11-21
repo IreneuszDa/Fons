@@ -1,0 +1,800 @@
+{
+  "meta": {
+    "startedAt": "2026-11-21T17:13:19.646Z",
+    "finishedAt": "2026-11-21T17:14:35.650Z",
+    "suite": "main",
+    "split": "dev",
+    "runs": 1,
+    "limit": 10,
+    "judge": false,
+    "provider": "openai (gpt-6.2-sol / gpt-6-luna)",
+    "verifier": "openai",
+    "singleKey": true,
+    "verdictMode": "rules",
+    "corpusSnapshot": "85036d545ab044db104b791e8ca0110d30d072c6202785763f40f1cefb8d2583",
+    "corpusRecords": 1052,
+    "pipelineVersion": "engine-2026.11.21-1",
+    "dbPath": "<poza repozytorium>/eval-real.db"
+  },
+  "summary": {
+    "cases": 10,
+    "runsPerCase": 1,
+    "endToEnd": {
+      "n": 10,
+      "ok": 10,
+      "rate": 1
+    },
+    "confusion": {
+      "POTWIERDZONE": {
+        "POTWIERDZONE": 3,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 3,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "FALSZYWE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 1,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 3,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "WPROWADZAJACE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "BRAK_DOWODOW": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "NIE_PODLEGA": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      }
+    },
+    "f1": {
+      "perClass": [
+        {
+          "label": "POTWIERDZONE",
+          "support": 6,
+          "tp": 3,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        {
+          "label": "FALSZYWE",
+          "support": 4,
+          "tp": 1,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1,
+          "recall": 0.25,
+          "f1": 0.4
+        },
+        {
+          "label": "WPROWADZAJACE",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        {
+          "label": "BRAK_DOWODOW",
+          "support": 0,
+          "tp": 0,
+          "fp": 6,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        {
+          "label": "NIE_PODLEGA",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        }
+      ],
+      "macroF1": 0.5333333333333333,
+      "supportedClasses": [
+        "POTWIERDZONE",
+        "FALSZYWE"
+      ],
+      "accuracy": 0.4,
+      "total": 10
+    },
+    "scenarios": {
+      "A": {
+        "n": 10,
+        "ok": 4,
+        "rate": 0.4
+      }
+    },
+    "tags": {},
+    "citationCoverage": {
+      "n": 4,
+      "ok": 4,
+      "rate": 1,
+      "missing": []
+    },
+    "citationCorrectness": {
+      "n": 6,
+      "ok": 6,
+      "rate": 1,
+      "failures": []
+    },
+    "abstention": {
+      "scenarioD": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "allExpectedAbstain": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "overAbstention": {
+        "n": 10,
+        "ok": 6,
+        "rate": 0.6
+      }
+    },
+    "injection": {
+      "resistance": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "detection": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "byGoal": {},
+      "failures": [],
+      "skipped": []
+    },
+    "falsePositives": {
+      "corpus": {
+        "n": 1052,
+        "ok": 0,
+        "rate": 0,
+        "flagged": []
+      },
+      "benign": {
+        "n": 31,
+        "ok": 0,
+        "rate": 0,
+        "flagged": []
+      }
+    },
+    "latency": {
+      "n": 10,
+      "p50Ms": 6425.165999499997,
+      "p95Ms": 12053.337137649996,
+      "maxMs": 13245.748749999999
+    },
+    "cost": {
+      "runs": 10,
+      "totalUsd": 0.095493,
+      "meanUsd": 0.0095493,
+      "per100Usd": 0.9549300000000001
+    },
+    "faults": {
+      "n": 0,
+      "ok": 0,
+      "rate": 0,
+      "failures": []
+    },
+    "soft": {
+      "conflictShown": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "incidentWarning": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "engineModeratorClaims": []
+    }
+  },
+  "outcomes": [
+    {
+      "case": {
+        "id": "A01",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 13245.748749999999,
+          "costUsd": 0.015987,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 3,
+              "quotedCount": 3,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "nato:2be4d332e735",
+              "quote": "Czechia, Hungary and Poland were invited to begin accession talks at the Alliance's Madrid Summit in 1997 and on 12 March 1999 they became the first former members of the Warsaw Pact to join NATO.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "sejm-eli:9f0fca326e3d",
+              "quote": "Doświadczeni historią XX wieku, uznajemy za nasz obowiązek – jako kraju\nczłonkowskiego Organizacji Traktatu Północnoatlantyckiego oraz Unii Europejskiej – wezwanie naszych sojuszników",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            },
+            {
+              "claimId": "c1",
+              "recordId": "nato:b5987f37cdfe",
+              "quote": "1999 - The first wave of post-Cold War enlargement\nA military band performs at the flag-raising ceremony for Czechia, Hungary and Poland at NATO Headquarters in Brussels in March 1999.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "nato:2be4d332e735",
+            "nato:b5987f37cdfe",
+            "sejm-eli:9f0fca326e3d"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): „Czechia, Hungary and Poland were invited to begin accession talks at the Alliance's Madrid Summit in 1997 and on 12 March 1999 they became the first former members of the Warsaw Pact to join NATO.”",
+            "NATO: NATO member countries (cz. 12)",
+            "https://www.nato.int/en/about-us/organization/nato-member-countries",
+            "Czechia, Hungary and Poland were invited to begin accession talks at the Alliance's Madrid Summit in 1997 and on 12 March 1999 they became the first former members of the Warsaw Pact to join NATO.",
+            "Uchwała Sejmu Rzeczypospolitej Polskiej z dnia 27 stycznia 2022 r. w sprawie wezwania państw członkowskich Organizacji Traktatu Północnoatlantyckiego oraz Unii Europej... (M.P. 2022 poz. 122) (cz. 2)",
+            "https://api.sejm.gov.pl/eli/acts/MP/2022/122/text/O/M20220122.pdf",
+            "Doświadczeni historią XX wieku, uznajemy za nasz obowiązek – jako kraju\nczłonkowskiego Organizacji Traktatu Północnoatlantyckiego oraz Unii Europejskiej – wezwanie naszych sojuszników",
+            "NATO: NATO member countries (cz. 11)",
+            "https://www.nato.int/en/about-us/organization/nato-member-countries",
+            "1999 - The first wave of post-Cold War enlargement\nA military band performs at the flag-raising ceremony for Czechia, Hungary and Poland at NATO Headquarters in Brussels in March 1999."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A02",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 10595.945167,
+          "costUsd": 0.010829,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "eu-portal:5761499f864c",
+              "quote": "W UE: od 1 maja 2004 r.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "eu-portal:5761499f864c"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „W UE: od 1 maja 2004 r.”",
+            "Unia Europejska: Polska — informacje o kraju UE",
+            "https://european-union.europa.eu/principles-countries-history/eu-countries/poland_pl",
+            "W UE: od 1 maja 2004 r."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A10",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 5306.577375000001,
+          "costUsd": 0.007833,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A13",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 5653.021790999999,
+          "costUsd": 0.008514,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A04",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "POTWIERDZONE",
+          "latencyMs": 9985.328791,
+          "costUsd": 0.012816,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "POTWIERDZONE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "nato:50f5e0c1aa22",
+              "quote": "Finland and Sweden became full members of the Alliance on 4 April 2023 and 7 March 2024, respectively.",
+              "relation": "WSPIERA",
+              "group": "wspierajace"
+            }
+          ],
+          "recordIds": [
+            "nato:50f5e0c1aa22"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Potwierdzone. Wiarygodne źródło potwierdza to twierdzenie.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło potwierdza to twierdzenie. NATO (Organizacja Traktatu Północnoatlantyckiego) (3 października 2024): „Finland and Sweden became full members of the Alliance on 4 April 2023 and 7 March 2024, respectively.”",
+            "NATO: Enlargement and Article 10 (cz. 2)",
+            "https://www.nato.int/en/what-we-do/partnerships-and-cooperation/enlargement-and-article-10",
+            "Finland and Sweden became full members of the Alliance on 4 April 2023 and 7 March 2024, respectively."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A06",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 7876,
+          "costUsd": 0.0108,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A08",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 5338.747791999995,
+          "costUsd": 0.006366,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A11",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "FALSZYWE",
+          "latencyMs": 7197.310207999995,
+          "costUsd": 0.009252,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "FALSZYWE",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 1,
+              "quotedCount": 1,
+              "conflicting": false
+            }
+          ],
+          "evidence": [
+            {
+              "claimId": "c1",
+              "recordId": "eu-portal:5761499f864c",
+              "quote": "Waluta: złoty polski (PLN). Polska przygotowuje się obecnie do przyjęcia euro.",
+              "relation": "OBALA",
+              "group": "obalajace"
+            }
+          ],
+          "recordIds": [
+            "eu-portal:5761499f864c"
+          ],
+          "rendered": [
+            "Ocena głównego twierdzenia: Fałszywe. Wiarygodne źródło podaje coś innego.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Model gpt-6-luna — OpenAI to sprawdził — to ten sam dostawca (tryb jednego klucza), dlatego siła oceny jest ograniczona. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Wiarygodne źródło podaje coś innego. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „Waluta: złoty polski (PLN). Polska przygotowuje się obecnie do przyjęcia euro.”",
+            "Unia Europejska: Polska — informacje o kraju UE",
+            "https://european-union.europa.eu/principles-countries-history/eu-countries/poland_pl",
+            "Waluta: złoty polski (PLN). Polska przygotowuje się obecnie do przyjęcia euro."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A15",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "POTWIERDZONE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 5346.810499999992,
+          "costUsd": 0.007542,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": []
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "A17",
+        "split": "dev",
+        "scenario": "A",
+        "inputKind": "text",
+        "expected": {
+          "verdict": "FALSZYWE",
+          "status": "OK"
+        }
+      },
+      "runs": [
+        {
+          "run": 1,
+          "status": "OK",
+          "mainVerdict": "BRAK_DOWODOW",
+          "latencyMs": 4242.552292000008,
+          "costUsd": 0.005554,
+          "securityEvents": 0,
+          "securityPatterns": [],
+          "warnings": [
+            "single_key_verifier",
+            "non_eea_processing"
+          ],
+          "unavailableBranches": [],
+          "claimVerdicts": [
+            {
+              "claimId": "c1",
+              "verdict": "BRAK_DOWODOW",
+              "claimType": "fakt",
+              "isMain": true,
+              "evidenceCount": 0,
+              "quotedCount": 0,
+              "conflicting": false
+            }
+          ],
+          "evidence": [],
+          "recordIds": [],
+          "rendered": [
+            "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców. Model gpt-6.2-sol — OpenAI ocenił, czy cytat wspiera twierdzenie. Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego. Przeczytaj źródło sam.",
+            "Cytaty sprawdził model tego samego dostawcy co model główny (tryb jednego klucza), dlatego siła oceny jest ograniczona.",
+            "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym.",
+            "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają."
+          ],
+          "sideEffects": []
+        }
+      ]
+    }
+  ]
+}

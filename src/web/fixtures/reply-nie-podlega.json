@@ -1,0 +1,84 @@
+{
+  "kind": "verdict",
+  "report": {
+    "id": "rep_fxNiePod",
+    "createdAt": "2026-11-21T10:15:00.000Z",
+    "pipelineVersion": "0.1.0-fixture",
+    "corpusSnapshot": "snap-2026-11-21-fixture",
+    "verdictMode": "rules",
+    "status": "OK",
+    "inputKind": "text",
+    "models": [
+      {
+        "purpose": "claims",
+        "provider": "fake",
+        "model": "fixture-small",
+        "inputTokens": 300,
+        "outputTokens": 60,
+        "latencyMs": 900,
+        "costUsd": 0.0002
+      }
+    ],
+    "timingsMs": {
+      "normalize": 30,
+      "claims": 900,
+      "total": 1000
+    },
+    "costUsd": 0.0002,
+    "unavailableBranches": [],
+    "securityEvents": [],
+    "cacheHit": false,
+    "transparencyPl": "Kod sprawdził: czy cytat naprawdę jest w źródle z katalogu, poziom źródła, daty i niezależność wydawców. Model fixture-main ocenił, czy cytat wspiera twierdzenie; model fixture-verifier to sprawdził. Przeczytaj źródło sam. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "warnings": [],
+    "token": "fxNiePodlega000000000005",
+    "inputEchoMasked": "Polskie góry są najpiękniejsze w Europie.",
+    "claims": [
+      {
+        "id": "c1",
+        "text": "Polskie góry są najpiękniejsze w Europie.",
+        "type": "opinia",
+        "isMain": true,
+        "temporal": {
+          "kind": "brak"
+        },
+        "inputOverlap": 1
+      }
+    ],
+    "mainVerdict": "NIE_PODLEGA",
+    "summaryPl": "To opinia. Nie da się jej potwierdzić ani obalić w źródłach. Dane przykładowe do przeglądu interfejsu — nie są prawdziwym wynikiem sprawdzenia.",
+    "verdicts": [
+      {
+        "claimId": "c1",
+        "verdict": "NIE_PODLEGA",
+        "ruleApplied": 1,
+        "strength": {
+          "level": "slaba",
+          "primarySources": 0,
+          "independentPublishers": 0,
+          "newestEvidenceAt": null,
+          "archivalWarning": false,
+          "verifierAgreement": "brak",
+          "notes": []
+        },
+        "reasonPl": "Słowo „najpiękniejsze” wyraża ocenę, a nie fakt.",
+        "evidence": []
+      }
+    ]
+  },
+  "textPl": "Wynik: Nie podlega weryfikacji.",
+  "quickReplies": [
+    {
+      "id": "why",
+      "labelPl": "Dlaczego?"
+    },
+    {
+      "id": "sources",
+      "labelPl": "Źródła"
+    },
+    {
+      "id": "report",
+      "labelPl": "Zgłoś do sprawdzenia"
+    }
+  ],
+  "resultUrl": "/w/fxNiePodlega000000000005"
+}

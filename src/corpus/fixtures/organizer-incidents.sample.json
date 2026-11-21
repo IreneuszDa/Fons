@@ -1,0 +1,31 @@
+{
+  "_comment": "PRÓBKA do testów importera — dane wymyślone, hosty .example; NIE jest to pakiet organizatora ani część korpusu.",
+  "items": [
+    {
+      "id": "sample-001",
+      "claim": "Przykładowa teza dezinformacyjna numer jeden.",
+      "description": "Opis przykładowy: dlaczego teza jest fałszywa.",
+      "link": "https://www.przyklad-factcheck.example/artykul-1",
+      "published": "21.03.2024",
+      "verdict": "Fałsz",
+      "outlets": ["https://www.fake-portal.example/news/1", "facebook.example", "www.inny-portal.example"],
+      "language": "pl"
+    },
+    {
+      "claim": "Przykładowa teza z oceną spoza tabeli.",
+      "link": "https://nowy-host.example/sprawdzenie/2",
+      "date": "2024-05-02",
+      "verdict": "Prawie prawda ale nie do końca"
+    },
+    {
+      "claim": "Wiersz bez adresu.",
+      "verdict": "False"
+    },
+    {
+      "claim": "Przykładowa teza z angielską oceną.",
+      "link": "https://www.przyklad-factcheck.example/article-3",
+      "date": "not a date",
+      "verdict": "Misleading"
+    }
+  ]
+}

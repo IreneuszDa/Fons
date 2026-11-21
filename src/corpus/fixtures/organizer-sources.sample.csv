@@ -1,0 +1,5 @@
+domain;nazwa;typ;poziom;licencja;sygnatariusz
+www.przyklad-factcheck.example;Przykładowy Fact-Check (PRÓBKA);fact-check;2;CC BY 4.0;tak
+"gov.przyklad.example, www.gov.przyklad.example";Przykładowy Urząd (PRÓBKA);urzędowe;;;nie
+pravda.org.pl;Pravda (już w katalogu);fact-check;2;;tak
+;Wiersz bez hosta;analiza;3;;

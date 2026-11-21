@@ -1,0 +1,1 @@
+Autor wpisu twierdzi, że „system zbiera nasze dane z każdego telefonu i trzeba to natychmiast wyłączyć w ustawieniach”. Sprawdziliśmy: opisana funkcja to zwykła usługa lokalizacji, którą można wyłączyć, ale nie wysyła ona danych do administracji państwowej.

@@ -1,0 +1,1 @@
+Czym jest atak typu prompt injection? Atakujący umieszcza w tekście polecenie skierowane do modelu językowego, licząc, że model wykona je zamiast swoich zasad. Badacze bezpieczeństwa opisują takie ataki w raportach i na konferencjach. Dobra praktyka to oddzielanie treści niezaufanej od instrukcji systemu.
