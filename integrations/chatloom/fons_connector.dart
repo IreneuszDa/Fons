@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:matrix/matrix.dart';
+import 'package:mime/mime.dart';
 
 /// Attach once to the dedicated, already authenticated ChatLoom client.
 class FonsConnector {
@@ -18,6 +19,7 @@ class FonsConnector {
   final http.Client _http;
   final _startedAtMs = DateTime.now().millisecondsSinceEpoch;
   final _queues = <String, Future<void>>{};
+  final _forwardingPhotos = <String>{};
   late final StreamSubscription<dynamic> _subscription;
   bool _closed = false;
 
@@ -75,20 +77,19 @@ class FonsConnector {
         return;
       final content = _contentOf(event);
       if (content == null) return;
-      final body = jsonEncode({
-        'room_id': room.id,
-        'event_id': event.eventId,
-        'sender': event.senderId,
-        'origin_server_ts': event.originServerTs.millisecondsSinceEpoch,
-        'type': event.type,
-        'content': content,
-      });
+      // The previous question may be waiting for this photo at the webhook.
+      if (content['msgtype'] == 'm.image') {
+        if (!_forwardingPhotos.add(event.eventId)) return;
+        unawaited(
+          _deliver(
+            event,
+            content,
+          ).whenComplete(() => _forwardingPhotos.remove(event.eventId)),
+        );
+        return;
+      }
       final previous = _queues[room.id] ?? Future<void>.value();
-      final turn = previous.then((_) => _forward(event, body)).catchError((
-        Object error,
-      ) {
-        if (!_closed) onFailure(event.eventId, error);
-      });
+      final turn = previous.then((_) => _deliver(event, content));
       _queues[room.id] = turn;
       unawaited(
         turn.whenComplete(() {
@@ -128,18 +129,114 @@ class FonsConnector {
         },
       };
     }
-    final body = content['body'];
-    if (content['msgtype'] != 'm.text' ||
-        body is! String ||
-        body.trim().isEmpty ||
-        (relation is Map && relation['rel_type'] == 'm.replace'))
+    if (relation is Map && relation['rel_type'] == 'm.replace') return null;
+    final msgtype = content['msgtype'];
+    if (msgtype != 'm.text' &&
+        msgtype != 'm.image' &&
+        msgtype != 'm.audio' &&
+        msgtype != 'm.voice') {
       return null;
-    // A native reply may carry a plaintext quote of a much older message.
-    final reply = relation is Map && relation['m.in_reply_to'] is Map;
-    final text = reply
-        ? body.replaceFirst(RegExp(r'^(?:>[^\n]*\r?\n)+\r?\n'), '')
-        : body;
-    return text.trim().isEmpty ? null : {'msgtype': 'm.text', 'body': text};
+    }
+    final reply = relation is Map ? relation['m.in_reply_to'] : null;
+    final replyId = reply is Map ? reply['event_id'] : null;
+    final body = content['body'];
+    var text = body is String ? body : '';
+    if (replyId is String) {
+      text = text.replaceFirst(RegExp(r'^(?:>[^\n]*\r?\n)+\r?\n'), '');
+    }
+    final filename = content['filename'];
+    if (msgtype == 'm.text' && text.trim().isEmpty) {
+      return null;
+    }
+    return {
+      'msgtype': msgtype,
+      if (msgtype == 'm.text') 'body': text,
+      if (msgtype == 'm.image' &&
+          body is String &&
+          filename is String &&
+          body != filename &&
+          body.trim().isNotEmpty)
+        'caption': body,
+      if (replyId is String && replyId.startsWith(r'$'))
+        'm.relates_to': {
+          'm.in_reply_to': {'event_id': replyId},
+        },
+    };
+  }
+
+  Future<Map<String, String>?> _readMedia(Event event, bool isPhoto) async {
+    final limit = (isPhoto ? 5 : 20) * 1024 * 1024;
+    final size = event.infoMap['size'];
+    if (size is int && size > limit) return null;
+    final file = await event
+        .downloadAndDecryptAttachment(
+          cacheAttachment: false,
+          onDownloadProgress: (bytes) {
+            if (bytes > limit)
+              throw StateError('Fons attachment is too large.');
+          },
+        )
+        .timeout(const Duration(seconds: 30));
+    if (file.bytes.isEmpty || file.bytes.length > limit) return null;
+    final originalMime = file.mimeType.split(';').first.trim().toLowerCase();
+    final detectedMime = lookupMimeType('', headerBytes: file.bytes);
+    const images = {'image/jpeg', 'image/png', 'image/webp'};
+    const audio = {
+      'audio/ogg',
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/webm',
+    };
+    final declaredMime = switch (originalMime) {
+      'application/ogg' || 'audio/opus' => 'audio/ogg',
+      'audio/x-wav' => 'audio/wav',
+      'video/mp4' || 'audio/x-m4a' || 'audio/m4a' => 'audio/mp4',
+      _ => originalMime,
+    };
+    final allowed = isPhoto ? images : audio;
+    final mime = allowed.contains(detectedMime) ? detectedMime! : declaredMime;
+    if (!allowed.contains(mime)) return null;
+    return {'mime': mime, 'base64': base64Encode(file.bytes)};
+  }
+
+  Future<void> _deliver(Event event, Map<String, Object?> content) async {
+    final room = event.room;
+    if (!_canUse(room) || event.senderId != room.directChatMatrixIDForDisplay) {
+      return;
+    }
+    final msgtype = content['msgtype'];
+    try {
+      Map<String, String>? attachment;
+      if (msgtype == 'm.image' ||
+          msgtype == 'm.audio' ||
+          msgtype == 'm.voice') {
+        try {
+          attachment = await _readMedia(event, msgtype == 'm.image');
+        } catch (error) {
+          if (!_closed) onFailure(event.eventId, error);
+        }
+      }
+      if (!_canUse(room) ||
+          event.senderId != room.directChatMatrixIDForDisplay) {
+        return;
+      }
+      final body = jsonEncode({
+        'room_id': room.id,
+        'event_id': event.eventId,
+        'sender': event.senderId,
+        'origin_server_ts': event.originServerTs.millisecondsSinceEpoch,
+        'type': event.type,
+        'media_context': true,
+        'content': {
+          ...content,
+          if (attachment != null) 'attachment': attachment,
+        },
+      });
+      await _forward(event, body);
+    } catch (error) {
+      if (!_closed) onFailure(event.eventId, error);
+    }
   }
 
   Future<void> _forward(Event event, String body) async {

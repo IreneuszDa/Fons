@@ -1,4 +1,3 @@
-import { createOpenAiVideoAnalyzer, OpenAiVideoAnalysisError } from "../engine/video/openai-video";
 import { AUDIO_MIMES, DOCUMENT_MIMES, IMAGE_MIMES, MAX_ATTACHMENT_BYTES, MAX_RECORDING_BYTES, RECORDING_MIMES } from "../shared/attachments";
 /** Fabryka aplikacji Hono: createApp(ctx) — testy używają app.request(). */
 import { Hono, type Context } from "hono";
@@ -14,7 +13,7 @@ import { archiveRoutes } from "./material-archive";
 import { latestNews } from "./news";
 import { authenticateBearerRequest, authorizeMetrics } from "./auth/principal";
 import { buildWebInbound } from "./channels/web";
-import { createChatLoomWebhook } from "./channels/chatloom";
+import { CHATLOOM_WEBHOOK_PATH, createChatLoomWebhook } from "./channels/chatloom";
 import { forwardWhatsAppSignup, WHATSAPP_SIGNUP_PATH } from "./channels/whatsapp-signup";
 import type { ServerContext } from "./context";
 import { handleInbound, type InboundOptions } from "./conversation";
@@ -22,8 +21,9 @@ import { resolveReaderExcerpt } from "./conversation/reader-excerpt";
 import { RATE_LIMITED_TEXT } from "./conversation/templates";
 import { securityHeaders } from "./headers";
 import { GENERIC_ERROR_PL, clientIp, clientKey } from "./http";
+import { attachmentBase64Ok, imageMagicOk, transcribeAudio } from "./media";
 import { requestObservability } from "./observability/http";
-import { addTokens, budgetExceeded, addClientTokens, clientBudgetExceeded, tokensUsedToday } from "./budget";
+import { budgetExceeded, addClientTokens, clientBudgetExceeded, tokensUsedToday } from "./budget";
 import { TOKEN_RE, getReportByToken } from "./reports";
 import { eraseSender, findSession, inTurnOrder } from "./sessions";
 import { chatSummary, createWebChat, listWebChats, newChatOwner, readChatOwner, readWebChat, recordWebTurn } from "./web-chats";
@@ -106,18 +106,6 @@ export function crossSiteRejection(c: Context, ctx: ServerContext, opts: { requi
   return undefined;
 }
 
-function imageMagicOk(mime: string, base64: string): boolean {
-  let head: Buffer;
-  try {
-    head = Buffer.from(base64.slice(0, 32), "base64");
-  } catch {
-    return false;
-  }
-  if (mime === "image/png") return head.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
-  if (mime === "image/jpeg") return head.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
-  return head.subarray(0, 4).toString("ascii") === "RIFF" && head.subarray(8, 12).toString("ascii") === "WEBP";
-}
-
 type WebhookStatus = 200 | 400 | 403 | 502;
 
 /** Wspólna ścieżka webhooka kanału: podpis → parseInbound → deduplikacja → rozmowa → wysłanie odpowiedzi. */
@@ -190,7 +178,8 @@ export function createApp(ctx: ServerContext): Hono {
   });
   app.use("/api/*", (c, next) => {
     const p = c.req.path;
-    const maxSize = (p === RECORDING_ROUTE || p === DICTATION_ROUTE) ? MAX_RECORDING_BASE64 + 65_536
+    const maxSize = (p === RECORDING_ROUTE || p === DICTATION_ROUTE || (p === CHATLOOM_WEBHOOK_PATH && ctx.cfg.chatloomWebhookSecret))
+      ? MAX_RECORDING_BASE64 + 65_536
       : p === "/api/chat" ? CHAT_BODY_MAX : p.startsWith("/api/channels/") ? WEBHOOK_BODY_MAX : DEFAULT_BODY_MAX;
     return bodyLimit({
       maxSize,
@@ -323,7 +312,7 @@ export function createApp(ctx: ServerContext): Hono {
     for (const attachment of attachments) {
       const b64 = attachment.base64;
       const limit = body.recording ? MAX_RECORDING_BYTES : MAX_ATTACHMENT_BYTES;
-      if (!b64 || b64.length % 4 === 1 || Buffer.byteLength(b64, "base64") > limit || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
+      if (!attachmentBase64Ok(b64, limit)) {
         return c.json({ error: "bad_attachment", messagePl: `Nie mogę odczytać pliku. Limit wynosi ${limit / 1024 ** 2} MB.` }, 400);
       }
       if (attachment.mime.startsWith("image/") && !imageMagicOk(attachment.mime, b64)) {
@@ -338,19 +327,13 @@ export function createApp(ctx: ServerContext): Hono {
       if (budgetExceeded(ctx.db, ctx.cfg, ctx.now()) || clientBudgetExceeded(ctx.clientUsage, ctx.cfg, ip, ctx.now())) {
         return c.json({ messagePl: "Wyczerpano dzisiejszy limit transkrypcji." }, 429);
       }
-      const analyze = createOpenAiVideoAnalyzer({ apiKey: ctx.cfg.openaiApiKey, fetchImpl: ctx.fetch, dataResidency: ctx.cfg.openaiDataResidency });
-      let tokens = 0;
       try {
-        const result = await analyze({ bytes: Buffer.from(base64, "base64"), mimeType: mime }, c.req.raw.signal);
-        tokens = [result.usage, ...(result.additionalUsage ?? [])].reduce((sum, u) => sum + u.inputTokens + u.outputTokens, 0);
-        return c.json({ text: result.data.transcript.map(segment => segment.text).join(" ") });
+        const text = await transcribeAudio(ctx, { mime, base64 }, c.req.raw.signal,
+          tokens => addClientTokens(ctx.clientUsage, ip, ctx.now(), tokens));
+        return c.json({ text });
       } catch (error) {
-        if (error instanceof OpenAiVideoAnalysisError) tokens = error.usages.reduce((sum, u) => sum + u.inputTokens + u.outputTokens, 0);
         return c.json({ messagePl: error instanceof Error && error.message === "audio_no_speech"
           ? "Nie rozpoznano mowy. Spróbuj ponownie." : "Nie udało się przepisać nagrania. Spróbuj ponownie." }, 422);
-      } finally {
-        addTokens(ctx.db, ctx.now(), tokens);
-        addClientTokens(ctx.clientUsage, ip, ctx.now(), tokens);
       }
     }
 
@@ -497,7 +480,7 @@ export function createApp(ctx: ServerContext): Hono {
   app.all("/mcp/*", mcpRoute);
 
   // ───────── kanały wiadomości (webhook) ─────────
-  app.post("/api/channels/chatloom/webhook", createChatLoomWebhook(ctx));
+  app.post(CHATLOOM_WEBHOOK_PATH, createChatLoomWebhook(ctx));
   app.post("/api/channels/:id/webhook", async (c) => {
     const adapter = ctx.channels.getWebhook(c.req.param("id"));
     if (!adapter) return c.json({ error: "not_configured", messagePl: "Ten kanał nie jest skonfigurowany." }, 501);

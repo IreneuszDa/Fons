@@ -1,6 +1,10 @@
+import { spawnSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import Database from "better-sqlite3";
-import { describe, expect, it } from "vitest";
+import sharp from "sharp";
+import { describe, expect, it, vi } from "vitest";
+import { FakeLlmProvider } from "../engine/llm/fake";
+import { memoryStore } from "../engine/testing/stubs";
 import { createApp } from "./app";
 import { createServerContext } from "./context";
 import { NO_REPORT_TEXT } from "./conversation/templates";
@@ -18,6 +22,13 @@ function event(eventId: string, type = "m.room.message", content: Record<string,
 }
 
 const like = () => event("$like", "m.reaction", { "m.relates_to": { rel_type: "m.annotation", event_id: "$answer", key: "👍" } });
+
+async function photo(eventId: string, width = 37, caption?: string) {
+  const pixels = await sharp({ create: { width, height: 29, channels: 3, background: "red" } }).png().toBuffer();
+  return event(eventId, "m.room.message", {
+    msgtype: "m.image", attachment: { mime: "image/png", base64: pixels.toString("base64") }, caption,
+  });
+}
 
 function post(env: TestEnv, body: object | string, { age = 0, key = secret, signedBody }: {
   age?: number; key?: string; signedBody?: string;
@@ -44,6 +55,83 @@ async function actions(res: Response): Promise<Action[]> {
 }
 
 describe("konektor ChatLoom", () => {
+  it("przekazuje to samo zdjęcie do kolejnych pytań oraz obsługuje podpis i odpowiedź na konkretny plik", async () => {
+    const env = makeEnv({ cfg });
+    const first = await photo("$first-photo");
+    expect((await actions(await post(env, first)))[0]?.content.body).toContain("Mam zdjęcie");
+    const question = event("$question", "m.room.message", { msgtype: "m.text", body: "Pokaż metadane tego zdjęcia." });
+    expect((await actions(await post(env, question)))[0]?.content.body).toContain("37 × 29");
+    expect((await actions(await post(env, { ...question, event_id: "$follow-up" })))[0]?.content.body).toContain("37 × 29");
+    expect((await actions(await post(env, await photo("$second-photo", 41, "Pokaż metadane tego zdjęcia."))))[0]?.content.body).toContain("41 × 29");
+    const directReply = { ...question, event_id: "$direct-reply", content: {
+      ...question.content, "m.relates_to": { "m.in_reply_to": { event_id: first.event_id } },
+    } };
+    expect((await actions(await post(env, directReply)))[0]?.content.body).toContain("37 × 29");
+    expect(env.ctx.media.size).toBe(0);
+  });
+
+  it("łączy pytanie z dosłanym zdjęciem i nie generuje osobnej odpowiedzi na plik", async () => {
+    const env = makeEnv({ cfg });
+    const llm = new FakeLlmProvider({ supportsVision: true, override: () => ({ answerPl: "Widzę czerwony prostokąt.", citationIndex: -1 }) });
+    env.ctx.engineDeps = {
+      llm, verifier: llm, singleKey: true, store: memoryStore([]), db: env.db,
+      branches: [], fetchPage: vi.fn(), now: env.ctx.now, verdictMode: "rules",
+    };
+    const question = {
+      ...event("$question", "m.room.message", { msgtype: "m.text", body: "Co jest na tym zdjęciu?" }),
+      media_context: true,
+    };
+    const image = { ...await photo("$after"), origin_server_ts: question.origin_server_ts + 1000 };
+    const pending = post(env, question);
+    await vi.waitFor(() => expect(env.db.prepare("SELECT COUNT(*) AS n FROM chatloom_replies").get()).toEqual({ n: 1 }), { interval: 5 });
+    expect(await actions(await post(env, image))).toEqual([]);
+    const reply = await actions(await pending);
+    expect(reply[0]?.content.body).toContain("Widzę czerwony prostokąt.");
+    expect(await actions(await post(env, question))).toEqual(reply);
+    expect(await actions(await post(env, image))).toEqual([]);
+    expect(llm.calls).toMatchObject([{ images: 1, purpose: "image_question" }]);
+    expect(env.db.prepare("SELECT input_kind FROM runs").all()).toEqual([{ input_kind: "image" }]);
+  });
+
+  it("trzyma zdjęcia w obrębie nadawcy i pokoju oraz usuwa kontekst po wycofaniu lub wygaśnięciu", async () => {
+    const env = makeEnv({ cfg });
+    await actions(await post(env, await photo("$photo")));
+    const question = event("$question", "m.room.message", { msgtype: "m.text", body: "Sprawdź, czy to prawda." });
+    await actions(await post(env, { ...question, room_id: "!other:example.org" }));
+    await actions(await post(env, { ...question, sender: "@other:example.org" }));
+    await actions(await post(env, event("$remove", "m.room.redaction", { redacts: "$photo" })));
+    await actions(await post(env, question));
+    await actions(await post(env, await photo("$expires")));
+    env.advance(5 * 60_000 + 1);
+    await actions(await post(env, { ...question, event_id: "$after-expiry", origin_server_ts: env.clock.now }));
+    expect(env.db.prepare("SELECT input_kind FROM runs").all()).toEqual(Array.from({ length: 4 }, () => ({ input_kind: "text" })));
+  });
+
+  it("używa transkrypcji głosówki Ogg/Opus jako pytania o otrzymane zdjęcie", async (test) => {
+    const encoded = spawnSync("ffmpeg", [
+      "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=1", "-c:a", "libopus", "-f", "ogg", "pipe:1",
+    ]);
+    if ((encoded.error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return test.skip();
+    expect(encoded.status, encoded.stderr.toString()).toBe(0);
+    const transcribe = vi.fn<typeof fetch>(async (_url, init) => {
+      expect((init?.body as FormData).get("file")).toMatchObject({ type: "audio/wav" });
+      return Response.json({ text: "Pokaż metadane tego zdjęcia." });
+    });
+    const env = makeEnv({ cfg: { ...cfg, openaiApiKey: "test-key" }, fetch: transcribe });
+    await actions(await post(env, await photo("$photo")));
+    const voice = event("$voice", "m.room.message", {
+      msgtype: "m.audio", "org.matrix.msc3245.voice": {},
+      attachment: { mime: "audio/ogg; codecs=opus", base64: encoded.stdout.toString("base64") },
+    });
+    const reply = await actions(await post(env, voice));
+    expect(reply[0]?.content.body).toContain("37 × 29");
+    expect(await actions(await post(env, voice))).toEqual(reply);
+    expect(transcribe).toHaveBeenCalledOnce();
+    transcribe.mockResolvedValueOnce(Response.json({ text: "Czy Polska jest członkiem NATO?" }));
+    await actions(await post(env, { ...voice, room_id: "!voice-only:example.org" }));
+    expect(env.calls).toMatchObject([{ kind: "text", channel: "chatloom", text: "Czy Polska jest członkiem NATO?" }]);
+  });
+
   it("włącza się po konfiguracji, sprawdza podpis surowej treści i świeżość dostawy", async () => {
     const msg = event("$one");
     expect((await post(makeEnv(), msg)).status).toBe(501);
