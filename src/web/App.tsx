@@ -17,6 +17,7 @@ import { installLinkInterception, matchRoute, usePathname, type Route } from "./
 // Only the citizen chat is in the main chunk; the rest loads on demand (the admin panel never reaches citizens).
 const ResultPage = lazy(() => import("./pages/ResultPage"));
 const SourcesPage = lazy(() => import("./pages/SourcesPage"));
+const PhoneOnboardingPage = lazy(() => import("./pages/PhoneOnboardingPage"));
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 export const BRAND = "Fons";
@@ -26,6 +27,7 @@ export const TITLES: Record<Route["name"], string> = {
   chat: `${BRAND} — ${TAGLINE.toLowerCase()}`,
   result: `Wynik sprawdzenia — ${BRAND}`,
   sources: `Źródła i metoda — ${BRAND}`,
+  phone: `Profil telefoniczny — ${BRAND}`,
   admin: `Panel zespołu — ${BRAND}`,
   notfound: `Nie ma takiej strony — ${BRAND}`,
 };
@@ -55,6 +57,8 @@ function Page({ route }: { route: Exclude<Route, { name: "chat" }> }) {
       return <ResultPage key={route.token} token={route.token} />;
     case "sources":
       return <SourcesPage />;
+    case "phone":
+      return <PhoneOnboardingPage />;
     case "admin":
       return <AdminApp />;
     default:
@@ -65,6 +69,7 @@ function Page({ route }: { route: Exclude<Route, { name: "chat" }> }) {
 export default function App() {
   const path = usePathname();
   const route = matchRoute(path);
+  const showNavigation = route.name !== "chat" && route.name !== "sources" && route.name !== "phone";
 
   useEffect(() => installLinkInterception(), []);
   useEffect(() => {
@@ -75,7 +80,7 @@ export default function App() {
     <AppShell
       variant="surface"
       contentPadding={0}
-      topNav={route.name !== "chat" && route.name !== "sources" && (
+      topNav={showNavigation && (
         <TopNav
           label="Nawigacja główna"
           heading={<TopNavHeading heading={BRAND} headingHref="/" logo={<Icon icon={ShieldCheckIcon} size="sm" color="accent" />} />}
@@ -101,7 +106,7 @@ export default function App() {
             )}
           </LayoutContent>
         }
-        footer={route.name !== "chat" && route.name !== "sources" && (
+        footer={showNavigation && (
           <LayoutFooter hasDivider padding={2} label="Stopka">
             <SiteFooter />
           </LayoutFooter>

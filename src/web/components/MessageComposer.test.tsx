@@ -28,9 +28,11 @@ class TestRecorder {
 
 beforeEach(async () => {
   const { window } = parseHTML("<html><body><main></main></body></html>");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ text: "Sprawdź tę informację." })));
   vi.stubGlobal("window", window);
   vi.stubGlobal("document", window.document);
   vi.stubGlobal("HTMLElement", window.HTMLElement);
+  vi.stubGlobal("Node", window.Node);
   vi.stubGlobal("getSelection", () => null);
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal("requestAnimationFrame", (frame: FrameRequestCallback) => setTimeout(() => frame(performance.now()), 0));
@@ -72,37 +74,36 @@ async function click(label: string) {
   await act(async () => button(label).click());
 }
 
-it("opens the microphone directly and prepares an audio attachment until the user sends it", async () => {
+it("transcribes dictation into the editable draft and sends only text", async () => {
   expect(getUserMedia).not.toHaveBeenCalled();
-  await click("Nagraj notatkę głosową");
+  await click("Dyktuj wiadomość");
   expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
   expect(document.body.textContent).toContain("Nagrywanie");
   await click("Zakończ");
   expect(stopTrack).toHaveBeenCalledOnce();
-  expect(document.body.textContent).toContain("Notatka głosowa.weba");
+  expect(document.body.textContent).toContain("Sprawdź tę informację.");
   expect(onSubmit).not.toHaveBeenCalled();
   await click("Wyślij");
   expect(onSubmit).toHaveBeenCalledWith({
-    recording: { mime: "audio/webm", base64: Buffer.from(sample).toString("base64") },
-  }, "Notatka głosowa.weba");
+    text: "Sprawdź tę informację.",
+  }, undefined);
 });
 
-it("can remove a recorded draft without sending it", async () => {
-  await click("Nagraj notatkę głosową");
+it("keeps a failed transcription out of the conversation", async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json({ messagePl: "Nie rozpoznano mowy." }, { status: 422 }));
+  await click("Dyktuj wiadomość");
   await click("Zakończ");
-  await click("Usuń załącznik");
-  expect(document.body.textContent).not.toContain("Notatka głosowa.weba");
-  await click("Wyślij");
+  expect(document.querySelector('[role="alert"]')?.textContent).toContain("Nie rozpoznano mowy.");
   expect(onSubmit).not.toHaveBeenCalled();
 });
 
 it("discards a cancelled recording and explains microphone access denial", async () => {
-  await click("Nagraj notatkę głosową");
+  await click("Dyktuj wiadomość");
   await click("Anuluj");
   expect(stopTrack).toHaveBeenCalledOnce();
   expect(document.body.textContent).not.toContain("Notatka głosowa.weba");
   getUserMedia.mockRejectedValueOnce(new DOMException("Denied", "NotAllowedError"));
-  await click("Nagraj notatkę głosową");
+  await click("Dyktuj wiadomość");
   expect(document.querySelector('[role="alert"]')?.textContent).toContain("Brak dostępu do mikrofonu");
   expect(onSubmit).not.toHaveBeenCalled();
 });

@@ -49,7 +49,7 @@ const chatStyles = `
     inset-inline-start: 0;
     z-index: 1;
     transform: translateX(-100%);
-    background: color-mix(in srgb, var(--color-background-surface) 96%, var(--color-text-primary));
+    background-color: var(--color-background-surface);
   }
   .fons-chat-body .fons-history-panel[aria-hidden="false"] { transform: translateX(0); }
   @media (prefers-reduced-motion: no-preference) {
@@ -159,7 +159,7 @@ export default function ChatHistory({
             <IconButton {...trigger} label="Menu czatu" variant="ghost"
               icon={<Icon icon={EllipsisHorizontalIcon} size="lg" />} />
           )}
-          items={[{ label: "Źródła i metoda", href: "/zrodla" }]}
+          items={[{ label: "Fons na telefonie", href: "/telefon" }, { label: "Źródła i metoda", href: "/zrodla" }]}
         />
       </HStack>
     </LayoutHeader>

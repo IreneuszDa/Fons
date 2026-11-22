@@ -32,8 +32,8 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
   const selection = useRef(0);
   const errorId = useId();
   const textError = text.trim().length > MAX_CHAT_TEXT_CHARS ? `Skróć wiadomość do ${MAX_CHAT_TEXT_CHARS} znaków.` : "";
-  const voice = useVoiceNote(file => { void selectFiles([file]); }, setFileError);
-  const recordDisabled = isDisabled || reading || !!attachment;
+  const voice = useVoiceNote(dictated => { setText(draft => [draft.trimEnd(), dictated].filter(Boolean).join(" ")); editor.current?.focus(); }, setFileError);
+  const recordDisabled = isDisabled || reading || !voice.available;
   const canSend = !isDisabled && !reading && voice.state === "idle" && !textError && (!!text.trim() || !!attachment);
   function startRecording() {
     if (recordDisabled) return;
@@ -138,7 +138,6 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
               {attachment.kind === "image" && (
                 <Text type="supporting" color="secondary">Fons może wysłać obraz do Google, żeby znaleźć jego źródło.</Text>
               )}
-              {attachment.kind === "recording" && <Text type="supporting" color="secondary">Po wysłaniu nagranie zostanie przetworzone przez dostawcę modelu.</Text>}
             </VStack>
           </ChatComposerDrawer>
         )}
@@ -167,11 +166,10 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
                 { label: "Dokument lub zdjęcie", onClick: () => pick(DOCUMENT_ACCEPT) },
                 { label: "Film", onClick: () => pick(VIDEO_ACCEPT) },
                 { label: "Plik audio", onClick: () => pick(AUDIO_ACCEPT) },
-                ...(voice.available ? [{ label: "Nagraj notatkę głosową", onClick: startRecording, isDisabled: recordDisabled }] : []),
               ]} />
           ) : (
             <HStack gap={1} vAlign="center" wrap="wrap">
-              <Text role="status" type="supporting">{voice.state === "requesting" ? "Czekam na mikrofon…" : "Nagrywanie…"}</Text>
+              <Text role="status" type="supporting">{voice.state === "requesting" ? "Czekam na mikrofon…" : voice.state === "transcribing" ? "Transkrypcja…" : "Nagrywanie…"}</Text>
               <Button label="Anuluj" size="sm" variant="ghost" onClick={voice.cancel} />
             </HStack>
           )
@@ -180,7 +178,7 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
           <IconButton label="Zakończ" tooltip="Zakończ nagrywanie" icon={<Icon icon={StopIcon} />}
             variant="primary" onClick={voice.stop} />
         ) : voice.state === "idle" && (
-          <IconButton label="Nagraj notatkę głosową" tooltip="Nagraj notatkę głosową" icon={<Icon icon={MicrophoneIcon} />}
+          <IconButton label="Dyktuj wiadomość" tooltip="Dyktuj wiadomość" icon={<Icon icon={MicrophoneIcon} />}
             variant="ghost" isDisabled={recordDisabled} onClick={startRecording} />
         )}
         sendButton={<ChatSendButton isDisabled={!canSend} onSend={submit} />}

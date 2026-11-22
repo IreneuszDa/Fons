@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 export type Route =
   | { name: "chat" }
+  | { name: "phone" }
   | { name: "result"; token: string }
   | { name: "sources" }
   | { name: "admin" }
@@ -11,6 +12,7 @@ export type Route =
 export function matchRoute(pathname: string): Route {
   const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
   if (p === "/" || p === "") return { name: "chat" };
+  if (p === "/telefon") return { name: "phone" };
   if (p === "/zrodla") return { name: "sources" };
   if (p === "/admin") return { name: "admin" };
   const m = /^\/w\/([^/]+)$/.exec(p);

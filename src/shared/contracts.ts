@@ -89,7 +89,7 @@ export type Strength = z.infer<typeof Strength>;
 export const ClaimType = z.enum(["fakt", "opinia", "prognoza"]);
 export type ClaimType = z.infer<typeof ClaimType>;
 
-export const ChannelId = z.enum(["web", "discord", "whatsapp", "sms", "imessage", "messenger", "cli", "eval", "mcp"]);
+export const ChannelId = z.enum(["web", "chatloom", "discord", "whatsapp", "sms", "imessage", "messenger", "cli", "eval", "mcp"]);
 export type ChannelId = z.infer<typeof ChannelId>;
 
 // ───────────────────────────── Katalog i korpus ─────────────────────────────

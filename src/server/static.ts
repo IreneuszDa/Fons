@@ -1,4 +1,4 @@
-/** Serwowanie zbudowanego WWW (web-dist/) z fallbackiem SPA dla /, /w/:token, /zrodla, /admin. */
+/** Serwowanie zbudowanego WWW (web-dist/) z fallbackiem dla tras SPA. */
 import { readFile, stat } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import type { MiddlewareHandler } from "hono";
@@ -22,7 +22,7 @@ const MIME: Record<string, string> = {
   ".map": "application/json; charset=utf-8",
 };
 
-const SPA_ROUTES = [/^\/$/, /^\/w\/[^/]+\/?$/, /^\/zrodla\/?$/, /^\/admin(\/.*)?$/];
+const SPA_ROUTES = [/^\/$/, /^\/w\/[^/]+\/?$/, /^\/zrodla\/?$/, /^\/telefon\/?$/, /^\/admin(\/.*)?$/];
 
 export function isSpaRoute(path: string): boolean {
   return SPA_ROUTES.some((r) => r.test(path));

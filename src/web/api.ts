@@ -64,6 +64,13 @@ async function chatResource<T>(path: string, message: string, init?: RequestInit
   return body as T;
 }
 
+export async function transcribeDictation(recording: ChatRecording, signal: AbortSignal): Promise<string> {
+  const result = await chatResource<{ text: string }>("/api/dictation", "Nie udało się przepisać nagrania.", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recording }), signal,
+  });
+  return result.text;
+}
+
 export async function listChats(): Promise<ChatSummary[]> {
   const { chats } = await chatResource<{ chats: ChatSummary[] }>("/api/chats", "Nie udało się wczytać historii czatów.");
   return chats;

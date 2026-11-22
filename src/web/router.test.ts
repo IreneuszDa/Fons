@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { isAppPath, matchRoute, shouldIntercept } from "./router";
 
 describe("matchRoute", () => {
-  it("matches the four pages", () => {
+  it("matches the application pages", () => {
     expect(matchRoute("/")).toEqual({ name: "chat" });
     expect(matchRoute("/zrodla")).toEqual({ name: "sources" });
     expect(matchRoute("/zrodla/")).toEqual({ name: "sources" });
     expect(matchRoute("/admin")).toEqual({ name: "admin" });
-    expect(matchRoute("/telefon")).toEqual({ name: "notfound" });
+    expect(matchRoute("/telefon")).toEqual({ name: "phone" });
     expect(matchRoute("/w/abc123")).toEqual({ name: "result", token: "abc123" });
   });
   it("returns notfound for anything else", () => {

@@ -89,6 +89,9 @@ export function eraseSender(ctx: ServerContext, senderId: string, sessionId?: st
   const params = sessionId ? [senderId, sessionId] : [senderId];
   const sessionIds = db.prepare(`SELECT id FROM sessions WHERE ${sessionsScope}`).all(...params) as { id: string }[];
   const tx = db.transaction((): EraseResult => {
+    // Keep anonymous delivery receipts so a bridge retry cannot recreate a deleted conversation.
+    db.prepare(`UPDATE chatloom_replies SET reply = '', emoji = NULL, sender_id = NULL, session_id = NULL WHERE ${scope}`).run(...params);
+    db.prepare(`UPDATE chatloom_reactions SET emoji = NULL, target_key = NULL, sender_id = NULL, session_id = NULL WHERE ${scope}`).run(...params);
     const reports = db.prepare(`DELETE FROM reports WHERE ${scope}`).run(...params).changes;
     const runs = eraseRunsForSender(db, senderId, sessionId);
     db.prepare(`UPDATE security_events SET excerpt = '', sender_id = NULL, session_id = NULL WHERE ${scope}`).run(...params);

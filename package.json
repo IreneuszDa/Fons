@@ -2,6 +2,7 @@
   "name": "fons",
   "version": "0.1.0",
   "scripts": {
+    "setup:video": "python3 -m venv .cache/video-tools && .cache/video-tools/bin/python -m pip install yt-dlp==2026.10.26",
     "dev": "concurrently -n api,web \"tsx watch src/server/index.ts\" \"vite\"",
     "dev:api": "tsx watch src/server/index.ts",
     "dev:web": "vite",

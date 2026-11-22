@@ -1,6 +1,7 @@
+import { recoverSocialVideo } from "./yt-dlp";
 import type { VideoAnalysis } from "../../shared/contracts";
 import { loadFacebookCaption, loadFacebookVideo, parseFacebookPost } from "./facebook";
-import { createSocialVideoLoader as createShortVideoLoader, loadSocialCaption, socialVideoPlatform as shortVideoPlatform, type SocialVideo, type SocialVideoMetadata } from "./social-source";
+import { SocialVideoSourceError, createSocialVideoLoader as createShortVideoLoader, loadSocialCaption, socialVideoPlatform as shortVideoPlatform, type SocialVideo, type SocialVideoMetadata } from "./social-source";
 import { canonicalYouTubeUrl, loadYouTubePost, loadYouTubeVideo, type YouTubePost } from "./youtube";
 
 type Caption = SocialVideoMetadata & { url: string; caption: string; title?: string };
@@ -32,6 +33,12 @@ export function createVideoLoader(socialKitApiKey?: string, provider: "gemini" |
   return async (url: string, signal?: AbortSignal): Promise<Video> => {
     if (canonicalYouTubeUrl(url)) return provider === "openai" ? loadYouTubeVideo(url, signal) : loadYouTubePost(url, signal);
     if (parseFacebookPost(url)) return loadFacebookVideo(url, signal);
-    return loadShortVideo(url, signal);
+    try {
+      return await loadShortVideo(url, signal);
+    } catch (error) {
+      signal?.throwIfAborted();
+      if (!(error instanceof SocialVideoSourceError) || error.reason !== "unavailable" || error.restricted) throw error;
+      return recoverSocialVideo(error, signal);
+    }
   };
 }

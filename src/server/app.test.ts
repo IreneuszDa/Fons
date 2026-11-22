@@ -430,13 +430,13 @@ describe("API podstawowe", () => {
     expect(res.status).toBe(413);
   });
 
-  it("produkcja: pliki statyczne i fallback SPA dla /, /w/:token, /zrodla, /admin", async () => {
+  it("produkcja: pliki statyczne i fallback SPA na trasach aplikacji", async () => {
     const dir = mkdtempSync(join(tmpdir(), "pw-dist-"));
     mkdirSync(join(dir, "assets"));
     writeFileSync(join(dir, "index.html"), "<!doctype html><title>spa</title>");
     writeFileSync(join(dir, "assets", "app.js"), "console.log(1)");
     const env = makeEnv({ options: { webDistDir: dir } });
-    for (const p of ["/", "/w/abcdef", "/zrodla", "/admin"]) {
+    for (const p of ["/", "/w/abcdef", "/zrodla", "/telefon", "/admin"]) {
       const r = await env.app.request(p);
       expect(r.status, p).toBe(200);
       expect(await r.text()).toContain("<title>spa</title>");

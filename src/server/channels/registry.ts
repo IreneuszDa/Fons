@@ -26,7 +26,6 @@ export function createChannelRegistry(): ChannelRegistry {
   };
   registry.register(webAdapter);
   registry.register(cliAdapter);
-  // Prawdziwe kanały (Discord, WhatsApp, SMS, iMessage, Messenger) rejestruje się tu jednym plikiem
-  // implementującym ChannelAdapter + registry.register(adapter, { webhook: true }) — na razie żaden nie jest skonfigurowany.
+  // ChatLoom dostarcza odpowiedzi w odpowiedzi HTTP na webhook. Jego trasę rejestruje createApp.
   return registry;
 }

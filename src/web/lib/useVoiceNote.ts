@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_RECORDING_BYTES, MAX_RECORDING_SECONDS } from "../../shared/attachments";
 
-/** A click opens the microphone. Stopping creates a draft attachment for the user to send. */
-export function useVoiceNote(onFile: (file: File) => void, onError: (message: string) => void) {
-  const [state, setState] = useState<"idle" | "requesting" | "recording">("idle");
+import { transcribeDictation } from "../api";
+import { prepareAttachment } from "./attachment";
+export function useVoiceNote(onText: (text: string) => void, onError: (message: string) => void) {
+  const [state, setState] = useState<"idle" | "requesting" | "recording" | "transcribing">("idle");
   const attempt = useRef(0);
+  const transcription = useRef<AbortController | null>(null);
   const capture = useRef<MediaRecorder | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const release = () => {
+    transcription.current?.abort();
+    transcription.current = null;
     clearTimeout(deadline.current);
     const recorder = capture.current;
     capture.current = null;
@@ -52,13 +56,24 @@ export function useVoiceNote(onFile: (file: File) => void, onError: (message: st
         cancel();
         onError("Nagrywanie zostało przerwane. Możesz dołączyć gotowy plik audio.");
       };
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         if (token !== attempt.current) return;
         release();
-        setState("idle");
+        setState("transcribing");
+        const controller = new AbortController();
+        transcription.current = controller;
         const type = mimeType.split(";")[0]!;
         const extension = type === "audio/mp4" ? "m4a" : type === "audio/ogg" ? "ogg" : "weba";
-        onFile(new File(chunks, `Notatka głosowa.${extension}`, { type }));
+        try {
+          const audio = await prepareAttachment(new File(chunks, `audio.${extension}`, { type }));
+          if (audio.kind !== "recording" || token !== attempt.current) return;
+          const text = await transcribeDictation(audio.content, controller.signal);
+          if (token === attempt.current) onText(text);
+        } catch (error) {
+          if (token === attempt.current) onError(error instanceof Error ? error.message : "Nie udało się przepisać nagrania.");
+        } finally {
+          if (token === attempt.current) { transcription.current = null; setState("idle"); }
+        }
       };
       recorder.start(1000);
       deadline.current = setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, MAX_RECORDING_SECONDS * 1000);

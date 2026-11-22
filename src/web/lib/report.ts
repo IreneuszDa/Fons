@@ -2,6 +2,7 @@
  * Pure presentation helpers for VerdictReport / ConversationReply (labels, grouping, tones).
  * Only `import type` from contracts, so zod never lands in the browser bundle.
  */
+import { replyView, statusOf, STATUS_KEY_TITLE_PL, VERDICT_LABEL_PL } from "../../shared/reply-view";
 import { mediaClaimSubject } from "../../shared/attachments";
 import type {
   Aspect,
@@ -18,14 +19,10 @@ import type {
   VerifierVote,
 } from "../../shared/contracts";
 
-/** Copy of VERDICT_LABEL_PL from contracts (value import would pull zod into the bundle). Kept in sync by a unit test. */
-export const VERDICT_LABEL_PL: Record<Verdict, string> = {
-  POTWIERDZONE: "Potwierdzone",
-  FALSZYWE: "Fałszywe",
-  WPROWADZAJACE: "Wprowadzające w błąd",
-  BRAK_DOWODOW: "Brak wystarczających dowodów",
-  NIE_PODLEGA: "Nie podlega weryfikacji",
-};
+export {
+  isOpenQuestion, replyView, statusOf, STATUS_KEY_TITLE_PL, STATUS_TITLE_PL, VERDICT_LABEL_PL,
+  type ReplyView, type StatusKey,
+} from "../../shared/reply-view";
 
 /** Colour family per verdict: always paired with an icon and the text label (never colour alone). */
 export type VerdictTone = "green" | "red" | "orange" | "blue" | "purple";
@@ -45,14 +42,6 @@ export const VERDICT_MEANING_PL: Record<Verdict, string> = {
   WPROWADZAJACE: "Część informacji się zgadza, ale brakuje ważnego kontekstu albo jest nieaktualna.",
   BRAK_DOWODOW: "Nie znaleźliśmy wystarczających dowodów, żeby to rozstrzygnąć.",
   NIE_PODLEGA: "To opinia albo przewidywanie — nie da się tego sprawdzić w źródłach.",
-};
-
-export const STATUS_TITLE_PL: Record<TechStatus, string> = {
-  OK: "Sprawdzenie zakończone",
-  NIEPELNE: "Nie udało się dokończyć sprawdzenia",
-  AWARIA: "Wystąpił problem techniczny",
-  DOPRECYZUJ: "Potrzebuję więcej szczegółów",
-  POZA_ZAKRESEM: "Tego nie sprawdzam",
 };
 
 export const STATUS_HINT_PL: Record<TechStatus, string> = {
@@ -168,40 +157,6 @@ export function claimRows(report: VerdictReport): { claimId: string; text: strin
   });
   return rows.sort((a, b) => Number(b.isMain) - Number(a.isMain));
 }
-
-/** How the chat should render a reply. A technical status is never shown as a verdict. */
-export type ReplyView = "verdict" | "answer" | "status" | "text";
-
-/** An open question ("Kto…?", "Kiedy…?") is answered only with a verified quote — rendered by AnswerCard, not VerdictCard. */
-export function isOpenQuestion(report: VerdictReport | undefined): boolean {
-  return !!report && (report.inputMode === "question_open" || !!report.answer);
-}
-
-export function replyView(reply: ConversationReply): ReplyView {
-  if (reply.report && reply.report.status === "OK" && (reply.kind === "answer" || (reply.kind === "verdict" && isOpenQuestion(reply.report)))) return "answer";
-  if (reply.kind === "answer") return reply.report ? "status" : "text"; // an answer reply without OK report is a technical status
-  if (reply.kind === "verdict" && reply.report && reply.report.status === "OK" && reply.report.mainVerdict) return "verdict";
-  if (reply.kind === "status" || reply.kind === "rate_limited") return "status";
-  if (reply.kind === "verdict") return "status"; // defensive: a "verdict" without a usable verdict is a technical status
-  return "text";
-}
-
-export type StatusKey = Exclude<TechStatus, "OK"> | "RATE_LIMITED" | "GENERIC";
-
-export function statusOf(reply: ConversationReply): StatusKey {
-  if (reply.kind === "rate_limited") return "RATE_LIMITED";
-  const s = reply.report?.status;
-  return s && s !== "OK" ? s : "GENERIC";
-}
-
-export const STATUS_KEY_TITLE_PL: Record<StatusKey, string> = {
-  NIEPELNE: STATUS_TITLE_PL.NIEPELNE,
-  AWARIA: STATUS_TITLE_PL.AWARIA,
-  DOPRECYZUJ: STATUS_TITLE_PL.DOPRECYZUJ,
-  POZA_ZAKRESEM: STATUS_TITLE_PL.POZA_ZAKRESEM,
-  RATE_LIMITED: "Za dużo wiadomości w krótkim czasie",
-  GENERIC: "Nie mogę teraz tego sprawdzić",
-};
 
 function clip(text: string, max: number): string {
   const t = text.replace(/\s+/g, " ").trim();

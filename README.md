@@ -35,6 +35,8 @@ Przy ogólnej prośbie o sprawdzenie posta, którego publiczny odtwarzacz udost�
 
 W serwerowym `.env` ustaw `VIDEO_PROVIDER=openai` i `OPENAI_API_KEY`, po czym uruchom ponownie API. Serwer używa programów `ffmpeg` i `ffprobe` z pakietu FFmpeg dostępnych w `PATH` (macOS: `brew install ffmpeg`, Debian/Ubuntu: `apt install ffmpeg`). Model `gpt-6-luna` odczytuje klatki, a `gpt-transcribe` przepisuje mowę z krótkich fragmentów audio. Czas transkrypcji OpenAI oznacza początek wysłanego fragmentu. Możesz zmienić model obrazu przez `OPENAI_VIDEO_MODEL`. Obie operacje stosują konfigurację `OPENAI_DATA_RESIDENCY`. [Wejście obrazowe OpenAI](https://developers.openai.com/api/docs/models/gpt-6-luna) · [Transkrypcja plików](https://developers.openai.com/api/docs/guides/speech-to-text)
 
+Dla publicznych filmów z Instagrama i TikToka uruchom w katalogu serwera `npm run setup:video` (Python 3.11+ na macOS/Linux). Polecenie instaluje przypiętą wersję yt-dlp w lokalnym środowisku projektu. Do wdrożenia skopiuj także `scripts/social-video.py` i uruchom instalację w docelowym środowisku. Gdy bezpośrednie pobieranie nie dostarczy pliku, Fons próbuje pobrać ten sam post przez yt-dlp. Działa bez klucza do pobierania i bez logowania na konto społecznościowe.
+
 Przy pustym `VIDEO_PROVIDER` Fons wybiera OpenAI, jeśli ma jego klucz, a przy samym `GEMINI_API_KEY` używa Gemini. Można też wskazać `VIDEO_PROVIDER=gemini` lub wyłączyć analizę obrazu i dźwięku przez `VIDEO_PROVIDER=off`. Limit wynosi 10 minut i 64 MiB na pobierany plik. Gdy dostępna jest wyłącznie transkrypcja lub napisy, Fons może sprawdzić zawarte w nich wypowiedzi. Raport wskazuje zakres analizy.
 
 Opcjonalny `SOCIALKIT_API_KEY` włącza dodatkową próbę pobrania MP4, gdy publiczny post na TikToku jest dostępny, ale bezpośrednie pobranie nagrania zawiedzie. W tym przypadku adres filmu trafia do SocialKit. Fons zamawia plik MP4 w 480p. Dostawca podaje limit 30 MB i nalicza własne kredyty za każdą rozpoczętą minutę nagrania. [TikTok Video Download API](https://docs.socialkit.dev/api-reference/tiktok-download-api)
@@ -262,7 +264,7 @@ Ważne zmienne `.env`: `LIVE_SEARCH=on` (źródła na żywo: oficjalne kanały i
 
 Przycisk „+” obok pola wiadomości pozwala dołączyć jeden plik, samodzielnie lub z pytaniem. Limit dla obrazu lub dokumentu wynosi 5 MiB. Fons odczytuje JPG, PNG i WebP do 32 megapikseli oraz tekst z PDF i TXT (UTF-8). Dokument z opisem może mieć łącznie do 20 000 znaków. Do odczytu PDF serwer potrzebuje polecenia `pdftotext` z pakietu Poppler (`brew install poppler` na macOS, `apt install poppler-utils` na Debianie). Skan można przesłać jako obraz.
 
-Wybierz „Film” lub „Plik audio”, aby wysłać MP4, MOV, WebM, MP3, M4A, WAV lub OGG do 20 MiB i 10 minut. Na HTTPS lub localhost kliknij mikrofon obok strzałki wysyłania, aby nagrać notatkę głosową. Po zakończeniu notatka trafia do szkicu i wymaga wysłania przyciskiem. Serwer sprawdza format i długość. Raport zachowuje odczytaną, zamaskowaną treść oraz pochodzenie twierdzeń. Bajty nagrania są usuwane po obsłużeniu wiadomości.
+Wybierz „Film” lub „Plik audio”, aby wysłać MP4, MOV, WebM, MP3, M4A, WAV lub OGG do 20 MiB i 10 minut. Na HTTPS lub localhost kliknij mikrofon obok strzałki wysyłania, aby podyktować wiadomość. Po zakończeniu transkrypcja OpenAI trafia do pola tekstowego. Możesz ją poprawić przed wysłaniem. Serwer sprawdza format i długość. Raport zachowuje odczytaną, zamaskowaną treść oraz pochodzenie twierdzeń. Bajty nagrania są usuwane po obsłużeniu wiadomości.
 
 Pytanie „Czy ten obraz wygenerowała AI?” uruchamia lokalne sprawdzenie oryginalnego pliku. Fons weryfikuje osadzone poświadczenie C2PA i zaufanie do wystawcy. Podpisana deklaracja może wskazywać na wygenerowanie całego obrazu albo edycję z użyciem AI. W pliku bez podpisu Fons szuka edytowalnej deklaracji IPTC. Brak obu oznaczeń pozostawia pochodzenie nieustalone. Przy weryfikacji tekstu na obrazie model wizyjny otrzymuje kopię obrazu bez osadzonych metadanych. Dane widoczne w samych pikselach pozostają widoczne dla dostawcy.
 
@@ -274,7 +276,7 @@ Google oferuje także probabilistyczny klasyfikator obrazów pod nazwą **AI Con
 
 ## Następne kroki
 
-1. **Kanały wiadomości.** Podłączenie operatora SMS lub komunikatora wymaga osobnej integracji.
+1. **Kanały wiadomości.** Konektor ChatLoom przekazuje tekst i linki do silnika Fons oraz zwraca odpowiedź i reakcję na wiadomość. Uruchomienie na numerze wymaga podłączenia konta i wybranych rozmów po stronie ChatLoom. Formularz demonstracyjny pod `/telefon` zapisuje profil w przeglądarce. [Konfiguracja konektora](integrations/chatloom/README.md)
 2. **Wiadomości głosowe:** zamiana mowy na tekst, potem ten sam potok. Transkrypcja jest przedmiotem sprawdzenia, nie dowodem.
 3. **Dokumenty:** obsługa DOCX i wielostronicowych skanów PDF.
 4. **Zdjęcia i zrzuty ekranu:** OCR modelem wizyjnym (ścieżka już istnieje) i wyszukiwanie wcześniejszych wystąpień treści w bazie incydentów.

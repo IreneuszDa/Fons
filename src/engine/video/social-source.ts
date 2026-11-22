@@ -35,7 +35,7 @@ export class SocialVideoSourceError extends Error {
   readonly url?: string;
   constructor(
     readonly reason: "unavailable" | "too_large" | "unsupported", caption = "",
-    metadata: SocialVideoMetadata & { url?: string } = {}, readonly confirmedPublicVideo = false,
+    metadata: SocialVideoMetadata & { url?: string } = {}, readonly confirmedPublicVideo = false, readonly restricted = false,
   ) {
     super(reason);
     this.name = "SocialVideoSourceError";
@@ -120,7 +120,7 @@ function instagramPageVideo(doc: ReturnType<typeof parseHTML>["document"], id: s
         if (node.is_video === false || (node.media_type !== undefined && node.media_type !== 2)) continue;
         const owner = node.owner ?? node.user;
         if (owner && typeof owner === "object" && "is_private" in owner && owner.is_private === true) {
-          throw new SocialVideoSourceError("unavailable");
+          throw new SocialVideoSourceError("unavailable", "", {}, false, true);
         }
         const variants = Array.isArray(node.video_versions) ? node.video_versions : [];
         const mediaUrls = [node.video_url, ...variants.map(v => v?.url)].filter((v): v is string => typeof v === "string");
@@ -137,7 +137,7 @@ function metadata(html: string, post: PostLink): PostMetadata {
     const script = doc.getElementById("__UNIVERSAL_DATA_FOR_REHYDRATION__")?.textContent;
     const legacy = doc.getElementById("SIGI_STATE")?.textContent;
     const item = tikTokPageDetails(script && parseJson(script), post.id, legacy && parseJson(legacy));
-    if (item?.restricted) throw new SocialVideoSourceError("unavailable");
+    if (item?.restricted) throw new SocialVideoSourceError("unavailable", "", {}, false, true);
     if (item) return { ...item, confirmedPublicVideo: true };
   } else {
     for (const script of doc.querySelectorAll("script")) {
@@ -150,7 +150,7 @@ function metadata(html: string, post: PostLink): PostMetadata {
       if (!embed || embed.context.shortcode !== post.id) continue;
       const item = embed.gql_data?.shortcode_media;
       const caption = item?.edge_media_to_caption?.edges[0]?.node.text ?? "";
-      if (embed.context.copyright_blocked || !item || item.shortcode !== post.id) throw new SocialVideoSourceError("unavailable", caption);
+      if (embed.context.copyright_blocked || !item || item.shortcode !== post.id) throw new SocialVideoSourceError("unavailable", caption, {}, false, !!embed.context.copyright_blocked);
       if (!item.is_video) throw new SocialVideoSourceError("unsupported", caption);
       return { caption, durationSeconds: item.video_duration ?? undefined, mediaUrls: item.video_url ? [item.video_url] : [] };
     }
@@ -255,7 +255,7 @@ async function readPublicPost(rawUrl: string, active: AbortSignal, includeMedia:
     return { post, details };
   } catch (err) {
     const info = { ...details, url: post.url.href };
-    if (err instanceof SocialVideoSourceError) throw new SocialVideoSourceError(err.reason, err.caption || details.caption || caption, info);
+    if (err instanceof SocialVideoSourceError) throw new SocialVideoSourceError(err.reason, err.caption || details.caption || caption, info, false, err.restricted);
     throw new SocialVideoSourceError("unavailable", details.caption || caption, info);
   }
 }
@@ -308,11 +308,22 @@ export async function loadSocialVideo(rawUrl: string, signal?: AbortSignal): Pro
     const urls = [...new Set(details.mediaUrls)].filter(raw => {
       const url = URL.parse(raw);
       return url && mediaAllowed(url, post.platform);
-    }).slice(0, 3);
+    });
+    const attempts = urls.slice(0, 3);
+    const hosts = new Set(attempts.map(raw => new URL(raw).hostname));
+    for (const candidate of urls.slice(3)) {
+      const host = new URL(candidate).hostname;
+      if (!hosts.has(host)) {
+        attempts.push(candidate);
+        hosts.add(host);
+        if (attempts.length >= 5) break;
+      }
+    }
     let exceededSize = false;
-    for (const url of urls) {
+    for (const url of attempts) {
       try {
         const media = await fetchPublicResource(url, {
+          referer: post.platform === "instagram" ? "https://www.instagram.com/" : "https://www.tiktok.com/",
           mimeTypes: videoTypes, maxBytes: MAX_VIDEO_BYTES, timeoutMs: 14_000, signal: active,
           allowUrl: u => mediaAllowed(u, post.platform),
         });

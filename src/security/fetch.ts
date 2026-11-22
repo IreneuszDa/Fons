@@ -252,6 +252,7 @@ function charsetOf(contentType: string, head: Buffer): string {
 interface ResourceOptions extends FetchOptions {
   mimeTypes: readonly string[];
   accept?: string;
+  referer?: "https://www.instagram.com/" | "https://www.tiktok.com/";
   /** A fixed provider API may receive JSON with a credential. Never redirect that request. */
   postJson?: { body: object; headers: Record<string, string> };
   /** Checked before the initial request and every redirect, in addition to the public IP policy. */
@@ -290,6 +291,7 @@ export async function fetchPublicResource(url: string, opts: ResourceOptions) {
           ...(opts.postJson ? { body: JSON.stringify(opts.postJson.body) } : {}),
           headers: {
             "user-agent": USER_AGENT,
+            ...(opts.referer && { referer: opts.referer }),
             accept: opts.accept ?? opts.mimeTypes.join(","),
             "accept-encoding": "gzip, deflate, br",
             "accept-language": "pl,en;q=0.7",

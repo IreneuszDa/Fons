@@ -19,6 +19,27 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_sender ON sessions(sender_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions(last_seen);
 
+CREATE TABLE IF NOT EXISTS chatloom_replies (
+  event_key TEXT PRIMARY KEY,
+  sender_id TEXT,
+  session_id TEXT,
+  reply TEXT,
+  emoji TEXT,
+  lease_until INTEGER NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chatloom_replies_sender ON chatloom_replies(sender_id);
+
+CREATE TABLE IF NOT EXISTS chatloom_reactions (
+  event_key TEXT PRIMARY KEY,
+  sender_id TEXT,
+  session_id TEXT,
+  target_key TEXT,
+  emoji TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chatloom_reactions_sender ON chatloom_reactions(sender_id);
+
 CREATE TABLE IF NOT EXISTS web_chats (
   session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
   title TEXT NOT NULL DEFAULT ''
@@ -228,6 +249,8 @@ export function purgeRetention(db: Db, now: Date): PurgeResult {
   const tx = db.transaction(() => {
     const runs = db.prepare("DELETE FROM runs WHERE created_at < ?").run(runsCut).changes;
     const sessions = db.prepare("DELETE FROM sessions WHERE last_seen < ?").run(sessCut).changes;
+    db.prepare("DELETE FROM chatloom_replies WHERE created_at < ?").run(sessCut);
+    db.prepare("DELETE FROM chatloom_reactions WHERE created_at < ?").run(sessCut);
     const reports = db.prepare("DELETE FROM reports WHERE expires_at < ?").run(iso).changes;
     const cache = db.prepare("DELETE FROM computation_cache WHERE expires_at < ?").run(iso).changes;
     db.prepare("DELETE FROM cache_tombstones WHERE until < ?").run(iso);

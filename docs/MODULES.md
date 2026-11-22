@@ -144,7 +144,8 @@ API (JSON, prefiks `/api`):
 - `DELETE /api/session` usuwa dane nadawcy ze wszystkich jego rozmów.
 - `GET /api/health` → `{ ok, corpusRecords, snapshotId, llm: { provider, available, singleKey } }`
 - `POST /api/admin/login`, `GET /api/admin/cases`, `GET /api/admin/metrics`, `GET /api/admin/export.csv|.json` (P2: minimum)
-- `POST /api/channels/:id/webhook` — odbiera wiadomości tylko dla zarejestrowanych adapterów webhookowych. Dla nieskonfigurowanego kanału zwraca HTTP 501.
+- `POST /api/channels/chatloom/webhook` przyjmuje podpisane zdarzenie Matrix i zwraca akcje wysyłane przez klienta ChatLoom. [Konfiguracja i protokół](../integrations/chatloom/README.md)
+- `POST /api/channels/:id/webhook` obsługuje pozostałe zarejestrowane adaptery. Dla nieskonfigurowanego kanału zwraca HTTP 501.
 - CLI używa tej samej funkcji `handleInbound` co WWW. Polecenie `npm run ask -- "pytanie"` uruchamia weryfikację. MCP ma osobne wejście `/mcp` oraz transport stdio.
 
 ### `src/web/`

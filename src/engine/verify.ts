@@ -628,6 +628,12 @@ class Run {
 
 export type PublicationRun = Pick<Run, "req" | "deps" | "faults" | "inputMode" | "claims" | "models" | "stage" | "recordLookup" | "report">;
 
+function videoWithoutClaims(video: VideoAnalysis): string {
+  const frame = video.observations[0];
+  const description = frame ? `Kadr z ${frame.seconds} s: ${frame.text}\n\n` : "";
+  return description + "W nagraniu nie znalazłem twierdzenia do sprawdzenia. Jeśli chcesz zweryfikować konkretną wypowiedź, wskaż jej fragment.";
+}
+
 function videoTransparencyPl(analysis?: VideoAnalysis): string {
   if (!analysis || analysis.status === "unavailable") return "";
   if (analysis.status === "caption_only") return "Podstawą sprawdzenia był wyłącznie publiczny opis posta. Platforma nie udostępniła obrazu ani dźwięku. ";
@@ -965,7 +971,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       videoClaims = video.claims;
       run.claims = videoClaims.map(c => c.claim);
       if (!videoClaims.length && !(question && observed)) {
-        return run.stop("DOPRECYZUJ", "Po analizie filmu nie udało się wskazać konkretnego twierdzenia do sprawdzenia. Możesz podać zdanie, które masz na myśli.");
+        return run.stop("DOPRECYZUJ", videoWithoutClaims(video.analysis));
       }
       text = videoClaims.map(c => c.claim.text).join("\n") || observed;
     }
@@ -1136,7 +1142,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
         excerpt: normalized.text.slice(0, 120),
         severity: res.rejected.length > 0 ? "high" : "low",
       });
-      return run.stop("DOPRECYZUJ", STATUS_PL.noClaims);
+      return run.stop("DOPRECYZUJ", run.videoAnalysis?.status === "analyzed" ? videoWithoutClaims(run.videoAnalysis) : STATUS_PL.noClaims);
     }
   } catch (e) {
     await rawRetrieval;

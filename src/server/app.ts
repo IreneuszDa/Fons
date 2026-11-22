@@ -1,4 +1,5 @@
-import { DOCUMENT_MIMES, IMAGE_MIMES, MAX_ATTACHMENT_BYTES, MAX_RECORDING_BYTES, RECORDING_MIMES } from "../shared/attachments";
+import { createOpenAiVideoAnalyzer, OpenAiVideoAnalysisError } from "../engine/video/openai-video";
+import { AUDIO_MIMES, DOCUMENT_MIMES, IMAGE_MIMES, MAX_ATTACHMENT_BYTES, MAX_RECORDING_BYTES, RECORDING_MIMES } from "../shared/attachments";
 /** Fabryka aplikacji Hono: createApp(ctx) — testy używają app.request(). */
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -11,13 +12,14 @@ import { InboundMessage, type ChannelAdapter } from "../shared/contracts";
 import { createAdminRoutes } from "./admin";
 import { authenticateBearerRequest, authorizeMetrics } from "./auth/principal";
 import { buildWebInbound } from "./channels/web";
+import { createChatLoomWebhook } from "./channels/chatloom";
 import type { ServerContext } from "./context";
 import { handleInbound, type InboundOptions } from "./conversation";
 import { RATE_LIMITED_TEXT } from "./conversation/templates";
 import { securityHeaders } from "./headers";
 import { GENERIC_ERROR_PL, clientIp, clientKey } from "./http";
 import { requestObservability } from "./observability/http";
-import { addClientTokens, clientBudgetExceeded, tokensUsedToday } from "./budget";
+import { addTokens, budgetExceeded, addClientTokens, clientBudgetExceeded, tokensUsedToday } from "./budget";
 import { TOKEN_RE, getReportByToken } from "./reports";
 import { eraseSender, findSession, inTurnOrder } from "./sessions";
 import { chatSummary, createWebChat, listWebChats, newChatOwner, readChatOwner, readWebChat, recordWebTurn } from "./web-chats";
@@ -28,6 +30,7 @@ const SESSION_COOKIE_MAX_AGE = 7 * 86_400;
 const CHAT_BODY_MAX = 8 * 1024 * 1024;
 const MAX_RECORDING_BASE64 = Math.ceil(MAX_RECORDING_BYTES / 3) * 4;
 const RECORDING_ROUTE = "/api/chat/recording";
+const DICTATION_ROUTE = "/api/dictation";
 const WEBHOOK_BODY_MAX = 1024 * 1024;
 const DEFAULT_BODY_MAX = 64 * 1024;
 const DEDUPE_WINDOW_MS = 5 * 60_000;
@@ -169,7 +172,8 @@ export function createApp(ctx: ServerContext): Hono {
   let readingRecordings = 0;
   const recordingQueueFull = () => Array.from(ctx.media.keys()).filter(key => key.startsWith("recording_")).length >= 3;
   const recordingBusy = (c: Context) => c.json({ error: "busy", messagePl: "Trwa analiza innych nagrań. Spróbuj ponownie za chwilę." }, 429);
-  app.use(RECORDING_ROUTE, async (c, next) => {
+  app.use("/api/*", async (c, next) => {
+    if (c.req.path !== RECORDING_ROUTE && c.req.path !== DICTATION_ROUTE) return next();
     const rejection = crossSiteRejection(c, ctx, { requireJson: true });
     if (rejection) return rejection;
     if (readingRecordings >= 3 || recordingQueueFull()) return recordingBusy(c);
@@ -178,7 +182,7 @@ export function createApp(ctx: ServerContext): Hono {
   });
   app.use("/api/*", (c, next) => {
     const p = c.req.path;
-    const maxSize = p === RECORDING_ROUTE ? MAX_RECORDING_BASE64 + 65_536
+    const maxSize = (p === RECORDING_ROUTE || p === DICTATION_ROUTE) ? MAX_RECORDING_BASE64 + 65_536
       : p === "/api/chat" ? CHAT_BODY_MAX : p.startsWith("/api/channels/") ? WEBHOOK_BODY_MAX : DEFAULT_BODY_MAX;
     return bodyLimit({
       maxSize,
@@ -268,7 +272,7 @@ export function createApp(ctx: ServerContext): Hono {
     });
   });
 
-  app.on("POST", ["/api/chat", RECORDING_ROUTE], async (c) => {
+  app.on("POST", ["/api/chat", RECORDING_ROUTE, DICTATION_ROUTE], async (c) => {
     const crossSite = crossSiteRejection(c, ctx, { requireJson: true });
     if (crossSite) return crossSite;
     // IPv6: limit per sieć /64 (jeden abonent), nie per adres.
@@ -285,7 +289,7 @@ export function createApp(ctx: ServerContext): Hono {
     const body = parsed.data;
     const attachments = [body.image, body.document, body.recording].filter(file => !!file);
     const attachment = attachments[0];
-    if (attachments.length > 1 || (c.req.path === RECORDING_ROUTE) !== !!body.recording || (body.action && attachment) || (body.imageOptions && !body.image)) {
+    if (attachments.length > 1 || (c.req.path !== "/api/chat") !== !!body.recording || (body.action && attachment) || (body.imageOptions && !body.image)) {
       return c.json({ error: "bad_request", messagePl: "Wyślij jeden plik z opcjonalną wiadomością." }, 400);
     }
     if (attachment) {
@@ -296,6 +300,29 @@ export function createApp(ctx: ServerContext): Hono {
       }
       if (body.image && !imageMagicOk(body.image.mime, b64)) {
         return c.json({ error: "bad_image", messagePl: "Nie mogę odczytać tego pliku. Wyślij zdjęcie JPG, PNG lub WebP do 5 MB." }, 400);
+      }
+    }
+
+    if (c.req.path === DICTATION_ROUTE && body.recording) {
+      const { mime, base64 } = body.recording;
+      if (!AUDIO_MIMES.some(value => value === mime)) return c.json({ messagePl: "Dyktowanie wymaga nagrania audio." }, 400);
+      if (!ctx.cfg.openaiApiKey) return c.json({ messagePl: "Dyktowanie jest obecnie niedostępne." }, 503);
+      if (budgetExceeded(ctx.db, ctx.cfg, ctx.now()) || clientBudgetExceeded(ctx.clientUsage, ctx.cfg, ip, ctx.now())) {
+        return c.json({ messagePl: "Wyczerpano dzisiejszy limit transkrypcji." }, 429);
+      }
+      const analyze = createOpenAiVideoAnalyzer({ apiKey: ctx.cfg.openaiApiKey, fetchImpl: ctx.fetch, dataResidency: ctx.cfg.openaiDataResidency });
+      let tokens = 0;
+      try {
+        const result = await analyze({ bytes: Buffer.from(base64, "base64"), mimeType: mime }, c.req.raw.signal);
+        tokens = [result.usage, ...(result.additionalUsage ?? [])].reduce((sum, u) => sum + u.inputTokens + u.outputTokens, 0);
+        return c.json({ text: result.data.transcript.map(segment => segment.text).join(" ") });
+      } catch (error) {
+        if (error instanceof OpenAiVideoAnalysisError) tokens = error.usages.reduce((sum, u) => sum + u.inputTokens + u.outputTokens, 0);
+        return c.json({ messagePl: error instanceof Error && error.message === "audio_no_speech"
+          ? "Nie rozpoznano mowy. Spróbuj ponownie." : "Nie udało się przepisać nagrania. Spróbuj ponownie." }, 422);
+      } finally {
+        addTokens(ctx.db, ctx.now(), tokens);
+        addClientTokens(ctx.clientUsage, ip, ctx.now(), tokens);
       }
     }
 
@@ -440,6 +467,7 @@ export function createApp(ctx: ServerContext): Hono {
   app.all("/mcp/*", mcpRoute);
 
   // ───────── kanały wiadomości (webhook) ─────────
+  app.post("/api/channels/chatloom/webhook", createChatLoomWebhook(ctx));
   app.post("/api/channels/:id/webhook", async (c) => {
     const adapter = ctx.channels.getWebhook(c.req.param("id"));
     if (!adapter) return c.json({ error: "not_configured", messagePl: "Ten kanał nie jest skonfigurowany." }, 501);
