@@ -55,6 +55,7 @@ export function branchNamePl(id: string): string {
   if (s === "catalog_url") return "dopasowanie adresu publikacji do korpusu";
   if (s === "local_transport") return "dokumenty dotyczące transportu w tej miejscowości";
   if (s === "official_membership") return "oficjalny wykaz członkostwa w NATO lub UE";
+  if (s === "stawki_swiadczen") return "stawki i grupy uprawnionych w urzędowych dokumentach o świadczeniach";
   if (s === "official_rate_series") return "bieżące i historyczne dane GUS lub NBP";
   if (s === "office_history") return "urzędowe publikacje o kadencjach";
   if (s === "sejm_club_register") return "wykazy klubów i imienne głosowania Sejmu";

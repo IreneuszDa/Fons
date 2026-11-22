@@ -35,7 +35,7 @@ function programName(s: string) {
 // The source states one full, periodic amount and unit. A title, a programme number or an
 // income threshold does not establish a rate. Other currencies and units require the same literal reading.
 function monthlyRate(r: CorpusRecord) {
-  const matches = [...r.text.matchAll(/\b(\d+(?:[ \u00a0]\d{3})*(?:[,.]\d{1,2})?)\s*(zł|PLN|EUR|euro) (?:co miesiąc|miesięcznie) na (dziecko|osobę)\b/giu)];
+  const matches = [...r.text.matchAll(/\b(\d+(?:[ \u00a0]\d{3})*(?:[,.]\d{1,2})?)\s*(zł|PLN|EUR|euro) (?:co miesiąc|miesięcznie) na (dziecko|osobę)(?!\p{L})/giu)];
   if (matches.length !== 1) return;
   const m = matches[0]!;
   return { amount: Number(m[1]!.replace(/\s/gu, "").replace(",", ".")), currency: /^(?:zł|PLN)$/iu.test(m[2]!) ? "PLN" : "EUR", unit: m[3]!.toLowerCase() };
@@ -43,19 +43,19 @@ function monthlyRate(r: CorpusRecord) {
 
 const Read = z.object({
   comparable: z.boolean(), leftMention: z.string(), rightMention: z.string(), leftGroup: z.string(), rightGroup: z.string(),
-  leftAmount: z.number(), rightAmount: z.number(), currency: z.string(), direction: z.enum(["higher", "equal", "lower", "unknown"]),
+  leftAmount: z.number(), rightAmount: z.number(), currency: z.string(),
 });
 const readingRules = "Sprawdź wyłącznie przedstawione cytaty i tytuły dokumentów. comparable=true wyłącznie dla porównania podstawowej pieniężnej stawki jednego świadczenia dla DWÓCH wskazanych grup uprawnionych, na dzień weryfikacji. " +
   "Instrukcja programu musi jawnie obejmować obie grupy i podawać ich wspólną stawkę; drugi niezależny dokument musi potwierdzać kwotę tego samego programu, walutę, okres i jednostkę. Wypowiedź o kwocie dla odbiorców nie jest zapewnieniem, że każdy spełnia warunki. " +
   "Odrzuć twierdzenia o identycznych warunkach, sumach wypłat, różnym okresie, świadczeniach specjalnych, innym kraju lub innym programie, a także dodatkowe zastrzeżenia nieobjęte źródłami. " +
   "leftMention/rightMention są dosłownymi frazami z TEZY określającymi obie grupy. leftGroup/rightGroup to identyfikatory G z ZAKRESU, leftAmount/rightAmount to stawki jednostkowe odczytane ze źródeł. " +
-  "direction to relacja deklarowana w TEZIE między grupą porównywaną a odniesienia, również gdy źródła wskazują przeciwnie. Dla równości zachowaj kolejność grup w tekście. " + UNTRUSTED_DATA_RULES;
+  "Zachowaj kolejność grup w tekście i zwróć kod ISO waluty. Nie oceniaj prawdziwości tezy; stosunek odczytanych wartości porówna kod." + UNTRUSTED_DATA_RULES;
 
 function groupMatches(mention: string, claim: string, scope: CorpusRecord, other: CorpusRecord): boolean {
   if (mention.length < 4 || !foldForMatch(claim).includes(foldForMatch(mention))) return false;
   // Only the beneficiary named before the qualifying clause. Its place of residence is not its identity.
   const head = (r: CorpusRecord) => foldForMatch(r.text.split(/[,;:]/u)[0]!).split(" ")
-    .filter(w => w.length >= 4 && !/^(?:obywatel|uprawn|rodzin|pobier|statusem)$/u.test(w))
+    .filter(w => w.length >= 4 && !/^(?:obywatel|uprawn|rodzin|pobier|status)/u.test(w))
     .map(w => w.slice(0, 5));
   const unique = head(scope).filter(w => !head(other).includes(w));
   return foldForMatch(mention).split(" ").some(w => unique.includes(w.slice(0, 5)));
@@ -74,7 +74,7 @@ export async function benefitComparisonReport(run: Run, input: string, main: Llm
     records = run.deps.store.getMany(ids.map(r => r.id)).filter(r => r.origin === "corpus" && r.type === "pierwotne" &&
       publicationAvailable(r, now) && !detectInjection(r.title + " " + r.text, "evidence", r.id).length);
   } catch { return; }
-  const aliases = new Set(records.flatMap(r => r.topics.filter(t => t.startsWith("program:") && query.includes(" " + programName(t.slice(8)) + " "))));
+  const aliases = new Set(records.flatMap(r => r.topics.filter(t => t.startsWith("program:") && query.includes(" " + programName(t.slice("program:".length)) + " "))));
   if (aliases.size !== 1) return;
   const group = records.filter(r => r.topics.some(t => aliases.has(t)));
   const rates = group.filter(r => r.topics.includes("stawka-programu"));
@@ -94,6 +94,7 @@ export async function benefitComparisonReport(run: Run, input: string, main: Llm
   const prompt = [fence("TEZA", input).text, fence("DATA", day).text, fence("STAWKI", JSON.stringify(sources)).text,
     fence("ZAKRES", JSON.stringify(eligible)).text].join("\n");
   run.recordLookup("stawki_swiadczen", "completed", [...groups, guide, corroboration].map(r => r.id));
+  run.stage("assessing");
   const reads = await Promise.allSettled([main, verifier].map((provider,i) => provider.complete({
     purpose: i ? "verify_evidence" : "assess", tier: i ? "fast" : "main", schema: Read,
     schemaName: "benefit_rate_comparison", system: readingRules, user: prompt, signal,
@@ -104,7 +105,7 @@ export async function benefitComparisonReport(run: Run, input: string, main: Llm
   if (!first || !second || first.leftGroup !== second.leftGroup || first.rightGroup !== second.rightGroup || first.leftGroup === first.rightGroup) return;
   const left = groups[eligible.findIndex(r => r.ref === first.leftGroup)];
   const right = groups[eligible.findIndex(r => r.ref === first.rightGroup)];
-  if (!left || !right || ![first,second].every(r => r.comparable && r.direction === direction && r.leftAmount === rate.amount && r.rightAmount === rate.amount &&
+  if (!left || !right || ![first,second].every(r => r.comparable && r.leftAmount === rate.amount && r.rightAmount === rate.amount &&
     r.currency === rate.currency && groupMatches(r.leftMention, input, left, right) && groupMatches(r.rightMention, input, right, left))) return;
   const mode = /^czy\s/iu.test(input) ? "question_yesno" : "claim";
   const text = input.replace(/^czy\s+/iu, "").replace(/\?$/u, ".");
@@ -115,6 +116,7 @@ export async function benefitComparisonReport(run: Run, input: string, main: Llm
     quoteVerified: true, quoteMatchScore: 1, verifier: "zgoda", decisive: true }));
   const result = decideVerdict({ claim, records: new Map(evidence.map(r => [r.id,r])), assessments, now, singleKeyVerifier: run.deps.singleKey });
   if (result.verdict !== (direction === "equal" ? "POTWIERDZONE" : "FALSZYWE")) return;
+  run.stage("checking_quotes");
   run.inputMode = mode;
   run.claims = [claim];
   run.verifierUsed = true;
