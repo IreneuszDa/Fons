@@ -1,5 +1,5 @@
 /** Adapter kanału WWW. Wiadomości przychodzą przez POST /api/chat (nie przez webhook), odpowiedź niesie odpowiedź HTTP. */
-import type { ChatDocument, ImageOptions } from "../../shared/attachments";
+import type { ChatDocument, ChatRecording, ImageOptions } from "../../shared/attachments";
 import { randomBytes } from "node:crypto";
 import type { ChannelAdapter, ConversationReply, InboundMessage } from "../../shared/contracts";
 import type { ServerContext } from "../context";
@@ -26,6 +26,7 @@ export interface WebInboundParts {
   action?: string;
   image?: { mime: string; base64: string };
   document?: ChatDocument;
+  recording?: ChatRecording;
   imageOptions?: ImageOptions;
 }
 
@@ -39,9 +40,12 @@ export function buildWebInbound(ctx: ServerContext, p: WebInboundParts): Inbound
   }
   const document = p.document ? { dataRef: `media_${randomBytes(8).toString("hex")}` } : undefined;
   if (document && p.document) ctx.media.set(document.dataRef, p.document);
+  const recording = p.recording ? { dataRef: `recording_${randomBytes(8).toString("hex")}` } : undefined;
+  if (recording && p.recording) ctx.media.set(recording.dataRef, p.recording);
   return {
     channel: "web",
     ...(document ? { document } : {}),
+    ...(recording ? { recording } : {}),
     ...(p.image && p.imageOptions ? { imageOptions: p.imageOptions } : {}),
     senderId: p.senderId,
     sessionId: p.sessionId,

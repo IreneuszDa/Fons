@@ -11,6 +11,16 @@ import { CorpusRecord } from "../../shared/contracts";
 export const LIVE_TTL_MS = 48 * 3_600_000;
 export const LIVE_ID_PREFIX = "live:";
 
+/** A single UTC-day counter shared by workers and restarts. Failed requests keep their reservation. */
+export function reserveLiveRequest(db: Database, now: Date, cap = 200): boolean {
+  if (!Number.isSafeInteger(cap) || cap <= 0) return false;
+  db.exec("CREATE TABLE IF NOT EXISTS web_search_quota (id INTEGER PRIMARY KEY CHECK(id = 1), day TEXT NOT NULL, requests INTEGER NOT NULL)");
+  return db.prepare(`INSERT INTO web_search_quota (id, day, requests) VALUES (1, ?, 1)
+    ON CONFLICT(id) DO UPDATE SET day = excluded.day,
+      requests = CASE WHEN day < excluded.day THEN 1 ELSE requests + 1 END
+    WHERE day < excluded.day OR (day = excluded.day AND requests < ?)`).run(now.toISOString().slice(0, 10), cap).changes === 1;
+}
+
 /** Tworzy tabelę idempotentnie. */
 export function ensureLiveSnapshotsTable(db: Database): void {
   db.exec(`

@@ -75,18 +75,18 @@ export default function App() {
     <AppShell
       variant="surface"
       contentPadding={0}
-      topNav={
+      topNav={route.name !== "chat" && (
         <TopNav
           label="Nawigacja główna"
           heading={<TopNavHeading heading={BRAND} headingHref="/" logo={<Icon icon={ShieldCheckIcon} size="sm" color="accent" />} />}
           startContent={
             <>
-              <TopNavItem label="Sprawdź" href="/" isSelected={route.name === "chat"} />
+              <TopNavItem label="Sprawdź" href="/" />
               <TopNavItem label="Źródła" href="/zrodla" isSelected={route.name === "sources"} />
             </>
           }
         />
-      }>
+      )}>
       <Layout
         height="fill"
         content={
@@ -101,11 +101,11 @@ export default function App() {
             )}
           </LayoutContent>
         }
-        footer={
+        footer={route.name !== "chat" && (
           <LayoutFooter hasDivider padding={2} label="Stopka">
             <SiteFooter />
           </LayoutFooter>
-        }
+        )}
       />
     </AppShell>
   );

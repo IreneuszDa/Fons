@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ConversationAgent } from "../engine/llm/conversation";
 import { tokensUsedToday } from "./budget";
 import { detectIntent } from "./conversation/intents";
+import type { NormalizeOutcome } from "../engine/normalize";
 import { chat, chatModelUsage as usage, makeEnv, makeReport, type TestEnv } from "./testkit";
 
 const n = (env: TestEnv, sql: string, ...a: unknown[]) => (env.db.prepare(sql).get(...a) as { n: number }).n;
@@ -14,6 +15,7 @@ describe("intencje (jednostkowo)", () => {
     expect(t("źródła").type).toBe("sources");
     expect(t("Zrodla!").type).toBe("sources");
     expect(t("Dlaczego?").type).toBe("why");
+    expect(t("Jak to sprawdziłeś?").type).toBe("why");
     expect(t("pomoc").type).toBe("help");
     expect(t("zgłoś")).toEqual({ type: "request", what: "report" });
     expect(t("Usuń moje dane")).toEqual({ type: "request", what: "delete" });
@@ -139,21 +141,35 @@ describe("asystent przed weryfikacją", () => {
     expect(env.calls).toHaveLength(1);
   });
 
-  it("pyta o cel wklejenia linku i przy zgodzie przekazuje ten link silnikowi", async () => {
+  it.each(["", "Hej, sprawdź mi czy to prawda ", "Rzuć okiem na argumenty autora i oceń ich wiarygodność. "])("odczytuje artykuł bez dodatkowej rundy rozmowy: %s", async prefix => {
     const env = makeEnv();
     const url = "https://example.com/komunikat";
-    const agent = vi.fn<ConversationAgent>()
-      .mockResolvedValueOnce({ kind: "reply", text: "Mam sprawdzić informacje z tego artykułu?", usage })
-      .mockResolvedValueOnce({ kind: "verify", query: url, usage });
+    const agent = vi.fn<ConversationAgent>();
     env.ctx.conversationAgent = agent;
-    const link = await chat(env, { text: url });
-    expect(link.json.reply.textPl).toContain("Mam sprawdzić");
-    expect(link.json.reply.report).toBeUndefined();
-    expect(env.calls).toHaveLength(0);
-    const answer = await chat(env, { text: "Tak, sprawdź." }, link.cookie);
-    expect(answer.json.reply.report).toBeDefined();
+    const link = await chat(env, { text: prefix + url });
+    expect(link.json.reply.report).toBeDefined();
+    expect(agent).not.toHaveBeenCalled();
     expect(env.calls).toHaveLength(1);
     expect(env.calls[0]).toMatchObject({ kind: "url", url });
+  });
+
+  it("revalidates a submitted article before using its cached analysis", async () => {
+    const env = makeEnv();
+    const text = "https://example.org/publikacja";
+    const read = (body: string): NormalizeOutcome => ({ ok: true, usage: [], normalized: {
+      kind: "url", submittedUrl: text, text: body, textResolvedDates: body, receivedAt: env.ctx.now().toISOString(),
+      detectorHits: [], piiMasked: false, warnings: [],
+    } });
+    env.ctx.engine.readArticle = vi.fn().mockResolvedValueOnce(read("Pierwsza wersja"))
+      .mockResolvedValueOnce(read("Pierwsza wersja")).mockResolvedValueOnce(read("Sprostowanie"))
+      .mockResolvedValueOnce({ ok: false, status: "NIEPELNE", messagePl: "Strona niedostępna", echo: text, usage: [], hits: [] });
+    const one = await chat(env, { text });
+    const same = await chat(env, { text }, one.cookie);
+    const changed = await chat(env, { text }, one.cookie);
+    const offline = await chat(env, { text }, one.cookie);
+    expect([one, same, changed, offline].map(r => r.json.reply.report.cacheHit)).toEqual([false, true, false, false]);
+    expect(env.ctx.engine.readArticle).toHaveBeenCalledTimes(4);
+    expect(env.calls).toHaveLength(3);
   });
 
   it("uwzględnia tezę wskazaną dopiero po wklejeniu artykułu", async () => {
@@ -163,7 +179,7 @@ describe("asystent przed weryfikacją", () => {
     env.ctx.conversationAgent = vi.fn<ConversationAgent>()
       .mockResolvedValueOnce({ kind: "reply", text: "Co sprawdzić w tym artykule?", usage })
       .mockResolvedValueOnce({ kind: "verify", query: claim + " " + url, usage });
-    const first = await chat(env, { text: url });
+    const first = await chat(env, { text: "Zapamiętaj na chwilę " + url });
     await chat(env, { text: "To, czy urząd podaje, że most został zamknięty w maju." }, first.cookie);
     expect(env.calls).toMatchObject([{ kind: "url", url, text: claim }]);
   });
@@ -178,7 +194,7 @@ describe("asystent przed weryfikacją", () => {
     expect(result.json.reply.report).toBeDefined();
     expect(env.calls).toHaveLength(1);
     expect(env.calls[0]).toMatchObject({ kind: "url", url });
-    expect(agent.mock.calls[0]![0].text).not.toContain("id=12345");
+    expect(agent).not.toHaveBeenCalled();
   });
 
   it("w następnej turze wybiera drugi z dwóch filmów o identycznej ścieżce, zachowując identyfikatory poza rozmową modelu", async () => {
@@ -207,8 +223,8 @@ describe("asystent przed weryfikacją", () => {
     const url = "https://example.com/artykul?id=tresc";
     const agent = vi.fn<ConversationAgent>().mockResolvedValue({ kind: "reply", text: "Mam sprawdzić artykuł?", usage });
     env.ctx.conversationAgent = agent;
-    const sent = await chat(env, { text: url });
-    const label = agent.mock.calls[0]![0].text;
+    const sent = await chat(env, { text: "Zapamiętaj na chwilę " + url });
+    const label = agent.mock.calls[0]![0].text.split(" ").at(-1)!;
     env.advance(16 * 60_000);
     agent.mockResolvedValueOnce({ kind: "verify", query: label, usage });
     const expired = await chat(env, { text: "Tak, sprawdź artykuł." }, sent.cookie);
@@ -216,8 +232,8 @@ describe("asystent przed weryfikacją", () => {
     expect(expired.json.reply.textPl).toMatch(/link/i);
     expect(env.calls).toHaveLength(0);
 
-    const another = await chat(env, { text: url });
-    const otherLabel = agent.mock.calls[2]![0].text;
+    const another = await chat(env, { text: "Zapamiętaj na chwilę " + url });
+    const otherLabel = agent.mock.calls[2]![0].text.split(" ").at(-1)!;
     expect(otherLabel).not.toBe(label);
     expect(env.ctx.conversationLinks.resolve(sent.json.sessionId, otherLabel)).toBeUndefined();
     expect(env.ctx.conversationLinks.resolve(another.json.sessionId, otherLabel)).toBe(url);

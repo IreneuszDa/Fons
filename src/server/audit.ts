@@ -168,11 +168,11 @@ export function verifyChain(db: Db): ChainResult {
 }
 
 /** Czyści pola osobowe przebiegów nadawcy (wiersze i skróty zostają — patrz nagłówek pliku). */
-export function eraseRunsForSender(db: Db, senderId: string): number {
+export function eraseRunsForSender(db: Db, senderId: string, sessionId?: string): number {
   return db
     .prepare(
       `UPDATE runs SET input_masked = '', sender_id = NULL, session_id = NULL, record_ids_json = '[]',
-         salt = '', erased = 1 WHERE sender_id = ? AND erased = 0`,
+         salt = '', erased = 1 WHERE sender_id = ? AND erased = 0 AND (? IS NULL OR session_id = ?)`,
     )
-    .run(senderId).changes;
+    .run(senderId, sessionId ?? null, sessionId ?? null).changes;
 }

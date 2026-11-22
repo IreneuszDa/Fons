@@ -22,7 +22,7 @@ export function buildVerifierPrompt(items: { ref: string; c: VerifierCandidate }
     const body =
       c.record.role === "stala_rola"
         ? `Rodzaj: dopasowanie\nTwierdzenie: ${c.claim.text}\nTeza sprawdzona przez fact-checkerów: ${c.record.claimReviewed ?? c.assessment.quote}\nZaproponowano: ${c.assessment.fixedRoleMatch ?? "niepewne"}`
-        : `Rodzaj: relacja\nTwierdzenie: ${c.claim.text}\nCytat: ${c.assessment.quote}\nZaproponowana relacja: ${c.assessment.relation} (aspekt: ${c.assessment.aspect})`;
+        : `Rodzaj: relacja\nTwierdzenie: ${c.claim.text}\nCytat: ${c.assessment.quote}\nZaproponowana relacja: ${c.assessment.partialMeaning === "correction" ? "KORYGUJE_CZESC" : c.assessment.relation} (aspekt: ${c.assessment.aspect})`;
     parts.push(fence(`POZYCJA_${ref}`, body).text);
   }
   return parts.join("\n");

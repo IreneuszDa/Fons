@@ -1,15 +1,20 @@
 import { Button } from "@astryxdesign/core/Button";
+import { Icon } from "@astryxdesign/core/Icon";
+import { BookOpenIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Link } from "@astryxdesign/core/Link";
 import { Text } from "@astryxdesign/core/Text";
 import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import { useStreamingText } from "@astryxdesign/core/hooks";
 import { useEffect, useState } from "react";
-import type { ConversationReply } from "../../shared/contracts";
+import type { ConversationReply, VerdictReport } from "../../shared/contracts";
 import { paragraphs } from "../lib/format";
-import { replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf } from "../lib/report";
+import { claimRows, hasArchivalWarning, replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf } from "../lib/report";
 import { resultPathFor, safeUrl } from "../lib/safeUrl";
 import { AnswerCard } from "./AnswerCard";
+import { ClaimBreakdown } from "./ClaimBreakdown";
+import { ArticleOrigin } from "./Evidence";
+import { QuestionBreakdown } from "./QuestionBreakdown";
 import { ImageFindings } from "./ImageFindings";
 import { StatusNotice } from "./StatusNotice";
 import { TransparencyBlock } from "./TransparencyBlock";
@@ -28,14 +33,16 @@ export function QuickReplies({
   if (reply.quickReplies.length === 0) return null;
   return (
     <HStack gap={2} wrap="wrap">
-      {reply.quickReplies.map((q) => (
-        <Button key={q.id} label={q.labelPl} variant="secondary" isDisabled={isDisabled} onClick={() => onAction(q.id, q.labelPl)} />
-      ))}
+      {reply.quickReplies.map((q) => {
+        const icon = q.id === "sources" ? BookOpenIcon : q.id === "why" ? MagnifyingGlassIcon : undefined;
+        return <Button key={q.id} label={q.labelPl} variant={icon ? "ghost" : "secondary"} size="sm"
+          icon={icon && <Icon icon={icon} size="sm" />} isDisabled={isDisabled} onClick={() => onAction(q.id, q.labelPl)} />;
+      })}
     </HStack>
   );
 }
 
-/** Assistant reply body: verdict card, answer card, status notice (never verdict styling) or plain text. */
+/** Successful text checks use a concise answer. Media and technical statuses retain their specialized views. */
 export function ReplyContent({ reply, anchorId, animateText = false }: { reply: ConversationReply; anchorId?: string; animateText?: boolean }) {
   const report = reply.report;
   const analysis = report?.imageAnalysis;
@@ -74,31 +81,57 @@ function TypingReply({ text }: { text: string }) {
   );
 }
 
+/** Stored conversations may predate the shortAnswer field. */
+function reportSummary(report: VerdictReport): NonNullable<ConversationReply["shortAnswer"]> {
+  return {
+    bodyPl: report.answer?.answerPl ?? report.summaryPl,
+    sources: report.answer?.evidence ?? claimRows(report)[0]?.verdict.evidence ?? [],
+    caseNotePl: report.moderatorCase && `Sprawa #${report.moderatorCase.caseId} jest zapisana do sprawdzenia.`,
+  };
+}
+
 function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: string }) {
-  const short = reply.shortAnswer;
-  if (short && reply.report?.status === "OK") {
-    const permalink = resultPathFor(reply.report.token, reply.resultUrl);
+  const report = reply.report;
+  const view = replyView(reply);
+  const plainReport = (view === "answer" || view === "verdict") && !report?.imageAnalysis && !report?.videoAnalysis;
+  if (report?.status === "OK" && (reply.shortAnswer || plainReport)) {
+    const short = reply.shortAnswer ?? reportSummary(report);
+    const publications = new Map<string, (typeof short.sources)[number]>();
+    for (const source of short.sources) {
+      const href = safeUrl(source.url);
+      if (href && !publications.has(href)) publications.set(href, source);
+    }
+    const permalink = resultPathFor(report.token, reply.resultUrl);
+    const showClaims = view === "verdict" && report.verdicts.length > 1;
+    const parts = report.questionParts;
+    const answerAnchor = report.article ? undefined : anchorId;
     return (
       <VStack gap={2}>
-        {paragraphs(short.bodyPl).map((p, i) => <Text key={i} as="p" id={i === 0 ? anchorId : undefined}>{p}</Text>)}
-        {short.sources.map(source => {
-          const href = safeUrl(source.url);
-          return href ? (
-            <Link key={href} href={href} isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">
-              {source.publisher} · {source.title}
-            </Link>
-          ) : null;
-        })}
-        {short.caseNotePl && <Text as="p" color="secondary">{short.caseNotePl}</Text>}
-        {reply.report.warnings.filter(w => w.kind === "injection_detected" || w.kind === "archival_material" ||
-          w.kind === "branch_unavailable" || w.kind === "non_eea_processing" || w.kind === "source_status").map(w => (
-          <Text key={w.textPl} as="p" type="supporting" color="secondary">{w.textPl}</Text>
+        {report.article && <ArticleOrigin article={report.article} anchorId={anchorId} />}
+        {parts?.length ? <QuestionBreakdown parts={parts} anchorId={answerAnchor} /> :
+          showClaims ? <ClaimBreakdown report={report} anchorId={answerAnchor} /> :
+          paragraphs(short.bodyPl).map((p, i) => <Text key={i} as="p" type="large" weight="normal" id={i === 0 ? answerAnchor : undefined}>{p}</Text>)}
+        {!showClaims && !parts?.length && Array.from(publications, ([href, source]) => (
+          <Link key={href} href={href} isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">
+            {source.publisher} · {source.title}
+          </Link>
         ))}
+        {short.caseNotePl && <Text as="p" color="secondary">{short.caseNotePl}</Text>}
+        {report.warnings.filter(w => w.kind !== "single_key_verifier").map((w, index) => (
+          <VStack key={index} gap={1}>
+            <Text as="p" type="supporting" color="secondary">{w.textPl}</Text>
+            {w.links?.map(link => {
+              const href = safeUrl(link.url);
+              return href && <Link key={href} href={href} type="supporting" isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">{link.title}</Link>;
+            })}
+          </VStack>
+        ))}
+        {hasArchivalWarning(report) && !report.warnings.some(w => w.kind === "archival_material") &&
+          <Text as="p" type="supporting" color="secondary">Źródło jest starsze. Sprawdź, czy informacja jest nadal aktualna.</Text>}
         {permalink && <Link href={permalink} type="supporting">Pełny wynik</Link>}
       </VStack>
     );
   }
-  const view = replyView(reply);
   if (view === "answer" && reply.report) return <AnswerCard report={reply.report} anchorId={anchorId} inChat />;
   if (view === "verdict" && reply.report) return <VerdictCard report={reply.report} anchorId={anchorId} />;
   if (view === "status") {
@@ -125,7 +158,7 @@ function ReplyParagraphs({ text }: { text: string }) {
   return (
     <VStack gap={2}>
       {paragraphs(text).map((p, i) => (
-        <Text key={i} as="p">
+        <Text key={i} as="p" type="large" weight="normal">
           {p}
         </Text>
       ))}

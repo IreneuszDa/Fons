@@ -1,6 +1,8 @@
 /** Szablony odpowiedzi warstwy rozmowy — bez LLM, prosty polski. */
 import { VERDICT_LABEL_PL, type ConversationReply, type VerdictReport } from "../../shared/contracts";
+import { mediaClaimSubject } from "../../shared/attachments";
 import { plural } from "../../engine/verdict/texts";
+import { passageText } from "../../shared/evidence";
 import type { CaseOutcome } from "../moderator/cases";
 import { isoDatePart, safeHttpUrl, truncate } from "../util";
 import { ACTION } from "./intents";
@@ -9,9 +11,8 @@ type QuickReply = ConversationReply["quickReplies"][number];
 
 export const QR = {
   sources: { id: ACTION.sources, labelPl: "Źródła" },
-  why: { id: ACTION.why, labelPl: "Dlaczego?" },
+  why: { id: ACTION.why, labelPl: "Jak to sprawdziłeś?" },
   report: { id: ACTION.report, labelPl: "Zgłoś do sprawdzenia" },
-  delete: { id: ACTION.delete, labelPl: "Usuń moje dane" },
   help: { id: ACTION.help, labelPl: "Pomoc" },
 } satisfies Record<string, QuickReply>;
 
@@ -19,7 +20,7 @@ export const STRENGTH_PL = { slaba: "słaba", srednia: "średnia", mocna: "mocna
 
 export const HELP_TEXT =
   "Wyślij mi informację, którą chcesz sprawdzić (tekst albo link do strony). Odpowiem, czy jest potwierdzona, fałszywa, wprowadzająca w błąd, czy brakuje dowodów, i pokażę źródła. " +
-  "Możesz też napisać: „źródła”, „dlaczego”, „zgłoś” albo „usuń moje dane”. Nie wysyłaj tu haseł ani numerów kart.";
+  "Możesz też napisać: „źródła”, „Jak to sprawdziłeś?”, „zgłoś” albo „usuń moje dane”. Nie wysyłaj tu haseł ani numerów kart.";
 
 export const NO_REPORT_TEXT = "Nie mam jeszcze wyniku, który mógłbym pokazać. Wyślij mi najpierw informację do sprawdzenia.";
 
@@ -67,13 +68,22 @@ export const CASE_FAILED_TEXT = "Nie udało się teraz zapisać sprawy. Możesz 
 
 export function verdictText(report: VerdictReport, note?: string): string {
   const lines: string[] = [];
-  if (report.mainVerdict) {
+  if (report.mainVerdict && (report.verdicts.length <= 1 || report.videoAnalysis)) {
     const claim = report.videoAnalysis && report.claims.find(c => c.isMain);
     lines.push(claim
-      ? `Główne twierdzenie z filmu „${claim.text}” — ${VERDICT_LABEL_PL[report.mainVerdict]}.`
+      ? `Główne twierdzenie z ${mediaClaimSubject(report.videoAnalysis!)} „${claim.text}” — ${VERDICT_LABEL_PL[report.mainVerdict]}.`
       : `Wynik: ${VERDICT_LABEL_PL[report.mainVerdict]}.`);
   }
   lines.push(report.summaryPl);
+  if (report.verdicts.length > 1) {
+    for (const claim of report.claims) {
+      const result = report.verdicts.find(v => v.claimId === claim.id);
+      if (!result) continue;
+      lines.push(`\n${claim.text}\n${VERDICT_LABEL_PL[result.verdict]}. ${result.reasonPl}`);
+      const sources = new Set(result.evidence.map(e => safeHttpUrl(e.url)).filter(Boolean));
+      for (const url of sources) lines.push(`Źródło: ${url}`);
+    }
+  }
   for (const w of report.warnings) lines.push(`Uwaga: ${w.textPl}`);
   if (note) lines.push(note);
   return lines.filter(Boolean).join("\n");
@@ -87,7 +97,7 @@ export function mainClaimVerdict(report: VerdictReport) {
 /** Both public channels lead with the same answer and reference the same publications. */
 export function shortAnswerFor(report: VerdictReport, note?: string): NonNullable<ConversationReply["shortAnswer"]> {
   const sources = new Map<string, { title: string; publisher: string; url: string }>();
-  const evidence = report.answer?.evidence ?? mainClaimVerdict(report)?.evidence ?? [];
+  const evidence = report.questionParts?.flatMap(p => p.evidence) ?? report.answer?.evidence ?? mainClaimVerdict(report)?.evidence ?? [];
   for (const item of evidence) {
     const url = safeHttpUrl(item.url);
     if (url && !sources.has(url)) sources.set(url, { url, title: item.title, publisher: item.publisher });
@@ -100,6 +110,13 @@ export function shortAnswerFor(report: VerdictReport, note?: string): NonNullabl
 }
 
 export function shortAnswerText(answer: NonNullable<ConversationReply["shortAnswer"]>, report: VerdictReport): string {
+  if (report.questionParts?.length) {
+    const parts = report.questionParts.map(part => [
+      part.questionPl, part.answerPl,
+      ...new Set(part.evidence.map(e => safeHttpUrl(e.url)).filter(Boolean)),
+    ].join("\n"));
+    return [...parts, ...report.warnings.map(w => w.textPl)].join("\n\n");
+  }
   return [
     answer.bodyPl,
     ...answer.sources.map(s => `Źródło: ${s.title} (${s.publisher}): ${s.url}`),
@@ -142,7 +159,7 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
     ]);
     return links.length ? [...new Set(links)].join("\n") : report.summaryPl;
   }
-  const items = [...report.verdicts.flatMap((v) => v.evidence), ...(report.answer?.evidence ?? [])];
+  const items = [...report.verdicts.flatMap((v) => v.evidence), ...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(p => p.evidence) ?? [])];
   if (items.length === 0) {
     const tried = mainClaimVerdict(report)?.triedPl;
     return [
@@ -162,7 +179,7 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
     lines.push(
       `${index + 1}. ${e.title} (${e.publisher}, opublikowano: ${isoDatePart(e.publishedAt)}, pobrano: ${isoDatePart(e.fetchedAt)})` +
         (url ? `\n   ${url}` : "") +
-        `\n   Cytat: „${truncate(e.quote, 200)}”`,
+        `\n   ${e.passageKind === "excerpt" ? "Cytat: " : ""}${passageText(truncate(e.quote, 200), e.passageKind)}`,
     );
   }
   if (passages.size > 6) lines.push("Pełna lista jest na stronie wyniku.");
@@ -174,6 +191,7 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
 export function whyText(report: VerdictReport): string {
   if (report.imageAnalysis?.only) return [report.summaryPl, report.transparencyPl].join("\n");
   const activity = searchSummary(report);
+  if (report.questionParts) return [report.transparencyPl, activity].filter(Boolean).join("\n");
   if (report.models.some(model => model.purpose === "source_answer_check") || report.sourceActivity?.branches.some(b => b.id === "publications" || b.id === "google_claimreview")) {
     return [report.transparencyPl, activity].filter(Boolean).join("\n");
   }
@@ -181,7 +199,9 @@ export function whyText(report: VerdictReport): string {
     return [
       activity,
       report.models.some(model => model.purpose === "open_answer")
-        ? "Podstawą odpowiedzi jest dosłowny cytat ze źródła z katalogu. Kod sprawdził jego zgodność z zapisanym fragmentem."
+        ? report.answer.evidence.length && report.answer.evidence.every(item => item.passageKind === "excerpt")
+          ? "Podstawą odpowiedzi jest dosłowny cytat ze źródła z katalogu. Kod sprawdził jego zgodność z zapisanym fragmentem."
+          : "Odczytałem fragmenty zapisane w rekordach źródeł. W szczegółach znajdziesz ich wydawców i odnośniki do publikacji."
         : undefined,
       report.transparencyPl,
     ]
@@ -208,7 +228,7 @@ export function whyText(report: VerdictReport): string {
 
 export function deletedText(counts: { reports: number; runs: number }): string {
   return (
-    `Usunąłem Twoje dane: raporty (${counts.reports}), historię zapytań (${counts.runs}) i tę rozmowę. ` +
+    `Usunąłem Twoje rozmowy, raporty (${counts.reports}) i historię zapytań (${counts.runs}). ` +
     "Zostają tylko zanonimizowane statystyki techniczne, bez treści wiadomości."
   );
 }

@@ -14,8 +14,7 @@
  *       teza/ocena przez detektor (high = recenzja odrzucona, zdarzenie przez onSecurityEvent) → też do `live_snapshots`;
  *   4. fragmenty są punktowane leksykalnie względem twierdzenia; recenzje z tezą pasującą do twierdzenia idą przed
  *      fragmentami; zwracane są najlepsze (via "live").
- * Limity na twierdzenie: 2 wyszukiwania, 5 pobrań stron (najwyżej 2 z jednego hosta), 14 s łącznie.
- * (2026-11-21: przy 6 s gałąź nie zdążała nigdy — hostowane wyszukiwanie trwa zwykle 5–10 s.)
+ * Limity na twierdzenie: 2 wyszukiwania, 5 pobrań stron (najwyżej 2 z jednego hosta), 30 s łącznie.
  *
  * Uwaga o rolach: zwykłe fragmenty stron fact-checków mają rolę `stala_rola` z katalogu, ale bez oceny, więc nigdy nie
  * rozstrzygają (decisive.ts wymaga rating.mapped). Rozstrzygać może rekord ClaimReview (3a) — ocena znana tabeli
@@ -34,6 +33,7 @@ import {
   filterProposedUrls,
   isSearchResultsUrl,
   type SearchProvider,
+  type SearchResultItem,
 } from "../../tools/search";
 import type {
   CatalogSource,
@@ -47,8 +47,8 @@ import { queryTexts } from "./bm25";
 import { claimReviewRecords, withClaimReviews } from "./claimreview";
 import { BranchUnavailableError, skipLookup, throwIfAborted } from "./errors";
 import { stripPiiPlaceholders } from "./fts";
-import { chunkText, keywordQuery, queryStems, scorePassages } from "./live-score";
-import { ensureLiveSnapshotsTable, LIVE_ID_PREFIX, LIVE_TTL_MS, saveLiveSnapshots } from "./live-store";
+import { chunkText, foldToken, keywordQuery, queryStems, scorePassages } from "./live-score";
+import { ensureLiveSnapshotsTable, LIVE_ID_PREFIX, LIVE_TTL_MS, reserveLiveRequest, saveLiveSnapshots } from "./live-store";
 import { recordLiveUsage } from "./live-usage";
 
 export { ensureLiveSnapshotsTable, getLiveSnapshot, purgeExpiredLiveSnapshots, saveLiveSnapshots, LIVE_TTL_MS } from "./live-store";
@@ -90,17 +90,17 @@ export const LIVE_MAX_PER_HOST = 2;
 export const LIVE_LIMITS: Readonly<LiveLimits> = {
   maxSearches: 2,
   maxFetches: 5,
-  overallTimeoutMs: 14000,
+  overallTimeoutMs: 30_000,
   maxPageBytes: 2 * 1024 * 1024,
   maxResults: 8,
   maxPassagesPerPage: 60,
 };
 
 /**
- * Limit czasu gałęzi, jakiego potrzebuje „live” (14 s na całość + zapas na zapis). `retrieve()` ma domyślnie 4 s na
+ * Limit czasu gałęzi (łączny czas działań sieciowych + zapas na zapis). `retrieve()` ma domyślnie 4 s na
  * gałąź — silnik powinien dla tej gałęzi użyć wartości `branch.timeoutMs` (patrz notesForIntegrator).
  */
-export const LIVE_BRANCH_TIMEOUT_MS = 14500;
+export const LIVE_BRANCH_TIMEOUT_MS = LIVE_LIMITS.overallTimeoutMs + 500;
 
 export type LiveDropReason =
   | "host_not_allowed" // zaproponowany host spoza katalogu (lub typ inny niż pierwotne/factcheck)
@@ -182,6 +182,15 @@ interface PageResult {
 
 class DeadlineError extends Error {}
 
+/** If a query names a publisher, reserve the second search for its own sites. The first still covers the catalogue. */
+function namedPublisherHosts(query: string, catalog: CatalogSource[]): string[] {
+  const words = new Set(foldToken(query).match(/[\p{L}\p{N}]+/gu) ?? []);
+  return catalog.filter(source => {
+    const names = [source.id.replace(/-(pl|org)$/u, ""), ...(source.publisher.match(/\b[\p{Lu}]{2,}\b/gu) ?? [])];
+    return names.some(name => words.has(foldToken(name)));
+  }).flatMap(source => source.hosts);
+}
+
 /** Rozszerzenia plików, których nie czyta fetchPage (tylko HTML i tekst) — nie zajmują miejsca z limitu 5 pobrań. */
 const UNSUPPORTED_PATH = /\.(pdf|docx?|xlsx?|pptx?|csv|zip|gz|xml|json|png|jpe?g|gif|svg|mp[34])$/i;
 
@@ -245,11 +254,14 @@ export function createLiveBranch(first?: LiveSearchProvider | Database, opts: Li
  */
 export function createLiveBranchFromConfig(
   db: Database,
-  cfg: Pick<AppConfig, "openaiApiKey" | "openaiDataResidency" | "modelFast">,
+  cfg: Pick<AppConfig, "openaiApiKey" | "openaiDataResidency" | "openaiSearchModel" | "modelFast" | "webSearchDailyCap">,
   opts: LiveBranchOptions = {},
 ): LiveBranch {
   // onUsage: koszt każdego wyszukiwania trafia do zakresu przebiegu (live-usage.ts) → report.models / costUsd.
-  return createDbLiveBranch(db, { searchProvider: createOpenAiSearchProvider(cfg, { onUsage: recordLiveUsage }), ...opts });
+  return createDbLiveBranch(db, { searchProvider: createOpenAiSearchProvider(cfg, {
+    onUsage: recordLiveUsage,
+    reserveRequest: () => reserveLiveRequest(db, opts.now?.() ?? new Date(), cfg.webSearchDailyCap),
+  }), ...opts });
 }
 
 function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
@@ -316,11 +328,21 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
         }
         queries.length = Math.min(queries.length, limits.maxSearches);
         if (queries.length === 0) return skipLookup(q);
-        const settled = await Promise.race([
-          Promise.allSettled(queries.map((text) => provider.search(text, allowedHosts, signal))),
-          deadlinePromise,
-        ]);
-        const lists = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+        const focusedHosts = namedPublisherHosts(texts.join(" "), allowedSources);
+        // Reserve time to actually read the pages even if one of the search requests hangs.
+        const searchSignal = AbortSignal.any([signal, AbortSignal.timeout(Math.ceil(limits.overallTimeoutMs * 0.75))]);
+        const results: (SearchResultItem[] | undefined)[] = [];
+        const searches = queries.map(async (text, index) => {
+          const hosts = index === 1 && focusedHosts.length ? focusedHosts : allowedHosts;
+          results[index] = await provider.search(text, hosts, searchSignal);
+        });
+        await Promise.race([Promise.allSettled(searches), new Promise<void>(resolve => {
+          if (searchSignal.aborted) resolve();
+          else searchSignal.addEventListener("abort", () => resolve(), { once: true });
+        })]);
+        throwIfAborted(q.signal);
+        const lists = results.filter((result): result is SearchResultItem[] => result !== undefined);
+        if (!lists.length && searchSignal.aborted) throw new BranchUnavailableError("live", "timeout");
         if (lists.length === 0) throw new BranchUnavailableError("live", "search_failed");
         if (lists.length < queries.length) q.onCoverage?.("partial");
 

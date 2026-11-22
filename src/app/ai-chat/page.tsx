@@ -1,8 +1,7 @@
-// Scaffolded from the Astryx `ai-chat` page template; frame, density and composer docking kept,
-// the artifact side panel and demo content removed (verdicts render inline in the transcript).
+// Copyright (c) Meta Platforms, Inc. and affiliates.
+// Adapted from the Astryx ai-chat template for the Fons conversation.
 import { useEffect, useState } from "react";
 
-import { Avatar } from "@astryxdesign/core/Avatar";
 import { Button } from "@astryxdesign/core/Button";
 import {
   ChatLayout,
@@ -19,27 +18,28 @@ import { Text } from "@astryxdesign/core/Text";
 import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import type { ConversationReply } from "../../shared/contracts";
 import type { VerificationStage } from "../../shared/chat";
-import { QuickReplies, ReplyContent } from "../components/ReplyContent";
-import { StatusNotice } from "../components/StatusNotice";
-import { replyView } from "../lib/report";
-import { resultPathFor } from "../lib/safeUrl";
-import { MessageComposer, type SubmitMessage } from "../components/MessageComposer";
+import { MessageReaction, failed, reactionFor, reactionStyles, reading, type Reaction } from "../../web/components/MessageReaction";
+import { QuickReplies, ReplyContent } from "../../web/components/ReplyContent";
+import { StatusNotice } from "../../web/components/StatusNotice";
+import { replyView } from "../../web/lib/report";
+import { resultPathFor } from "../../web/lib/safeUrl";
+import { MessageComposer, type SubmitMessage } from "../../web/components/MessageComposer";
 import { Token } from "@astryxdesign/core/Token";
 import { Icon } from "@astryxdesign/core/Icon";
 import { PaperClipIcon } from "@heroicons/react/24/outline";
 
 export type ChatEntry =
   | { id: string; role: "user"; text: string; fileName?: string; imageSrc?: string }
-  | { id: string; role: "assistant"; reply: ConversationReply }
-  | { id: string; role: "error"; text: string; retry?: () => void };
+  | { id: string; role: "assistant"; replyTo?: string; reply: ConversationReply }
+  | { id: string; role: "error"; replyTo?: string; text: string; retry?: () => void };
 
-const ASSISTANT_NAME = "Fons";
 export type PendingPhase = "responding" | "verifying" | "image" | VerificationStage;
 export const progressLabels = {
   verifying: "Rozpoczynam sprawdzanie…",
   image: "Analizuję obraz…",
   fetching_video: "Odczytuję post…",
   analyzing_video: "Odczytuję obraz i wypowiedzi z filmu…",
+  transcribing_audio: "Odczytuję nagranie głosowe…",
   searching: "Szukam źródeł…",
   assessing: "Czytam znalezione fragmenty…",
   checking_quotes: "Sprawdzam cytaty…",
@@ -47,36 +47,47 @@ export const progressLabels = {
 
 const replyAnchorId = (entryId: string | undefined) => `odpowiedz-${entryId ?? ""}`;
 
-function SentImage({ src, name }: { src: string; name?: string }) {
+function SentImage({ src, name, reaction }: { src: string; name?: string; reaction?: Reaction }) {
   const [failed, setFailed] = useState(false);
   const alt = name ? `Przesłane zdjęcie: ${name}` : "Przesłane zdjęcie";
   const lightbox = useLightbox({ media: { src, alt }, hasZoom: true });
-  if (failed) return <Text type="supporting">{name ?? "Zdjęcie"} · podgląd niedostępny</Text>;
-  return <>
+  return <VStack className="fons-reaction-anchor" style={{ maxWidth: "min(82%, 20rem)" }}>
+    <MessageReaction reaction={reaction} />
+    {failed ? <Text type="supporting">{name ?? "Zdjęcie"} · podgląd niedostępny</Text> : (
     <img src={src} alt={alt} {...lightbox.triggerProps}
       aria-label={name ? `Powiększ zdjęcie ${name}` : "Powiększ zdjęcie"}
       onError={() => setFailed(true)}
       style={{
-        display: "block", width: "auto", height: "auto", maxWidth: "min(82%, 20rem)",
+        display: "block", width: "auto", height: "auto", maxWidth: "100%",
         maxHeight: "min(42svh, 20rem)", borderRadius: "var(--radius-chat)", cursor: "zoom-in",
       }}
-    />
+    />)}
     {lightbox.isOpen && lightbox.element}
-  </>;
+  </VStack>;
 }
 
 export default function ChatConversation({
   entries,
   pending,
+  pendingUserId,
   onSubmit,
   onAction,
 }: {
   entries: ChatEntry[];
   pending: PendingPhase | null;
+  pendingUserId?: string;
   onSubmit: SubmitMessage;
   onAction: (id: string, label: string) => void;
 }) {
   const isPending = pending !== null;
+  const reactions = new Map<string, Reaction>();
+  entries.forEach((entry, index) => {
+    if (entry.role === "user") return;
+    const previous = entries[index - 1];
+    const target = entry.replyTo ?? (previous?.role === "user" ? previous.id : undefined);
+    if (target) reactions.set(target, entry.role === "error" ? failed : reactionFor(entry.reply));
+  });
+  if (pending && pendingUserId) reactions.set(pendingUserId, reading);
   const lastAssistant = [...entries].reverse().find((e) => e.role === "assistant");
   const lastAssistantId = lastAssistant?.id;
   const lastView = lastAssistant?.role === "assistant" ? replyView(lastAssistant.reply) : null;
@@ -99,6 +110,7 @@ export default function ChatConversation({
   }, [lastAssistantId, lastIsVerdict]);
   return (
     <VStack width="100%" height="100%">
+      <style>{reactionStyles}</style>
       <Layout
         height="fill"
         content={
@@ -108,16 +120,17 @@ export default function ChatConversation({
               <ChatLayout
                 density="spacious"
                 composer={<MessageComposer onSubmit={onSubmit} isDisabled={isPending} />}>
-                <ChatMessageList isStreaming={isPending}>
+                <ChatMessageList align="top" gap={6} isStreaming={isPending}>
                   {entries.map((e) => {
                     if (e.role === "user") {
                       return (
-                        <ChatMessage key={e.id} sender="user">
-                          {e.imageSrc && <SentImage src={e.imageSrc} name={e.fileName} />}
-                          {(e.text || (!e.imageSrc && e.fileName)) && <ChatMessageBubble>
+                        <ChatMessage key={e.id} sender="user" name={<VisuallyHidden>Twoja wiadomość</VisuallyHidden>}>
+                          {e.imageSrc && <SentImage src={e.imageSrc} name={e.fileName} reaction={reactions.get(e.id)} />}
+                          {(e.text || (!e.imageSrc && e.fileName)) && <ChatMessageBubble className={e.imageSrc ? undefined : "fons-reaction-anchor"}>
+                            {!e.imageSrc && <MessageReaction reaction={reactions.get(e.id)} />}
                             <VStack gap={1}>
                               {!e.imageSrc && e.fileName && <Token label={e.fileName} icon={<Icon icon={PaperClipIcon} size="sm" />} />}
-                              {e.text && <Text>{e.text}</Text>}
+                              {e.text && <Text type="large" weight="normal">{e.text}</Text>}
                             </VStack>
                           </ChatMessageBubble>}
                         </ChatMessage>
@@ -125,8 +138,8 @@ export default function ChatConversation({
                     }
                     if (e.role === "error") {
                       return (
-                        <ChatMessage key={e.id} sender="assistant" name={ASSISTANT_NAME} avatar={<Avatar name={ASSISTANT_NAME} size="md" />}>
-                          <ChatMessageBubble variant="ghost">
+                        <ChatMessage key={e.id} sender="assistant" name={<VisuallyHidden>Fons</VisuallyHidden>}>
+                          <ChatMessageBubble variant="ghost" width="100%">
                             <StatusNotice
                               title="Nie udało się wysłać wiadomości"
                               message={e.text}
@@ -140,8 +153,8 @@ export default function ChatConversation({
                     const showLink = replyView(reply) === "text" || (reply.kind === "status" && (reply.report?.imageAnalysis || reply.report?.videoAnalysis));
                     const resultPath = showLink ? resultPathFor(reply.report?.token, reply.resultUrl) : null;
                     return (
-                      <ChatMessage key={e.id} sender="assistant" name={ASSISTANT_NAME} avatar={<Avatar name={ASSISTANT_NAME} size="md" />}>
-                        <ChatMessageBubble variant="ghost">
+                      <ChatMessage key={e.id} sender="assistant" name={<VisuallyHidden>Fons</VisuallyHidden>}>
+                        <ChatMessageBubble variant="ghost" width="100%">
                           <VStack gap={3}>
                             <ReplyContent reply={reply} anchorId={replyAnchorId(e.id)} animateText={!pending && e === entries.at(-1)} />
                             {resultPath ? <Link href={resultPath}>Pełny wynik</Link> : null}

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { LlmUnavailableError } from "../../shared/contracts";
-import { loadConfig, type AppConfig } from "../../server/config";
+import { defaultModelsFor, loadConfig, type AppConfig } from "../../server/config";
 import { createLlmProviders } from "./index";
 import { OpenAiProvider, openAiBaseUrl, type FetchLike } from "./openai";
 import { processingRegion } from "./types";
@@ -187,6 +187,23 @@ describe("OpenAI in config and factory", () => {
     vi.stubEnv("USER_ID_PEPPER", "p");
     expect(loadConfig({ dbPath: ":memory:" }).llmProvider).toBe("openai");
     vi.unstubAllEnvs();
+  });
+
+  it("defaults web search to the available OpenAI key, independently of the main provider", () => {
+    try {
+      vi.stubEnv("LLM_PROVIDER", "anthropic");
+      vi.stubEnv("ANTHROPIC_API_KEY", "anthropic-test");
+      vi.stubEnv("OPENAI_API_KEY", "openai-test");
+      vi.stubEnv("MODEL_FAST", "claude-test");
+      vi.stubEnv("OPENAI_SEARCH_MODEL", "");
+      vi.stubEnv("LIVE_SEARCH", "");
+      const cfg = loadConfig({ dbPath: ":memory:" });
+      expect(cfg.liveSearch).toBe(true);
+      expect(cfg.openaiSearchModel).toBe(defaultModelsFor("openai").fast);
+      vi.stubEnv("LIVE_SEARCH", "off");
+      vi.stubEnv("OPENAI_SEARCH_MODEL", "gpt-search-test");
+      expect(loadConfig({ dbPath: ":memory:" })).toMatchObject({ liveSearch: false, openaiSearchModel: "gpt-search-test" });
+    } finally { vi.unstubAllEnvs(); }
   });
 
   it("openai + anthropic keys with VERIFIER_PROVIDER=anthropic → cross-family verifier", () => {

@@ -4,7 +4,7 @@
  * (stan „na teraz”: alerty, ostrzeżenia dla podróżujących); zapisujemy wyłącznie status OK.
  */
 import { createHash } from "node:crypto";
-import { VerdictReport } from "../shared/contracts";
+import { VerdictReport, type NormalizedInput } from "../shared/contracts";
 import { relativeWindowDay } from "../security/dates";
 import { publicPostUrl, socialVideoPlatform } from "../engine/video/platforms";
 import { selectedVideoProvider } from "./config";
@@ -57,7 +57,7 @@ function normalizeText(s: string): string {
 }
 
 /** Klucz cache z wejścia po maskowaniu PII i zamianie dat względnych na bezwzględne. */
-export function computeCacheKey(ctx: ServerContext, req: EngineRequest): string {
+export function computeCacheKey(ctx: ServerContext, req: EngineRequest, article?: NormalizedInput): string {
   const receivedAt = new Date(req.receivedAt);
   let normalized: string;
   if (req.kind === "url" && req.url) {
@@ -74,6 +74,15 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest): string 
       const note = normalizeText(ctx.security.resolveRelativeDates(ctx.security.maskPii(req.text).text, receivedAt));
       normalized = JSON.stringify([normalized, note]);
     }
+    if (article) {
+      normalized = JSON.stringify([normalized, article.submittedUrl && canonicalUrl(article.submittedUrl),
+        article.textResolvedDates, article.pagePublishedAt, article.pageDisplayedDate, article.detectorHits, article.warnings]);
+    }
+  } else if (req.kind === "recording" && req.recording) {
+    const mediaHash = createHash("sha256").update(req.recording.base64, "base64").digest("hex");
+    const note = normalizeText(ctx.security.maskPii(req.text ?? "").text);
+    normalized = JSON.stringify([mediaHash, req.recording.mime, note, selectedVideoProvider(ctx.cfg),
+      ctx.cfg.openaiVideoModel, ctx.cfg.geminiVideoModel, ctx.cfg.openaiDataResidency]);
   } else if (req.kind === "image") {
     const h = createHash("sha256");
     for (const img of req.images ?? []) h.update(img.mime).update(img.base64);
@@ -120,7 +129,8 @@ export function putCached(
   opts: { liveSearch?: boolean } = {},
 ): boolean {
   if (report.status !== "OK") return false;
-  if (report.videoAnalysis && report.videoAnalysis.status !== "analyzed") return false;
+  if (report.videoAnalysis && report.videoAnalysis.status !== "analyzed" &&
+    !(report.videoAnalysis.platform === "upload_audio" && report.videoAnalysis.status === "transcript_only")) return false;
   if (report.imageAnalysis?.images.some(({ provenance, search }) =>
     provenance.credential === "unavailable" || (search && (search.status !== "ok" || search.factCheckStatus === "unavailable")))) return false;
   // Klucz skasowany przez „usuń moje dane” (SEC-02): wynik trafia tylko do pytającego, nie do cache.

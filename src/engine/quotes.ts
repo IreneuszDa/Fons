@@ -59,8 +59,9 @@ export function normalizeWithMap(text: string): { norm: string; map: number[]; e
     let out = QUOTE_CHARS[ch] ?? ch;
     if (out === "…") out = "...";
     out = out.normalize("NFKC").toLowerCase();
-    for (const c of out) {
-      norm += c;
+    norm += out;
+    // indexOf and slice return UTF-16 offsets, including both units of a preceding emoji.
+    for (let unit = 0; unit < out.length; unit++) {
       map.push(start);
       ends.push(i);
     }

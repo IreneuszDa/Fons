@@ -12,6 +12,8 @@ import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { VerdictReport } from "../../shared/contracts";
 import { ApiError, fetchReport, NETWORK_ERROR_PL } from "../api";
 import { AnswerCard } from "../components/AnswerCard";
+import { ArticleOrigin } from "../components/Evidence";
+import { QuestionBreakdown } from "../components/QuestionBreakdown";
 import { ImageFindings } from "../components/ImageFindings";
 import { StatusNotice } from "../components/StatusNotice";
 import { TransparencyBlock } from "../components/TransparencyBlock";
@@ -81,9 +83,16 @@ function ReportView({ report }: { report: VerdictReport }) {
         </Text>
         <Blockquote>{report.inputEchoMasked}</Blockquote>
       </VStack>
+      {report.article && <ArticleOrigin article={report.article} />}
       {report.imageAnalysis?.only && <ImageFindings analysis={report.imageAnalysis} summaryPl={report.summaryPl} expanded />}
       {report.imageAnalysis && !report.imageAnalysis.visual && report.status !== "OK" && <ReportWarnings warnings={report.warnings} />}
-      {report.imageAnalysis?.only ? <TransparencyBlock report={report} /> : report.status === "OK" && isOpenQuestion(report) ? (
+      {report.questionParts?.length ? (
+        <>
+          <QuestionBreakdown parts={report.questionParts} />
+          <ReportWarnings warnings={report.warnings} />
+          <TransparencyBlock report={report} />
+        </>
+      ) : report.imageAnalysis?.only ? <TransparencyBlock report={report} /> : report.status === "OK" && isOpenQuestion(report) ? (
         <AnswerCard report={report} showResultLink={false} />
       ) : report.status === "OK" && report.mainVerdict ? (
         <VerdictCard report={report} showResultLink={false} />

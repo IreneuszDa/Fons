@@ -67,13 +67,15 @@ export interface OpenAiSearchProviderOptions {
   model: string;
   /** "eu" → eu.api.openai.com; anything else → api.openai.com (US). */
   dataResidency?: string;
-  /** Overall timeout of one search call (default 6 s). */
+  /** Overall timeout of one Responses API request, including compatibility retries. */
   timeoutMs?: number;
   /** Max proposed URLs returned (default 8). */
   maxResults?: number;
   /** Reasoning effort sent to the model (default "low"; dropped automatically if the model rejects it). */
   effort?: "low" | "medium" | "high";
   onUsage?: (usage: SearchUsage) => void;
+  /** Production reserves each outgoing HTTP attempt atomically, before sending the request. */
+  reserveRequest?: () => boolean;
   /** Injected for tests. */
   fetchImpl?: FetchLike;
   baseUrl?: string;
@@ -83,8 +85,7 @@ export interface OpenAiSearchProviderOptions {
 export const WEB_SEARCH_CALL_USD = 0.01;
 /** The API accepts at most 100 allowed domains. */
 export const MAX_ALLOWED_DOMAINS = 100;
-/** Hostowane wyszukiwanie trwa zwykle 5–10 s; przy 6 s gałąź live w praktyce nie zdążała nigdy. */
-export const DEFAULT_SEARCH_TIMEOUT_MS = 12000;
+export const DEFAULT_SEARCH_TIMEOUT_MS = 22_000;
 export const DEFAULT_MAX_PROPOSALS = 8;
 const MAX_QUERY_CHARS = 400;
 
@@ -188,11 +189,14 @@ export function buildSearchRequestBody(
   const body: Record<string, unknown> = {
     model: opts.model,
     store: false,
-    instructions: SEARCH_SYSTEM,
+    instructions: domains.length === 1
+      ? `${SEARCH_SYSTEM}\nTo kwerenda u wskazanego wydawcy. Użyj operatora site:${domains[0]} i odszukaj publikację bezpośrednio w tym serwisie.`
+      : SEARCH_SYSTEM,
     input: `Twierdzenie do sprawdzenia:\n${claim.text}`,
     tools: [
       {
         type: "web_search",
+        external_web_access: true,
         filters: { allowed_domains: domains },
         search_context_size: "low",
       },
@@ -207,10 +211,12 @@ export function buildSearchRequestBody(
 }
 
 interface ResponsesLike {
+  status?: string;
   model?: string;
   usage?: { input_tokens?: number; output_tokens?: number };
   output?: {
     type?: string;
+    status?: string;
     action?: { type?: string; sources?: { type?: string; url?: string }[] };
     content?: { type?: string; text?: string; annotations?: { type?: string; url?: string; title?: string }[] }[];
   }[];
@@ -257,8 +263,8 @@ export class OpenAiSearchProvider implements SearchProvider {
   private readonly timeoutMs: number;
   private readonly maxResults: number;
   private readonly onUsage?: (u: SearchUsage) => void;
-  /** Optional parameters the model rejected once; they are not sent again by this instance. */
-  private readonly dropped = new Set<string>();
+  private readonly reserveRequest?: () => boolean;
+  private supportsReasoning = true;
   private readonly effort: "low" | "medium" | "high";
   static residencyWarned = false;
 
@@ -270,6 +276,7 @@ export class OpenAiSearchProvider implements SearchProvider {
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_SEARCH_TIMEOUT_MS;
     this.maxResults = opts.maxResults ?? DEFAULT_MAX_PROPOSALS;
     this.onUsage = opts.onUsage;
+    this.reserveRequest = opts.reserveRequest;
     this.effort = opts.effort ?? "low";
     this.processingRegion = opts.dataResidency?.trim().toLowerCase() === "eu" ? "eea" : "us";
   }
@@ -286,14 +293,16 @@ export class OpenAiSearchProvider implements SearchProvider {
     const timeout = AbortSignal.timeout(this.timeoutMs);
     const sig = signal ? AbortSignal.any([signal, timeout]) : timeout;
 
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       const body = buildSearchRequestBody(q, allowedHosts, {
         model: this.model,
-        effort: this.dropped.has("reasoning") ? null : this.effort,
-        maxToolCalls: this.dropped.has("max_tool_calls") ? null : 2,
-        maxOutputTokens: this.dropped.has("max_output_tokens") ? null : 1200,
+        effort: this.supportsReasoning ? this.effort : null,
+        maxToolCalls: 2,
+        maxOutputTokens: 1200,
       });
       let res: Response;
+      if (sig.aborted) throw new SearchUnavailableError("timeout");
+      if (this.reserveRequest && !this.reserveRequest()) throw new SearchUnavailableError("budget");
       try {
         res = await this.fetchImpl(`${this.baseUrl}/responses`, {
           method: "POST",
@@ -313,12 +322,9 @@ export class OpenAiSearchProvider implements SearchProvider {
           /* ignore */
         }
         if (res.status === 400) {
-          // An optional parameter the model does not support (e.g. reasoning on a non-reasoning model): drop it once.
-          const unsupported = (["reasoning", "max_tool_calls", "max_output_tokens"] as const).find(
-            (p) => !this.dropped.has(p) && errText.includes(p),
-          );
-          if (unsupported) {
-            this.dropped.add(unsupported);
+          // Model compatibility retries must retain the spending caps, including under concurrent searches.
+          if (body.reasoning && errText.includes("reasoning")) {
+            this.supportsReasoning = false;
             continue;
           }
           throw new SearchUnavailableError("provider_error", "status_400");
@@ -345,7 +351,8 @@ export class OpenAiSearchProvider implements SearchProvider {
       } catch {
         throw new SearchUnavailableError("bad_response", "invalid_json");
       }
-      const { items, searchCalls } = extractProposals(json);
+      if (!json || typeof json !== "object") throw new SearchUnavailableError("bad_response", "invalid_response");
+      const { items, searchCalls } = extractProposals({ output: Array.isArray(json.output) ? json.output : [] });
       const inputTokens = json.usage?.input_tokens ?? 0;
       const outputTokens = json.usage?.output_tokens ?? 0;
       const model = json.model ?? this.model;
@@ -358,6 +365,11 @@ export class OpenAiSearchProvider implements SearchProvider {
         latencyMs: Date.now() - started,
         costUsd: Math.round((costUsd(model, "openai", inputTokens, outputTokens) + searchCalls * WEB_SEARCH_CALL_USD) * 1e6) / 1e6,
       });
+      // An HTTP 200 can also represent a failed response or an answer without a tool call.
+      // Account for returned usage first, but only a completed search can establish search coverage.
+      const completedSearch = Array.isArray(json.output) && json.output.some(item => item?.type === "web_search_call" &&
+        item.status === "completed" && item.action?.type === "search");
+      if (json.status !== "completed" || !completedSearch) throw new SearchUnavailableError("bad_response", "search_not_completed");
       return filterProposedUrls(items, allowedHosts).slice(0, this.maxResults);
     }
     throw new SearchUnavailableError("provider_error", "unsupported_parameters");
@@ -367,6 +379,7 @@ export class OpenAiSearchProvider implements SearchProvider {
 export interface SearchProviderConfig {
   openaiApiKey?: string;
   openaiDataResidency?: string;
+  openaiSearchModel?: string;
   modelFast: string;
 }
 
@@ -377,7 +390,7 @@ export function createOpenAiSearchProvider(
 ): OpenAiSearchProvider {
   return new OpenAiSearchProvider({
     apiKey: cfg.openaiApiKey,
-    model: cfg.modelFast,
+    model: cfg.openaiSearchModel ?? cfg.modelFast,
     dataResidency: cfg.openaiDataResidency,
     ...extra,
   });

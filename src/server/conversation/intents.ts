@@ -32,7 +32,7 @@ export const ACTION = {
 
 const PHRASES = {
   sources: ["zrodla", "zrodlo", "pokaz zrodla", "jakie zrodla", "podaj zrodla"],
-  why: ["dlaczego", "dlaczego tak", "dlaczego taki wynik", "uzasadnienie", "uzasadnij"],
+  why: ["jak to sprawdziles", "dlaczego", "dlaczego tak", "dlaczego taki wynik", "uzasadnienie", "uzasadnij"],
   report: ["zglos", "zglos to", "zglos wynik", "zglos do sprawdzenia", "zglos do moderatora"],
   delete: ["usun moje dane", "usun dane", "skasuj moje dane", "usun wszystkie moje dane"],
   help: ["pomoc", "pomocy", "help", "start", "menu"],

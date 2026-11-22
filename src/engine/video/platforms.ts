@@ -6,7 +6,7 @@ import { canonicalYouTubeUrl, loadYouTubePost, loadYouTubeVideo, type YouTubePos
 type Caption = SocialVideoMetadata & { url: string; caption: string; title?: string };
 type Video = Caption & (Omit<SocialVideo, "platform"> & { platform: VideoAnalysis["platform"] } | YouTubePost);
 
-export function socialVideoPlatform(url: string): VideoAnalysis["platform"] | undefined {
+export function socialVideoPlatform(url: string): Exclude<VideoAnalysis["platform"], "upload_audio" | "upload_video"> | undefined {
   if (canonicalYouTubeUrl(url)) return "youtube";
   return parseFacebookPost(url)?.platform ?? shortVideoPlatform(url);
 }

@@ -5,6 +5,7 @@ import { List, ListItem } from "@astryxdesign/core/List";
 import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
 import { Text } from "@astryxdesign/core/Text";
 import type { SourceActivity, VerdictReport } from "../../shared/contracts";
+import { passageText } from "../../shared/evidence";
 import { countLabel, formatDate, formatDateTime, formatDuration, paragraphs } from "../lib/format";
 import { SOURCE_TYPE_PL } from "../lib/report";
 import { safeUrl } from "../lib/safeUrl";
@@ -68,7 +69,8 @@ function SearchActivity({ activity }: { activity: SourceActivity }) {
 }
 
 function CitedPassages({ report }: { report: VerdictReport }) {
-  const evidence = [...(report.answer?.evidence ?? []), ...report.verdicts.flatMap(v => v.evidence)];
+  const evidence = [...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(part => part.evidence) ?? []),
+    ...report.verdicts.flatMap(v => v.evidence)];
   const passages = new Map(evidence.map(item => [JSON.stringify([safeUrl(item.url) ?? item.recordId, item.quote]), item]));
   if (!passages.size) return null;
   return (
@@ -78,7 +80,7 @@ function CitedPassages({ report }: { report: VerdictReport }) {
           description={
             <VStack gap={1}>
               <Text type="supporting" color="secondary">{item.publisher} · {SOURCE_TYPE_PL[item.sourceType]} · {formatDate(item.publishedAt, "brak daty publikacji")}</Text>
-              <Text as="p">„{item.quote}”</Text>
+              <Text as="p">{passageText(item.quote, item.passageKind)}</Text>
             </VStack>
           } />
       ))}

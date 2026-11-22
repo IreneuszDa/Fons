@@ -41,19 +41,18 @@ export interface PreparedRecord {
   unusable: boolean;
 }
 
-/** Runs the detector on every record (text + claimReviewed) and strips flagged sentences. */
+/** Body text can be cleaned. A flagged publisher, title or rated claim makes attribution unreliable. */
 export function prepareEvidence(records: CorpusRecord[], detect: DetectFn, strip: StripFn): PreparedRecord[] {
   return records.slice(0, MAX_FRAGMENTS_PER_CLAIM).map((record, i) => {
+    const metadata = [record.title, record.publisher, record.publishedAt, record.period, record.rating?.raw, ...record.topics];
+    const metaHits = detect(metadata.filter(Boolean).join("\n"), "evidence", record.id);
     const textHits = detect(record.text, "evidence", record.id);
     const crHits = record.claimReviewed ? detect(record.claimReviewed, "evidence", record.id) : [];
     const safeText = textHits.length > 0 ? strip(record.text, textHits) : record.text;
     const safeClaimReviewed =
       record.claimReviewed && crHits.length > 0 ? strip(record.claimReviewed, crHits) : record.claimReviewed;
-    const unusable =
-      record.role === "stala_rola"
-        ? crHits.length > 0 && (safeClaimReviewed ?? "").trim().length < 10
-        : textHits.length > 0 && safeText.trim().length < 15;
-    return { ref: `F${i + 1}`, record, safeText, safeClaimReviewed, hits: [...textHits, ...crHits], unusable };
+    const unusable = metaHits.length > 0 || crHits.length > 0 || (textHits.length > 0 && safeText.trim().length < 15);
+    return { ref: `F${i + 1}`, record, safeText, safeClaimReviewed, hits: [...metaHits, ...textHits, ...crHits], unusable };
   });
 }
 
@@ -201,7 +200,9 @@ export function toAssessments(
     done.add(p.ref);
     const a: EvidenceAssessment = {
       ...blank(claim.id, p.record.id),
-      relation: item.relation,
+      relation: item.relation === "KORYGUJE_CZESC" ? "CZESCIOWO" : item.relation,
+      ...(item.relation === "KORYGUJE_CZESC" ? { partialMeaning: "correction" as const }
+        : item.relation === "CZESCIOWO" ? { partialMeaning: "coverage" as const } : {}),
       aspect: item.aspect,
       ...(item.period ? { period: item.period } : {}),
     };
@@ -244,12 +245,18 @@ export function toAssessments(
     const r = p.record;
     // The quote is chosen by code from the record: the reviewed claim if it appears in the text,
     // otherwise the beginning of the record text.
-    const cr = r.claimReviewed?.trim();
-    const crInText = cr ? findQuote(cr, r.text) : undefined;
+    const cr = p.safeClaimReviewed?.trim();
+    const crInText = cr ? findQuote(cr, p.safeText) : undefined;
     const quote =
       crInText?.found && crInText.matched
         ? truncateWords(crInText.matched, QUOTE_MAX_CHARS)
-        : truncateWords(r.text.trim(), QUOTE_MAX_CHARS);
+        : truncateWords(p.safeText.trim(), QUOTE_MAX_CHARS);
+    const quoteHits = detect(quote, "quote", r.id);
+    if (!quote || !r.text.includes(quote) || quoteHits.length) {
+      events.push(...quoteHits);
+      assessments.push({ ...blank(claim.id, r.id), excluded: quoteHits.length ? "detector_hit" : "quote_not_found" });
+      continue;
+    }
     assessments.push({
       ...blank(claim.id, r.id),
       relation: fixedRoleRelation(match, r.rating, cr),

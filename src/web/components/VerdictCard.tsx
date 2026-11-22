@@ -8,6 +8,7 @@ import { Link } from "@astryxdesign/core/Link";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import type { ClaimVerdict, ReportWarning, Verdict, VerdictReport } from "../../shared/contracts";
+import { mediaClaimSubject } from "../../shared/attachments";
 import { paragraphs } from "../lib/format";
 import {
   claimRows,
@@ -76,6 +77,14 @@ function ClaimSection({ index, total, text, isMain, verdict, origin }: {
         <Text color="secondary">Wynik:</Text>
         <VerdictLabel verdict={verdict.verdict} size="sm" />
       </HStack>
+      <ClaimDetails verdict={verdict} />
+    </VStack>
+  );
+}
+
+export function ClaimDetails({ verdict }: { verdict: ClaimVerdict }) {
+  return (
+    <VStack gap={3}>
       <Text as="p">{verdict.reasonPl}</Text>
       {verdict.missingContext ? (
         <Text as="p">
@@ -106,6 +115,9 @@ function ClaimSection({ index, total, text, isMain, verdict, origin }: {
 export function VerdictCard({ report, showResultLink = true, anchorId }: { report: VerdictReport; showResultLink?: boolean; anchorId?: string }) {
   const main = report.mainVerdict;
   const rows = claimRows(report);
+  const mainStatement = rows.find(row => row.isMain)?.text;
+  const heading = report.videoAnalysis ? `Ocena głównego twierdzenia z ${mediaClaimSubject(report.videoAnalysis)}`
+    : rows.length > 1 ? "Ocena głównego twierdzenia" : "Wynik sprawdzenia";
   const resultPath = showResultLink ? resultPathFor(report.token) : null;
   if (!main) return null;
   return (
@@ -113,13 +125,13 @@ export function VerdictCard({ report, showResultLink = true, anchorId }: { repor
       <Card variant={VERDICT_TONE[main]} padding={4}>
         <VStack gap={2}>
           <Text type="supporting" color="secondary" id={anchorId}>
-            {report.videoAnalysis ? "Ocena głównego twierdzenia z filmu" : "Wynik sprawdzenia"}
+            {heading}
           </Text>
           <HStack gap={2} vAlign="center">
             <Icon icon={VERDICT_ICON[main]} size="lg" color={VERDICT_TONE[main]} />
             <Heading level={3}>{VERDICT_LABEL_PL[main]}</Heading>
           </HStack>
-          {report.videoAnalysis && rows[0]?.text && <Blockquote>{rows[0].text}</Blockquote>}
+          {(report.videoAnalysis || rows.length > 1) && mainStatement && <Blockquote>{mainStatement}</Blockquote>}
           <Text as="p" weight="medium">
             {VERDICT_MEANING_PL[main]}
           </Text>

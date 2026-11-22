@@ -138,6 +138,25 @@ describe("social-video post links", () => {
     await expect(loadSocialVideo(tk)).rejects.toMatchObject({ reason: "too_large", caption: "Tekst autora" });
   });
 
+  it("downloads a legacy TikTok item with a string author and unknown subtitle format", async () => {
+    const id = "123456789";
+    const legacy = { ItemModule: { [id]: { id, author: "Autor", video: { playAddr: cdn, subtitleInfos: {} } } } };
+    get.mockResolvedValueOnce(resource(tk, `<script id="SIGI_STATE">${JSON.stringify(legacy)}</script>`))
+      .mockResolvedValueOnce(resource(cdn, clip, "video/mp4"));
+    await expect(loadSocialVideo(tk)).resolves.toMatchObject({ author: "Autor", bytes: clip });
+  });
+
+  it("downloads a matching Instagram variant when the first version exceeds the limit", async () => {
+    const media = "https://a.fbcdn.net/public.mp4";
+    const records = [{ code: "Other", video_url: media + "?other" }, { code: "Polska1", media_type: 2,
+      video_versions: [{ url: media + "?large" }, { url: media }] }];
+    const page = `<link rel="canonical" href="${ig}"><script type="application/json">${JSON.stringify(records)}</script>`;
+    get.mockResolvedValueOnce(resource(ig, "")).mockResolvedValueOnce(resource(ig, page))
+      .mockRejectedValueOnce(new FetchBlockedError("too_large", "size")).mockResolvedValueOnce(resource(media, clip, "video/mp4"));
+    await expect(loadSocialVideo(ig)).resolves.toMatchObject({ bytes: clip });
+    expect(get.mock.calls.slice(2).map(([url]) => url)).toEqual([media + "?large", media]);
+  });
+
   it("reads only the matching captioned Instagram embed, respecting its explicit block", async () => {
     const media = "https://scontent.cdninstagram.com/clip";
     get.mockResolvedValueOnce(resource(ig, instagramHtml(false, media))).mockResolvedValueOnce(resource(media, clip, "application/octet-stream"));

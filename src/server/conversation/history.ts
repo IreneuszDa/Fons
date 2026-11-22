@@ -59,7 +59,7 @@ export function rememberExchange(ctx: ServerContext, msg: InboundMessage, reply:
   const session = findSession(ctx.db, msg.sessionId);
   if (!session || reply.kind === "deleted") return;
 
-  const user = msg.text.trim() || msg.action || (msg.images.length ? "[obraz]" : msg.document ? "[dokument]" : "");
+  const user = msg.text.trim() || msg.action || (msg.images.length ? "[obraz]" : msg.document ? "[dokument]" : msg.recording ? "[nagranie]" : "");
   // A compact copy of what was actually returned gives follow-ups a subject. Do not replay report tokens.
   const assistant = reply.resultUrl ? reply.textPl.replaceAll(reply.resultUrl, "[wynik]") : reply.textPl;
   const history: ConversationTurn[] = [

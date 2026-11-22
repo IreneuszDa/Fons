@@ -18,6 +18,7 @@ const originLabels: Record<ClaimOrigin["source"], string> = {
 
 const platformLabels: Record<VideoAnalysis["platform"], string> = {
   tiktok: "Film z TikToka", instagram: "Film z Instagrama", facebook: "Film z Facebooka", youtube: "Film z YouTube",
+  upload_audio: "Przesłane nagranie audio", upload_video: "Przesłany film",
 };
 
 function timestamp(seconds: number) {
@@ -67,15 +68,16 @@ export function VideoFindings({ analysis, pendingClaims = [] }: { analysis: Vide
         <Collapsible trigger="Opis posta" chevronPosition="start" defaultIsOpen={false}>
           <Text as="p" wordBreak="break-word" style={{ whiteSpace: "pre-wrap" }}>{analysis.caption}</Text>
         </Collapsible>
-      ) : analysis.status === "analyzed" && <Text as="p" type="supporting" color="secondary">Opis posta jest niedostępny.</Text>}
+      ) : analysis.status === "analyzed" && analysis.platform !== "upload_video" && <Text as="p" type="supporting" color="secondary">Opis posta jest niedostępny.</Text>}
       {analysis.status === "subtitles_only" && <Text as="p" type="supporting">Dostępne są napisy platformy. Obraz filmu pozostaje niesprawdzony.</Text>}
-      {analysis.status === "transcript_only" && <Text as="p" type="supporting">Sprawdzono transkrypcję dźwięku. Obraz filmu pozostaje niesprawdzony.</Text>}
+      {analysis.status === "caption_only" && <Text as="p" type="supporting">Odczytano wyłącznie publiczny opis posta.</Text>}
+      {analysis.status === "transcript_only" && <Text as="p" type="supporting">{analysis.platform === "upload_audio" ? "Sprawdzono treść transkrypcji nagrania." : "Sprawdzono transkrypcję dźwięku. Obraz filmu pozostaje niesprawdzony."}</Text>}
       {analysis.status === "analyzed" && analysis.provider === "openai" &&
         <Text as="p" type="supporting" color="secondary">OpenAI przeanalizował wybrane klatki filmu.</Text>}
       {analysis.transcriptSource === "openai" &&
         <Text as="p" type="supporting" color="secondary">Czas przy wypowiedzi wskazuje początek fragmentu dźwięku.</Text>}
       {analysis.mediaIssue && <Text as="p" type="supporting" color="secondary">{analysis.mediaIssue}</Text>}
-      {analysis.status !== "unavailable" &&
+      {analysis.status !== "unavailable" && analysis.status !== "caption_only" &&
         <TimedPassages title={analysis.transcriptSource === "platform" ? "Napisy platformy" : "Transkrypcja"} entries={analysis.transcript} empty="Nie rozpoznano wypowiedzi w nagraniu." />}
       {analysis.status === "analyzed" &&
         <TimedPassages title="Obraz i napisy" entries={analysis.observations} empty="Brak odczytanych szczegółów obrazu." />}

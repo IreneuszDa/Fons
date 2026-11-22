@@ -198,9 +198,9 @@ function prepareLocalFile(video: { bytes: Uint8Array; mimeType: string }) {
   if (!video.bytes.byteLength) throw new LlmUnavailableError("provider_error", "video_empty");
   if (video.bytes.byteLength > MAX_VIDEO_BYTES) throw new LlmUnavailableError("provider_error", "video_too_large");
   const mimeType = video.mimeType === "video/quicktime" ? "video/mov" : video.mimeType;
-  if (!["video/mp4", "video/webm", "video/mov"].includes(mimeType)) throw new LlmUnavailableError("provider_error", "video_type");
+  if (!["video/mp4", "video/webm", "video/mov", "audio/wav"].includes(mimeType)) throw new LlmUnavailableError("provider_error", "video_type");
   const bytes = Buffer.from(video.bytes.buffer, video.bytes.byteOffset, video.bytes.byteLength);
-  return { bytes, mimeType, duration: mimeType === "video/webm" ? undefined : mp4Duration(bytes) };
+  return { bytes, mimeType, duration: mimeType === "video/mp4" || mimeType === "video/mov" ? mp4Duration(bytes) : undefined };
 }
 
 export function createGeminiVideoAnalyzer(options: {
@@ -251,7 +251,9 @@ export function createGeminiVideoAnalyzer(options: {
         method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": options.apiKey },
         signal: deadline,
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: instruction(subtitles.length > 0) }] }, contents: [{ role: "user", parts }],
+          systemInstruction: { parts: [{ text: file?.mimeType === "audio/wav"
+            ? "Przepisz tylko rzeczywiście słyszalną mowę w oryginalnym języku w polu transcript. Podaj początek wypowiedzi w pełnych sekundach. Jeśli nic nie słychać, zwróć pustą listę. Pola observations oraz claims mają być puste. " + UNTRUSTED_DATA_RULES
+            : instruction(subtitles.length > 0) }] }, contents: [{ role: "user", parts }],
           generationConfig: { responseMimeType: "application/json", responseJsonSchema, maxOutputTokens: duration > 180 ? 16_384 : 8192 },
         }),
       });
@@ -271,7 +273,7 @@ export function createGeminiVideoAnalyzer(options: {
     const outputTokens = Math.max((usage?.candidatesTokenCount ?? 0) + (usage?.thoughtsTokenCount ?? 0), (usage?.totalTokenCount ?? 0) - inputTokens);
     const servedModel = response.data.modelVersion ?? model;
     const modelUsage: ModelUsage = {
-      purpose: "video_analysis", provider: "gemini", model: servedModel, inputTokens, outputTokens,
+      purpose: file?.mimeType === "audio/wav" ? "video_transcription" : "video_analysis", provider: "gemini", model: servedModel, inputTokens, outputTokens,
       latencyMs: Date.now() - started, costUsd: costUsd(servedModel, "gemini", inputTokens, outputTokens),
     };
     try {

@@ -8,14 +8,17 @@ import { socialPostId } from "./video/social-source";
 import { publicPostUrl, socialVideoPlatform } from "./video/platforms";
 import { stemToken } from "./retrieval/stem";
 
-function documentUrl(raw: string): string | undefined {
+export function documentUrl(raw: string): string | undefined {
   const url = URL.parse(raw);
   if (!url || !["http:", "https:"].includes(url.protocol) || url.port || url.username || url.password) return;
   url.hash = "";
+  url.hostname = url.hostname.replace(/^www\./, "");
   for (const key of [...url.searchParams.keys()]) {
     if (/^(?:utm_|fbclid$|gclid$)/i.test(key)) url.searchParams.delete(key);
   }
-  return url.href.replace(/\/$/, "");
+  url.searchParams.sort();
+  url.pathname = url.pathname.replace(/\/+$/, "") || "/";
+  return url.href;
 }
 
 /** Add bibliographic neighbours immediately after their search hit, deduplicating by record ID. */

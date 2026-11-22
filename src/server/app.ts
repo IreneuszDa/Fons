@@ -1,4 +1,4 @@
-import { DOCUMENT_MIMES, IMAGE_MIMES, MAX_ATTACHMENT_BYTES } from "../shared/attachments";
+import { DOCUMENT_MIMES, IMAGE_MIMES, MAX_ATTACHMENT_BYTES, MAX_RECORDING_BYTES, RECORDING_MIMES } from "../shared/attachments";
 /** Fabryka aplikacji Hono: createApp(ctx) — testy używają app.request(). */
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -19,12 +19,15 @@ import { GENERIC_ERROR_PL, clientIp, clientKey } from "./http";
 import { requestObservability } from "./observability/http";
 import { addClientTokens, clientBudgetExceeded, tokensUsedToday } from "./budget";
 import { TOKEN_RE, getReportByToken } from "./reports";
-import { createSession, eraseSender, findSession, inTurnOrder, newSessionId } from "./sessions";
+import { eraseSender, findSession, inTurnOrder } from "./sessions";
+import { chatSummary, createWebChat, listWebChats, newChatOwner, readChatOwner, readWebChat, recordWebTurn } from "./web-chats";
 import { createStaticHandler } from "./static";
 
 export const SESSION_COOKIE = "pw_sid";
 const SESSION_COOKIE_MAX_AGE = 7 * 86_400;
 const CHAT_BODY_MAX = 8 * 1024 * 1024;
+const MAX_RECORDING_BASE64 = Math.ceil(MAX_RECORDING_BYTES / 3) * 4;
+const RECORDING_ROUTE = "/api/chat/recording";
 const WEBHOOK_BODY_MAX = 1024 * 1024;
 const DEFAULT_BODY_MAX = 64 * 1024;
 const DEDUPE_WINDOW_MS = 5 * 60_000;
@@ -51,10 +54,12 @@ const ChatBody = z.object({
   sessionId: z.string().max(128).optional(),
   text: z.string().max(50_000).optional(),
   action: z.string().max(64).optional(),
+  fileName: z.string().max(512).optional(),
   image: z
     .object({ mime: z.enum(IMAGE_MIMES), base64: z.string().max(8_000_000) })
     .optional(),
   document: z.object({ mime: z.enum(DOCUMENT_MIMES), base64: z.string().max(8_000_000) }).optional(),
+  recording: z.object({ mime: z.enum(RECORDING_MIMES), base64: z.string().max(MAX_RECORDING_BASE64) }).optional(),
   imageOptions: z.object({ searchWeb: z.boolean().optional() }).optional(),
 });
 
@@ -148,6 +153,10 @@ async function processWebhook(
 export function createApp(ctx: ServerContext): Hono {
   const app = new Hono();
   const secureCookie = ctx.cfg.env === "production" && ctx.cfg.publicBaseUrl.startsWith("https://");
+  const ownerFrom = (c: Context) => readChatOwner(ctx, getCookie(c, SESSION_COOKIE));
+  const rememberOwner = (c: Context, cookie: string) => setCookie(c, SESSION_COOKIE, cookie,
+    { httpOnly: true, sameSite: "Strict", secure: secureCookie, path: "/", maxAge: SESSION_COOKIE_MAX_AGE });
+  const missingChat = (c: Context) => c.json({ error: "not_found", messagePl: "Ta rozmowa została usunięta albo wygasła." }, 404);
 
   app.use("*", requestObservability(ctx));
   app.use("*", securityHeaders(ctx));
@@ -157,9 +166,20 @@ export function createApp(ctx: ServerContext): Hono {
     if (!c.res.headers.has("Cache-Control")) c.header("Cache-Control", "no-store");
   });
 
+  let readingRecordings = 0;
+  const recordingQueueFull = () => Array.from(ctx.media.keys()).filter(key => key.startsWith("recording_")).length >= 3;
+  const recordingBusy = (c: Context) => c.json({ error: "busy", messagePl: "Trwa analiza innych nagrań. Spróbuj ponownie za chwilę." }, 429);
+  app.use(RECORDING_ROUTE, async (c, next) => {
+    const rejection = crossSiteRejection(c, ctx, { requireJson: true });
+    if (rejection) return rejection;
+    if (readingRecordings >= 3 || recordingQueueFull()) return recordingBusy(c);
+    readingRecordings++;
+    try { await next(); } finally { readingRecordings--; }
+  });
   app.use("/api/*", (c, next) => {
     const p = c.req.path;
-    const maxSize = p === "/api/chat" ? CHAT_BODY_MAX : p.startsWith("/api/channels/") ? WEBHOOK_BODY_MAX : DEFAULT_BODY_MAX;
+    const maxSize = p === RECORDING_ROUTE ? MAX_RECORDING_BASE64 + 65_536
+      : p === "/api/chat" ? CHAT_BODY_MAX : p.startsWith("/api/channels/") ? WEBHOOK_BODY_MAX : DEFAULT_BODY_MAX;
     return bodyLimit({
       maxSize,
       onError: (cc) => cc.json({ error: "payload_too_large", messagePl: "Wiadomość jest za duża." }, 413),
@@ -203,7 +223,52 @@ export function createApp(ctx: ServerContext): Hono {
     return c.json(report);
   });
 
-  app.post("/api/chat", async (c) => {
+  app.get("/api/chats", (c) => {
+    const rejected = crossSiteRejection(c, ctx, { requireJson: false });
+    if (rejected) return rejected;
+    const owner = ownerFrom(c) ?? newChatOwner(ctx);
+    rememberOwner(c, owner.cookie);
+    return c.json({ chats: listWebChats(ctx, owner.senderId) });
+  });
+
+  app.post("/api/chats", (c) => {
+    const rejected = crossSiteRejection(c, ctx, { requireJson: true });
+    if (rejected) return rejected;
+    if (!ctx.limiters.ip.check(`create-chat:${clientKey(clientIp(c, ctx))}`)) {
+      c.header("Retry-After", "60");
+      return c.json({ error: "rate_limited", messagePl: RATE_LIMITED_TEXT }, 429);
+    }
+    const owner = ownerFrom(c) ?? newChatOwner(ctx);
+    const session = createWebChat(ctx, owner.senderId);
+    rememberOwner(c, owner.cookie);
+    return c.json({ chat: chatSummary(ctx, owner.senderId, session.id)! }, 201);
+  });
+
+  app.get("/api/chats/:id", (c) => {
+    const rejected = crossSiteRejection(c, ctx, { requireJson: false });
+    if (rejected) return rejected;
+    const owner = ownerFrom(c);
+    if (!owner) return missingChat(c);
+    const detail = readWebChat(ctx, owner.senderId, c.req.param("id"));
+    rememberOwner(c, owner.cookie);
+    return detail ? c.json(detail) : missingChat(c);
+  });
+
+  app.delete("/api/chats/:id", async (c) => {
+    const rejected = crossSiteRejection(c, ctx, { requireJson: false });
+    if (rejected) return rejected;
+    const owner = ownerFrom(c);
+    if (!owner) return missingChat(c);
+    rememberOwner(c, owner.cookie);
+    const id = c.req.param("id");
+    return inTurnOrder(ctx, owner.senderId, () => {
+      if (!chatSummary(ctx, owner.senderId, id)) return missingChat(c);
+      eraseSender(ctx, owner.senderId, id);
+      return c.json({ ok: true });
+    });
+  });
+
+  app.on("POST", ["/api/chat", RECORDING_ROUTE], async (c) => {
     const crossSite = crossSiteRejection(c, ctx, { requireJson: true });
     if (crossSite) return crossSite;
     // IPv6: limit per sieć /64 (jeden abonent), nie per adres.
@@ -218,28 +283,29 @@ export function createApp(ctx: ServerContext): Hono {
     const parsed = ChatBody.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: "bad_request", messagePl: "Nieprawidłowe żądanie." }, 400);
     const body = parsed.data;
-    const attachment = body.image ?? body.document;
-    if ((body.image && body.document) || (body.action && attachment) || (body.imageOptions && !body.image)) {
+    const attachments = [body.image, body.document, body.recording].filter(file => !!file);
+    const attachment = attachments[0];
+    if (attachments.length > 1 || (c.req.path === RECORDING_ROUTE) !== !!body.recording || (body.action && attachment) || (body.imageOptions && !body.image)) {
       return c.json({ error: "bad_request", messagePl: "Wyślij jeden plik z opcjonalną wiadomością." }, 400);
     }
     if (attachment) {
       const b64 = attachment.base64;
-      if (!b64 || b64.length % 4 === 1 || Buffer.byteLength(b64, "base64") > MAX_ATTACHMENT_BYTES || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
-        return c.json({ error: "bad_attachment", messagePl: "Nie mogę odczytać pliku. Limit wynosi 5 MB." }, 400);
+      const limit = body.recording ? MAX_RECORDING_BYTES : MAX_ATTACHMENT_BYTES;
+      if (!b64 || b64.length % 4 === 1 || Buffer.byteLength(b64, "base64") > limit || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
+        return c.json({ error: "bad_attachment", messagePl: `Nie mogę odczytać pliku. Limit wynosi ${limit / 1024 ** 2} MB.` }, 400);
       }
       if (body.image && !imageMagicOk(body.image.mime, b64)) {
         return c.json({ error: "bad_image", messagePl: "Nie mogę odczytać tego pliku. Wyślij zdjęcie JPG, PNG lub WebP do 5 MB." }, 400);
       }
     }
 
-    // Tożsamość sesji: ciasteczko; identyfikator z treści tylko gdy nie ma ciasteczka i sesja istnieje.
-    const candidate = getCookie(c, SESSION_COOKIE) ?? body.sessionId;
-    let session = candidate ? findSession(ctx.db, candidate) : undefined;
-    if (session && session.channel !== "web") session = undefined;
-    if (!session) {
-      const id = newSessionId(); // zawsze nasz losowy identyfikator (brak session fixation)
-      session = createSession(ctx, { id, senderId: ctx.security.pseudonymize(`web:${id}`), channel: "web" });
-    }
+    // Streaming replies release the HTTP handler before the queued verification frees the file.
+    if (body.recording && recordingQueueFull()) return recordingBusy(c);
+    const owner = ownerFrom(c) ?? newChatOwner(ctx);
+    const selected = chatSummary(ctx, owner.senderId, body.sessionId);
+    if (body.sessionId !== undefined && !selected) return missingChat(c);
+    // Older clients omit the selector and continue their last conversation.
+    const session = selected ? findSession(ctx.db, selected.id)! : createWebChat(ctx, owner.senderId);
 
     const msg = buildWebInbound(ctx, {
       sessionId: session.id,
@@ -248,6 +314,7 @@ export function createApp(ctx: ServerContext): Hono {
       action: body.action,
       image: body.image,
       document: body.document,
+      recording: body.recording,
       imageOptions: body.imageOptions,
     });
     // Udział jednego klienta w dobowym budżecie (SEC-04): po jego wyczerpaniu ten klient dostaje komunikat
@@ -260,6 +327,7 @@ export function createApp(ctx: ServerContext): Hono {
       onVerificationStart = () => resolve("verification-start");
     });
     const replyPromise = handleInbound(msg, ctx, {
+      onReply: reply => recordWebTurn(ctx, msg, reply, body.fileName),
       clientOverBudget: () => clientBudgetExceeded(ctx.clientUsage, ctx.cfg, ip, ctx.now()),
       onRoutingTokens: (tokens) => addClientTokens(ctx.clientUsage, ip, ctx.now(), tokens),
       onVerificationStart,
@@ -277,11 +345,10 @@ export function createApp(ctx: ServerContext): Hono {
 
     // Open a stream only when a new verification starts. Other replies keep their JSON status and cookie handling.
     const first = started ? await Promise.race([replyPromise, started]) : await replyPromise;
-    const activeSessionId = first === "verification-start" ? session.id : first.sessionId;
-    if (activeSessionId) {
-      setCookie(c, SESSION_COOKIE, activeSessionId, { httpOnly: true, sameSite: "Strict", secure: secureCookie, path: "/", maxAge: SESSION_COOKIE_MAX_AGE });
-    } else {
+    if (first !== "verification-start" && first.reply.kind === "deleted") {
       deleteCookie(c, SESSION_COOKIE, { path: "/" });
+    } else {
+      rememberOwner(c, owner.cookie);
     }
     if (first !== "verification-start") return c.json(first, first.reply.kind === "rate_limited" ? 429 : 200);
 
@@ -306,11 +373,10 @@ export function createApp(ctx: ServerContext): Hono {
   app.delete("/api/session", async (c) => {
     const crossSite = crossSiteRejection(c, ctx, { requireJson: false });
     if (crossSite) return crossSite;
-    const id = getCookie(c, SESSION_COOKIE);
-    const session = id ? findSession(ctx.db, id) : undefined;
+    const owner = ownerFrom(c);
     deleteCookie(c, SESSION_COOKIE, { path: "/" });
-    if (!session) return c.json({ ok: true, deleted: { reports: 0, runs: 0, cache: 0, caseSenders: 0, sessions: 0 } });
-    const deleted = await inTurnOrder(ctx, session.senderId, () => eraseSender(ctx, session.senderId));
+    if (!owner) return c.json({ ok: true, deleted: { reports: 0, runs: 0, cache: 0, caseSenders: 0, sessions: 0 } });
+    const deleted = await inTurnOrder(ctx, owner.senderId, () => eraseSender(ctx, owner.senderId));
     return c.json({ ok: true, deleted });
   });
 

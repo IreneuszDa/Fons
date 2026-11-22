@@ -50,6 +50,14 @@ export function evidenceKind(r: CorpusRecord): EvidenceKind {
   return r.level === 1 ? "primary" : "secondary";
 }
 
+/** Copies of a substantial passage can circulate under different publisher names.
+ * A shared short name, date, or the text of a claim rated by two fact-checkers is insufficient. */
+export function copiedPassageKey(record: CorpusRecord): string | undefined {
+  if (record.role !== "tresc") return;
+  const words = record.text.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu);
+  return words && words.length >= 24 ? words.join(" ") : undefined;
+}
+
 /**
  * Werdykt wynikający z rekordu o stałej roli — WYŁĄCZNIE z oceny przez tabelę mapowania.
  * null = rekord nie rozstrzyga (brak oceny, ocena nieznana, `inna`, `niepewne`, negacja oceny niebinarnej).
@@ -91,6 +99,7 @@ export function polarityOf(a: EvidenceAssessment, r: CorpusRecord): Polarity {
     case "OBALA":
       return "refute";
     case "CZESCIOWO":
+      return a.partialMeaning === "correction" ? "partial" : "none";
     case "INNY_KONTEKST":
       return "partial";
     default:
@@ -112,6 +121,7 @@ export function isDecisive(
   if (a.verifier === "sprzeciw") return false;
 
   const kind = evidenceKind(r);
+  if (kind !== "fixed" && polarityOf(a, r) === "none") return false;
   if (kind === "primary") return true;
   if (kind === "fixed") return effectiveFixedVerdict(a, r) !== null;
   if (kind === "fixed_unqualified") return false;
@@ -126,6 +136,8 @@ export function isDecisive(
     if (!isCounted(b, rb)) return false;
     if (evidenceKind(rb) !== "secondary") return false;
     if (rb.independenceGroup === r.independenceGroup) return false;
+    const passage = copiedPassageKey(r);
+    if (passage && passage === copiedPassageKey(rb)) return false;
     return polarityOf(b, rb) === pol;
   });
 }

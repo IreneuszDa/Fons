@@ -333,6 +333,7 @@ describe("gałąź official", () => {
     const records = res.map((c) => getLiveSnapshot(db, c.recordId, now)!);
     expect(records.every((r) => r.level === 1 && r.type === "pierwotne" && r.publisher === "MSZ - Odyseusz")).toBe(true);
     expect(records.every((r) => r.origin === "live_snapshot" && r.topics.includes(OFFICIAL_TOPIC))).toBe(true);
+    expect(records.every(r => r.topics.includes("generated-from-data"))).toBe(true);
     // rekord najbliższy twierdzeniu jest pierwszy; rekord z poziomem ostrzeżenia zawsze jest na liście
     expect(records[0]!.text).toContain("MSZ nie ma prawnych możliwości zakazania wyjazdu");
     expect(records.some((r) => r.text.includes("Poziom 1 - Zwykła ostrożność"))).toBe(true);

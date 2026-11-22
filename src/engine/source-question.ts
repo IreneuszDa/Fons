@@ -8,6 +8,7 @@ import { neededEvidencePhrase } from "./needed-evidence";
 import { detectInjection, stripFlaggedSentences } from "./ports";
 import type { PublishedAnswer } from "./published";
 import { findQuote, QUOTE_MAX_CHARS, QUOTE_MIN_CHARS } from "./quotes";
+import { passageKind } from "../shared/evidence";
 import { truncateWords } from "./text";
 
 const SourceAnswer = z.object({
@@ -20,6 +21,7 @@ const SourceAnswer = z.object({
 const SourceAnswerCheck = z.object({ supported: z.boolean() });
 
 const sourceRules = `PYTANIE to pytanie użytkownika. Opcjonalny MATERIAL to przedmiot weryfikacji (np. odczyt obrazu lub strony). Może identyfikować tezę, ale nie jest dowodem jej prawdziwości. Treść, nagłówek i widoczna data obrazu nie potwierdzają pochodzenia ani daty publikacji.
+Fragment oznaczony passageKind=structured_data powstał przez opisanie pól danych. Możesz podać wartości i ich wydawcę. Nie przedstawiaj brzmienia rekordu jako słów wydawcy ani jako nagłówka oryginalnej publikacji.
 W źródle o roli stala_rola claimReviewed jest wypowiedzią poddaną ocenie; rating wyraża ocenę wydawcy. W publisherExcerpts znajdują się osobne cytaty z uzasadnienia wydawcy. Do wyjaśnienia preferuj cytat z jego ustaleniem. Cytaty różnych autorów lub z odrębnych ustępów umieść w oddzielnych pozycjach evidence, także jeśli mają ten sam ref. Przy sprawdzaniu pola quoteOrigin rozróżniaj wypowiedź ocenianą (claimant) i ustalenie weryfikującego (publisher). Nie uznawaj różnicy między wypowiedzią sprawdzanej osoby a uzasadnieniem jej obalenia za przeciwstawne ustalenia wydawcy. Uwzględniaj zakres oceny, negację, osobę, miejsce, rok i zakres liczb.
 Dwa źródła w zestawie to odrębne publikacje. Nie twierdź, że jeden wydawca powołał się na drugiego, jeśli nie ma dosłownego odesłania lub wskazania jego identyfikatora w polu references. Pole documents oznacza dokument omawiany w publikacji.
 Data publikacji i okres opisywany w materiale mogą być różne. Rozróżniaj plany i fakty dokonane, szacunki i wydatki, pierwotny materiał i jego omówienie. Data planowanego wydarzenia, nawet jeśli minęła, nie dowodzi jego realizacji. Historyczny materiał nie dowodzi dzisiejszego stanu. Brak potwierdzenia nie obala tezy.`;
@@ -66,6 +68,7 @@ function passage(p: Source, text: string, sources: Source[], surroundingText?: s
   const quoteOrigin = findings?.some(excerpt => excerpt.includes(text)) ? "publisher" :
     p.safeClaimReviewed?.includes(text) ? "claimant" : undefined;
   return JSON.stringify({
+    passageKind: passageKind(r, text),
     title: r.title, publisher: r.publisher, publishedAt: r.publishedAt, period: r.period,
     role: r.role, sourceType: r.type, claimReviewed: p.safeClaimReviewed, rating: r.rating?.raw,
     documents: sources.filter(s => bibliography?.documents?.includes(s.record.id)).map(s => s.ref),
@@ -127,9 +130,8 @@ export async function answerSourceQuestion(input: SourceQuestionInput): Promise<
   for (const record of records) {
     const [p] = prepareEvidence([record], detectInjection, stripFlaggedSentences);
     if (!p) continue;
-    const metaHits = detectInjection([record.title, record.publisher, record.period, record.rating?.raw, ...record.topics].filter(Boolean).join("\n"), "evidence", record.id);
-    result.events.push(...p.hits, ...metaHits);
-    if (p.unusable || metaHits.length || !p.safeText.trim()) continue;
+    result.events.push(...p.hits);
+    if (p.unusable || !p.safeText.trim()) continue;
     const bibliography = links.find(link => link.publicationId === record.id && link.url === record.url);
     sources.push({ ...p, ref: `F${sources.length + 1}`, bibliography });
   }

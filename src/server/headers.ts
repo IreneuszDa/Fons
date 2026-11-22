@@ -26,7 +26,7 @@ export function securityHeaders(ctx: ServerContext): MiddlewareHandler {
     h.set("X-Frame-Options", "DENY");
     h.set("Cross-Origin-Opener-Policy", "same-origin");
     h.set("Cross-Origin-Resource-Policy", "same-origin");
-    h.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+    h.set("Permissions-Policy", "camera=(), microphone=(self), geolocation=(), payment=()");
     if (ctx.cfg.env === "production" && ctx.cfg.publicBaseUrl.startsWith("https://")) {
       h.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     }

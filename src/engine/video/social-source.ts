@@ -5,7 +5,8 @@ import { loadTikTokSubtitles, readTikTokEmbed, tikTokMediaAllowed, tikTokPageDet
 import type { SubtitleSegment } from "./webvtt";
 
 export const MAX_VIDEO_BYTES = 64 * 1024 * 1024;
-export const MAX_VIDEO_SECONDS = 600;
+import { MAX_RECORDING_SECONDS } from "../../shared/attachments";
+export const MAX_VIDEO_SECONDS = MAX_RECORDING_SECONDS;
 const MAX_PAGE_BYTES = 3 * 1024 * 1024;
 const videoTypes = ["video/mp4", "video/webm", "video/quicktime", "application/octet-stream"];
 export type SocialVideoPlatform = "tiktok" | "instagram";
@@ -105,11 +106,37 @@ function parseJson(value: string): unknown {
   try { return JSON.parse(value); } catch { return undefined; }
 }
 
+// Public post pages may carry the matching media object inside a nested JSON script.
+function instagramPageVideo(doc: ReturnType<typeof parseHTML>["document"], id: string) {
+  for (const script of doc.querySelectorAll('script[type="application/json"]')) {
+    const json = script.textContent ?? "";
+    if (!json.includes(id) || !(json.includes("video_versions") || json.includes("video_url"))) continue;
+    const pending: unknown[] = [parseJson(json)];
+    while (pending.length) {
+      const value = pending.pop();
+      if (!value || typeof value !== "object") continue;
+      const node = value as Record<string, unknown>;
+      if (node.shortcode === id || node.code === id) {
+        if (node.is_video === false || (node.media_type !== undefined && node.media_type !== 2)) continue;
+        const owner = node.owner ?? node.user;
+        if (owner && typeof owner === "object" && "is_private" in owner && owner.is_private === true) {
+          throw new SocialVideoSourceError("unavailable");
+        }
+        const variants = Array.isArray(node.video_versions) ? node.video_versions : [];
+        const mediaUrls = [node.video_url, ...variants.map(v => v?.url)].filter((v): v is string => typeof v === "string");
+        if (mediaUrls.length) return { mediaUrls, durationSeconds: typeof node.video_duration === "number" ? node.video_duration : undefined };
+      }
+      for (const child of Object.values(node)) if (child && typeof child === "object") pending.push(child);
+    }
+  }
+}
+
 function metadata(html: string, post: PostLink): PostMetadata {
   const doc = parseHTML(html).document;
   if (post.platform === "tiktok") {
     const script = doc.getElementById("__UNIVERSAL_DATA_FOR_REHYDRATION__")?.textContent;
-    const item = tikTokPageDetails(script && parseJson(script), post.id);
+    const legacy = doc.getElementById("SIGI_STATE")?.textContent;
+    const item = tikTokPageDetails(script && parseJson(script), post.id, legacy && parseJson(legacy));
     if (item?.restricted) throw new SocialVideoSourceError("unavailable");
     if (item) return { ...item, confirmedPublicVideo: true };
   } else {
@@ -131,13 +158,14 @@ function metadata(html: string, post: PostLink): PostMetadata {
 
   // Only page-level metadata for this exact post. Embedded players or recommended posts may refer to other clips.
   const property = (name: string) => doc.querySelector(`meta[property="${name}"]`)?.getAttribute("content") ?? "";
-  const canonical = parsePost(property("og:url"));
+  const canonical = parsePost(property("og:url") || doc.querySelector('link[rel="canonical"]')?.getAttribute("href") || "");
   if (!canonical?.id || canonical.platform !== post.platform || canonical.id !== post.id) {
     return { caption: "", mediaUrls: [] };
   }
-  const mediaUrls = ["og:video:secure_url", "og:video:url", "og:video"].map(property).filter(Boolean);
+  const embedded = post.platform === "instagram" ? instagramPageVideo(doc, canonical.id) : undefined;
+  const mediaUrls = [...["og:video:secure_url", "og:video:url", "og:video"].map(property).filter(Boolean), ...(embedded?.mediaUrls ?? [])];
   const thumbnail = URL.parse(property("og:image"));
-  return { caption: property("og:description").trim().slice(0, 8_000), mediaUrls,
+  return { durationSeconds: embedded?.durationSeconds, caption: property("og:description").trim().slice(0, 8_000), mediaUrls,
     confirmedPublicVideo: mediaUrls.some(raw => { const url = URL.parse(raw); return url && mediaAllowed(url, post.platform); }),
     ...(thumbnail && mediaAllowed(thumbnail, post.platform) && { thumbnailUrl: thumbnail.href }),
   };
@@ -281,6 +309,7 @@ export async function loadSocialVideo(rawUrl: string, signal?: AbortSignal): Pro
       const url = URL.parse(raw);
       return url && mediaAllowed(url, post.platform);
     }).slice(0, 3);
+    let exceededSize = false;
     for (const url of urls) {
       try {
         const media = await fetchPublicResource(url, {
@@ -293,10 +322,10 @@ export async function loadSocialVideo(rawUrl: string, signal?: AbortSignal): Pro
         }
       } catch (err) {
         active.throwIfAborted();
-        if (err instanceof FetchBlockedError && err.reason === "too_large") throw new SocialVideoSourceError("too_large", caption, metadata);
+        if (err instanceof FetchBlockedError && err.reason === "too_large") exceededSize = true;
       }
     }
-    throw new SocialVideoSourceError("unavailable", caption, metadata, confirmedPublicVideo);
+    throw new SocialVideoSourceError(exceededSize ? "too_large" : "unavailable", caption, metadata, confirmedPublicVideo);
   } catch (err) {
     signal?.throwIfAborted();
     if (err instanceof SocialVideoSourceError) throw err;

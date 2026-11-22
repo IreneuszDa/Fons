@@ -14,6 +14,7 @@ const SAMPLE_RATE = 16_000;
 export interface DecodedVideo {
   durationSeconds: number;
   frames: { seconds: number; bytes: Buffer }[];
+  wav?: Buffer;
   audio?: { seconds: number; durationSeconds: number; bytes: Buffer }[];
 }
 
@@ -38,7 +39,7 @@ async function run(tool: "ffmpeg" | "ffprobe", args: string[], signal: AbortSign
 
 // Read actual packet endpoints as well as the container duration, including audio when using platform
 // subtitles. Short or absent metadata must not turn a long clip into a billable short one.
-function timeline(probe: Buffer) {
+function timeline(probe: Buffer, audioOnly: boolean) {
   const ends = new Map<number, number>();
   let video: number | undefined;
   let audio: number | undefined;
@@ -66,8 +67,8 @@ function timeline(probe: Buffer) {
       }
     }
   }
-  if (video === undefined) throw failure();
-  const end = Math.max(ends.get(video) ?? 0, audio === undefined ? 0 : ends.get(audio) ?? 0);
+  if (audioOnly ? audio === undefined || video !== undefined : video === undefined) throw failure();
+  const end = Math.max(video === undefined ? 0 : ends.get(video) ?? 0, audio === undefined ? 0 : ends.get(audio) ?? 0);
   const duration = Math.max(end - start, declaredDuration);
   if (!Number.isFinite(duration) || duration <= 0) throw failure("video_duration_unknown");
   // Packet times are printed to microseconds. Adding two rounded numbers can overshoot the limit.
@@ -126,12 +127,18 @@ function audioChunks(pcm: Buffer): NonNullable<DecodedVideo["audio"]> {
 
 export async function decodeVideo(
   media: { bytes: Uint8Array; mimeType: string; durationSeconds?: number },
-  options: { includeAudio: boolean; signal?: AbortSignal },
+  options: { includeAudio: boolean; probeOnly?: boolean; continuousAudio?: boolean; signal?: AbortSignal },
 ): Promise<DecodedVideo> {
   options.signal?.throwIfAborted();
   if (media.bytes.length > MAX_VIDEO_BYTES) throw failure("video_too_large");
   if ((media.durationSeconds ?? 0) > MAX_VIDEO_SECONDS) throw failure("video_too_long");
-  if (!media.bytes.length || !["video/mp4", "video/webm", "video/quicktime"].includes(media.mimeType)) throw failure();
+  const formats: Record<string, string> = {
+    "video/mp4": "mov", "video/quicktime": "mov", "video/webm": "matroska",
+    "audio/wav": "wav", "audio/mpeg": "mp3", "audio/ogg": "ogg", "audio/webm": "matroska", "audio/mp4": "mov",
+  };
+  const format = formats[media.mimeType];
+  if (!media.bytes.length || !format) throw failure();
+  const audioOnly = media.mimeType.startsWith("audio/");
   const deadline = AbortSignal.timeout(90_000);
   const signal = options.signal ? AbortSignal.any([options.signal, deadline]) : deadline;
   const dir = await mkdtemp(join(tmpdir(), "fons-video-"));
@@ -140,38 +147,41 @@ export async function decodeVideo(
     await writeFile(path, media.bytes, { mode: 0o600, signal });
     // Force one of the supported demuxers and disable MOV external track references. Only our
     // private input file is needed. In particular, no remote protocols or playlist demuxers run.
-    const mov = media.mimeType !== "video/webm";
+    const mov = format === "mov";
     const input = ["-v", "error", "-max_alloc", String(128 * 1024 ** 2), "-protocol_whitelist", "file",
-      "-max_pixels", String(MAX_PIXELS), "-max_streams", "16", "-format_whitelist", mov ? "mov" : "matroska,webm",
-      "-f", mov ? "mov" : "matroska", ...(mov ? ["-enable_drefs", "0", "-use_absolute_path", "0"] : [])];
+      "-max_pixels", String(MAX_PIXELS), "-max_streams", "16", "-format_whitelist", format === "matroska" ? "matroska,webm" : format,
+      "-f", format, ...(mov ? ["-enable_drefs", "0", "-use_absolute_path", "0"] : [])];
     const rows = await run("ffprobe", [...input, "-i", path, "-show_entries",
       "packet=stream_index,pts_time,duration_time:stream=index,codec_type,width,height:stream_disposition=attached_pic:format=duration,start_time",
       "-of", "compact"], signal, 16 * 1024 ** 2);
-    const info = timeline(rows);
+    const info = timeline(rows, audioOnly);
+    const result: DecodedVideo = { frames: [], durationSeconds: info.duration };
+    if (options.probeOnly) return result;
     const decode = ["-nostdin", "-copyts", "-start_at_zero", "-filter_threads", "1", "-threads", "1", ...input, "-i", path];
-    const interval = Math.max(1, info.duration / MAX_FRAMES);
-    // Sample the first original frame in each interval. Its filename is the actual PTS in ms,
-    // even when a variable-rate recording has no frame exactly on the desired boundary.
-    const select = `select='isnan(prev_selected_t)+gt(floor(t/${interval}),floor(prev_selected_t/${interval}))'`;
-    const scale = "scale=w='min(iw,768)':h='min(ih,768)':force_original_aspect_ratio=decrease:force_divisible_by=2";
-    await run("ffmpeg", [...decode, "-map", `0:${info.video}`, "-vf", select + "," + scale,
-      "-fps_mode", "passthrough", "-frames:v", String(MAX_FRAMES), "-c:v", "mjpeg", "-threads", "1", "-q:v", "4",
-      "-enc_time_base", "1:1000", "-frame_pts", "1", join(dir, "frame-%012d.jpg")], signal, 256 * 1024);
-    const frames = [];
-    for (const name of (await readdir(dir)).sort()) {
-      const match = /^frame-(\d+)\.jpg$/.exec(name);
-      if (!match) continue;
-      const seconds = Number(match[1]) / 1000;
-      if (seconds > info.duration + 0.001) throw failure();
-      frames.push({ seconds: Math.min(seconds, info.duration), bytes: await readFile(join(dir, name), { signal }) });
+    if (!audioOnly) {
+      const interval = Math.max(1, info.duration / MAX_FRAMES);
+      // Sample the first original frame in each interval. Its filename is the actual PTS in ms,
+      // even when a variable-rate recording has no frame exactly on the desired boundary.
+      const select = `select='isnan(prev_selected_t)+gt(floor(t/${interval}),floor(prev_selected_t/${interval}))'`;
+      const scale = "scale=w='min(iw,768)':h='min(ih,768)':force_original_aspect_ratio=decrease:force_divisible_by=2";
+      await run("ffmpeg", [...decode, "-map", `0:${info.video}`, "-vf", select + "," + scale,
+        "-fps_mode", "passthrough", "-frames:v", String(MAX_FRAMES), "-c:v", "mjpeg", "-threads", "1", "-q:v", "4",
+        "-enc_time_base", "1:1000", "-frame_pts", "1", join(dir, "frame-%012d.jpg")], signal, 256 * 1024);
+      for (const name of (await readdir(dir)).sort()) {
+        const match = /^frame-(\d+)\.jpg$/.exec(name);
+        if (!match) continue;
+        const seconds = Number(match[1]) / 1000;
+        if (seconds > info.duration + 0.001) throw failure();
+        result.frames.push({ seconds: Math.min(seconds, info.duration), bytes: await readFile(join(dir, name), { signal }) });
+      }
+      if (!result.frames.length) throw failure();
     }
-    if (!frames.length) throw failure();
-    const result: DecodedVideo = { frames, durationSeconds: info.duration };
     if (options.includeAudio && info.audio !== undefined) {
       const pcm = await run("ffmpeg", [...decode, "-map", `0:${info.audio}`, "-vn", "-sn", "-dn",
         "-af", `aresample=${SAMPLE_RATE}:async=1:first_pts=0`, "-ac", "1", "-ar", String(SAMPLE_RATE),
         "-t", String(MAX_VIDEO_SECONDS), "-f", "s16le", "pipe:1"], signal, MAX_VIDEO_SECONDS * SAMPLE_RATE * 2 + 65_536);
-      result.audio = audioChunks(pcm);
+      if (options.continuousAudio) result.wav = wav(pcm);
+      else result.audio = audioChunks(pcm);
     }
     return result;
   } catch (error) {

@@ -22,6 +22,16 @@ function setup() {
 }
 
 describe("OpenAI frame analysis", () => {
+  it("transcribes a voice note with timestamped segments without making a vision request", async () => {
+    const { analyze, decode, fetchImpl } = setup();
+    decode.mockResolvedValueOnce({ durationSeconds: 25, frames: [], audio: [audio[0]!] });
+    fetchImpl.mockResolvedValueOnce(Response.json({ text: "Polska jest w NATO." }));
+    const result = await analyze({ ...media, mimeType: "audio/wav" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(fetchImpl.mock.calls[0]![0]).toMatch(/\/audio\/transcriptions$/);
+    expect(result.usage.purpose).toBe("video_transcription");
+    expect(result.data).toEqual({ transcript: [{ seconds: 2, text: "Polska jest w NATO." }], observations: [], claims: [] });
+  });
   it("transcribes decoded segments, uses sampled frame times and independently anchors every proposed claim", async () => {
     const { analyze, decode, fetchImpl } = setup();
     fetchImpl.mockResolvedValueOnce(Response.json({ text: "Polska jest" }))

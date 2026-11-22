@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@astryxdesign/core/Button";
+import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { HStack } from "@astryxdesign/core/HStack";
 import { useMediaQuery } from "@astryxdesign/core/hooks";
 import { List, ListItem } from "@astryxdesign/core/List";
@@ -102,16 +103,37 @@ export default function SourcesPage() {
           <VStack gap={2}>
             <Heading level={1}>Źródła i metoda</Heading>
             <Text as="p">
-              Dowodem są tylko fragmenty ze źródeł z tej listy. Poziom źródła przypisujemy do dokładnego adresu strony, a nie do odpowiedzi modelu. Treść,
-              którą przysyłasz, nigdy nie jest dowodem.
+              Z przesłanego materiału Fons wyodrębnia tezy. Dla każdej szuka dowodów w katalogu wydawców.
+              W raporcie możesz otworzyć publikacje, przeczytać cytaty i sprawdzić, jakich danych zabrakło.
             </Text>
+            <Collapsible defaultIsOpen={false} chevronPosition="start" trigger="Jak dobieramy i porównujemy dowody">
+              <VStack gap={2} paddingBlock={2}>
+                <Text as="p">Wyszukiwanie porównuje słowa oraz znaczenie pytania z dokumentami w bazie.
+                  W trybie online Fons szuka także publikacji w internecie. Raport pokazuje, które metody zadziałały podczas konkretnego sprawdzenia.</Text>
+                <Text as="p">Przy porównaniu liczą się data zdarzenia, okres danych i pochodzenie publikacji. Dwa przedruki jednego tekstu
+                  mogą opierać się na tej samej informacji. Sprzeczne dowody możesz przeczytać obok siebie w szczegółach twierdzenia.</Text>
+                <Text as="p">Opinię lub prognozę oznaczamy osobno. Siłę dowodów obliczamy na podstawie rodzaju i niezależności źródeł,
+                  aktualności materiału oraz wyniku kontroli cytatów.</Text>
+              </VStack>
+            </Collapsible>
+            <Collapsible defaultIsOpen={false} chevronPosition="start" trigger="Materiały o standardach weryfikacji">
+              <VStack gap={2} paddingBlock={2}>
+                <Text as="p">IFCN i EFCSN opisują zasady pracy organizacji fact-checkingowych, w tym dokumentowanie źródeł i publikowanie korekt.
+                  EDMO opisuje niezależność pracy redakcyjnej i badawczej. NASK pokazuje, jak sprawdzać pochodzenie wiadomości i szukać potwierdzenia
+                  poza platformą społecznościową.</Text>
+                <Link href="https://ifcncodeofprinciples.poynter.org/the-commitments" isExternalLink rel="noopener noreferrer">Kodeks IFCN</Link>
+                <Link href="https://efcsn.com/code-of-standards/" isExternalLink rel="noopener noreferrer">Europejski kodeks EFCSN</Link>
+                <Link href="https://belux.edmo.eu/about-us/guiding-principles-for-the-edmo-network/" isExternalLink rel="noopener noreferrer">Zasady sieci EDMO</Link>
+                <Link href="https://oad.nask.pl/aktualnosci/jak-obywatele-moga-pomoc-w-zwalczaniu-dezinformacji" isExternalLink rel="noopener noreferrer">Wskazówki Ośrodka Analizy Dezinformacji NASK</Link>
+              </VStack>
+            </Collapsible>
             <VStack as="section" gap={1}>
               <Heading level={2}>Sprawdzenia fact-checkerów</Heading>
               <Text as="p">
-                Podczas aktualizacji bazy Fons pobiera przez Google Fact Check Tools API metadane sprawdzeń Stowarzyszenia
-                Demagog. W tej bazie Fons szuka też treści sformułowanych innymi słowami i sprawdza, czy dotyczą tego samego
-                twierdzenia. Oceny pochodzą od wydawcy. W publicznym Fact Check Explorerze możesz przeglądać sprawdzenia
-                innych redakcji.
+                Fons indeksuje sprawdzenia Stowarzyszenia Demagog. Kiedy pytasz o konkretną analizę tej redakcji,
+                przeszukuje też Google Fact Check Tools na żywo i porównuje znalezioną tezę z Twoim pytaniem.
+                Ocena przy publikacji pochodzi od jej wydawcy. W publicznym Fact Check Explorerze znajdziesz również
+                sprawdzenia innych redakcji.
               </Text>
               <HStack gap={2} wrap="wrap">
                 <Link

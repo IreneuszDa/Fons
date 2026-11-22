@@ -53,6 +53,7 @@ import type {
   VerifierVote,
 } from "../../shared/contracts";
 import { freshnessDate, type Ev } from "./evidence";
+import { copiedPassageKey } from "./decisive";
 import { literalCheck, literalFactorPl } from "./literal";
 import { monthsBefore } from "./periods";
 import { NOTE, plural } from "./texts";
@@ -141,14 +142,18 @@ interface Group {
 
 /** Najlepszy dowód w każdej grupie niezależności (ta sama grupa / przedruk = jeden głos). */
 function groupsOf(evs: Ev[]): Group[] {
-  const by = new Map<string, Group>();
-  for (const e of evs) {
-    const w = evidenceWeight(e);
-    if (w <= 0) continue;
-    const g = by.get(e.r.independenceGroup);
-    if (!g || w > g.weight) by.set(e.r.independenceGroup, { id: e.r.independenceGroup, best: e, weight: w });
-  }
-  return [...by.values()].sort((a, b) => b.weight - a.weight);
+  const publishers = new Set<string>();
+  const passages = new Set<string>();
+  const ranked = evs.map(best => ({ id: best.r.independenceGroup, best, weight: evidenceWeight(best) }))
+    .sort((a, b) => b.weight - a.weight || a.best.r.id.localeCompare(b.best.r.id));
+  return ranked.filter(({ id, best, weight }) => {
+    if (weight <= 0 || publishers.has(id)) return false;
+    const passage = copiedPassageKey(best.r);
+    if (passage && passages.has(passage)) return false;
+    if (passage) passages.add(passage);
+    publishers.add(id);
+    return true;
+  });
 }
 
 function combine(weights: number[]): number {
@@ -211,7 +216,7 @@ export function computeStrength(args: StrengthArgs): StrengthCard {
   const aligned = alignedEvidence(basis, counted);
 
   const primaryIds = new Set(aligned.filter((e) => e.kind === "primary").map((e) => e.r.id));
-  const groupIds = new Set(aligned.map((e) => e.r.independenceGroup));
+  const groups = groupsOf(aligned);
 
   // Najnowszy dowód podstawy (data publikacji jako tekst z bazy).
   let newestAt: string | null = null;
@@ -225,7 +230,8 @@ export function computeStrength(args: StrengthArgs): StrengthCard {
 
   let archivalWarning = args.archival;
   let staleState = false;
-  if (!archivalWarning && args.claim.temporal.kind === "stan" && basis.length > 0 && rule !== 1) {
+  const presentState = args.claim.temporal.kind === "stan" && !args.claim.temporal.asOf;
+  if (!archivalWarning && presentState && basis.length > 0 && rule !== 1) {
     const fresh = basis.map(freshnessDate).filter((x): x is number => x !== undefined);
     if (fresh.length === 0) {
       notes.push(NOTE.noDates);
@@ -254,7 +260,7 @@ export function computeStrength(args: StrengthArgs): StrengthCard {
 
   const base = {
     primarySources: primaryIds.size,
-    independentPublishers: groupIds.size,
+    independentPublishers: groups.length,
     newestEvidenceAt: newestAt,
     archivalWarning,
     verifierAgreement,
@@ -265,7 +271,6 @@ export function computeStrength(args: StrengthArgs): StrengthCard {
   }
 
   // 1) Głosy niezależnych grup.
-  const groups = groupsOf(aligned);
   let score = combine(groups.map((g) => g.weight));
   factors.push(...sourcesFactor(groups));
   if (groups.some((g) => g.best.kind !== "fixed" && quoteScore(g.best) < FUZZY_QUOTE)) {
@@ -298,7 +303,7 @@ export function computeStrength(args: StrengthArgs): StrengthCard {
     });
   } else if (votes.length > 0 && votes.every((v) => v === "zgoda")) {
     score *= READING.allConfirmed;
-    factors.push({ effect: "plus", textPl: "Drugi model niezależnie potwierdził odczyt każdego cytatu." });
+    factors.push({ effect: "plus", textPl: "Drugi model potwierdził odczyt cytatów użytych do oceny." });
   } else {
     score *= literalText ? LITERAL_READING : READING.partlyUnchecked;
     factors.push({ effect: "minus", textPl: "Nie każdy cytat sprawdził drugi model." });
@@ -339,7 +344,7 @@ export function computeStrength(args: StrengthArgs): StrengthCard {
   if (staleState) {
     score *= ARCHIVAL_FACTOR;
     factors.push({ effect: "minus", textPl: "Najnowszy dowód ma ponad 2 lata — sytuacja mogła się zmienić." });
-  } else if (args.claim.temporal.kind === "stan" && newestAt && !args.archival) {
+  } else if (presentState && newestAt && !args.archival) {
     factors.push({ effect: "plus", textPl: "Dowody są aktualne (z ostatnich 2 lat)." });
   }
 

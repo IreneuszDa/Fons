@@ -65,14 +65,35 @@ export function reportPublication(run: PublicationRun, publication: PublishedAns
 }
 
 /** Explicit questions about the publisher are resolved from a fresh search. Other questions continue to retrieval. */
-export async function findPublicationReport(run: PublicationRun, input: NormalizedInput, _receivedAt: Date, signal?: AbortSignal): Promise<VerdictReport | undefined> {
-  if (input.kind !== "text" || !asksAboutDemagogReview(input.text)) return;
+async function lookupReview(run: PublicationRun, question: string, signal?: AbortSignal) {
+  if (!asksAboutDemagogReview(question)) return;
   run.stage("searching");
-  run.inputMode = "question_open";
   const lookup = run.deps.demagogTopicIndex ?? createDemagogTopicIndex();
-  const outcome = await lookup(input.text, run.deps.now(), signal, {
+  return lookup(question, run.deps.now(), signal, {
     llm: run.faults.has("llm_down") ? undefined : run.deps.llm, onUsage: usage => run.models.push(usage),
   });
+}
+
+export async function publicationQuestionPart(run: PublicationRun, questionPl: string, signal?: AbortSignal):
+Promise<NonNullable<VerdictReport["questionParts"]>[number] | undefined> {
+  const outcome = await lookupReview(run, questionPl, signal);
+  if (!outcome) return;
+  if (outcome.status === "hit" || outcome.status === "related") {
+    const { evidence, answerPl } = outcome.publication;
+    run.recordLookup("google_claimreview", "completed", evidence.map(e => e.recordId));
+    return { questionPl, answerPl, evidence, status: outcome.status === "hit" ? "answered" : "insufficient" };
+  }
+  const status = outcome.status === "unavailable" ? "unavailable" : "insufficient";
+  if (outcome.status !== "clarify") run.recordLookup("google_claimreview", status === "unavailable" ? "unavailable" : "completed", []);
+  const answerPl = outcome.status === "clarify" ? outcome.messagePl : googleIndexMessage(outcome as IndexMiss);
+  return { questionPl, status, answerPl, evidence: [] };
+}
+
+export async function findPublicationReport(run: PublicationRun, input: NormalizedInput, _receivedAt: Date, signal?: AbortSignal): Promise<VerdictReport | undefined> {
+  if (input.kind !== "text") return;
+  const outcome = await lookupReview(run, input.text, signal);
+  if (!outcome) return;
+  run.inputMode = "question_open";
   switch (outcome.status) {
     case "empty":
     case "unavailable":

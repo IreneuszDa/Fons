@@ -43,6 +43,7 @@ export interface InboundOptions {
   onRoutingTokens?: (tokens: number) => void;
   onVerificationStart?: () => void;
   onActivity?: (stage: VerificationStage) => void;
+  onReply?: (reply: ConversationReply) => void;
 }
 
 export async function handleInbound(msg: InboundMessage, ctx: ServerContext, opts: InboundOptions = {}): Promise<ConversationReply> {
@@ -58,6 +59,7 @@ export async function handleInbound(msg: InboundMessage, ctx: ServerContext, opt
       if (!current) return help("Ta rozmowa została usunięta.");
       const reply = await respond(msg, ctx, current, opts);
       rememberExchange(ctx, msg, reply);
+      if (reply.kind !== "deleted") opts.onReply?.(reply);
       return reply;
     });
   } catch {
@@ -65,6 +67,7 @@ export async function handleInbound(msg: InboundMessage, ctx: ServerContext, opt
   } finally {
     for (const ref of mediaRefs) ctx.media.delete(ref);
     if (msg.document) ctx.media.delete(msg.document.dataRef);
+    if (msg.recording) ctx.media.delete(msg.recording.dataRef);
   }
 }
 
@@ -73,7 +76,7 @@ async function respond(msg: InboundMessage, ctx: ServerContext, session: Session
   const pendingActive: PendingType | undefined =
     session.state.pending && session.state.pending.expiresAt > nowMs ? session.state.pending.type : undefined;
 
-  const intent = msg.document ? { type: "verify" as const } : detectIntent({ text: msg.text, action: msg.action, images: msg.images }, pendingActive);
+  const intent = msg.document || msg.recording ? { type: "verify" as const } : detectIntent({ text: msg.text, action: msg.action, images: msg.images }, pendingActive);
 
   // Każda wiadomość inna niż potwierdzenie/anulowanie kasuje oczekujące potwierdzenie.
   const clearPending = () => saveSessionState(ctx, session.id, { ...session.state, pending: undefined });
@@ -101,7 +104,7 @@ async function respond(msg: InboundMessage, ctx: ServerContext, session: Session
         ? {
             kind: "confirm_delete",
             textPl:
-              "Czy na pewno usunąć wszystkie Twoje dane (raporty, historię zapytań, tę rozmowę)? Tej operacji nie można cofnąć. Napisz „tak” albo użyj przycisku.",
+              "Czy na pewno usunąć Twoje rozmowy, raporty i historię zapytań? Tej operacji nie można cofnąć. Napisz „tak” albo użyj przycisku.",
             quickReplies: [
               { id: ACTION.deleteConfirm, labelPl: "Tak, usuń" },
               { id: ACTION.deleteCancel, labelPl: "Nie, zostaw" },
@@ -129,7 +132,7 @@ async function respond(msg: InboundMessage, ctx: ServerContext, session: Session
       if (!report || !claim) return help(NO_REPORT_TEXT);
       try {
         const outcome = await recordUnresolved(ctx, { text: claim, senderId: session.senderId, channel: msg.channel });
-        return { kind: "reported", textPl: caseNote(outcome), quickReplies: [QR.delete] };
+        return { kind: "reported", textPl: caseNote(outcome), quickReplies: [] };
       } catch {
         return { kind: "reported", textPl: CASE_FAILED_TEXT, quickReplies: [QR.report] };
       }

@@ -9,27 +9,30 @@ import type { ConversationReply, VerdictReport } from "../../shared/contracts";
 import { FIXTURE_REPLIES } from "../../../tests/fixtures/web";
 import { TITLES } from "../App";
 import { announcementFor, replyView, VERDICT_LABEL_PL, WARNING_TITLE_PL } from "../lib/report";
-import ChatConversation, { type PendingPhase } from "../pages/ChatConversation";
-import ChatLanding from "../pages/ChatLanding";
+import ChatConversation, { type PendingPhase } from "../../app/ai-chat/page";
+import ChatLanding from "../../app/ai-chat-landing/page";
 import { AnswerCard } from "./AnswerCard";
 import { ImageFindings } from "./ImageFindings";
 import { ReplyContent } from "./ReplyContent";
-import { FOOTER_TEXT_PL } from "./SiteFooter";
+import { SiteFooter } from "./SiteFooter";
 import { TransparencyBlock } from "./TransparencyBlock";
 import { VerdictCard } from "./VerdictCard";
 
 const html = (reply: ConversationReply) => renderToStaticMarkup(createElement(ReplyContent, { reply }));
+const fullVerdict = (report: VerdictReport) => renderToStaticMarkup(createElement(VerdictCard, { report, showResultLink: false }));
+const fullAnswer = (report: VerdictReport) => renderToStaticMarkup(createElement(AnswerCard, { report, showResultLink: false }));
 const allVerdictLabels = Object.values(VERDICT_LABEL_PL);
 
 describe("VerdictCard", () => {
   it.each(["potwierdzone", "falszywe", "wprowadzajace", "brak", "niePodlega"])("renders %s with label and summary", (key) => {
     const reply = FIXTURE_REPLIES[key]!;
     const report = reply.report!;
-    const out = html(reply);
+    const out = fullVerdict(report);
     expect(out).toContain(VERDICT_LABEL_PL[report.mainVerdict!]);
-    expect(out).toContain("Wynik sprawdzenia");
+    expect(out).toContain(report.summaryPl);
+    expect(out).toContain(report.verdicts.length > 1 ? "Ocena głównego twierdzenia" : "Wynik sprawdzenia");
     expect(out).toContain("Jak sprawdziłem");
-    expect(out).toContain(`/w/${report.token}`);
+    expect(out).not.toContain(`/w/${report.token}`);
     expect(out).toContain("Siła dowodów");
   });
 
@@ -43,14 +46,14 @@ describe("VerdictCard", () => {
         { title: "Nieprawidłowy link", url: "javascript:alert(1)" },
       ],
     });
-    const out = html(reply);
+    const out = fullVerdict(reply.report!);
     expect(out).toContain(WARNING_TITLE_PL.incident_narrative);
     expect(out).toContain('href="https://euvsdisinfo.eu/report/example/"');
     expect(out).not.toContain("javascript:");
   });
 
   it("groups evidence and shows quotes, publisher and both dates", () => {
-    const out = html(FIXTURE_REPLIES.falszywe!);
+    const out = fullVerdict(FIXTURE_REPLIES.falszywe!.report!);
     expect(out).toContain("Co przeczy");
     expect(out).toContain("Kontekst");
     expect(out).toContain("Opublikowano: 20 listopada 2026");
@@ -61,7 +64,7 @@ describe("VerdictCard", () => {
   });
 
   it("shows conflicting sources side by side", () => {
-    const out = html(FIXTURE_REPLIES.brak!);
+    const out = fullVerdict(FIXTURE_REPLIES.brak!.report!);
     expect(out).toContain("Źródła są sprzeczne");
     expect(out).toContain("Według tych źródeł — prawda");
     expect(out).toContain("Według tych źródeł — nieprawda");
@@ -71,10 +74,111 @@ describe("VerdictCard", () => {
     const report: VerdictReport = structuredClone(FIXTURE_REPLIES.potwierdzone!.report!);
     report.verdicts[0]!.evidence[0]!.url = "javascript:alert(1)";
     report.verdicts[0]!.evidence[0]!.title = "<img src=x onerror=alert(1)>";
-    const out = renderToStaticMarkup(createElement(VerdictCard, { report }));
+    const out = fullVerdict(report);
     expect(out).not.toContain("javascript:");
     expect(out).not.toContain("<img src=x");
     expect(out).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
+});
+
+describe("text checks in chat", () => {
+  it("renders a stored claim's summary, distinct main-claim publications, warnings and confirmed case", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
+    const report = reply.report!;
+    const evidence = report.verdicts[0]!.evidence;
+    const first = evidence[0]!;
+    const second = evidence[1]!;
+    report.claims = report.claims.slice(0, 1);
+    report.verdicts = report.verdicts.slice(0, 1);
+    evidence.push({ ...first, title: "Powtórzony fragment" }, { ...second, url: "javascript:alert(1)" });
+    report.moderatorCase = { caseId: "23", action: "updated" };
+    report.warnings = [{
+      kind: "incident_narrative",
+      textPl: "W bazie jest podobna narracja.",
+      links: [{ title: "Wcześniejsza analiza", url: "https://example.org/analiza" }],
+    }];
+
+    const out = html(reply);
+    expect(out).toContain(report.summaryPl);
+    expect(out.split(`href="${first.url}"`)).toHaveLength(2);
+    expect(out).toContain(first.title);
+    expect(out.indexOf(first.url)).toBeLessThan(out.indexOf(second.url));
+    expect(out).not.toContain("javascript:");
+    expect(out).toContain("Sprawa #23");
+    expect(out).toContain(report.warnings[0]!.textPl);
+    expect(out).toContain('href="https://example.org/analiza"');
+    expect(out).toContain(`href="/w/${report.token}"`);
+    for (const detail of ["Wynik sprawdzenia", "Siła dowodów", "<blockquote", "Jak sprawdziłem"]) {
+      expect(out).not.toContain(detail);
+    }
+  });
+
+  it("presents the separate findings of a multi-claim article, each with its own evidence", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
+    const report = reply.report!;
+    report.inputKind = "url";
+    report.article = { url: "https://example.org/material", title: "Materiał zgłoszony do analizy", publishedAt: "2021-01-02" };
+    report.verdicts.reverse();
+    report.verdicts[0]!.verdict = "WPROWADZAJACE";
+    const out = html(reply);
+    expect(out).toContain("Sprawdzone twierdzenia");
+    expect(out).toContain('href="https://example.org/material"');
+    expect(out).toContain("Materiał zgłoszony do analizy");
+    expect(out).toContain("2 stycznia 2021");
+    for (const { text } of report.claims) expect(out).toContain(text);
+    expect(out).toContain("Wprowadzające w błąd");
+    expect(out).toContain("Potwierdzone");
+    expect(out).toContain('aria-expanded="false"');
+    expect(out).not.toContain(report.summaryPl);
+  });
+
+  it("shows the verified answer and its publication in a stored open-question reply", () => {
+    const reply = FIXTURE_REPLIES.odpowiedz!;
+    const answer = reply.report!.answer!;
+    const out = html(reply);
+    expect(out).toContain(answer.answerPl);
+    expect(out).toContain(`href="${answer.evidence[0]!.url}"`);
+    expect(out).toContain(reply.report!.warnings[0]!.textPl);
+    expect(out).not.toContain("<blockquote");
+    expect(out).not.toContain("Sprawa #");
+  });
+
+  it("identifies values from a data feed without attributing the wording to the publisher", () => {
+    const report = structuredClone(FIXTURE_REPLIES.odpowiedz!.report!);
+    report.answer!.evidence[0]!.passageKind = "structured_data";
+    const out = fullAnswer(report);
+    expect(out).toContain("Odczyt z danych źródłowych");
+    expect(out).not.toContain("<blockquote");
+  });
+
+  it("keeps unanswered questions visible alongside verified answers", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.odpowiedz!);
+    const report = reply.report!;
+    const answer = report.answer!;
+    report.questionParts = [
+      { ...answer, status: "answered" },
+      { questionPl: "Czy powstał nowy dokument?", status: "unavailable", evidence: [], answerPl: "Serwis źródłowy jest niedostępny." },
+    ];
+    const out = html(reply);
+    expect(out).toContain(answer.answerPl);
+    expect(out).toContain("Czy powstał nowy dokument?");
+    expect(out).toContain("Serwis źródłowy jest niedostępny.");
+  });
+
+  it("preserves the server's short answer and the outcome of a failed case registration", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
+    reply.report!.claims = reply.report!.claims.slice(0, 1);
+    reply.report!.verdicts = reply.report!.verdicts.slice(0, 1);
+    reply.shortAnswer = {
+      bodyPl: "Źródło podaje datę wstąpienia Polski do UE.",
+      sources: [reply.report!.verdicts[0]!.evidence[0]!],
+      caseNotePl: "Nie udało się teraz zapisać sprawy.",
+    };
+    const out = html(reply);
+    expect(out).toContain(reply.shortAnswer.bodyPl);
+    expect(out).toContain(reply.shortAnswer.caseNotePl!);
+    expect(out).not.toContain(reply.report!.summaryPl);
+    expect(out).not.toContain("Sprawa #");
   });
 });
 
@@ -96,10 +200,10 @@ describe("status replies", () => {
 });
 
 describe("AnswerCard (open questions)", () => {
-  it("renders the answer sentence, the quote in a blockquote, source metadata, archival warning and result link", () => {
-    const reply = FIXTURE_REPLIES.odpowiedz!;
-    const report = reply.report!;
-    const out = html(reply);
+  it("renders the answer sentence, the quote in a blockquote, source metadata and archival warning", () => {
+    const report = structuredClone(FIXTURE_REPLIES.odpowiedz!.report!);
+    report.answer!.evidence[0]!.passageKind = "excerpt";
+    const out = fullAnswer(report);
     expect(out).toContain("Odpowiedź ze źródła");
     expect(out).toContain("NATO — przykład (7 marca 2024) podaje:"); // answer sentence as assembled by code
     expect(out).toContain("<blockquote");
@@ -111,19 +215,27 @@ describe("AnswerCard (open questions)", () => {
     expect(out).toContain("NATO — przykład");
     expect(out).toContain('href="https://example.org/nato/news/sweden-joins"');
     expect(out).toContain(WARNING_TITLE_PL.archival_material);
-    expect(out).toContain(`/w/${report.token}`);
+    expect(out).not.toContain(`/w/${report.token}`);
     for (const label of allVerdictLabels) expect(out).not.toContain(`>${label}<`);
+  });
+
+  it("labels evidence from old reports that did not save whether the wording came from a publication", () => {
+    const report = structuredClone(FIXTURE_REPLIES.odpowiedz!.report!);
+    delete report.answer!.evidence[0]!.passageKind;
+    const out = fullAnswer(report);
+    expect(out).toContain("Fragment zapisanego rekordu");
+    expect(out).not.toContain("<blockquote");
   });
 
   it("keeps an unanswered chat turn short, with its warnings and a link to the full search details", () => {
     const reply = structuredClone(FIXTURE_REPLIES.brakOdpowiedzi!);
     reply.report!.warnings.push({ kind: "branch_unavailable", textPl: "Wyszukiwanie na żywo było niedostępne." });
     const out = html(reply);
-    expect(out).toContain("Nie znalazłem odpowiedzi w źródłach");
+    expect(out).toContain(reply.report!.summaryPl);
     expect(out).toContain("Wyszukiwanie na żywo było niedostępne.");
     expect(out).toContain(`/w/${reply.report!.token}`);
-    expect(out).not.toContain(reply.report!.summaryPl);
-    const full = renderToStaticMarkup(createElement(AnswerCard, { report: reply.report! }));
+    expect(out).not.toContain("Jak sprawdziłem");
+    const full = fullAnswer(reply.report!);
     expect(full).toContain(reply.report!.summaryPl);
     expect(full).toContain("Jak sprawdziłem");
   });
@@ -131,14 +243,14 @@ describe("AnswerCard (open questions)", () => {
   it("never links a non-http(s) answer source", () => {
     const report: VerdictReport = structuredClone(FIXTURE_REPLIES.odpowiedz!.report!);
     report.answer!.evidence[0]!.url = "javascript:alert(1)";
-    const out = renderToStaticMarkup(createElement(AnswerCard, { report }));
+    const out = fullAnswer(report);
     expect(out).not.toContain("javascript:");
   });
 
   it("shows no archival warning when neither the report nor strength flags it", () => {
     const report: VerdictReport = structuredClone(FIXTURE_REPLIES.odpowiedz!.report!);
     report.warnings = [];
-    expect(renderToStaticMarkup(createElement(AnswerCard, { report }))).not.toContain(WARNING_TITLE_PL.archival_material);
+    expect(fullAnswer(report)).not.toContain(WARNING_TITLE_PL.archival_material);
   });
 
   it("a technical status on an answer reply is never shown as an answer", () => {
@@ -377,8 +489,11 @@ describe("chat helpers", () => {
     }
   });
 
-  it("brands the app as Fons and keeps the footer disclaimer", () => {
+  it("brands the app as Fons and links to sources in the footer", () => {
     expect(TITLES.chat).toBe("Fons — sprawdź informację u źródła");
-    expect(FOOTER_TEXT_PL).toBe("Prototyp. Pomaga ocenić informację — nie jest automatycznym sędzią prawdy.");
+    const footer = renderToStaticMarkup(createElement(SiteFooter));
+    expect(footer).toContain('href="/zrodla"');
+    expect(footer).toContain("Źródła i metoda");
+    expect(footer).not.toContain("Prototyp");
   });
 });

@@ -82,19 +82,21 @@ export function buildClaimsPrompt(input: string, limit = claimLimitFor(input)): 
   return `Rozpoznaj rodzaj tekstu i wyodrębnij twierdzenia z tekstu poniżej. LIMIT: najwyżej ${limit} twierdzeń.${long}\n${fence("WEJSCIE", input).text}`;
 }
 
-export async function extractClaims(llm: LlmProvider, input: string, signal?: AbortSignal, subtitleFocus?: string): Promise<ClaimsResult> {
+export async function extractClaims(llm: LlmProvider, input: string, signal?: AbortSignal, subtitleFocus?: string, article = false, articleDate?: string, articleFocus?: string): Promise<ClaimsResult> {
   const subtitleInstruction = subtitleFocus === undefined ? "" :
     " Materiał zawiera napisy lub opis filmu. Podaj w text dokładny, samodzielny, ciągły cytat w oryginalnym języku. Zachowaj sprostowania i kontekst. TEMAT służy wyłącznie do wyboru cytatu.";
   const res = await llm.complete({
     purpose: "claims",
-    system: CLAIMS_SYSTEM + subtitleInstruction,
-    user: buildClaimsPrompt(input) + (subtitleFocus ? "\n" + fence("TEMAT", subtitleFocus.slice(0, 1000)).text : ""),
+    system: CLAIMS_SYSTEM + subtitleInstruction + (article ? " WEJSCIE to artykuł. Zwróć inputMode=claim, także przy pytającym tytule. Zachowaj okresy z tekstu. Dla stanu opisanego w ówczesnym czasie teraźniejszym ustaw temporalKind=stan. Data materiału wyznacza perspektywę autora i nie jest datą zdarzenia." : ""),
+    user: buildClaimsPrompt(input) + (article && articleDate ? "\nData materiału: " + articleDate : "")
+      + (article && articleFocus ? "\nUwzględnij wskazany przez nadawcę zakres przy wyborze tez z artykułu.\n" + fence("ZAKRES", articleFocus.slice(0, 1400)).text : "")
+      + (subtitleFocus ? "\n" + fence("TEMAT", subtitleFocus.slice(0, 1000)).text : ""),
     schema: ClaimsOut,
     schemaName: "claims",
     tier: "fast",
     signal,
   });
-  return { ...postProcessClaims(res.data, input), usage: res.usage };
+  return { ...postProcessClaims(res.data, input, claimLimitFor(input), article, articleDate), usage: res.usage };
 }
 
 const INTERROGATIVE =
@@ -194,7 +196,7 @@ export function validParts(parentText: string, parts: string[]): string[] {
   return out.length >= 2 ? out.slice(0, MAX_PARTS) : [];
 }
 
-const NAMED_ATTRIBUTION = /^(?:[Cc]zy\s+)?((?:[\p{Lu}][\p{L}’'-]+\s+){1,3}[\p{Lu}][\p{L}’'-]+)\s+(?:powiedzia[łl]a?|stwierdzi[łl]a?|napisa[łl]a?|oświadczy[łl]a?|oznajmi[łl]a?)(?:\s*:\s*|(?:\s*,\s*|\s+)(?:[żz]e|i[żz])\s+)/u;
+const NAMED_ATTRIBUTION = /^(?:[Cc]zy\s+)?((?:[\p{Lu}][\p{L}’'-]+\s+){1,3}[\p{Lu}][\p{L}’'-]+)\s+(?:powiedzia[łl]a?|m[óo]wi(?:[łl]a?)?|stwierdzi[łl]a?|napisa[łl]a?|oświadczy[łl]a?|oznajmi[łl]a?)(?:\s*:\s*|(?:\s*,\s*|\s+)(?:[żz]e|i[żz])\s+)/u;
 
 /** An explicit attribution is part of the claim even if the model extracts only the quoted statement. */
 function restoreAttribution(text: string, sourceText: string, input: string): { text: string; speaker: string } | undefined {
@@ -206,7 +208,7 @@ function restoreAttribution(text: string, sourceText: string, input: string): { 
   return { text: fragment.replace(/^[Cc]zy\s+/u, "").replace(/\?\s*$/u, "."), speaker: match[1]! };
 }
 
-export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLimitFor(input)): Omit<ClaimsResult, "usage"> {
+export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLimitFor(input), article = false, articleDate?: string): Omit<ClaimsResult, "usage"> {
   const kept: { raw: ClaimsOut["claims"][number]; text: string; overlap: number }[] = [];
   const rejected: { text: string; overlap: number }[] = [];
   const seen = new Set<string>();
@@ -234,14 +236,15 @@ export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLi
     const key = foldForMatch(text);
     if (seen.has(key)) continue;
     seen.add(key);
-    const preserved = attribution
-      ? { ...raw, type: "fakt" as const, assertedAspect: "autorstwo" as const, entities: [attribution.speaker, ...raw.entities], parts: [] }
+    const speaker = attribution?.speaker ?? NAMED_ATTRIBUTION.exec(text)?.[1];
+    const preserved = speaker && input.includes(speaker)
+      ? { ...raw, type: "fakt" as const, assertedAspect: "autorstwo" as const, entities: [speaker, ...raw.entities], parts: [] }
       : raw;
     kept.push({ raw: preserved, text, overlap });
     if (kept.length >= limit) break;
   }
 
-  const inputMode = resolveInputMode(out.inputMode ?? "claim", input, kept.length);
+  const inputMode = article ? "claim" : resolveInputMode(out.inputMode ?? "claim", input, kept.length);
 
   if (inputMode === "question_open") {
     const q = out.question ?? { searchPl: [], searchEn: "", entities: [], aboutPresent: false };
@@ -276,21 +279,23 @@ export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLi
     // Rule 3 compares the EVENT date asserted by the claim with the evidence — a date the claim's own words do not
     // state (the page's dateline or publication date, copied by the model) is dropped (demo DEMO09).
     const assertedDate = date && claimStatesDate(date, [text, raw.sourceText ?? ""]) ? date : undefined;
+    const asOf = article && kind === "stan" ? assertedDate ?? isoDateOrUndefined(articleDate) : undefined;
+    const scopedText = (s: string) => asOf && !assertedDate ? `${s} (stan opisany w materiale z ${asOf})` : s;
     const focus = raw.assertedAspect ?? undefined;
     const claim: Claim = {
       id: `c${i + 1}`,
-      text: truncateWords(text, 400),
+      text: scopedText(truncateWords(text, 400)),
       type: raw.type,
       isMain: i === mainIdx,
-      temporal: assertedDate ? { kind, date: assertedDate } : { kind },
+      temporal: { kind, ...(assertedDate && { date: assertedDate }), ...(asOf && { asOf }) },
       inputOverlap: overlap,
       ...(focus && raw.type === "fakt" ? { assertedAspect: focus } : {}),
     };
     const parts =
       raw.type === "fakt"
-        ? validParts(claim.text, raw.parts ?? []).map(
+        ? validParts(text, raw.parts ?? []).map(
             (p, k): ExtractedClaim => ({
-              claim: { ...claim, id: `${claim.id}p${k + 1}`, text: p, isMain: false, inputOverlap: Math.round(ngramContainment(p, input) * 1000) / 1000 },
+              claim: { ...claim, id: `${claim.id}p${k + 1}`, text: scopedText(p), isMain: false, inputOverlap: Math.round(ngramContainment(p, input) * 1000) / 1000 },
               extraQueries: cleanQueries([p, ...extraQueries]),
               mustHave: mustHaveTerms(p, entities.filter((en) => mentions(p, en))),
               parts: [],

@@ -8,7 +8,8 @@ import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Link } from "@astryxdesign/core/Link";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import { CheckCircleIcon, InformationCircleIcon, ScaleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import type { ClaimVerdict, EvidenceItem } from "../../shared/contracts";
+import type { ClaimVerdict, EvidenceItem, VerdictReport } from "../../shared/contracts";
+import { passageText } from "../../shared/evidence";
 import { formatDate, hostOf } from "../lib/format";
 import {
   ASPECT_PL,
@@ -35,6 +36,18 @@ export function SourceTitle({ item }: { item: Pick<EvidenceItem, "title" | "url"
   );
 }
 
+export function ArticleOrigin({ article, anchorId }: { article: NonNullable<VerdictReport["article"]>; anchorId?: string }) {
+  const date = article.publishedAt ? `Data publikacji: ${formatDate(article.publishedAt)}` :
+    article.displayedDate ? `Data widoczna w artykule: ${formatDate(article.displayedDate)}` : "Data publikacji nieustalona";
+  return (
+    <VStack gap={0.5}>
+      <Text type="supporting" color="secondary" id={anchorId}>Sprawdzany artykuł</Text>
+      <SourceTitle item={{ url: article.url, title: article.title || hostOf(article.url) || "Otwórz artykuł" }} />
+      <Text type="supporting" color="secondary">{date}</Text>
+    </VStack>
+  );
+}
+
 export function EvidenceEntry({ item }: { item: EvidenceItem }) {
   const host = hostOf(item.url);
   return (
@@ -47,13 +60,21 @@ export function EvidenceEntry({ item }: { item: EvidenceItem }) {
       <Text type="supporting" color="secondary">
         Opublikowano: {formatDate(item.publishedAt)} · Pobrano: {formatDate(item.fetchedAt)}
       </Text>
-      <Blockquote cite={item.publisher}>„{item.quote}”</Blockquote>
+      <EvidencePassage item={item} />
       <Text type="supporting" color="secondary">
-        Ten fragment {RELATION_PL[item.relation]} (dotyczy: {ASPECT_PL[item.aspect]})
+        {item.partialMeaning === "coverage" ? "Fragment potwierdza część tezy. Pozostałe elementy wykraczają poza jego zakres."
+          : item.partialMeaning === "correction" ? "Fragment wskazuje, co wymaga korekty w sprawdzanej tezie."
+          : `Ten fragment ${RELATION_PL[item.relation]} (dotyczy: ${ASPECT_PL[item.aspect]})`}
         {item.ratingRaw ? ` · ocena w źródle: „${item.ratingRaw}”` : ""}
       </Text>
     </VStack>
   );
+}
+
+export function EvidencePassage({ item }: { item: EvidenceItem }) {
+  const text = passageText(item.quote, item.passageKind);
+  return item.passageKind === "excerpt"
+    ? <Blockquote cite={item.publisher}>{text}</Blockquote> : <Text as="p">{text}</Text>;
 }
 
 export function EvidenceGroups({ evidence, headingLevel = 5 }: { evidence: EvidenceItem[]; headingLevel?: 4 | 5 | 6 }) {
@@ -91,7 +112,7 @@ function ConflictColumn({ title, items }: { title: string; items: EvidenceItem[]
             <Text type="supporting" color="secondary">
               {it.publisher} · {formatDate(it.publishedAt)}
             </Text>
-            <Blockquote>„{it.quote}”</Blockquote>
+            <EvidencePassage item={it} />
           </VStack>
         ))}
       </VStack>

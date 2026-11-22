@@ -26,6 +26,7 @@
  */
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { relativeWindowDay } from "../security/dates";
+import { passageKind } from "../shared/evidence";
 import type BetterSqlite3 from "better-sqlite3";
 import {
   LlmUnavailableError,
@@ -87,15 +88,17 @@ import {
   nonEeaPl,
   warning,
 } from "./messages";
-import { normalizeInput, userNoteBesideUrl } from "./normalize";
+import { normalizeInput, userNoteBesideUrl, type NormalizeOutcome } from "./normalize";
 import { socialVideoPlatform } from "./video/platforms";
-import { findPublicationReport, reportPublication } from "./publication-report";
+import { findPublicationReport, publicationQuestionPart, reportPublication } from "./publication-report";
 import { answerSourceQuestion } from "./source-question";
-import { compareReviewedDocument, linkedPublicationRecords, screenshotClaim, withScreenshotReading } from "./attachment-answer";
+import { compareReviewedDocument, documentUrl, linkedPublicationRecords, screenshotClaim, withScreenshotReading } from "./attachment-answer";
+import { routeArticleRequest } from "./article-intent";
+import { MAX_QUESTION_PARTS, separateQuestions } from "./question-parts";
 import { reviewedMediaRecords } from "./attachment-answer";
 import { findLocalTransportRecords, localTransportQuestion, unresolvedQuestion } from "./local-transport";
 import { createDemagogTopicIndex, type DemagogTopicIndex } from "./retrieval/demagog-topic";
-import { anchorSubtitleClaims, hasOnlyTranscript, readVideo, type VideoServices } from "./video/intake";
+import { anchorSubtitleClaims, hasOnlyText, readVideo, type VideoServices } from "./video/intake";
 import { createVideoServices } from "./video/services";
 import {
   createCorpusStore,
@@ -117,7 +120,7 @@ import type { CreateBranchesOptions } from "./retrieval";
 
 type Database = BetterSqlite3.Database;
 
-export const PIPELINE_VERSION = "engine-2026.11.22-17-source-search";
+export const PIPELINE_VERSION = "engine-2026.11.22-20-article-scope";
 
 const PER_BRANCH_TIMEOUT_MS = 4000;
 /** Live search (paid, slow) only for the first units in importance order; the rest use the corpus. */
@@ -172,6 +175,7 @@ export interface VerifyRequest {
   text?: string;
   url?: string;
   images?: { mime: string; base64: string }[];
+  recording?: { mime: string; base64: string };
   channel: ChannelId;
   receivedAt: string;
   fault?: string;
@@ -199,6 +203,7 @@ export interface EngineDeps {
 export interface VerifyOptions {
   /** Already-normalised input (e.g. computed by the server for the cache key) — skips step 1. */
   normalized?: NormalizedInput;
+  articleRead?: NormalizeOutcome;
   signal?: AbortSignal;
 }
 
@@ -249,6 +254,7 @@ export function cacheKeyFor(req: VerifyRequest, normalized: NormalizedInput, dep
     relativeDay: relativeWindowDay(req.text ?? "", new Date(req.receivedAt)),
     url: normalized.submittedUrl ?? null,
     image: imageHash ?? null,
+    ...(req.recording && { recording: createHash("sha256").update(req.recording.base64, "base64").digest("hex") }),
     mode: deps.verdictMode,
     llm: `${deps.llm.name}/${modelNameFor(deps.llm, "main")}`,
     verifier: `${deps.verifier.name}/${modelNameFor(deps.verifier, "fast")}`,
@@ -361,12 +367,16 @@ export function gateProposedVerdict(
   assessments: EvidenceAssessment[],
 ): { verdict: Verdict; ruleApplied: number; gated: boolean } {
   if (claim.type !== "fakt") return { verdict: "NIE_PODLEGA", ruleApplied: 1, gated: proposed !== "NIE_PODLEGA" };
-  const valid = assessments.filter((a) => a.quoteVerified && !a.excluded && a.relation !== "BEZ_ZWIAZKU");
+  const valid = assessments.filter((a) => a.quoteVerified && !a.excluded && a.verifier !== "sprzeciw" && a.relation !== "BEZ_ZWIAZKU");
   if (valid.length === 0 || !proposed) return { verdict: "BRAK_DOWODOW", ruleApplied: 2, gated: proposed !== "BRAK_DOWODOW" };
   if (proposed === "POTWIERDZONE" && !valid.some((a) => a.relation === "WSPIERA")) {
     return { verdict: "BRAK_DOWODOW", ruleApplied: 2, gated: true };
   }
   if (proposed === "FALSZYWE" && !valid.some((a) => a.relation === "OBALA")) {
+    return { verdict: "BRAK_DOWODOW", ruleApplied: 2, gated: true };
+  }
+  if (proposed === "WPROWADZAJACE" && !valid.some(a => a.relation === "OBALA" || a.relation === "INNY_KONTEKST"
+    || (a.relation === "CZESCIOWO" && (a.fixedRoleMatch === "ta_sama" || (a.partialMeaning === "correction" && a.verifier === "zgoda"))))) {
     return { verdict: "BRAK_DOWODOW", ruleApplied: 2, gated: true };
   }
   return { verdict: proposed, ruleApplied: RULE_FOR_VERDICT[proposed], gated: false };
@@ -388,7 +398,9 @@ function toEvidenceItem(a: EvidenceAssessment, r: CorpusRecord): EvidenceItem {
     fetchedAt: r.fetchedAt,
     url: r.url,
     quote: a.quote, // verified span cut from r.text (quotes.ts) or chosen by code
+    passageKind: passageKind(r, a.quote),
     relation: a.relation,
+    ...(a.partialMeaning && { partialMeaning: a.partialMeaning }),
     aspect: a.aspect,
     sourceType: r.type,
     level: r.level,
@@ -423,7 +435,7 @@ export function buildTransparencyPl(opts: {
   const y = providerLabel(opts.verifier, "fast");
   if (opts.inputMode === "question_open") {
     if (!opts.answered) {
-      return "Fons odpowiada tylko cytatem ze źródła z katalogu. Żaden fragment nie odpowiadał wprost na pytanie, dlatego nie podajemy odpowiedzi — model nie odpowiada z własnej wiedzy.";
+      return "Żaden ze sprawdzonych fragmentów nie zawierał bezpośredniej odpowiedzi na pytanie.";
     }
     const check = !opts.verifierUsed
       ? ""
@@ -431,11 +443,10 @@ export function buildTransparencyPl(opts: {
         ? ` Model ${y} sprawdził, czy cytat odpowiada na pytanie — to ten sam dostawca (tryb jednego klucza).`
         : ` Model ${y} (inny dostawca) sprawdził, czy cytat odpowiada na pytanie.`;
     return (
-      `Model ${x} wskazał fragment źródła, który odpowiada na pytanie. Kod sprawdził, że cytat występuje dosłownie w źródle z katalogu, ` +
-      `i wstawił wydawcę, datę i link z bazy.${check} Odpowiedź nie pochodzi z wiedzy modelu. Przeczytaj źródło sam.`
+      `Model ${x} wskazał fragment odpowiadający na pytanie. Kod porównał go z zapisanym rekordem i dołączył wydawcę, datę i adres publikacji.${check}`
     );
   }
-  const code = "Kod sprawdził: obecność cytatu w źródle z katalogu, poziom źródła, daty, niezależność wydawców.";
+  const code = "Kod sprawdził zgodność fragmentów z rekordami w katalogu, rodzaj źródła, daty i pochodzenie publikacji.";
   const verifierPart = !opts.verifierUsed
     ? "Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego."
     : opts.singleKey
@@ -464,6 +475,7 @@ class Run {
   private readonly startedStages = new Set<VerificationStage>();
   echo = "";
   claims: Claim[] = [];
+  article?: VerdictReport["article"];
   videoAnalysis?: VideoAnalysis;
   verifierUsed = false;
   inputMode: InputMode = "claim";
@@ -554,6 +566,7 @@ class Run {
     mainVerdict?: Verdict | null;
     summaryPl?: string;
     answer?: OpenAnswer;
+    questionParts?: VerdictReport["questionParts"];
     transparencyPl?: string;
   }): VerdictReport {
     this.timings.total = Math.round(performance.now() - this.started);
@@ -569,6 +582,7 @@ class Run {
     const report: VerdictReport = {
       inputMode: this.inputMode,
       ...(ok && fields.answer ? { answer: fields.answer } : {}),
+      ...(fields.questionParts && { questionParts: fields.questionParts }),
       id: randomUUID(),
       token: randomBytes(16).toString("base64url"),
       createdAt: this.deps.now().toISOString(),
@@ -578,6 +592,7 @@ class Run {
       status: fields.status,
       ...(fields.statusMessagePl ? { statusMessagePl: fields.statusMessagePl } : {}),
       inputKind: this.req.kind,
+      ...(this.article && { article: this.article }),
       ...(this.videoAnalysis && { videoAnalysis: this.videoAnalysis }),
       inputEchoMasked: this.echo,
       claims: this.claims,
@@ -615,8 +630,11 @@ export type PublicationRun = Pick<Run, "req" | "deps" | "faults" | "inputMode" |
 
 function videoTransparencyPl(analysis?: VideoAnalysis): string {
   if (!analysis || analysis.status === "unavailable") return "";
+  if (analysis.status === "caption_only") return "Podstawą sprawdzenia był wyłącznie publiczny opis posta. Platforma nie udostępniła obrazu ani dźwięku. ";
   if (analysis.status === "subtitles_only") return "Podstawą sprawdzenia były publiczne napisy i dostępny opis posta. ";
-  if (analysis.status === "transcript_only") return "Podstawą sprawdzenia była transkrypcja dźwięku wykonana przez OpenAI i dostępny opis posta. ";
+  if (analysis.status === "transcript_only") return analysis.platform === "upload_audio"
+    ? "Podstawą sprawdzenia była transkrypcja przesłanego dźwięku. "
+    : "Podstawą sprawdzenia była transkrypcja dźwięku wykonana przez OpenAI i dostępny opis posta. ";
   if (analysis.provider === "openai") {
     if (!analysis.transcript.length) return "OpenAI odczytał wybrane klatki filmu. ";
     return "OpenAI odczytał wybrane klatki filmu. " + (analysis.transcriptSource === "platform"
@@ -685,8 +703,14 @@ function mergeCandidates(...lists: EvidenceCandidate[][]): EvidenceCandidate[] {
   return out;
 }
 
-/** Records by id; live snapshots of the submitted page's own host are dropped (the subject is never evidence). */
-function loadRecords(store: CorpusStore, ids: string[], submittedHost: string | undefined): Map<string, CorpusRecord> | null {
+/** A corpus copy of the submitted article is no more independent than the live page. */
+function independentOfSubject(record: CorpusRecord, urls: (string | undefined)[]): boolean {
+  const key = documentUrl(record.url);
+  return !urls.some(url => url && ((key && documentUrl(url) === key)
+    || (record.origin === "live_snapshot" && hostOf(record.url) === hostOf(url))));
+}
+
+function loadRecords(store: CorpusStore, ids: string[], ...subjectUrls: (string | undefined)[]): Map<string, CorpusRecord> | null {
   let fetched: CorpusRecord[];
   try {
     fetched = store.getMany(ids);
@@ -695,10 +719,66 @@ function loadRecords(store: CorpusStore, ids: string[], submittedHost: string | 
   }
   const records = new Map<string, CorpusRecord>();
   for (const r of fetched) {
-    if (r.origin === "live_snapshot" && submittedHost && hostOf(r.url) === submittedHost) continue;
+    if (!independentOfSubject(r, subjectUrls)) continue;
     records.set(r.id, r);
   }
   return records;
+}
+
+function questionRecords(store: CorpusStore, candidates: EvidenceCandidate[], query: string, ...subjectUrls: (string | undefined)[]): CorpusRecord[] | null {
+  const indexed = loadRecords(store, candidates.map(c => c.recordId), ...subjectUrls);
+  if (!indexed) return null;
+  const ranked = lexicalRerank(candidates.filter(c => indexed.has(c.recordId)), indexed, { queryTexts: [query] });
+  const ids = diversifyFragments(ranked.map(c => c.recordId), indexed, { max: 12, fixedRole: 5 });
+  return linkedPublicationRecords(ids.map(id => indexed.get(id)!), store).filter(record => independentOfSubject(record, subjectUrls));
+}
+
+type QuestionPart = NonNullable<VerdictReport["questionParts"]>[number];
+
+async function answerQuestionParts(run: Run, questions: string[], normalized: NormalizedInput, branches: RetrievalBranch[],
+  llm: LlmProvider, verifier: LlmProvider, receivedAt: Date, signal?: AbortSignal): Promise<VerdictReport> {
+  run.inputMode = "question_open";
+  const parts: QuestionPart[] = [];
+  const context = normalized.userNote ?? normalized.textResolvedDates;
+  const material = [context, normalized.attachmentText?.slice(0, 3000)].filter(Boolean).join("\n\n");
+  for (const questionPl of questions.slice(0, MAX_QUESTION_PARTS)) {
+    try {
+      if (normalized.kind === "text") {
+        const indexed = await publicationQuestionPart(run, questionPl, signal);
+        if (indexed) { parts.push(indexed); continue; }
+      }
+      const query = { claim: pseudoClaim(questionPl), extraQueries: [context.slice(0, 400)], limit: CLAIM_QUERY_LIMIT, signal };
+      const search = await run.search(branches, query);
+      const records = search.requiredFailed ? null : questionRecords(run.deps.store, search.candidates, questionPl, normalized.submittedUrl, run.req.url);
+      if (!records || !llm.available) {
+        parts.push({ questionPl, status: "unavailable", evidence: [], answerPl: records ? STATUS_PL.llmNotConfigured : STATUS_PL.corpusDown });
+        continue;
+      }
+      run.stage("assessing");
+      const synthesis = await answerSourceQuestion({ question: questionPl, subject: material, records, llm, verifier, receivedAt, signal });
+      run.models.push(...synthesis.usage);
+      run.events.push(...synthesis.events);
+      for (const r of records.slice(0, 12)) run.assessedRecords.add(r.id);
+      if (synthesis.events.length) run.warn("injection_detected", WARNING_PL.injection);
+      if (synthesis.publication) {
+        run.stage("checking_quotes");
+        run.verifierUsed = true;
+        parts.push({ questionPl, status: "answered", answerPl: synthesis.publication.answerPl, evidence: synthesis.publication.evidence });
+      } else {
+        const needed = synthesis.neededEvidencePl ? ` Potrzebne źródło: ${synthesis.neededEvidencePl}.` : "";
+        parts.push({ questionPl, status: "insufficient", answerPl: "Dostępne źródła nie rozstrzygają tego pytania." + needed, evidence: [] });
+      }
+    } catch (error) {
+      if (!(error instanceof LlmUnavailableError)) throw error;
+      parts.push({ questionPl, status: "unavailable", answerPl: llmStatusMessage(error), evidence: [] });
+    }
+  }
+  if (questions.length > parts.length) run.warn("source_status", `W tej odpowiedzi sprawdzono pierwsze ${parts.length} z ${questions.length} pytań. Pozostałe możesz przesłać osobno.`);
+  if (run.verifierUsed && run.deps.singleKey) run.warn("single_key_verifier", WARNING_PL.singleKey);
+  const summaryPl = parts.map(p => p.questionPl + "\n" + p.answerPl).join("\n\n");
+  const status = parts.every(p => p.status === "unavailable") ? "NIEPELNE" : "OK";
+  return run.report({ status, summaryPl, questionParts: parts, ...(status !== "OK" && { statusMessagePl: summaryPl }),
+    transparencyPl: "Pytania rozpatrzono osobno. Przy każdym wątku widać odpowiedź opartą na sprawdzonych cytatach lub powód, dla którego nie można jej podać." });
 }
 
 // ───────────────────────────── open questions ─────────────────────────────
@@ -729,7 +809,7 @@ async function answerOpenQuestion(run: Run, ctx: OpenQuestionCtx): Promise<Verdi
   if (raw.requiredFailed || own.requiredFailed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
 
   const pool = mergeCandidates(own.candidates, raw.candidates);
-  const records = loadRecords(deps.store, pool.map((c) => c.recordId), hostOf(normalized.submittedUrl));
+  const records = loadRecords(deps.store, pool.map((c) => c.recordId), normalized.submittedUrl, run.req.url);
   if (!records) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
   // Fact-check records quote the false claims they debunk — never used as an answer.
   const contentPool = pool.filter((c) => records.get(c.recordId)?.role === "tresc");
@@ -776,7 +856,7 @@ async function answerOpenQuestion(run: Run, ctx: OpenQuestionCtx): Promise<Verdi
         if (!(err instanceof LlmUnavailableError)) throw err;
         run.warn("branch_unavailable", WARNING_PL.verifierUnavailable);
       }
-      if (vote !== "sprzeciw") {
+      if (vote === "zgoda") {
         answer = buildAnswer(question.questionPl, chk.record, chk.quote);
         answerRecord = chk.record;
         if (asksAboutPresent(question.questionPl, question.aboutPresent) && isArchival(chk.record, deps.now())) {
@@ -823,7 +903,9 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   run.echo = safeMask(req.kind === "url" ? (req.url ?? req.text ?? "") : req.kind === "image" ? "[obraz]" : (req.text ?? ""));
 
   const url = req.kind === "url" ? (req.url ?? req.text ?? "").trim() : "";
-  const platform = url && socialVideoPlatform(url);
+  const upload = req.kind === "recording" ? req.recording : undefined;
+  if (req.kind === "recording" && !upload) return run.stop("NIEPELNE", "Dodaj nagranie ponownie.");
+  const platform = upload ? (upload.mime.startsWith("audio/") ? "upload_audio" : "upload_video") : url && socialVideoPlatform(url);
   let videoClaims: ExtractedClaim[] | undefined;
   let subtitleFocus: string | undefined;
   let normalized = opts.normalized;
@@ -848,15 +930,15 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     return reportPublication(run, result.publication, question, { origin: "retrieval",
       basisPl: "Adres materiału powiązano z publikacją źródłową. Odpowiedź i jej cytaty przeszły osobne sprawdzenie." });
   };
-  if (url) {
+  if (platform && url) {
     const reviewed = await answerMediaQuestion(url, userNoteBesideUrl(req, url));
     if (reviewed) return reviewed;
   }
   if (platform) {
     const started = performance.now();
-    const video = await readVideo(url, platform, userNoteBesideUrl(req, url), deps.video, stage => run.stage(stage), signal);
+    const video = await readVideo(url, platform, upload ? req.text ?? "" : userNoteBesideUrl(req, url), deps.video, stage => run.stage(stage), signal, upload);
     run.time("video", started);
-    run.echo = safeMask(video.url);
+    run.echo = upload ? (platform === "upload_audio" ? "[nagranie audio]" : "[przesłany film]") : safeMask(video.url);
     run.events.push(...video.hits);
     if (video.hits.length) run.warn("injection_detected", WARNING_PL.injection);
     run.models.push(...video.usages);
@@ -869,13 +951,14 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       if (reviewed) return reviewed;
     }
     run.videoAnalysis = video.analysis;
+    if (video.analysis.status === "caption_only") run.warn("source_status", "Sprawdzam wyłącznie twierdzenia z publicznego opisu posta. Platforma nie udostępniła obrazu ani dźwięku. Aby sprawdzić samo nagranie, możesz przesłać plik w czacie.");
     if (video.message) return run.stop("NIEPELNE", video.message);
     const question = video.focus && /\?|^(?:czy|kto|co|kiedy|ile|gdzie|dlaczego|skąd|porównaj|wyjaśnij)\s/iu.test(video.focus)
       && !video.hits.some(hit => hit.location === "user_message") ? video.focus : undefined;
     const observed = [video.analysis.title, video.analysis.caption,
       ...video.analysis.observations.map(row => row.text), ...video.analysis.transcript.map(row => row.text)].filter(Boolean).join("\n");
     let text: string;
-    if (hasOnlyTranscript(video.analysis)) {
+    if (hasOnlyText(video.analysis)) {
       subtitleFocus = video.focus ?? "";
       text = [video.analysis.transcript.map(cue => cue.text).join(" "), video.analysis.caption].filter(Boolean).join("\n");
     } else {
@@ -888,7 +971,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     }
     // A repost can be archival. Dates spoken in the clip are never resolved against submission time.
     normalized = {
-      kind: "url", text, textResolvedDates: text, submittedUrl: run.echo,
+      kind: upload ? "recording" : "url", text, textResolvedDates: text, ...(!upload && { submittedUrl: run.echo }),
       ...(question && { userNote: question, attachmentText: observed || text }),
       receivedAt: receivedAt.toISOString(), piiMasked: true, detectorHits: [], warnings: [],
     };
@@ -899,7 +982,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   // ── 1. normalize ──
   let t = performance.now();
   if (!normalized) {
-    const n = await normalizeInput(
+    const n = opts.articleRead ?? await normalizeInput(
       { kind: req.kind, text: req.text, url: req.url, images: req.images, receivedAt: req.receivedAt },
       { fetchPage: deps.fetchPage, llm, receivedAt, ocrDown: faults.has("ocr_down"), signal },
     );
@@ -918,7 +1001,12 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       run.warn("source_status", "Dodatkowej strony nie udało się odczytać. Pozostałe źródła wyszukano na podstawie pytania.");
     } else normalized = n.normalized;
   }
-  run.echo =
+  if (normalized.kind === "url" && !platform && normalized.submittedUrl && normalized.attachmentText?.trim()) {
+    run.article = { url: normalized.submittedUrl, ...(normalized.pageTitle && { title: normalized.pageTitle }),
+      ...(normalized.pagePublishedAt && { publishedAt: normalized.pagePublishedAt }),
+      ...(normalized.pageDisplayedDate && { displayedDate: normalized.pageDisplayedDate }) };
+  }
+  if (!upload) run.echo =
     normalized.kind === "url"
       ? [normalized.submittedUrl, normalized.pageTitle].filter(Boolean).join("\n")
       : normalized.text;
@@ -937,6 +1025,14 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   if (faults.has("corpus_down")) {
     for (const branch of branches.filter(b => b.required)) run.recordLookup(branch.id, "unavailable", []);
     return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+  }
+  const articleRoute = normalized.kind === "url" && !run.videoAnalysis
+    ? await routeArticleRequest(normalized.userNote, llm, signal) : undefined;
+  if (articleRoute?.usage) run.models.push(articleRoute.usage);
+  const articleReview = articleRoute?.review ?? false;
+  const questions = articleReview ? [] : separateQuestions(normalized.kind === "text" ? normalized.textResolvedDates : normalized.userNote);
+  if (!run.videoAnalysis && questions.length && !normalized.detectorHits.some(hit => hit.location === "user_message")) {
+    return answerQuestionParts(run, questions, normalized, branches, llm, verifier, receivedAt, signal);
   }
   if (!platform) {
     const published = await findPublicationReport(run, normalized, receivedAt, signal);
@@ -964,7 +1060,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   // ── 3 ∥ 4. claims + raw-text retrieval ──
   t = performance.now();
   const noLive = branches.filter((b) => b.id !== "live");
-  const question = normalized.kind !== "text" ? normalized.userNote :
+  const question = normalized.kind !== "text" ? (articleReview ? undefined : normalized.userNote) :
     !platform && normalized.text.length <= 1400 && /\?|^(?:czy|kto|kiedy|ile|gdzie|dlaczego|porównaj|wyjaśnij)\s/iu.test(normalized.text) ? normalized.text : undefined;
   const subject = normalized.kind === "image" ? screenshotClaim(normalized) : normalized.attachmentText;
   const queryText = question
@@ -981,11 +1077,8 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   if (question && !normalized.detectorHits.some(hit => hit.location === "user_message")) {
     const search = await rawRetrieval;
     if (search.requiredFailed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
-    const indexed = loadRecords(deps.store, search.candidates.map(c => c.recordId), hostOf(normalized.submittedUrl));
-    if (!indexed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
-    const ranked = lexicalRerank(search.candidates, indexed, { queryTexts: [queryText] });
-    const ids = diversifyFragments(ranked.map(c => c.recordId), indexed, { max: 12, fixedRole: 5 });
-    const records = linkedPublicationRecords(ids.map(id => indexed.get(id)!), deps.store);
+    const records = questionRecords(deps.store, search.candidates, queryText, normalized.submittedUrl, run.req.url);
+    if (!records) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
     const comparison = !platform && normalized.kind === "url" && compareReviewedDocument(normalized, records, deps.store);
     if (comparison) return reportPublication(run, comparison, question, { origin: "retrieval", basisPl: "Porównano cechy materiału z dokumentem wskazanym w wyszukanej publikacji." });
     if (llm.available) {
@@ -1024,9 +1117,10 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
           claimLimit: 1, rejected: [], usage: undefined, question: undefined }
       : videoClaims
       ? { claims: videoClaims, inputMode: "claim" as const, claimLimit: MAX_CLAIMS_LONG, rejected: [], usage: undefined, question: undefined }
-      : await extractClaims(llm, normalized.textResolvedDates, signal, subtitleFocus);
+      : await extractClaims(llm, (articleReview && normalized.attachmentText) || normalized.textResolvedDates, signal, subtitleFocus, articleReview,
+        normalized.pagePublishedAt ?? normalized.pageDisplayedDate, normalized.userNote);
     if (res.usage) run.models.push(res.usage);
-    extracted = run.videoAnalysis && hasOnlyTranscript(run.videoAnalysis) ? anchorSubtitleClaims(res.claims, run.videoAnalysis) : res.claims;
+    extracted = run.videoAnalysis && hasOnlyText(run.videoAnalysis) ? anchorSubtitleClaims(res.claims, run.videoAnalysis) : res.claims;
     claimLimit = res.claimLimit;
     // Links and images are always checked as claims (their content is the subject, not a question to us).
     run.inputMode = normalized.kind !== "text" && res.inputMode !== "claim" ? "claim" : res.inputMode;
@@ -1079,11 +1173,10 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   if (outcomes.some((o) => o.requiredFailed)) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
 
   // Candidate pool per claim (per-claim ranking first, then raw-text hits) → lexical rerank.
-  const submittedHost = hostOf(normalized.submittedUrl);
   const poolByClaim = new Map<string, EvidenceCandidate[]>();
   factClaims.forEach((e, i) => poolByClaim.set(e.claim.id, mergeCandidates(perClaim[i]?.candidates ?? [], raw!.candidates)));
   const allIds = [...new Set([...poolByClaim.values(), ...rolePools.map((o) => o.candidates)].flat().map((c) => c.recordId))];
-  const records = loadRecords(deps.store, allIds, submittedHost);
+  const records = loadRecords(deps.store, allIds, normalized.submittedUrl, run.req.url);
   if (!records) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
   const recordIdsByClaim = new Map<string, string[]>();
   factClaims.forEach((e, i) => {
@@ -1170,7 +1263,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       const relevant =
         r.role === "stala_rola"
           ? a.fixedRoleMatch === "ta_sama" || a.fixedRoleMatch === "zaprzeczona"
-          : a.relation === "WSPIERA" || a.relation === "OBALA" || a.relation === "CZESCIOWO";
+          : a.relation !== "BEZ_ZWIAZKU";
       if (!relevant) continue;
       let decisive = false;
       try {
@@ -1225,14 +1318,11 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     };
     if (propose) {
       const g = gateProposedVerdict(e.claim, proposedByClaim.get(e.claim.id), assessments);
-      decision = {
-        verdict: g.verdict,
-        ruleApplied: g.ruleApplied,
-        decisiveRecordIds: g.verdict === "BRAK_DOWODOW" || g.verdict === "NIE_PODLEGA" ? [] : d.decisiveRecordIds,
-        ...(g.verdict === "WPROWADZAJACE" && d.missingContext ? { missingContext: d.missingContext } : {}),
-        ...(g.verdict === "BRAK_DOWODOW" && d.conflicting ? { conflicting: d.conflicting } : {}),
-        archival: g.verdict === "WPROWADZAJACE" && d.archival,
-      };
+      // A model may abstain. A categorical proposal still needs the actual period, source
+      // independence and correction checks of the deterministic verdict.
+      if (!g.gated && g.verdict === "BRAK_DOWODOW" && d.verdict !== "BRAK_DOWODOW") {
+        decision = { verdict: "BRAK_DOWODOW", ruleApplied: 2, decisiveRecordIds: [], archival: false };
+      }
     }
     assessmentsByClaim.set(
       e.claim.id,

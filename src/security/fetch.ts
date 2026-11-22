@@ -31,6 +31,7 @@ export interface FetchedPage {
   cleanText: string;
   title?: string;
   publishedAt?: string;
+  displayedDate?: string;
   /** Hidden content (display:none, aria-hidden, white-on-white, comments, meta …). */
   hiddenSegments: string[];
 }

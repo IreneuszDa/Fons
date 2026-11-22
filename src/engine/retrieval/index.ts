@@ -44,7 +44,7 @@ export interface CreateBranchesOptions {
   /** Dostawca wyszukiwania na żywo; bez niego gałąź „live” (gdy liveSearch=true) zgłasza niedostępność. */
   liveProvider?: LiveSearchProvider;
   /** Konfiguracja pełnej gałęzi „live” (wyszukiwanie w hostach z katalogu); ma pierwszeństwo przed liveProvider. */
-  liveConfig?: Pick<AppConfig, "openaiApiKey" | "openaiDataResidency" | "modelFast">;
+  liveConfig?: Pick<AppConfig, "openaiApiKey" | "openaiDataResidency" | "openaiSearchModel" | "modelFast" | "webSearchDailyCap">;
   /** Wywołania zwrotne pełnej gałęzi „live” (zdarzenia bezpieczeństwa, odrzucone strony). */
   liveOptions?: Pick<LiveBranchOptions, "onSecurityEvent" | "onDrop">;
 }

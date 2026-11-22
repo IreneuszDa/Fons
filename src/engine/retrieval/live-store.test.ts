@@ -6,6 +6,7 @@ import {
   getLiveSnapshot,
   LIVE_TTL_MS,
   purgeExpiredLiveSnapshots,
+  reserveLiveRequest,
   saveLiveSnapshots,
 } from "./live-store";
 
@@ -32,6 +33,17 @@ function rec(id: string, over: Partial<CorpusRecord> = {}): CorpusRecord {
 }
 
 const T0 = new Date("2026-11-21T10:00:00.000Z");
+
+it("caps search attempts per UTC day even when no report or search snapshot exists", () => {
+  const db = new BetterSqlite3(":memory:");
+  expect(reserveLiveRequest(db, T0, 0)).toBe(false);
+  expect(reserveLiveRequest(db, T0, 1)).toBe(true);
+  expect(reserveLiveRequest(db, T0, 1)).toBe(false);
+  expect(reserveLiveRequest(db, new Date("2026-11-22T00:00:00Z"), 1)).toBe(true);
+  expect(reserveLiveRequest(db, T0, 1)).toBe(false);
+  expect(db.prepare("SELECT day, requests FROM web_search_quota").all()).toEqual([{ day: "2026-11-22", requests: 1 }]);
+  db.close();
+});
 
 describe("live_snapshots", () => {
   it("tworzy tabelę idempotentnie", () => {

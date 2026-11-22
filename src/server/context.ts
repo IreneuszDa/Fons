@@ -9,6 +9,7 @@ import type { VerificationStage } from "../shared/chat";
 import { createChannelRegistry, type ChannelRegistry } from "./channels/registry";
 import type { TopicRule } from "./moderator/topics";
 import type { EngineDeps } from "../engine/verify";
+import type { NormalizeOutcome } from "../engine/normalize";
 import type { ConversationAgent } from "../engine/llm/conversation";
 import { ConversationLinks } from "./conversation/link-memory";
 import { createAdminLog, type AdminLog } from "./auth/adminlog";
@@ -26,6 +27,7 @@ export interface EngineRequest {
   text?: string;
   url?: string;
   images?: { mime: string; base64: string }[];
+  recording?: { mime: string; base64: string };
   imageOptions?: { searchWeb?: boolean };
   imageFocus?: "origin" | "copies" | "identity" | "visual" | "context" | "claims";
   onActivity?: (stage: VerificationStage) => void;
@@ -50,7 +52,8 @@ export interface SecurityPorts {
 }
 
 export interface EnginePort {
-  verify(req: EngineRequest): Promise<VerdictReport>;
+  readArticle?(req: EngineRequest): Promise<NormalizeOutcome>;
+  verify(req: EngineRequest, articleRead?: NormalizeOutcome): Promise<VerdictReport>;
   snapshotId(): string;
   pipelineVersion: string;
   llm: { provider: string; available: boolean; singleKey: boolean };

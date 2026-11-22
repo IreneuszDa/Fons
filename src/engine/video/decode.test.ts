@@ -24,6 +24,15 @@ it("rejects cancelled jobs and out-of-bounds metadata before launching any decod
   await expect(decodeVideo(media, { includeAudio: true, signal: AbortSignal.abort() })).rejects.toMatchObject({ name: "AbortError" });
 });
 
+it.skipIf(!installed)("decodes an audio-only recording with no fabricated frames and rejects a video disguised as audio", async () => {
+  const sound = await movie(["-f", "lavfi", "-i", "sine=frequency=500:duration=0.5", "-c:a", "aac"]);
+  const decoded = await decodeVideo({ ...sound, mimeType: "audio/mp4" }, { includeAudio: true });
+  expect(decoded.frames).toEqual([]);
+  expect(decoded.audio?.[0]?.durationSeconds).toBeGreaterThan(0);
+  const clip = await movie(["-f", "lavfi", "-i", "color=s=32x32:d=0.5", "-c:v", "mpeg4"]);
+  await expect(decodeVideo({ ...clip, mimeType: "audio/mp4" }, { includeAudio: true })).rejects.toThrow("video_decode_failed");
+});
+
 it("reports a missing system decoder", async () => {
   vi.stubEnv("PATH", "");
   try {

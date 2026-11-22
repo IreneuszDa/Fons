@@ -1,5 +1,4 @@
 import { Banner } from "@astryxdesign/core/Banner";
-import { Blockquote } from "@astryxdesign/core/Blockquote";
 import { Card } from "@astryxdesign/core/Card";
 import { Divider } from "@astryxdesign/core/Divider";
 import { Icon } from "@astryxdesign/core/Icon";
@@ -12,7 +11,7 @@ import type { EvidenceItem, VerdictReport } from "../../shared/contracts";
 import { formatDate, hostOf, paragraphs } from "../lib/format";
 import { hasArchivalWarning, SOURCE_TYPE_PL, WARNING_TITLE_PL } from "../lib/report";
 import { resultPathFor, safeUrl } from "../lib/safeUrl";
-import { SourceTitle } from "./Evidence";
+import { EvidencePassage, SourceTitle } from "./Evidence";
 import { ReportWarnings } from "./VerdictCard";
 import { TransparencyBlock } from "./TransparencyBlock";
 
@@ -40,7 +39,7 @@ export function AnswerSource({ item }: { item: EvidenceItem }) {
   const host = hostOf(item.url);
   return (
     <VStack gap={3}>
-      <Blockquote cite={item.publisher}>„{item.quote}”</Blockquote>
+      <EvidencePassage item={item} />
       <MetadataList columns="single">
         <MetadataListItem label="Tytuł">
           <SourceTitle item={item} />

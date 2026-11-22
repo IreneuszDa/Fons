@@ -61,12 +61,12 @@ const visibility = z.object({
 });
 const item = z.object({
   desc: z.string().optional(),
-  author: z.object({ uniqueId: z.string().optional(), nickname: z.string().optional() }).optional(),
+  author: z.union([z.string(), z.object({ uniqueId: z.string().optional(), nickname: z.string().optional() })]).optional(),
   video: z.object({
     duration: z.number().optional(), playAddr: z.string().optional(), downloadAddr: z.string().optional(),
     cover: z.string().optional(), originCover: z.string().optional(), PlayAddrStruct: address.optional(),
     bitrateInfo: z.array(z.object({ Bitrate: z.number().optional(), PlayAddr: address.optional() })).optional(),
-    subtitleInfos: z.array(subtitleTrack).optional(),
+    subtitleInfos: z.array(subtitleTrack).optional().catch(undefined),
     claInfo: z.object({ captionInfos: z.array(captionInfo).optional() }).optional(),
   }).optional(),
 });
@@ -74,10 +74,11 @@ const detailSchema = z.object({ __DEFAULT_SCOPE__: z.object({
   "webapp.video-detail": z.object({ statusCode: z.number().optional(), itemInfo: z.object({ itemStruct: z.unknown() }).nullish() }),
 }) });
 
-export function tikTokPageDetails(data: unknown, postId?: string) {
+export function tikTokPageDetails(data: unknown, postId?: string, legacyData?: unknown) {
   const detail = detailSchema.safeParse(data).data?.__DEFAULT_SCOPE__["webapp.video-detail"];
   if (detail?.statusCode) return { restricted: true } as const;
-  const raw = detail?.itemInfo?.itemStruct;
+  const legacy = !detail && postId ? z.object({ ItemModule: z.record(z.string(), z.unknown()) }).safeParse(legacyData).data : undefined;
+  const raw = detail?.itemInfo?.itemStruct ?? (postId && legacy?.ItemModule[postId]);
   if (!raw) return;
   // Check visibility before parsing optional playback fields, which can change shape independently.
   const status = visibility.safeParse(raw).data;
@@ -100,7 +101,7 @@ export function tikTokPageDetails(data: unknown, postId?: string) {
     .filter(t => !t.Format || /^(?:web)?vtt$/i.test(t.Format))
     .sort((a, b) => Number(b.IsOriginalCaption === true) - Number(a.IsOriginalCaption === true));
   return {
-    ...metadata(post.desc, post.author?.uniqueId || post.author?.nickname, video.cover || video.originCover),
+    ...metadata(post.desc, typeof post.author === "string" ? post.author : post.author?.uniqueId || post.author?.nickname, video.cover || video.originCover),
     durationSeconds: video.duration, mediaUrls, subtitleUrls: tracks.map(t => allowedUrl(t.Url)).filter((u): u is string => !!u),
   };
 }

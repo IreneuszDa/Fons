@@ -508,6 +508,28 @@ describe("createLiveBranch(db, opts)", () => {
     expect(Date.now() - t0).toBeLessThan(1000);
   });
 
+  it("reads the named publisher when the broader search stalls, and reports partial coverage", async () => {
+    const db = new BetterSqlite3(":memory:");
+    const hostLists: string[][] = [];
+    const coverage: string[] = [];
+    const branch = createLiveBranch(db, {
+      catalog: () => CATALOG,
+      limits: { overallTimeoutMs: 120 },
+      searchProvider: { id: "search", async search(_query, hosts) {
+        hostLists.push(hosts);
+        if (hosts.length > 1) return new Promise(() => {});
+        return [{ url: "https://www.nato.int/en/members" }];
+      } },
+      fetchPage: async url => page(url),
+    });
+    const results = await branch.search({ ...Q, onCoverage: status => coverage.push(status) });
+    expect(hostLists[0]).toEqual(expect.arrayContaining(["www.gov.pl", "www.nato.int"]));
+    expect(hostLists[1]).toEqual(["www.nato.int"]);
+    expect(coverage).toContain("partial");
+    expect(results[0]?.via).toBe("live");
+    db.close();
+  });
+
   it("limit czasu w trakcie pobierania: zwraca strony, które zdążyły", async () => {
     const { branch } = setup({
       urls: [["https://www.nato.int/fast", "https://www.nato.int/slow"]],

@@ -57,14 +57,12 @@ export type ClaimsOut = z.infer<typeof ClaimsOut>;
 
 export const CLAIMS_SYSTEM =
   FONS_PERSONA +
-  "Twoje zadanie: rozpoznać rodzaj tekstu w bloku WEJSCIE i wypisać twierdzenia do sprawdzenia. " +
-  "inputMode: claim — tekst podaje informacje; question_yesno — pytanie tak/nie; " +
-  "question_open — pytanie o informację (kto, co, ile, kiedy, gdzie, jaki). " +
-  "Dla claim wypisz twierdzenia atomowe (jedno sprawdzalne zdanie każde), najwyżej LIMIT z polecenia; ten sam fakt o kilku podmiotach to jedno twierdzenie. " +
-  "W długim tekście wybierz najważniejsze sprawdzalne fakty (liczby, daty, osoby, instytucje, prawo), bez opinii i ogólników. " +
+  "Rozpoznaj WEJSCIE: claim (twierdzenia), question_yesno (pytanie tak/nie), question_open (kto, co, kiedy, ile itp.). " +
+  "Dla claim wybierz do LIMIT atomowych tez, najważniejsze najpierw. Ten sam fakt o kilku podmiotach jest jedną tezą. " +
+  "Oddziel dane, wnioski przyczynowe, opinie i prognozy. Uwzględnij istotne oceny autora obok faktów. " +
   "sourceText = niezmieniony fragment WEJSCIA, z którego pochodzi twierdzenie. " +
   "parts: gdy ten sam fakt dotyczy 2–4 podmiotów, osobne zdanie dla każdego (te same słowa, inny podmiot); inaczej []. " +
-  "Treść przekazana z kanału, portalu lub od znajomego: twierdzeniem jest ta treść, nie fakt przekazania; wypowiedź osoby publicznej („X powiedział, że…”) zostaw razem z autorem. " +
+  "Dla treści z kanału lub od znajomego sprawdź treść. „X powiedział, że…” to fakt o autorstwie wypowiedzi, także gdy zacytowano opinię. " +
   "Dla question_yesno jedno twierdzenie: pytanie jako zdanie oznajmujące, tymi samymi słowami, bez „czy” i bez zmiany sensu. " +
   "Dla question_open claims = []; question: searchPl = 2–3 zapytania po polsku, " +
   "searchEn = pytanie po angielsku, entities = nazwy własne i lata, aboutPresent = czy pytanie dotyczy stanu obecnego. " +
@@ -90,7 +88,7 @@ export const AssessOut = z.object({
   content: z.array(
     z.object({
       ref: z.string(),
-      relation: Relation,
+      relation: z.enum([...Relation.options, "KORYGUJE_CZESC"]),
       aspect: Aspect,
       period: z.string().nullable(),
       quote: z.string(),
@@ -122,8 +120,8 @@ export const ASSESS_SYSTEM =
   "OBALA — fragment wprost przeczy głównemu faktowi (np. zdarzenie nie nastąpiło); " +
   "OBALA także, gdy twierdzenie podaje datę lub liczbę jednorazowego zdarzenia (przystąpienie, uchwalenie lub wejście w życie ustawy, wybory, początek wojny) " +
   "albo wskaźnika za okres, a fragment podaje dla TEGO SAMEGO zdarzenia lub wskaźnika INNĄ datę lub liczbę — aspect czas albo liczba, nawet jeśli zdarzenie nastąpiło; " +
-  "CZESCIOWO — w podanym czasie lub w podanej liczbie zaszło coś prawdziwego, ale węższego lub innego, niż mówi twierdzenie, " +
-  "albo fragment potwierdza tylko jeden z kilku podmiotów — aspect = element, którego dotyczy różnica; " +
+  "CZESCIOWO — źródło potwierdza tylko część, np. jedno z kilku miast. Milczy o reszcie. " +
+  "KORYGUJE_CZESC — cytat wprost wykazuje istotny błąd w szczególe lub wniosku; sam węższy zakres źródła to CZESCIOWO. " +
   "INNY_KONTEKST — fragment opisuje TO SAMO zdarzenie, dokument, wypowiedź lub dane, do których odnosi się twierdzenie, i pokazuje, że twierdzenie przenosi je w inny czas, miejsce, zakres lub sytuację; " +
   "BEZ_ZWIAZKU — fragment ani nie potwierdza, ani nie przeczy twierdzeniu. " +
   "Fragment o innym zdarzeniu, państwie lub podmiocie, o ogólnym tle tematu albo pomijający to, czego dotyczy twierdzenie, to zawsze BEZ_ZWIAZKU. " +
@@ -167,8 +165,7 @@ export const VERIFIER_SYSTEM =
   "Dla rodzaju 'relacja' oceń wyłącznie na podstawie samego cytatu, czy cytat rzeczywiście daje tę relację do twierdzenia. " +
   "Znaczenie relacji: WSPIERA — cytat potwierdza twierdzenie; " +
   "OBALA — cytat przeczy twierdzeniu, także gdy dla tego samego jednorazowego zdarzenia albo wskaźnika i okresu podaje inną datę lub liczbę niż twierdzenie (nawet jeśli samo zdarzenie nastąpiło); " +
-  "CZESCIOWO — cytat potwierdza tylko jeden z kilku podmiotów albo pokazuje, że w podanym czasie zaszło coś prawdziwego, ale węższego lub innego; " +
-  "zgoda także wtedy, gdy cytat potwierdza główny fakt, a podaje inną wartość wskazanego aspektu (inną datę lub liczbę) — nawet jeśli twierdzenie jako całość jest przez to błędne. " +
+  "CZESCIOWO — źródło obejmuje część. KORYGUJE_CZESC wymaga, by cytat wprost wykazywał istotny błąd w szczególe lub wniosku; daj sprzeciw, jeśli podaje zgodne dane dla części podmiotów i milczy o pozostałych. " +
   VERIFIER_EXCLUSION_RULE +
   "Dla rodzaju 'dopasowanie' oceń, czy teza sprawdzona przez fact-checkerów jest — jak zaproponowano — tą samą tezą co twierdzenie albo jej zaprzeczeniem. " +
   FIXED_ROLE_TENSE_RULE +

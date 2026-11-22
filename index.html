@@ -17,6 +17,35 @@
       .astryx-chat-layout :has(> .astryx-chat-layout-scroll-button) + :empty {
         display: none;
       }
+      /* Astryx puts its body, attachment drawer and status in separate slots. */
+      .fons-composer > :has(> * > .astryx-chat-composer-input) {
+        border: var(--border-width) solid var(--color-border);
+        box-shadow: 0 var(--border-width) var(--spacing-2) var(--color-border);
+        outline-color: var(--color-text-secondary);
+        outline-width: var(--border-width);
+      }
+      .fons-composer[data-inline] > :has(> * > .astryx-chat-composer-input) {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+      }
+      .fons-composer[data-inline] :has(> .astryx-chat-composer-input) {
+        grid-area: 1 / 2;
+      }
+      .fons-composer[data-inline] :has(> .astryx-chat-composer-input) + * {
+        display: contents;
+      }
+      .fons-composer[data-inline] :has(> .astryx-chat-composer-input) + * > :first-child {
+        grid-area: 1 / 1;
+      }
+      .fons-composer[data-inline] :has(> .astryx-chat-composer-input) + * > :last-child {
+        grid-area: 1 / 3;
+      }
+      .fons-composer .astryx-chat-composer-input > [aria-hidden="true"] {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
     </style>
   </head>
   <body>

@@ -4,7 +4,7 @@ Dwa dodatki do rdzenia sprawdzania informacji. Oba są opcjonalne: bez nich usł
 
 | Dodatek | Co robi | Kod |
 |---|---|---|
-| Wyszukiwanie na żywo | Gdy korpus nie ma odpowiedzi, szuka świeżych stron **wyłącznie w serwisach z katalogu źródeł** i dołącza ich fragmenty jako dodatkowe kandydatury do dowodów | `src/tools/search.ts`, `src/engine/retrieval/live*.ts` |
+| Wyszukiwanie na żywo | Wyszukuje świeże strony **wyłącznie w serwisach z katalogu źródeł** i dołącza ich fragmenty jako dodatkowe kandydatury do dowodów | `src/tools/search.ts`, `src/engine/retrieval/live*.ts` |
 | Oficjalne kanały instytucji | Pobiera komunikaty i ostrzeżenia **bezpośrednio**, bez wyszukiwarki i bez modelu (§1a) | `src/engine/retrieval/official*.ts`, `data/authorities.yaml` |
 | Serwer MCP | Udostępnia Fons innym programom (Claude Desktop, IDE, agenci analityków) jako cztery narzędzia | `src/mcp/` |
 
@@ -26,9 +26,13 @@ Dalej to zwykły rekord: silnik ocenia go, sprawdza cytat jako dosłowny podcią
 
 ### Limity na jedno twierdzenie
 
-2 wyszukiwania (równolegle: twierdzenie + zapytanie dodatkowe, a gdy go nie ma — same słowa kluczowe), 5 pobrań stron, 6 s łącznie (po limicie zostają strony, które zdążyły się przetworzyć). Awaria wyszukiwarki, brak klucza albo brak jakiejkolwiek czytelnej strony przy błędach sieci → gałąź „niedostępna”: silnik dopisuje do raportu „nie udało się sprawdzić w: wyszukiwanie na żywo”, a werdykt zostaje (PLAN §1.3). Brak trafień to nie awaria — gałąź zwraca pustą listę.
+Silnik wysyła najwyżej dwa równoległe żądania do OpenAI i odczytuje do pięciu stron. Pierwsze zapytanie obejmuje katalog. Gdy tekst wymienia wydawcę po nazwie lub skrócie, drugie zapytanie skupia się na jego serwisach. Budżet czasu wynosi 30 sekund. Ostatnia część tego czasu służy pobraniu publikacji, także gdy jedno z zapytań jeszcze się nie zakończyło.
+
+Narzędzie ma jawnie włączony dostęp do internetu, wymuszone wywołanie i zwrot listy źródeł. Fons sprawdza, czy API zwróciło zakończoną akcję wyszukiwania. Awaria trafia do aktywności raportu. Częściowe powodzenie zachowuje odczytane materiały i oznacza ograniczony zakres wyszukiwania. Prawidłowe wyszukanie może dać zero pasujących publikacji. [Dokumentacja web search w OpenAI Responses API](https://developers.openai.com/api/docs/guides/tools-web-search).
 
 ### Włączanie
+
+`WEB_SEARCH_DAILY_CAP` ogranicza liczbę żądań Responses w dobie UTC, domyślnie do 200 dla procesów współdzielących bazę. Każde żądanie rezerwuje miejsce przed wysłaniem, także przy ponowieniu lub gdy usługa nie zwróci raportu. Jedno żądanie może wywołać najwyżej dwie akcje narzędzia. Tokeny i koszt w raporcie uwzględniają zużycie zwrócone przez dostawcę. Przy przerwanym połączeniu pełne rozliczenie jest dostępne u dostawcy.
 
 ```
 LIVE_SEARCH=on
@@ -36,9 +40,9 @@ OPENAI_API_KEY=...
 OPENAI_DATA_RESIDENCY=      # puste = przetwarzanie w USA (raport mówi o tym jawnie)
 ```
 
-Wyszukiwanie używa modelu szybkiego (`MODEL_FAST`). Bez `LIVE_SEARCH=on` gałąź nie powstaje. `OPENAI_DATA_RESIDENCY=eu` działa tylko dla projektu OpenAI z rezydencją danych w UE; przy projekcie bez niej OpenAI odrzuca klucz, a gałąź zgłasza niedostępność (nie przełączamy się po cichu na USA).
+Jeżeli `LIVE_SEARCH` jest puste, obecność `OPENAI_API_KEY` włącza wyszukiwanie. Wartość `off` je wyłącza. Model wyszukiwania można wybrać przez `OPENAI_SEARCH_MODEL`. Domyślnie to `MODEL_FAST` przy głównym dostawcy OpenAI lub szybki model OpenAI przy innym dostawcy. `OPENAI_DATA_RESIDENCY=eu` kieruje żądania do projektu OpenAI z rezydencją w UE. Odmowa dostępu daje w raporcie stan niedostępności.
 
-Rejestracja w kodzie: `createLiveBranchFromConfig(db, cfg)` z `src/engine/retrieval/live.ts` (albo `createLiveBranch(db, { searchProvider, ... })`). Ręczny test z prawdziwym modelem i prawdziwymi stronami: `OPENAI_DATA_RESIDENCY= npm run live:smoke -- "Szwecja dołączyła do NATO w 2024 roku."`.
+Rejestracja w kodzie: `createLiveBranchFromConfig(db, cfg)` z `src/engine/retrieval/live.ts` (albo `createLiveBranch(db, { searchProvider, ... })`). Ręczny test z rzeczywistym modelem i stronami wydawców wykonuje polecenie `npm run live:smoke -- "Szwecja dołączyła do NATO w 2024 roku."`.
 
 ### Koszt i czas (pomiar z prawdziwym modelem)
 

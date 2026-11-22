@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CorpusRecord, EvidenceAssessment } from "../../shared/contracts";
 import { annotateDecisive, effectiveFixedVerdict, isDecisive } from "./decisive";
+import { decideVerdict } from "./rules";
 import { overlaps, parsePeriod, strictlyAfter } from "./periods";
 
 function rec(id: string, over: Partial<CorpusRecord> = {}): CorpusRecord {
@@ -66,6 +67,22 @@ describe("isDecisive", () => {
     expect(isDecisive(a2, r2, [a1, a2], m)).toBe(true);
   });
 
+  it("two publishers reproducing one passage do not supply independent corroboration", () => {
+    const text = "Raport zawiera dane z badania przeprowadzonego w styczniu. Zastosowano tę samą metodę pomiaru we wszystkich objętych nim gminach, a wyniki opublikowano w roczniku statystycznym za poprzedni rok.";
+    const first = rec("first", { text, level: 3 });
+    const copy = rec("copy", { text: text.toUpperCase().replaceAll(" ", "  "), level: 3 });
+    const records = new Map([[first.id, first], [copy.id, copy]]);
+    const assessments = [asm(first.id), asm(copy.id)];
+    const decide = () => decideVerdict({
+      claim: { id: "c1", text: "Raport uwzględnia wszystkie objęte badaniem gminy.", type: "fakt", isMain: true,
+        temporal: { kind: "brak" }, inputOverlap: 1 },
+      assessments, records, now: new Date("2026-11-22"), singleKeyVerifier: true,
+    });
+    expect(decide().verdict).toBe("BRAK_DOWODOW");
+    first.level = 1;
+    expect(decide()).toMatchObject({ verdict: "POTWIERDZONE", strength: { independentPublishers: 1 } });
+  });
+
   it("wtórne: drugi rekord z innego twierdzenia się nie liczy", () => {
     const r1 = rec("a", { level: 3, independenceGroup: "g1" });
     const r2 = rec("b", { level: 3, independenceGroup: "g2" });
@@ -78,10 +95,10 @@ describe("isDecisive", () => {
     expect(isDecisive(a1, r1, [a1, a2], m)).toBe(false);
   });
 
-  it("wtórne: CZESCIOWO i INNY_KONTEKST to ten sam kierunek (częściowo)", () => {
+  it("wtórne: korekta szczegółu i inny kontekst mają ten sam kierunek", () => {
     const r1 = rec("a", { level: 3, independenceGroup: "g1" });
     const r2 = rec("b", { level: 3, independenceGroup: "g2" });
-    const a1 = asm("a", { relation: "CZESCIOWO" });
+    const a1 = asm("a", { relation: "CZESCIOWO", partialMeaning: "correction" });
     const a2 = asm("b", { relation: "INNY_KONTEKST" });
     const m = new Map([
       ["a", r1],

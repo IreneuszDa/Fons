@@ -7,7 +7,7 @@ import { dirname, resolve } from "node:path";
 import { loadCatalog } from "../corpus/catalog";
 import { createCorpusStore, ensureCorpusLoaded, openDatabase } from "../corpus/store";
 import { createConversationAgent } from "../engine/llm/conversation";
-import { isolateFenceMarkers } from "../engine/normalize";
+import { isolateFenceMarkers, normalizeInput } from "../engine/normalize";
 import { createE5Embedder, warmUp, type Embedder } from "../engine/retrieval";
 import { currentLiveRequestId, runWithLiveScope, withLiveUsage } from "../engine/retrieval/live";
 import { PIPELINE_VERSION, createEngineDeps, verifyInput } from "../engine/verify";
@@ -80,8 +80,11 @@ export function buildProductionContext(cfg: AppConfig, db: Db): ServerContext {
     engine: {
       // Zakres przebiegu: koszt wyszukiwania na żywo (tokeny + opłata za web_search) trafia do report.models
       // („live_search”) i report.costUsd, a zdarzenia bezpieczeństwa gałęzi live dostają identyfikator przebiegu.
-      verify: ({ requestId, ...req }) =>
-        runWithLiveScope({ requestId }, async () => withLiveUsage(await verifyInput(req, deps))),
+      readArticle: req => normalizeInput({ kind: "url", url: req.url, text: req.text, receivedAt: req.receivedAt }, {
+        llm: deps.llm, fetchPage: deps.fetchPage, receivedAt: new Date(req.receivedAt), ocrDown: false,
+      }),
+      verify: ({ requestId, ...req }, articleRead) =>
+        runWithLiveScope({ requestId }, async () => withLiveUsage(await verifyInput(req, deps, { articleRead }))),
       snapshotId: () => store.snapshotId(),
       pipelineVersion: PIPELINE_VERSION,
       llm: { provider: deps.llm.name, available: deps.llm.available, singleKey: deps.singleKey },

@@ -356,10 +356,38 @@ const cases: Case[] = [
     expect: { verdict: "WPROWADZAJACE", rule: 9, missingContextIncludes: "miejsce" },
   },
   {
-    name: "B: CZESCIOWO z pierwotnego przy wspartym sednie → WPROWADZAJACE (9)",
-    records: [primary("gus:1"), primary("gus:2")],
-    assessments: [asm("gus:1", "WSPIERA"), asm("gus:2", "CZESCIOWO", "zakres")],
-    expect: { verdict: "WPROWADZAJACE", rule: 9, missingContextIncludes: "tylko część" },
+    name: "Sieć obserwatoriów: pełny wykaz i dwie zgodne monografie poszczególnych stacji",
+    claim: claim({ text: "Sieć otworzyła stacje w Toruniu, Pile i Opolu." }),
+    records: [primary("wykaz"), primary("pila"), primary("opole")],
+    assessments: [asm("wykaz", "WSPIERA", "sedno", { quote: "Otwarto stacje w Toruniu, Pile i Opolu." }),
+      asm("pila", "CZESCIOWO", "zakres", { quote: "W Pile powstała stacja badawcza.", partialMeaning: "coverage" }),
+      asm("opole", "CZESCIOWO", "zakres", { quote: "Otworzyliśmy stację w Opolu." })],
+    expect: { verdict: "POTWIERDZONE", rule: 7, decisive: ["wykaz"] },
+  },
+  {
+    name: "Źródło o jednej z trzech stacji nie rozstrzyga, czy otwarto komplet",
+    records: [primary("pila")],
+    assessments: [asm("pila", "CZESCIOWO", "zakres", { quote: "W Pile powstała stacja badawcza.", partialMeaning: "coverage" })],
+    expect: { verdict: "BRAK_DOWODOW", rule: 2 },
+  },
+  {
+    name: "Wykazane pominięcie odwołanych otwarć zmienia ocenę zakresu",
+    records: [primary("protokol")],
+    assessments: [asm("protokol", "CZESCIOWO", "zakres", { quote: "Otwarto wyłącznie stację w Pile. Pozostałe otwarcia odwołano.", partialMeaning: "correction" })],
+    expect: { verdict: "WPROWADZAJACE", rule: 9, missingContextIncludes: "błąd w szczególe" },
+  },
+  {
+    name: "Niepotwierdzona przez weryfikatora interpretacja nie wystarcza do przypisania błędu",
+    records: [primary("pila")],
+    assessments: [asm("pila", "CZESCIOWO", "zakres", { quote: "W Pile powstała stacja badawcza.", partialMeaning: "correction", verifier: "niepewne" })],
+    expect: { verdict: "BRAK_DOWODOW", rule: 2 },
+  },
+  {
+    name: "Historyczny stan sieci nie zostaje obalony przez późniejszą liczbę stacji",
+    claim: claim({ text: "Sieć ma trzy stacje.", temporal: { kind: "stan", asOf: "2018-03-08" } }),
+    records: [primary("2018", { period: "2018" }), primary("2026", { period: "2026" })],
+    assessments: [asm("2018", "WSPIERA"), asm("2026", "OBALA")],
+    expect: { verdict: "POTWIERDZONE", rule: 7, decisive: ["2018"] },
   },
   // ── C: sprzeczne wiarygodne źródła
   {

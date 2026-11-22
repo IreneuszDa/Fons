@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chat, makeEnv, makeReport } from "./testkit";
+import { sourcesText, whyText } from "./conversation/templates";
 
 const evidence = {
   recordId: "eli:ustawa-1",
@@ -9,6 +10,7 @@ const evidence = {
   fetchedAt: "2026-11-01",
   url: "https://eli.gov.pl/akt/42",
   quote: "Prezes Urzędu jest centralnym organem administracji rządowej.",
+  passageKind: "excerpt" as const,
   relation: "WSPIERA" as const,
   aspect: "sedno" as const,
   sourceType: "pierwotne" as const,
@@ -33,6 +35,13 @@ const answerReport = (text: string) =>
   });
 
 describe("tryb odpowiedzi na pytanie otwarte", () => {
+  it("przy starszym raporcie opisuje zapisany fragment bez przypisywania jego brzmienia wydawcy", () => {
+    const report = structuredClone(answerReport("Pytanie"));
+    delete report.answer!.evidence[0]!.passageKind;
+    expect(sourcesText(report)).toContain("Fragment zapisanego rekordu:");
+    expect(sourcesText(report)).not.toContain("Cytat:");
+    expect(whyText(report)).not.toContain("dosłowny cytat");
+  });
   it("raport z answer → odpowiedź kind=answer z answerPl i odnośnikiem do źródła", async () => {
     const env = makeEnv({ engine: (r) => answerReport(r.text ?? "") });
     const c = await chat(env, { text: "Kim jest Prezes UOKiK?" });
@@ -44,7 +53,10 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     expect(reply.textPl).not.toContain("Wynik:"); // to nie werdykt
     expect(reply.report.answer.evidence).toHaveLength(1);
     expect(reply.resultUrl).toContain("/w/");
-    expect(reply.quickReplies.map((q: any) => q.id)).not.toContain("report");
+    expect(reply.quickReplies).toEqual([
+      { id: "sources", labelPl: "Źródła" },
+      { id: "why", labelPl: "Jak to sprawdziłeś?" },
+    ]);
   });
 
   it("źródła i „dlaczego” działają dla odpowiedzi (cytat ze źródła, bez werdyktu)", async () => {
@@ -52,11 +64,13 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     const c = await chat(env, { text: "Kim jest Prezes UOKiK?" });
     const src = await chat(env, { action: "sources" }, c.cookie);
     expect(src.json.reply.kind).toBe("sources");
+    expect(src.json.reply.quickReplies).toEqual([{ id: "why", labelPl: "Jak to sprawdziłeś?" }]);
     expect(src.json.reply.textPl).toContain("Ustawa o ochronie konkurencji");
     expect(src.json.reply.textPl).toContain("Prezes Urzędu jest centralnym organem");
     expect(src.json.reply.textPl).not.toContain("nie ma źródeł");
     const why = await chat(env, { action: "why" }, c.cookie);
     expect(why.json.reply.kind).toBe("why");
+    expect(why.json.reply.quickReplies).toEqual([{ id: "sources", labelPl: "Źródła" }]);
     expect(why.json.reply.textPl).toContain("dosłowny cytat");
   });
 

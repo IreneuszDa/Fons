@@ -57,11 +57,11 @@ describe("DELETE /api/session", () => {
     expect(row).toEqual({ excerpt: "", sender_id: null, session_id: null, pattern: "ignore_previous_pl" });
   });
 
-  it("identyfikator sesji z treści nie pozwala przejąć cudzej sesji innego kanału; nieznany id dostaje nową sesję", async () => {
+  it("wskazanie nieznanej lub cudzej rozmowy bez ciasteczka daje 404, bez tworzenia nowej sesji", async () => {
     const env = makeEnv();
-    const fixated = await chat(env, { text: "Pytanie", sessionId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
-    expect(fixated.json.sessionId).not.toBe("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    const again = await chat(env, { text: "źródła", sessionId: fixated.json.sessionId }); // bez ciasteczka, ale z poprawnym id
-    expect(again.json.reply.kind).toBe("sources");
+    expect((await chat(env, { text: "Pytanie", sessionId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" })).status).toBe(404);
+    const own = await chat(env, { text: "Pytanie" });
+    expect((await chat(env, { action: "sources", sessionId: own.json.sessionId })).status).toBe(404);
+    expect(n(env, "SELECT COUNT(*) AS n FROM sessions")).toBe(1);
   });
 });

@@ -204,7 +204,7 @@ export function createOfficialBranch(db: Database, opts: OfficialBranchOptions =
               level: source.level,
               independenceGroup: source.independenceGroup,
               licence: source.licence,
-              topics: [OFFICIAL_TOPIC, lookup.authorityId],
+              topics: [OFFICIAL_TOPIC, lookup.authorityId, "generated-from-data"],
               origin: "live_snapshot",
               ...(lead ? { lead: true } : {}),
             });

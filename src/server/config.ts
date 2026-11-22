@@ -19,6 +19,8 @@ export interface AppConfig {
   anthropicApiKey?: string;
   mistralApiKey?: string;
   openaiApiKey?: string;
+  openaiSearchModel?: string;
+  webSearchDailyCap?: number;
   videoProvider?: "openai" | "gemini" | "off";
   openaiVideoModel?: string;
   geminiApiKey?: string;
@@ -132,6 +134,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   const adminFromEnv = nonEmpty(e.ADMIN_PASSWORD);
   const adminPassword = adminFromEnv ?? readOrCreateSecret(`${varDir}/admin-password`);
 
+  const modelFast = nonEmpty(e.MODEL_FAST) ?? DEFAULT_MODELS[llmProvider].fast;
   const cfg: AppConfig = {
     env: nodeEnv,
     port: Number(e.PORT ?? 8787),
@@ -148,7 +151,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     socialKitApiKey: nonEmpty(e.SOCIALKIT_API_KEY),
     openaiDataResidency: nonEmpty(e.OPENAI_DATA_RESIDENCY),
     modelMain: nonEmpty(e.MODEL_MAIN) ?? DEFAULT_MODELS[llmProvider].main,
-    modelFast: nonEmpty(e.MODEL_FAST) ?? DEFAULT_MODELS[llmProvider].fast,
+    modelFast,
+    openaiSearchModel: nonEmpty(e.OPENAI_SEARCH_MODEL) ?? (llmProvider === "openai" ? modelFast : DEFAULT_MODELS.openai.fast),
     verifierProvider,
     adminPassword,
     adminPasswordGenerated: !adminFromEnv,
@@ -156,7 +160,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     dailyTokenBudget: Number(e.DAILY_TOKEN_BUDGET ?? 3_000_000),
     ipDailyTokenShare: e.IP_DAILY_TOKEN_SHARE !== undefined ? Number(e.IP_DAILY_TOKEN_SHARE) : undefined,
     rateLimitPerMinute: Number(e.RATE_LIMIT_PER_MINUTE ?? 10),
-    liveSearch: e.LIVE_SEARCH === "on",
+    liveSearch: nonEmpty(e.LIVE_SEARCH) ? e.LIVE_SEARCH?.trim() === "on" : Boolean(openaiApiKey),
+    webSearchDailyCap: nonEmpty(e.WEB_SEARCH_DAILY_CAP) ? Number(e.WEB_SEARCH_DAILY_CAP) : undefined,
     reverseImageProvider: reverseImageProvider === "google_vision" ? "google_vision" : "off",
     reverseImageDailyCap: Number(e.REVERSE_IMAGE_DAILY_CAP ?? 500),
     googleVisionApiKey,

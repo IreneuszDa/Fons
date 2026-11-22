@@ -42,6 +42,13 @@ function logUrl(raw: string): string {
 export function buildEngineRequest(msg: InboundMessage, ctx: ServerContext): BuiltRequest {
   const mediaRefs = msg.images.map((i) => i.dataRef);
   const text = msg.text.trim();
+  if (msg.recording) {
+    const recording = ctx.media.get(msg.recording.dataRef);
+    const logInput = "[nagranie]";
+    if (!recording) return { reject: statusReply("Dodaj nagranie ponownie."), logInput, mediaRefs };
+    if (text.length > ctx.options.maxInputChars) return { reject: statusReply(TOO_LONG_TEXT(ctx.options.maxInputChars)), logInput, mediaRefs };
+    return { req: { kind: "recording", recording, text, channel: msg.channel, receivedAt: msg.receivedAt }, logInput, mediaRefs };
+  }
 
   if (msg.images.length > 0) {
     const images = [];
@@ -152,9 +159,15 @@ export async function runVerification(
   };
 
   // 1. cache (trafienie nic nie kosztuje, więc przed bezpiecznikiem budżetu)
-  const key = computeCacheKey(ctx, req);
+  // A URL can change or disappear. Read the current public article before reusing a result.
+  const articleRead = req.kind === "url" && req.url && !socialVideoPlatform(req.url)
+    ? await ctx.engine.readArticle?.(req) : undefined;
+  const digest = computeCacheKey(ctx, req, articleRead?.ok ? articleRead.normalized : undefined);
+  const privateAttachment = req.kind === "recording" || req.kind === "image" || !!msg.document;
+  const key = privateAttachment ? `${session.id}:${digest}` : digest;
   const freshIndex = req.kind === "text" && asksAboutDemagogReview(req.text ?? "");
-  const cached = freshIndex ? undefined : getCached(ctx.db, key, now);
+  const canCache = !freshIndex && articleRead?.ok !== false;
+  const cached = canCache ? getCached(ctx.db, key, now) : undefined;
   let base: VerdictReport;
   let cacheHit = false;
 
@@ -172,7 +185,7 @@ export async function runVerification(
     try {
       opts.onVerificationStart?.();
       const request = { ...req, requestId, onActivity: opts.onActivity };
-      const raw = req.kind === "image" ? await analyzeImage(ctx, request) : await ctx.engine.verify(request);
+      const raw = req.kind === "image" ? await analyzeImage(ctx, request) : await ctx.engine.verify(request, articleRead);
       const parsed = VerdictReport.safeParse(raw);
       if (!parsed.success) throw new Error("report_schema");
       base = parsed.data;
@@ -200,7 +213,7 @@ export async function runVerification(
     report.mainVerdict = null; // status techniczny nigdy nie jest werdyktem
     report.verdicts = [];
   }
-  if (!cacheHit && !freshIndex) putCached(ctx.db, key, report, now, owner, { liveSearch: ctx.cfg.liveSearch });
+  if (!cacheHit && canCache) putCached(ctx.db, key, report, now, owner, { liveSearch: ctx.cfg.liveSearch });
 
   // 5. pętla informacji: tylko status OK i brak dowodów
   let outcome: CaseOutcome | undefined;
@@ -231,16 +244,19 @@ export async function runVerification(
   const note = outcome ? caseNote(outcome) : caseFailed ? CASE_FAILED_TEXT : undefined;
   const resultUrl = resultUrlFor(ctx, report.token);
   if (report.imageAnalysis?.only) {
-    return { kind: "image_analysis", report, textPl: report.summaryPl, quickReplies: [QR.why, QR.delete], resultUrl };
+    return { kind: "image_analysis", report, textPl: report.summaryPl, quickReplies: [QR.why], resultUrl };
   }
   if (report.status !== "OK") {
     return { kind: "status", report, textPl: statusTextFor(report), quickReplies: [QR.help], resultUrl };
   }
-  const quick = [QR.sources, QR.why, ...(report.moderatorCase || !report.verdicts.length ? [] : [QR.report]), QR.delete];
+  const quick = [QR.sources, QR.why, ...(report.moderatorCase || !report.verdicts.length ? [] : [QR.report])];
   if (report.answer || report.inputMode !== "claim") {
     const shortAnswer = shortAnswerFor(report, note);
-    return { kind: report.answer ? "answer" : "verdict", report, shortAnswer,
-      textPl: shortAnswerText(shortAnswer, report), quickReplies: report.answer ? [QR.sources, QR.why, QR.delete] : quick, resultUrl };
+    return { kind: report.answer || report.questionParts ? "answer" : "verdict", report, shortAnswer,
+      textPl: shortAnswerText(shortAnswer, report), quickReplies: report.answer ? [QR.sources, QR.why] : quick, resultUrl };
   }
-  return { kind: "verdict", report, textPl: verdictText(report, note), quickReplies: quick, resultUrl };
+  return {
+    kind: "verdict", report, textPl: verdictText(report, note), quickReplies: quick, resultUrl,
+    ...(!report.imageAnalysis && !report.videoAnalysis && { shortAnswer: shortAnswerFor(report, note) }),
+  };
 }

@@ -74,6 +74,90 @@ function evidenceUrls(r: VerdictReport): string[] {
   return r.verdicts.flatMap((v) => v.evidence.map((e) => e.url));
 }
 
+describe("article bodies and independent questions", () => {
+  const url = "https://example.org/wiadomosci/artykul";
+  const opinion = "Moim zdaniem to najlepszy pomysł dekady.";
+  const unknown = "W mieście otwarto fabrykę porcelany.";
+  const article = [WAGE_CLAIM, opinion, unknown].join("\n");
+  const page = (body: string, title = "Czy wszystko się zmieniło?") => ({
+    finalUrl: url, status: 200, contentType: "text/html", rawText: body, cleanText: body, title, hiddenSegments: [],
+  });
+
+  it("reads claims from the body, tracks opinion separately and excludes an archived copy of the subject", async () => {
+    const copy = rec({ id: "self", url: url + "/?utm_source=test#fragment", text: article });
+    const deps = makeDeps({ records: [WAGE_RECORD, copy], fetchPage: async () => page(article) });
+    const r = await verifyInput(textReq("Hej, sprawdź mi czy to prawda", { kind: "url", url }), deps);
+    expect(r.status).toBe("OK");
+    expect(r.claims.map(c => c.text)).toEqual([WAGE_CLAIM, opinion, unknown]);
+    expect(r.article).toEqual({ url, title: "Czy wszystko się zmieniło?" });
+    expect(r.verdicts.map(v => v.verdict)).toEqual(["POTWIERDZONE", "NIE_PODLEGA", "BRAK_DOWODOW"]);
+    expect(evidenceUrls(r)).toContain(WAGE_RECORD.url);
+    expect(evidenceUrls(r)).not.toContain(copy.url);
+    expect(deps.llm.calls.map(c => c.purpose)).not.toContain("source_answer");
+  });
+
+  it("routes a free-form material review and preserves the user's focus for the claim reader", async () => {
+    const note = "Rzuć okiem na argumenty autora i oceń ich wiarygodność, szczególnie w części o wynagrodzeniach.";
+    const llm = new FakeLlmProvider({ override: q => q.schemaName === "article_request" ? { intent: "review" } : undefined });
+    const deps = makeDeps({ llm, fetchPage: async () => page(article) });
+    const r = await verifyInput(textReq(note, { kind: "url", url }), deps);
+    expect(r.inputMode).toBe("claim");
+    const claims = llm.calls.find(c => c.purpose === "claims")!;
+    expect(parseFences(claims.user)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: "WEJSCIE", content: article }),
+      expect.objectContaining({ label: "ZAKRES", content: note }),
+    ]));
+    expect(llm.calls.some(c => c.schemaName === "SourceAnswer")).toBe(false);
+  });
+
+  it("keeps the given factual question in the article route even without a question mark", async () => {
+    const focus = "Ustal wysokość minimalnego wynagrodzenia w Polsce za 2026 rok.";
+    const llm = new FakeLlmProvider({ override: q => {
+      if (q.schemaName === "article_request") return { intent: "question" };
+      if (q.schemaName === "SourceAnswer") return { answerPl: WAGE_RECORD.text, evidence: [{ ref: "F1", quote: WAGE_RECORD.text }], claimPl: "", reviewRef: "", neededEvidencePl: "" };
+      if (q.schemaName === "SourceAnswerCheck") return { supported: true };
+    } });
+    const r = await verifyInput(textReq(focus, { kind: "url", url }), makeDeps({ llm, fetchPage: async () => page(article) }));
+    expect(r.answer).toMatchObject({ questionPl: focus, answerPl: WAGE_RECORD.text, evidence: [{ url: WAGE_RECORD.url }] });
+  });
+
+  it.each(["", "Sam nagłówek"])("does not check a headline as if it were an article", async body => {
+    const deps = makeDeps({ fetchPage: async () => page(body, "Sam nagłówek") });
+    const r = await verifyInput(textReq("Sprawdź ten artykuł", { kind: "url", url }), deps);
+    expect(r).toMatchObject({ status: "NIEPELNE", mainVerdict: null, claims: [], verdicts: [] });
+    expect(r.article).toBeUndefined();
+    expect(deps.llm.calls).toHaveLength(0);
+  });
+
+  it("answers each question independently and gives no citations to unverified answers", async () => {
+    const llm = new FakeLlmProvider({ override: q => {
+      if (q.schemaName === "SourceAnswer" && parseFences(q.user).find(f => f.label === "PYTANIE")?.content.startsWith("Ile")) {
+        return { answerPl: WAGE_RECORD.text, evidence: [{ ref: "F1", quote: WAGE_RECORD.text }], claimPl: "", reviewRef: "", neededEvidencePl: "" };
+      }
+      if (q.schemaName === "SourceAnswerCheck") return { supported: true };
+    } });
+    const d = makeDeps({ llm });
+    const r = await verifyInput(textReq("Ile wynosi minimalne wynagrodzenie w Polsce? Kiedy otwarto fabrykę porcelany?"), d);
+    expect(r.questionParts).toMatchObject([
+      { status: "answered", answerPl: WAGE_RECORD.text, evidence: [{ url: WAGE_RECORD.url }] },
+      { status: "insufficient", questionPl: "Kiedy otwarto fabrykę porcelany?", evidence: [] },
+    ]);
+    expect(r.summaryPl).toContain(r.questionParts![1]!.answerPl);
+    expect(r.mainVerdict).toBeNull();
+  });
+
+  it("distinguishes a Google index outage in one question from missing evidence in another", async () => {
+    const deps = makeDeps();
+    deps.demagogTopicIndex = async () => ({ status: "unavailable", reason: "access" });
+    const r = await verifyInput(textReq("Czy Demagog sprawdzał twierdzenie o obserwatorium na Antarktydzie? Kiedy otwarto fabrykę porcelany?"), deps);
+    expect(r.questionParts).toMatchObject([
+      { status: "unavailable", answerPl: expect.stringContaining("błędu dostępu"), evidence: [] },
+      { status: "insufficient", evidence: [] },
+    ]);
+    expect(r.unavailableBranches).toContain("google_claimreview");
+  });
+});
+
 describe("social video verification", () => {
   const url = "https://www.instagram.com/reel/ABC123/";
   const req = textReq("Sprawdź wysokość pensji.", { kind: "url", url: url + "?igsh=private" });
@@ -215,6 +299,19 @@ describe("social video verification", () => {
     });
     expect(r.verdicts[0]?.evidence[0]?.url).toBe(WAGE_RECORD.url);
     expect(analyze).toHaveBeenCalledTimes(mode === "gemini" || mode === "full" ? 1 : 0);
+  });
+
+  it("checks claims from a public post description when the file is unavailable, without claiming to see the video", async () => {
+    const deps = makeDeps();
+    const analyze = vi.fn(async () => ({ data, usage }));
+    deps.video = { load: async () => { throw new SocialVideoSourceError("unavailable", WAGE_CLAIM, { url }); }, analyze };
+    const report = await verifyInput({ ...req, text: "Sprawdź ten film" }, deps);
+    expect(report).toMatchObject({ status: "OK", videoAnalysis: { status: "caption_only", observations: [], transcript: [],
+      claimOrigins: [{ claimId: "c1", source: "caption", seconds: null }] } });
+    expect(report.warnings).toContainEqual(expect.objectContaining({ kind: "source_status", textPl: expect.stringContaining("nie udostępniła obrazu") }));
+    const unseen = await verifyInput({ ...req, text: "Czy na nagraniu widać protest?" }, deps);
+    expect(unseen).toMatchObject({ status: "NIEPELNE", mainVerdict: null });
+    expect(analyze).not.toHaveBeenCalled();
   });
 
   it("keeps missing configuration, inaccessible posts and provider failures distinct from verdicts", async () => {

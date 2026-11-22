@@ -26,7 +26,7 @@ Werdykt (inny niż „brak dowodów” i „nie podlega weryfikacji”) może wy
 Doprecyzowania (wszystkie zachowawcze):
 
 - **Weryfikator „sprzeciw”** — dowód przestaje być rozstrzygający (zostaje „poniżej progu”). **Weryfikator „niepewne”** — dowód nadal rozstrzyga, ale siła spada o jeden stopień.
-- **Ta sama grupa niezależności = jedno źródło.** Dwa teksty agencji i portalu, który ją przedrukował, nie tworzą pary.
+- **Ta sama grupa niezależności = jedno źródło.** Dwa teksty agencji i portalu, który ją przedrukował, nie tworzą pary. Silnik rozpoznaje również identyczne rekordy treści o długości co najmniej 24 słów, nawet gdy wydawcy należą do różnych grup.
 - **Dwa źródła wtórne, które się nie zgadzają** (jedno wspiera, drugie obala) albo mówią o różnych aspektach, nie tworzą dowodu rozstrzygającego.
 - **Analiza poziomu 2 będąca rekordem treści** (np. analiza instytucji UE) jest źródłem wtórnym: sama nie rozstrzyga, potrzebuje drugiego, niezależnego.
 - **Rekord o stałej roli spoza IFCN/EFCSN i spoza bazy organizatora** nie rozstrzyga i nie liczy się jako źródło wtórne. `CorpusRecord` nie ma pola „sygnatariusz IFCN”, dlatego rozpoznajemy go po poziomie przypisanym w katalogu (poziom 2 to właśnie fact-checki sygnatariuszy).
@@ -46,11 +46,15 @@ Pierwsza pasująca reguła wygrywa. Od reguły 3 w górę kod patrzy **wyłączn
 | 6 | dopasowany rekord o stałej roli i brak nowszego lub sprzecznego źródła pierwotnego dla tego aspektu | werdykt z tabeli mapowania | Demagog: „Fałsz” dla tej samej tezy → FAŁSZYWE |
 | 7 | wspiera sedno, żaden aspekt nie jest obalony ani podważony | POTWIERDZONE | Dziennik Ustaw potwierdza, że ustawa weszła w życie |
 | 8 | obala sedno; albo twierdzenie sprowadza się do obalonej daty lub liczby | FAŁSZYWE | „W 2024 r. inflacja wyniosła 15%”, a GUS podaje inną liczbę; „Polska wstąpiła do NATO w 2004 roku”, a NATO podaje 1999 |
-| 9 | sedno prawdziwe, ale obalony aspekt; relacja „częściowo” lub „inny kontekst”; obalony aspekt bez dowodu na sedno | WPROWADZAJĄCE W BŁĄD + nazwany brakujący kontekst | prawdziwe zdjęcie powodzi, ale z 2019 r., a nie „z wczoraj” |
+| 9 | Źródło wykazuje błąd w szczególe, zniekształcony wniosek lub przeniesienie materiału w inny kontekst. | WPROWADZAJĄCE W BŁĄD + brakujący kontekst | Prawdziwe zdjęcie powodzi z 2019 r. przedstawiono jako relację z wczoraj. |
+
+Czytelnik rozróżnia cytat potwierdzający fragment tezy (`CZESCIOWO`, w raporcie `partialMeaning=coverage`) od cytatu wykazującego istotny błąd (`KORYGUJE_CZESC`, w raporcie `partialMeaning=correction`). Korekta wymaga zgody weryfikatora. Profil jednej stacji badawczej może uzupełnić pełny wykaz stacji. Sama informacja o tej jednej stacji pozostawia pytanie o pozostałe otwarte. Kiedy starsza ocena łączyła oba znaczenia, kod uznaje korektę jedynie przy zgodzie weryfikatora i odmiennej dacie lub liczbie w odpowiednim polu.
 
 Jeśli po regułach 3–9 zostały tylko dowody na szczegóły (np. sam czas), a nic o sednie — werdykt to BRAK DOWODÓW z numerem reguły 2 („brak dowodu rozstrzygającego dla sedna”). Pole `ruleApplied` jest zawsze ustawione (1–9).
 
 ### Szczegóły reguł 3–5 (czas i okresy)
+
+Stan opisany w datowanym artykule zachowuje swoją datę odniesienia (`temporal.asOf`). Rozstrzygają źródła obejmujące ten okres. Raport odróżnia datę publikacji z metadanych od daty wyświetlonej przy nagłówku. Data materiału może określać perspektywę autora opisującego ówczesny stan. Do ustalenia daty zdarzenia potrzebna jest treść twierdzenia.
 
 - **Okres dowodu** = okres podany przez czytelnika dla fragmentu → okres rekordu w bazie → rok publikacji. Rozumiemy: rok, półrocze (`2024-H1`), kwartał (`2024-Q2`), miesiąc, dzień, zakresy (`2023-2024`, `2024-01-01/2024-06-30`).
 - **Nieznany okres nakłada się z każdym innym** i nigdy nie jest „nowszy”. Lepiej pokazać sprzeczność, niż ją ukryć.
@@ -209,7 +213,7 @@ Ewaluacja: przypadki z `expected.minStrength` (np. `ST01` „Czy Jakub Siuda to 
 - **Okres z roku publikacji.** Gdy ani czytelnik, ani rekord nie podają okresu, przyjmujemy rok publikacji. Fact-check z marca 2025 o danych za 2024 r. może przez to wyglądać na „ten sam okres” co dane za 2025 r. Skutek jest zachowawczy: sprzeczność zamiast werdyktu.
 - **Okres podaje czytelnik (model).** Okres fragmentu nie przechodzi kontroli podciągu jak cytat. Błędny okres może przesunąć przypadek między regułami 4 i 5, ale nigdy nie da POTWIERDZONE bez zweryfikowanego cytatu wspierającego.
 - **Różne merytoryczne oceny fact-checków** sprowadzamy do WPROWADZAJĄCE — to uproszczenie.
-- **Reguła 7 jest surowa:** każdy rozstrzygający dowód „częściowo” lub „inny kontekst”, nawet o drobnym aspekcie, blokuje POTWIERDZONE (wynik: reguła 9).
+- Potwierdzony błąd w szczególe lub wykazany inny kontekst prowadzi do reguły 9. Cytat o części wymienionych podmiotów może towarzyszyć potwierdzeniu opartemu na pełnym wykazie.
 - **Dowody poniżej progu nie zmieniają werdyktu**, nawet jeśli obalają jakiś aspekt — wpływają tylko na siłę i są pokazane w raporcie.
 
 ## 7. Twierdzenia złożone (kilka podmiotów)

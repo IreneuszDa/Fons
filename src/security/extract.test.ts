@@ -98,7 +98,11 @@ describe("extractFromHtml", () => {
     );
     expect(a.publishedAt).toBe("2025-05-04T10:00:00.000Z");
     const b = extractFromHtml(`<html><body><time datetime="2024-02-03">3 lutego</time><p>x</p></body></html>`);
-    expect(b.publishedAt).toBe("2024-02-03");
+    expect(b.displayedDate).toBe("2024-02-03");
+    expect(b.publishedAt).toBeUndefined();
+    const dateline = extractFromHtml('<html><body><article><h2>Raport obserwatorium</h2><p class="event-date">08.03.2018</p><p>Otwarcie: <time datetime="2015-01-16">16 stycznia 2015</time>.</p></article></body></html>');
+    expect(dateline.displayedDate).toBe("2018-03-08");
+    expect(dateline.publishedAt).toBeUndefined();
     const c = extractFromHtml(`<html><body><p>bez daty</p></body></html>`);
     expect(c.publishedAt).toBeUndefined();
   });

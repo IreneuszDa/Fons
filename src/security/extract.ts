@@ -16,6 +16,7 @@ export interface ExtractedPage {
   cleanText: string;
   title?: string;
   publishedAt?: string;
+  displayedDate?: string;
   hiddenSegments: string[];
 }
 
@@ -276,8 +277,17 @@ function extractPublishedAt(doc: Document): string | undefined {
       /* malformed JSON-LD is common; ignore */
     }
   }
-  const timeEl = doc.querySelector("time[datetime]");
+  const timeEl = doc.querySelector("time[itemprop='datePublished'], time[pubdate], time.published");
   return normaliseDate(timeEl?.getAttribute("datetime"));
+}
+
+/** The date in an article's dateline can describe the material without establishing publication. */
+function extractDateline(doc: Document): string | undefined {
+  const lead = doc.querySelector("article h1 + .event-date, article h2 + .event-date, article h1 + time, article h2 + time, article header time, body > time:first-child");
+  if (!lead) return;
+  const raw = (lead.getAttribute("datetime") ?? lead.textContent ?? "").trim();
+  const pl = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(raw);
+  return normaliseDate(pl ? `${pl[3]}-${pl[2]}-${pl[1]}` : raw);
 }
 
 // ─────────────────────────── main ───────────────────────────
@@ -345,6 +355,7 @@ export function extractFromHtml(html: string, url?: string): ExtractedPage {
   };
   if (body) visit(body, undefined);
   for (const el of toRemove) el.remove();
+  const displayedDate = extractDateline(doc);
 
   // Template contents may live outside the DOM tree in some parsers — include for rawText.
   const rawParts = [rawDomText];
@@ -352,6 +363,11 @@ export function extractFromHtml(html: string, url?: string): ExtractedPage {
   const rawText = tidyText(rawParts.join("\n"));
 
   // Clean text: Readability on the cleaned DOM, falling back to the cleaned body text.
+  // The raw detector input above retains navigation and forms. These site-wide controls
+  // must not become article content when a page only serves a title or a sign-in shell.
+  for (const element of Array.from(doc.querySelectorAll('nav, [role="navigation"], footer, form, aside, header'))) {
+    if (!element.closest("article, main, [role=main]")) element.remove();
+  }
   let cleanText = "";
   try {
     const clone = doc.cloneNode(true) as Document;
@@ -373,6 +389,7 @@ export function extractFromHtml(html: string, url?: string): ExtractedPage {
     cleanText,
     ...(title ? { title } : {}),
     ...(publishedAt ? { publishedAt } : {}),
+    ...(displayedDate ? { displayedDate } : {}),
     hiddenSegments,
   };
 }

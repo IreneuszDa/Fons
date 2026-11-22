@@ -13,6 +13,7 @@
  * No verified quote → no answer; the summary says what was searched and that sources did not answer.
  */
 import type { CorpusRecord, EvidenceItem, LlmProvider, ModelUsage, VerdictReport } from "../shared/contracts";
+import { passageKind, passageText } from "../shared/evidence";
 import { findQuoteInRecord, type DetectFn, type PreparedRecord } from "./assess";
 import { fence } from "./llm/fence";
 import { OPEN_ANSWER_SYSTEM, OpenAnswerOut, VERIFIER_SYSTEM, VerifierOut } from "./prompts";
@@ -121,6 +122,7 @@ export function answerEvidenceItem(r: CorpusRecord, quote: string): EvidenceItem
     fetchedAt: r.fetchedAt,
     url: r.url,
     quote,
+    passageKind: passageKind(r, quote),
     relation: "WSPIERA",
     aspect: "sedno",
     sourceType: r.type,
@@ -132,9 +134,12 @@ export function answerEvidenceItem(r: CorpusRecord, quote: string): EvidenceItem
 
 /** Template answer — every descriptive field comes from the record, the quote from its stored text. */
 export function buildAnswer(questionPl: string, r: CorpusRecord, quote: string): OpenAnswer {
+  const kind = passageKind(r, quote);
   return {
     questionPl,
-    answerPl: `${r.publisher} (${formatDatePl(evidenceDate(r))}) podaje: «${quote}»`,
+    answerPl: kind !== "excerpt"
+      ? `${passageText(quote, kind)} (${r.publisher}).`
+      : `${r.publisher} (${formatDatePl(evidenceDate(r))}) podaje: «${quote}»`,
     evidence: [answerEvidenceItem(r, quote)],
   };
 }
@@ -144,7 +149,7 @@ export function archivalAnswerPl(r: CorpusRecord): string {
 }
 
 export function answerSummaryPl(r: CorpusRecord, archival: boolean): string {
-  const base = `Odpowiedź znaleźliśmy w źródle z katalogu Fons: ${r.publisher} (${formatDatePl(evidenceDate(r))}). Cytujemy je dosłownie — przeczytaj źródło i oceń sam.`;
+  const base = `Podstawą odpowiedzi jest ${passageKind(r, r.text) === "structured_data" ? "rekord danych" : "fragment publikacji"} wydawcy ${r.publisher} (${formatDatePl(evidenceDate(r))}).`;
   return archival ? `${base} Uwaga: to materiał sprzed ponad roku, stan mógł się zmienić.` : base;
 }
 

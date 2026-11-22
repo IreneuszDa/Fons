@@ -37,13 +37,22 @@ interface Outcome {
 
 export function decideVerdict(input: VerdictInput): VerdictDecision {
   const { claim, records } = input;
-  const mine = input.assessments.filter((a) => a.claimId === claim.id);
+  const mine = input.assessments.filter((a) => a.claimId === claim.id).map((a) => {
+    if (a.relation !== "CZESCIOWO" || records.get(a.recordId)?.role !== "tresc") return a;
+    // Older readers overloaded this relation. A different value in the same numeric slot is
+    // recoverable from their quote. A source covering fewer subjects is never a correction.
+    const correction = a.partialMeaning === "correction" || (!a.partialMeaning && isNumericAspect(a.aspect)
+      && !!quoteCorrectsSlot(claim.text, a.quote, a.aspect));
+    return { ...a, partialMeaning: correction && a.verifier === "zgoda" ? "correction" as const : "coverage" as const };
+  });
 
   const counted: Ev[] = [];
   for (const a of mine) {
     const r = records.get(a.recordId);
     if (!isCounted(a, r)) continue;
-    counted.push(buildEv(a, r, isDecisive(a, r, mine, records)));
+    const evidence = buildEv(a, r, isDecisive(a, r, mine, records));
+    if (claim.temporal.asOf && (!evidence.period || !overlaps(parsePeriod(claim.temporal.asOf), evidence.period))) evidence.decisive = false;
+    counted.push(evidence);
   }
   const vetoedCount = counted.filter((e) => e.a.verifier === "sprzeciw").length;
   const decisive = counted.filter((e) => e.decisive);
@@ -111,7 +120,7 @@ export function decideVerdict(input: VerdictInput): VerdictDecision {
   // o innym kierunku (wspiera/obala), którego okres jest w całości PÓŹNIEJSZY, a data publikacji
   // (gdy obie znane) nie jest wcześniejsza. Nieznany okres nigdy nie jest „starszy” → zostaje (konflikt).
   const supersededBy = new Map<Ev, Ev>();
-  if (claim.temporal.kind === "stan") {
+  if (claim.temporal.kind === "stan" && !claim.temporal.asOf) {
     for (const e of decisive) {
       const newer = decisive.find(
         (n) =>
@@ -351,7 +360,7 @@ function rule9MissingContext(supportsSedno: boolean, refutes: Ev[], partials: Ev
       `materiał pochodzi z innej sytuacji (inny czas, miejsce lub kontekst; dotyczy: ${aspectList(otherContext.map((e) => e.aspect))})`,
     );
   }
-  if (partly.length > 0) parts.push(`źródła potwierdzają tylko część informacji (dotyczy: ${aspectList(partly.map((e) => e.aspect))})`);
+  if (partly.length > 0) parts.push(`źródła wskazują błąd w szczególe informacji (dotyczy: ${aspectList(partly.map((e) => e.aspect))})`);
   const body = parts.join("; ");
   if (supportsSedno) return `Główna treść się zgadza, ale ${body}.`;
   if (refuted.length > 0 && partials.length === 0) {

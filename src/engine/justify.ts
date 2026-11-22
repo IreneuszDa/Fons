@@ -15,6 +15,7 @@ import {
   type Verdict,
 } from "../shared/contracts";
 import { fence } from "./llm/fence";
+import { passageKind, passageText } from "../shared/evidence";
 import { SMOOTH_SYSTEM, SmoothOut } from "./prompts";
 import { foldForMatch, formatDatePl } from "./text";
 import { plural } from "./verdict/texts";
@@ -58,7 +59,7 @@ const ASPECT_PL: Record<Aspect, string> = {
 
 function cite(r: CorpusRecord | undefined, quote: string): string {
   if (!r) return `„${quote}”`;
-  return `${r.publisher} (${formatDatePl(r.publishedAt)}): „${quote}”`;
+  return `${r.publisher} (${formatDatePl(r.publishedAt)}): ${passageText(quote, passageKind(r, quote))}`;
 }
 
 function usable(a: EvidenceAssessment): boolean {
@@ -235,29 +236,10 @@ export function buildJustification(input: JustifyInput): Justification {
       triedPl: tried,
     };
   }
-  if (isUnconfirmedAfterLiveSearch(input)) {
-    return {
-      reasonPl:
-        "Żadne wiarygodne źródło, które przeszukaliśmy — także na żywo w serwisach urzędowych i u fact-checkerów — tego nie potwierdza. " +
-        "Gdyby tak ważna rzecz się wydarzyła, powinny o niej pisać źródła urzędowe. Traktuj tę informację jako niepotwierdzoną i nie przekazuj jej dalej, dopóki nie znajdziesz wiarygodnego źródła.",
-      triedPl: tried,
-    };
-  }
   return {
     reasonPl: "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
     triedPl: tried,
   };
-}
-
-/**
- * Sygnał ostrzegawczy dla BRAK_DOWODÓW (werdykt bez zmian): fakt, wyszukiwanie na żywo zadziałało, a żaden
- * przeczytany fragment nie mówi o sprawie (wszystkie „bez związku” albo nic). Typowa sytuacja wymyślonego zdarzenia —
- * nikt mu wprost nie zaprzecza, ale też nikt wiarygodny go nie potwierdza.
- */
-function isUnconfirmedAfterLiveSearch(input: JustifyInput): boolean {
-  if (input.claim.type !== "fakt") return false;
-  if (!input.searchedPl.some((s) => s.includes("na żywo"))) return false;
-  return !input.assessments.some((a) => !a.excluded && a.relation !== "BEZ_ZWIAZKU" && a.quoteVerified);
 }
 
 /** Długość uzasadnienia, do której wstawiamy je do podsumowania w całości (z cytatem). */

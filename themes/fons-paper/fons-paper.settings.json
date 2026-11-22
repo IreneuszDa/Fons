@@ -1,0 +1,38 @@
+{
+  "name": "fons-paper",
+  "like": "neutral",
+  "mode": "both",
+  "settings": [
+    {
+      "thing": "font",
+      "value": "Figtree, system-ui, sans-serif",
+      "source": "dial",
+      "on": "heading"
+    },
+    {
+      "thing": "--color-background-surface",
+      "value": "#fcfbfa",
+      "source": "token",
+      "mode": "light"
+    },
+    {
+      "thing": "--color-text-primary",
+      "value": "#493734",
+      "source": "token",
+      "mode": "light"
+    },
+    {
+      "thing": "--color-accent",
+      "value": "#493734",
+      "source": "token",
+      "mode": "light"
+    },
+    {
+      "thing": "--color-background-popover",
+      "value": "#ffffff",
+      "source": "token",
+      "mode": "light"
+    }
+  ],
+  "lifted": []
+}

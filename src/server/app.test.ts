@@ -58,6 +58,26 @@ describe("pliki wysłane do /api/chat", () => {
     expect(env.ctx.media.size).toBe(0);
   });
 
+  it.each(["obraz", "dokument"])("izoluje i usuwa cache załącznika (%s) dla wskazanego czatu", async kind => {
+    const env = makeEnv();
+    const body = kind === "obraz"
+      ? { image, text: "Sprawdź prawdziwość wiadomości o Warszawie ze zrzutu." }
+      : { document: { mime: "text/plain", base64: Buffer.from("Warszawa jest stolicą Polski.").toString("base64") } };
+    const first = await chat(env, body);
+    const sessionId = first.json.sessionId;
+    expect(first.json.reply.report.cacheHit).toBe(false);
+    expect((await chat(env, { ...body, sessionId }, first.cookie)).json.reply.report.cacheHit).toBe(true);
+    const second = await chat(env, body);
+    expect(second.json.reply.report.cacheHit).toBe(false);
+    expect(env.calls).toHaveLength(2);
+
+    const cleanup = await env.app.request("/api/chats/" + sessionId, { method: "DELETE", headers: { cookie: first.cookie } });
+    expect(cleanup.status).toBe(200);
+    expect(env.db.prepare("SELECT cache_key FROM computation_cache WHERE session_id = ?").all(sessionId)).toEqual([]);
+    expect(env.db.prepare("SELECT cache_key FROM cache_tombstones WHERE instr(cache_key, ?) = 1").all(sessionId + ":")).toEqual([]);
+    expect((await chat(env, { ...body, sessionId: second.json.sessionId }, second.cookie)).json.reply.report.cacheHit).toBe(true);
+  });
+
   it("odpowiada na pytanie o zawartość załączonego zdjęcia z pikseli", async () => {
     const google = vi.fn<typeof fetch>();
     const env = makeEnv({ fetch: google, cfg: { reverseImageProvider: "google_vision", googleVisionApiKey: "test" } });
@@ -204,6 +224,30 @@ describe("pliki wysłane do /api/chat", () => {
     expect(env.ctx.media.size).toBe(0);
   });
 
+  it("przekazuje nagranie do silnika, usuwa bajty z pamięci i zapisuje tylko nazwę pliku w historii", async () => {
+    const env = makeEnv();
+    const recording = { mime: "audio/wav", base64: Buffer.from("private voice recording for transport test").toString("base64") };
+    const post = (body: object, cookie = "") => env.app.request("/api/chat/recording", {
+      method: "POST", headers: { "content-type": "application/json", cookie }, body: JSON.stringify(body),
+    });
+    const invalid = await post({ recording, document: { mime: "text/plain", base64: "YQ==" } });
+    expect(invalid.status).toBe(400);
+    const accepted = await post({ recording, fileName: "Wiadomość.wav", text: "Sprawdź to nagranie" });
+    expect(accepted.status).toBe(200);
+    expect(env.calls).toHaveLength(1);
+    expect(env.calls[0]).toMatchObject({ kind: "recording", recording, text: "Sprawdź to nagranie" });
+    expect(env.ctx.media.size).toBe(0);
+    const stored = JSON.stringify(env.db.prepare("SELECT * FROM web_chat_turns").all());
+    expect(stored).toContain("Wiadomość.wav");
+    expect(stored).not.toContain(recording.base64);
+    expect(await accepted.text()).not.toContain(recording.base64);
+    const cookie = accepted.headers.get("set-cookie")!.split(";")[0]!;
+    await post({ recording, text: "Sprawdź to nagranie" }, cookie);
+    expect(env.calls).toHaveLength(1);
+    await post({ recording, text: "Sprawdź to nagranie" });
+    expect(env.calls).toHaveLength(2);
+  });
+
   it("odrzuca zły typ pliku i niejednoznaczne załączniki przed analizą", async () => {
     const env = makeEnv();
     const document = { mime: "text/plain", base64: Buffer.from("test").toString("base64") };
@@ -241,6 +285,7 @@ describe("API podstawowe", () => {
     expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
     expect(r.headers.get("x-content-type-options")).toBe("nosniff");
     expect(r.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(r.headers.get("permissions-policy")).toBe("camera=(), microphone=(self), geolocation=(), payment=()");
     const w = await env.app.request("/w/abc");
     expect(w.headers.get("x-robots-tag")).toContain("noindex");
     const health = await env.app.request("/api/health");

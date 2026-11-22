@@ -17,11 +17,13 @@ function jsonRes(body: unknown, status = 200): Response {
 }
 
 const OK_BODY = {
+  status: "completed",
   model: "gpt-6-luna",
   usage: { input_tokens: 1000, output_tokens: 100 },
   output: [
     {
       type: "web_search_call",
+      status: "completed",
       action: {
         type: "search",
         query: "x",
@@ -70,6 +72,7 @@ describe("buildSearchRequestBody", () => {
     const body = buildSearchRequestBody("Szwecja w NATO", HOSTS, { model: "m", effort: "low", maxToolCalls: 2 }) as any;
     expect(body.store).toBe(false);
     expect(body.tools[0].type).toBe("web_search");
+    expect(body.tools[0].external_web_access).toBe(true);
     expect(body.tools[0].filters.allowed_domains).toEqual(HOSTS);
     expect(body.include).toContain("web_search_call.action.sources");
     expect(body.tool_choice).toBe("required");
@@ -143,6 +146,18 @@ describe("isSearchResultsUrl", () => {
 });
 
 describe("OpenAiSearchProvider", () => {
+  it("treats a failed or missing search as unavailable even when the API returns HTTP 200 and citations", async () => {
+    const message = OK_BODY.output[1];
+    for (const body of [
+      { ...OK_BODY, status: "failed" },
+      { ...OK_BODY, output: [message] },
+      { ...OK_BODY, output: [{ ...OK_BODY.output[0], status: "failed" }, message] },
+    ]) {
+      const provider = new OpenAiSearchProvider({ apiKey: "k", model: "m", fetchImpl: async () => jsonRes(body) });
+      await expect(provider.search("topic", HOSTS)).rejects.toMatchObject({ reason: "bad_response" });
+    }
+  });
+
   it("zwraca tylko adresy z dokładnych hostów katalogu i raportuje zużycie z kosztem wyszukiwania", async () => {
     let seenUrl = "";
     let seenBody: any;
@@ -231,6 +246,42 @@ describe("OpenAiSearchProvider", () => {
         }),
     });
     await expect(p.search("x", HOSTS)).rejects.toBeInstanceOf(SearchUnavailableError);
+  });
+
+  it("does not retry without the tool-call spending limit", async () => {
+    let calls = 0;
+    const provider = new OpenAiSearchProvider({
+      model: "m", apiKey: "k", fetchImpl: async () => {
+        calls++;
+        return jsonRes({ error: { param: "max_tool_calls" } }, 400);
+      },
+    });
+    await expect(provider.search("topic", HOSTS)).rejects.toBeInstanceOf(SearchUnavailableError);
+    expect(calls).toBe(1);
+  });
+
+  it("reserves each outgoing request, including retries and searches concurrent with a failed request", async () => {
+    let remaining = 2;
+    let requests = 0;
+    const provider = new OpenAiSearchProvider({ apiKey: "k", model: "m",
+      reserveRequest: () => remaining-- > 0,
+      fetchImpl: async () => {
+        requests++;
+        return jsonRes({ error: { param: "reasoning.effort" } }, 400);
+      },
+    });
+    const results = await Promise.allSettled([provider.search("one", HOSTS), provider.search("two", HOSTS)]);
+    for (const result of results) expect(result).toMatchObject({ status: "rejected", reason: { reason: "budget" } });
+    expect(requests).toBe(2);
+  });
+
+  it("records reported token usage even for an unsuccessful response without an output array", async () => {
+    const usages: SearchUsage[] = [];
+    const provider = new OpenAiSearchProvider({ apiKey: "k", model: "m", onUsage: u => usages.push(u),
+      fetchImpl: async () => jsonRes({ status: "failed", usage: { input_tokens: 15, output_tokens: 3 } }),
+    });
+    await expect(provider.search("one", HOSTS)).rejects.toMatchObject({ reason: "bad_response" });
+    expect(usages).toMatchObject([{ inputTokens: 15, outputTokens: 3, searchCalls: 0 }]);
   });
 
   it("pusta lista hostów lub pusty tekst → brak wywołania i pusty wynik", async () => {

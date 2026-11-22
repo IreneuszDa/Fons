@@ -8,13 +8,15 @@ import { OpenAiVideoAnalysisError } from "./openai-video";
 import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, SocialVideoSourceError, type SocialVideoMetadata } from "./social-source";
 import { publicPostUrl, type createVideoLoader, type loadVideoCaption } from "./platforms";
 import { subtitleStart } from "./webvtt";
+import { decodeVideo } from "./decode";
+import { MAX_RECORDING_BYTES } from "../../shared/attachments";
 
 export type VideoServices =
   | { load: ReturnType<typeof createVideoLoader>; analyze: VideoAnalyzer; provider?: "openai" | "gemini"; processingRegion?: "us" | "eea" }
   | { loadCaption: typeof loadVideoCaption };
 
-export function hasOnlyTranscript(video: VideoAnalysis): boolean {
-  return video.status === "subtitles_only" || video.status === "transcript_only";
+export function hasOnlyText(video: VideoAnalysis): boolean {
+  return video.status === "subtitles_only" || video.status === "transcript_only" || video.status === "caption_only";
 }
 
 /** Keep the original cue time, including for a sentence split over adjacent WebVTT cues. */
@@ -52,6 +54,7 @@ let activeVideos = 0;
 const ANALYSIS_DISABLED = "Analiza obrazu i dźwięku jest wyłączona w tej instalacji. Możesz wkleić transkrypcję lub treść twierdzenia.";
 
 function videoFailure(error: unknown, loading: boolean, platform: VideoAnalysis["platform"], provider?: VideoAnalysis["provider"]): string {
+  if (error instanceof Error && error.message === "audio_no_speech") return "Nie rozpoznałem mowy w nagraniu. Możesz podać treść wypowiedzi do sprawdzenia.";
   if (provider === "openai" && error instanceof LlmUnavailableError) {
     if (error.message === "eu_residency_not_enabled") return "OpenAI odrzucił żądanie w wybranym regionie UE. Sprawdź ustawienia projektu OpenAI.";
     if (error.message === "auth" || error.reason === "no_key") return "OpenAI odrzucił dostęp do analizy filmu. Sprawdź klucz OPENAI_API_KEY i jego uprawnienia do modeli.";
@@ -69,7 +72,8 @@ function videoFailure(error: unknown, loading: boolean, platform: VideoAnalysis[
   }
   if ((error instanceof SocialVideoSourceError && error.reason === "too_large") ||
       (error instanceof Error && ["video_too_large", "video_too_long"].includes(error.message))) {
-    return `Ten film przekracza limit pobierania lub analizy. Wybierz krótsze nagranie (maksymalnie ${MAX_VIDEO_SECONDS / 60} min i ${MAX_VIDEO_BYTES / 1024 ** 2} MiB) lub wklej transkrypcję.`;
+    const byteLimit = platform.startsWith("upload_") ? MAX_RECORDING_BYTES : MAX_VIDEO_BYTES;
+    return `Nagranie przekracza limit. Wybierz krótszy fragment (maksymalnie ${MAX_VIDEO_SECONDS / 60} min i ${byteLimit / 1024 ** 2} MiB) lub wklej transkrypcję.`;
   }
   if (error instanceof Error && error.message === "video_duration_unknown") {
     return "Nie udało się ustalić długości filmu. Możesz wkleić transkrypcję do sprawdzenia.";
@@ -81,7 +85,7 @@ function videoFailure(error: unknown, loading: boolean, platform: VideoAnalysis[
     return "YouTube nie udostępnił pliku nagrania w tym połączeniu. Możesz wkleić transkrypcję albo treść twierdzenia.";
   }
   return loading
-    ? "Serwis nie udostępnił nagrania. Jeśli post jest prywatny lub wymaga logowania, wklej jego transkrypcję albo konkretne twierdzenie."
+    ? "Serwis nie udostępnił nagrania. Możesz przesłać plik w czacie lub wkleić transkrypcję."
     : `Nie udało się ukończyć analizy filmu przez ${provider === "openai" ? "OpenAI" : "Gemini"}. Spróbuj ponownie lub wklej transkrypcję.`;
 }
 
@@ -92,9 +96,10 @@ export async function readVideo(
   services: VideoServices | undefined,
   stage: (value: VerificationStage) => void,
   signal?: AbortSignal,
+  upload?: { mime: string; base64: string },
 ): Promise<VideoIntake> {
   const analysis: VideoAnalysis = { platform, status: "unavailable", caption: "", transcript: [], observations: [], claimOrigins: [] };
-  const result: VideoIntake = { analysis, url: publicPostUrl(url), claims: [], hits: [], usages: [] };
+  const result: VideoIntake = { analysis, url: upload ? "" : publicPostUrl(url), claims: [], hits: [], usages: [] };
   if (!services) {
     result.message = ANALYSIS_DISABLED;
     return result;
@@ -133,18 +138,28 @@ export async function readVideo(
   let loading = true;
   activeVideos++;
   try {
-    stage("fetching_video");
+    if (!upload) stage("fetching_video");
     result.focus = sanitize(note, "user_message");
     if ("loadCaption" in services) {
+      if (upload) { result.message = ANALYSIS_DISABLED; return result; }
       savePost(await services.loadCaption(url, signal));
       if (analysis.status !== "subtitles_only") result.message = ANALYSIS_DISABLED;
       return result;
     }
     analysis.provider = services.provider ?? "gemini";
-    const media = await services.load(url, signal);
+    loading = !upload;
+    const media = upload ? { caption: "", mimeType: upload.mime, bytes: Buffer.from(upload.base64, "base64"), durationSeconds: undefined as number | undefined }
+      : await services.load(url, signal);
     savePost(media);
     loading = false;
-    stage("analyzing_video");
+    stage(platform === "upload_audio" ? "transcribing_audio" : "analyzing_video");
+    if (upload && "bytes" in media && analysis.provider === "gemini") {
+      // Validate stream types and packet duration before submitting a user file to the provider.
+      const audioOnly = platform === "upload_audio";
+      const decoded = await decodeVideo(media, { includeAudio: audioOnly, continuousAudio: audioOnly, probeOnly: !audioOnly, signal });
+      media.durationSeconds = decoded.durationSeconds;
+      if (decoded.wav) { media.bytes = decoded.wav; media.mimeType = "audio/wav"; }
+    }
     const { data, usage, additionalUsage } = await services.analyze({
       ...("youtubeUrl" in media ? { youtubeUrl: media.youtubeUrl } : { bytes: media.bytes, mimeType: media.mimeType }),
       durationSeconds: media.durationSeconds,
@@ -152,10 +167,17 @@ export async function readVideo(
       caption: analysis.caption, focus: result.focus,
     }, signal);
     result.usages.push(...(additionalUsage ?? []), usage);
-    analysis.status = "analyzed";
+    analysis.status = platform === "upload_audio" ? "transcript_only" : "analyzed";
     if (analysis.transcriptSource !== "platform") {
       analysis.transcript = segments(data.transcript);
       if (analysis.transcript.length) analysis.transcriptSource = analysis.provider;
+    }
+    if (platform === "upload_audio") {
+      if (!analysis.transcript.length) {
+        analysis.status = "unavailable";
+        result.message = "Nie rozpoznałem mowy w nagraniu. Możesz podać treść wypowiedzi do sprawdzenia.";
+      }
+      return result;
     }
     analysis.observations = segments(data.observations);
 
@@ -202,7 +224,14 @@ export async function readVideo(
     }
     if (error instanceof SocialVideoSourceError) savePost(error);
     const message = videoFailure(error, loading, platform, analysis.provider);
-    if (!hasOnlyTranscript(analysis)) result.message = message;
+    if (error instanceof SocialVideoSourceError && error.reason === "unavailable" && analysis.status === "unavailable" && analysis.caption) {
+      const focus = foldForMatch(result.focus ?? "");
+      // A public description can be checked on its own for a general request. A question about
+      // what was said or shown still requires the missing stream or subtitles.
+      if (!focus || /^((hej|prosze) )?(sprawdz|zweryfikuj)( mi)?( prosze)?( czy to prawda| ten (film|post|material)| to)?$/.test(focus)
+        || /\b(opis posta|w opisie|sam opis)\b/.test(focus)) analysis.status = "caption_only";
+    }
+    if (!hasOnlyText(analysis)) result.message = message;
     else if (!(error instanceof SocialVideoSourceError && error.reason === "unavailable")) analysis.mediaIssue = message;
     return result;
   } finally {

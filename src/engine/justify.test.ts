@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Claim, CorpusRecord, EvidenceAssessment } from "../shared/contracts";
+import { passageKind } from "../shared/evidence";
 import { buildJustification, buildSummaryPl, firstSentencePl, type JustifyInput } from "./justify";
 
 function rec(over: Partial<CorpusRecord> & { id: string }): CorpusRecord {
@@ -22,6 +23,14 @@ function rec(over: Partial<CorpusRecord> & { id: string }): CorpusRecord {
     ...over,
   };
 }
+
+it("odróżnia autora ocenianej tezy od komentarza redakcji i fragmentu łączącego oba pola feedu", () => {
+  const record = rec({ id: "factcheck:1", role: "stala_rola", claimReviewed: "Cytowana teza",
+    text: "Cytowana teza\nKomentarz redakcji" });
+  expect(passageKind(record, "Cytowana teza")).toBe("reviewed_claim");
+  expect(passageKind(record, "Komentarz redakcji")).toBe("excerpt");
+  expect(passageKind(record, "teza\nKomentarz")).toBe("structured_data");
+});
 
 function asm(recordId: string, over: Partial<EvidenceAssessment> = {}): EvidenceAssessment {
   return {
@@ -159,10 +168,10 @@ describe("brak potwierdzenia po wyszukiwaniu na żywo", () => {
       }),
     );
 
-  it("gdy live zadziałało i nic nie dotyczy sprawy — wyraźny sygnał „niepotwierdzone”", () => {
+  it("brak trafienia na żywo pozostawia pytanie otwarte, a raport wymienia użyte wyszukiwanie", () => {
     const j = none(["baza wiarygodnych źródeł", "wyszukiwanie na żywo w serwisach z katalogu źródeł"]);
-    expect(j.reasonPl).toContain("tego nie potwierdza");
-    expect(j.reasonPl).toContain("niepotwierdzoną");
+    expect(j.reasonPl).toBe("Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.");
+    expect(j.triedPl).toContain("wyszukiwanie na żywo");
   });
 
   it("bez wyszukiwania na żywo — zwykły komunikat o braku dowodu", () => {

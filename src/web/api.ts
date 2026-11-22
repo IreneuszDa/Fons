@@ -1,16 +1,18 @@
 /**
  * Typed client for the Fons API (docs/MODULES.md, section src/server/ → API).
  */
-import type { ChatImage, ChatDocument, ImageOptions } from "../shared/attachments";
+import type { ChatImage, ChatDocument, ChatRecording, ImageOptions } from "../shared/attachments";
 import type { CatalogSource, ConversationReply, VerdictReport } from "../shared/contracts";
-import { CHAT_STREAM_CONTENT_TYPE, VERIFICATION_STAGES, type ChatResponse, type ChatStreamEvent, type VerificationStage } from "../shared/chat";
+import { CHAT_STREAM_CONTENT_TYPE, VERIFICATION_STAGES, type ChatDetail, type ChatResponse, type ChatStreamEvent, type ChatSummary, type VerificationStage } from "../shared/chat";
 
 export interface ChatInput {
   text?: string;
   action?: string;
   image?: ChatImage;
   document?: ChatDocument;
+  recording?: ChatRecording;
   imageOptions?: ImageOptions;
+  fileName?: string;
 }
 
 export interface SourcesResponse {
@@ -55,7 +57,32 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
   }
 }
 
-let sessionId: string | undefined;
+async function chatResource<T>(path: string, message: string, init?: RequestInit): Promise<T> {
+  const res = await request(path, init);
+  const body = await readJson(res);
+  if (!res.ok || !body) throw new ApiError(res.status, messageFrom(body, message));
+  return body as T;
+}
+
+export async function listChats(): Promise<ChatSummary[]> {
+  const { chats } = await chatResource<{ chats: ChatSummary[] }>("/api/chats", "Nie udało się wczytać historii czatów.");
+  return chats;
+}
+
+export async function createChat(): Promise<ChatSummary> {
+  const { chat } = await chatResource<{ chat: ChatSummary }>("/api/chats", "Nie udało się rozpocząć czatu.", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+  });
+  return chat;
+}
+
+export function openChat(id: string): Promise<ChatDetail> {
+  return chatResource(`/api/chats/${encodeURIComponent(id)}`, "Nie udało się otworzyć czatu.");
+}
+
+export async function deleteChat(id: string): Promise<void> {
+  await chatResource(`/api/chats/${encodeURIComponent(id)}`, "Nie udało się usunąć czatu.", { method: "DELETE" });
+}
 
 type ProgressHandler = (stage?: VerificationStage) => void;
 
@@ -83,18 +110,17 @@ async function readChatStream(res: Response, onProgress: ProgressHandler): Promi
   }
 }
 
-export async function sendChat(input: ChatInput, onProgress: ProgressHandler): Promise<ConversationReply> {
-  const res = await request("/api/chat", {
+export async function sendChat(sessionId: string, input: ChatInput, onProgress: ProgressHandler): Promise<ConversationReply> {
+  const res = await request(input.recording ? "/api/chat/recording" : "/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: `${CHAT_STREAM_CONTENT_TYPE}, application/json` },
-    body: JSON.stringify({ ...(sessionId ? { sessionId } : {}), ...input }),
+    body: JSON.stringify({ ...input, sessionId }),
   });
   const isStream = res.headers.get("content-type")?.split(";")[0] === CHAT_STREAM_CONTENT_TYPE;
   const body = isStream ? await readChatStream(res, onProgress) : await readJson(res);
   // 429 also carries a reply of kind "rate_limited".
   if (body && typeof body === "object" && "reply" in body) {
     const data = body as ChatResponse;
-    sessionId = data.sessionId || undefined;
     return data.reply;
   }
   throw new ApiError(res.status, messageFrom(body, "Nie udało się wysłać wiadomości. Spróbuj ponownie."));

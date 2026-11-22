@@ -82,29 +82,33 @@ export interface EraseResult {
  * utworzone przez nadawcę, jego wiersze w sprawach (sprawa bez nadawców znika) i sesje.
  * Zdarzenia bezpieczeństwa zostają jako zanonimizowane liczniki (bez fragmentu i powiązania).
  */
-export function eraseSender(ctx: ServerContext, senderId: string): EraseResult {
+export function eraseSender(ctx: ServerContext, senderId: string, sessionId?: string): EraseResult {
   const db = ctx.db;
-  const sessionIds = db.prepare("SELECT id FROM sessions WHERE sender_id = ?").all(senderId) as { id: string }[];
+  const scope = sessionId ? "sender_id = ? AND session_id = ?" : "sender_id = ?";
+  const sessionsScope = sessionId ? "sender_id = ? AND id = ?" : "sender_id = ?";
+  const params = sessionId ? [senderId, sessionId] : [senderId];
+  const sessionIds = db.prepare(`SELECT id FROM sessions WHERE ${sessionsScope}`).all(...params) as { id: string }[];
   const tx = db.transaction((): EraseResult => {
-    const reports = db.prepare("DELETE FROM reports WHERE sender_id = ?").run(senderId).changes;
-    const runs = eraseRunsForSender(db, senderId);
-    db.prepare("UPDATE security_events SET excerpt = '', sender_id = NULL, session_id = NULL WHERE sender_id = ?").run(senderId);
-    // Wpis cache jest współdzielony (klucz nie zależy od nadawcy): po usunięciu zostaje „nagrobek” do końca TTL,
-    // żeby skasowanie danych i ponowne wysłanie nie otwierało klucza na nowy, być może inny wynik dla wszystkich.
+    const reports = db.prepare(`DELETE FROM reports WHERE ${scope}`).run(...params).changes;
+    const runs = eraseRunsForSender(db, senderId, sessionId);
+    db.prepare(`UPDATE security_events SET excerpt = '', sender_id = NULL, session_id = NULL WHERE ${scope}`).run(...params);
+    // Public digests may be requested by another sender. Private session-scoped keys expire
+    // with this chat and have no subsequent reader, so the tombstone must not retain their prefix.
     db.prepare(
       `INSERT OR REPLACE INTO cache_tombstones (cache_key, until)
-       SELECT cache_key, expires_at FROM computation_cache WHERE sender_id = ?`,
-    ).run(senderId);
-    const cache = db.prepare("DELETE FROM computation_cache WHERE sender_id = ?").run(senderId).changes;
+       SELECT cache_key, expires_at FROM computation_cache WHERE ${scope} AND instr(cache_key, ':') = 0`,
+    ).run(...params);
+    const cache = db.prepare(`DELETE FROM computation_cache WHERE ${scope}`).run(...params).changes;
 
-    const caseIds = (db.prepare("SELECT DISTINCT case_id FROM case_senders WHERE sender_id = ?").all(senderId) as { case_id: number }[]).map((r) => r.case_id);
-    const caseSenders = db.prepare("DELETE FROM case_senders WHERE sender_id = ?").run(senderId).changes;
+    // Reports filed with moderators belong to the sender, possibly from several chats.
+    const caseIds = sessionId ? [] : (db.prepare("SELECT DISTINCT case_id FROM case_senders WHERE sender_id = ?").all(senderId) as { case_id: number }[]).map((r) => r.case_id);
+    const caseSenders = sessionId ? 0 : db.prepare("DELETE FROM case_senders WHERE sender_id = ?").run(senderId).changes;
     for (const id of caseIds) {
       const left = (db.prepare("SELECT COUNT(*) AS n FROM case_senders WHERE case_id = ?").get(id) as { n: number }).n;
       if (left === 0) db.prepare("DELETE FROM moderator_cases WHERE id = ?").run(id);
       else db.prepare("UPDATE moderator_cases SET sender_count = ? WHERE id = ?").run(left, id);
     }
-    const sessions = db.prepare("DELETE FROM sessions WHERE sender_id = ?").run(senderId).changes;
+    const sessions = db.prepare(`DELETE FROM sessions WHERE ${sessionsScope}`).run(...params).changes;
     return { reports, runs, cache, caseSenders, sessions };
   });
   const result = tx();

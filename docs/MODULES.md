@@ -134,11 +134,14 @@ export async function handleInbound(msg: InboundMessage, ctx: ServerContext): Pr
 // index.ts — startuje Hono na PORT; w produkcji serwuje web-dist/
 ```
 API (JSON, prefiks `/api`):
-- `POST /api/chat` `{ sessionId?: string, text?: string, action?: string, image?: { mime, base64 } }` → `{ sessionId, reply: ConversationReply }` (ustawia ciasteczko sesji `pw_sid`, httpOnly, SameSite=Strict)
+- `GET /api/chats` zwraca rozmowy z tej przeglądarki od najnowszej. Właściciela identyfikuje podpisane ciasteczko `pw_sid` z atrybutami HttpOnly i SameSite=Strict.
+- `POST /api/chats` tworzy oddzielną rozmowę. `GET /api/chats/:id` odczytuje jej wiadomości. `DELETE /api/chats/:id` usuwa wybrany czat i jego raporty. We wszystkich operacjach na istniejącym czacie serwer sprawdza właściciela.
+- `POST /api/chat` przyjmuje wybrany `sessionId`, tekst, akcję lub załącznik i zwraca `{ sessionId, reply: ConversationReply }`. Historia zachowuje zamaskowany tekst i nazwę załącznika. Plik służy do przetworzenia bieżącej wiadomości.
   Klient z `Accept: application/x-ndjson, application/json` otrzymuje strumień NDJSON tylko po uruchomieniu silnika. Pierwszy wiersz ma `type: "verification-start"`, a drugi `type: "reply"` wraz z `sessionId` i `reply`. Odpowiedzi rozmowy i trafienia w pamięć podręczną wracają jako zwykły JSON.
+- `POST /api/chat/recording` przyjmuje w tym samym formacie wiadomość z polem `recording: { mime, base64 }`, opcjonalnym pytaniem i nazwą pliku. Limit nagrania wynosi 20 MiB i 10 minut. Dźwięk i klatki trafiają do skonfigurowanego dostawcy analizy mediów.
 - `GET /api/report/:token` → `VerdictReport` (404 dla nieznanego tokenu)
 - `GET /api/sources` → `{ catalog: CatalogSource[], counts: Record<string, number>, snapshotId }`
-- `DELETE /api/session` → usuwa dane bieżącej sesji (raporty, przebiegi, sprawy tego nadawcy)
+- `DELETE /api/session` usuwa dane nadawcy ze wszystkich jego rozmów.
 - `GET /api/health` → `{ ok, corpusRecords, snapshotId, llm: { provider, available, singleKey } }`
 - `POST /api/admin/login`, `GET /api/admin/cases`, `GET /api/admin/metrics`, `GET /api/admin/export.csv|.json` (P2: minimum)
 - `POST /api/channels/:id/webhook` — odbiera wiadomości tylko dla zarejestrowanych adapterów webhookowych. Dla nieskonfigurowanego kanału zwraca HTTP 501.

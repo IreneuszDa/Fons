@@ -19,6 +19,20 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_sender ON sessions(sender_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions(last_seen);
 
+CREATE TABLE IF NOT EXISTS web_chats (
+  session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS web_chat_turns (
+  seq INTEGER PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES web_chats(session_id) ON DELETE CASCADE,
+  user_text TEXT NOT NULL,
+  file_name TEXT,
+  reply_json TEXT NOT NULL,
+  report_token TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_web_chat_turns_session ON web_chat_turns(session_id, seq);
+
 CREATE TABLE IF NOT EXISTS reports (
   token TEXT NOT NULL UNIQUE,
   report_id TEXT NOT NULL,

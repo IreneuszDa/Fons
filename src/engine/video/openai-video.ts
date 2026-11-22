@@ -131,7 +131,8 @@ export function createOpenAiVideoAnalyzer(options: {
       deadline.throwIfAborted();
       const { frames, audio, durationSeconds } = await decode(video, { includeAudio: !cues.data.length, signal: deadline });
       if (cues.data.some(c => c.seconds > durationSeconds)) throw new LlmUnavailableError("provider_error", "video_subtitles_invalid");
-      if (!frames.length) throw new LlmUnavailableError("provider_error", "video_decode_failed");
+      const audioOnly = video.mimeType.startsWith("audio/");
+      if (!frames.length && !audioOnly) throw new LlmUnavailableError("provider_error", "video_decode_failed");
       const transcript = [...cues.data].sort((a, b) => a.seconds - b.seconds);
       if (!cues.data.length && audio) {
         // Settle both requests before propagating failure so simultaneous, billed uploads are accounted for.
@@ -145,6 +146,11 @@ export function createOpenAiVideoAnalyzer(options: {
           }
         }
         fullTranscript = transcript;
+      }
+      if (audioOnly) {
+        const [usage, ...additionalUsage] = transcriptions;
+        if (!usage || !transcript.length) throw new LlmUnavailableError("provider_error", "audio_no_speech");
+        return { data: { transcript, claims: [], observations: [] }, usage, additionalUsage };
       }
       const safeTranscript = transcript.map(cue => ({ seconds: cue.seconds, text: sanitizeVideoText(cue.text, "ocr") })).filter(cue => cue.text);
       const caption = sanitizeVideoText(video.caption?.slice(0, 8000) ?? "", "fetched_page");

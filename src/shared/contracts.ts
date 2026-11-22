@@ -152,7 +152,7 @@ export type CorpusRecord = z.infer<typeof CorpusRecord>;
 
 // ───────────────────────────── Wejście ─────────────────────────────
 
-export const InputKind = z.enum(["text", "url", "image"]);
+export const InputKind = z.enum(["text", "url", "image", "recording"]);
 export type InputKind = z.infer<typeof InputKind>;
 
 /** Wiadomość przychodząca z dowolnego kanału, po parsowaniu przez adapter. */
@@ -168,6 +168,7 @@ export const InboundMessage = z.object({
   action: z.string().optional(),
   images: z.array(z.object({ mime: z.string(), dataRef: z.string() })).default([]),
   document: z.object({ dataRef: z.string() }).optional(),
+  recording: z.object({ dataRef: z.string() }).optional(),
   imageOptions: z.object({ searchWeb: z.boolean().optional() }).optional(),
 });
 export type InboundMessage = z.infer<typeof InboundMessage>;
@@ -196,6 +197,7 @@ export const NormalizedInput = z.object({
   submittedUrl: z.string().optional(),
   pageTitle: z.string().optional(),
   pagePublishedAt: z.string().optional(),
+  pageDisplayedDate: z.string().optional(),
   /** Moment zgłoszenia — kotwica dla „wczoraj/dziś”. */
   receivedAt: z.string(),
   /** Tekst z zamienionymi datami względnymi na bezwzględne (do hasha cache i ekstrakcji). */
@@ -217,6 +219,7 @@ export const Claim = z.object({
   temporal: z.object({
     kind: z.enum(["jednorazowe", "stan", "brak"]),
     date: z.string().optional(), // ISO, jeśli ustalona
+    asOf: z.string().optional(), // punkt odniesienia dla stanu opisanego w datowanym artykule
   }),
   /** Zgodność n-gramów z wejściem (0–1); poniżej progu twierdzenie odrzucane. */
   inputOverlap: z.number(),
@@ -254,6 +257,7 @@ export const EvidenceAssessment = z.object({
   quoteVerified: z.boolean(),
   quoteMatchScore: z.number(),
   fixedRoleMatch: FixedRoleMatch.optional(), // tylko dla stala_rola
+  partialMeaning: z.enum(["coverage", "correction"]).optional(),
   verifier: VerifierVote.default("brak"),
   /** Czy dowód jest rozstrzygający wg PLAN §4 (wyliczane w kodzie). */
   decisive: z.boolean().default(false),
@@ -271,6 +275,8 @@ export const EvidenceItem = z.object({
   fetchedAt: z.string(),
   url: z.string(),
   quote: z.string(),
+  passageKind: z.enum(["excerpt", "structured_data", "reviewed_claim"]).optional(),
+  partialMeaning: EvidenceAssessment.shape.partialMeaning,
   relation: Relation,
   aspect: Aspect,
   sourceType: SourceType,
@@ -367,8 +373,8 @@ export type SourceActivity = z.infer<typeof SourceActivity>;
 
 const VideoSegment = z.object({ seconds: z.number().nonnegative(), text: z.string() });
 export const VideoAnalysis = z.object({
-  platform: z.enum(["tiktok", "instagram", "facebook", "youtube"]),
-  status: z.enum(["analyzed", "subtitles_only", "transcript_only", "unavailable"]),
+  platform: z.enum(["tiktok", "instagram", "facebook", "youtube", "upload_audio", "upload_video"]),
+  status: z.enum(["analyzed", "subtitles_only", "transcript_only", "caption_only", "unavailable"]),
   provider: z.enum(["openai", "gemini"]).optional(),
   transcriptSource: z.enum(["platform", "openai", "gemini"]).optional(),
   mediaIssue: z.string().optional(),
@@ -416,6 +422,8 @@ export const VerdictReport = z.object({
   /** Gałęzie wyszukiwania, które nie zadziałały (bez treści błędów). */
   unavailableBranches: z.array(z.string()),
   sourceActivity: SourceActivity.optional(),
+  /** Metadata of the submitted page, after its body was successfully read. */
+  article: z.object({ url: z.string(), title: z.string().optional(), publishedAt: z.string().optional(), displayedDate: z.string().optional() }).optional(),
   /** Trafienia detektora — przy każdym trafieniu w cache serwer zapisuje je ponownie w logu zdarzeń. */
   securityEvents: z.array(DetectorHit).default([]),
   /**
@@ -435,6 +443,13 @@ export const VerdictReport = z.object({
       evidence: z.array(EvidenceItem).min(1),
     })
     .optional(),
+  /** Independent questions in one message retain separate evidence and availability. */
+  questionParts: z.array(z.object({
+    questionPl: z.string(),
+    answerPl: z.string(),
+    status: z.enum(["answered", "insufficient", "unavailable"]),
+    evidence: z.array(EvidenceItem),
+  })).optional(),
   /** Sprawa moderatora utworzona/zaktualizowana — tylko po faktycznym zapisie. */
   moderatorCase: z
     .object({ caseId: z.string(), action: z.enum(["created", "updated", "recommended"]) })
@@ -455,7 +470,7 @@ export type VerdictReport = z.infer<typeof VerdictReport>;
 
 export function reportEvidence(report: VerdictReport): EvidenceItem[] {
   const byId = new Map<string, EvidenceItem>();
-  for (const entry of [...report.verdicts.flatMap(v => v.evidence), ...(report.answer?.evidence ?? [])]) {
+  for (const entry of [...report.verdicts.flatMap(v => v.evidence), ...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(p => p.evidence) ?? [])]) {
     if (!byId.has(entry.recordId)) byId.set(entry.recordId, entry);
   }
   return [...byId.values()];

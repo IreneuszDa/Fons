@@ -2,6 +2,7 @@
  * Pure presentation helpers for VerdictReport / ConversationReply (labels, grouping, tones).
  * Only `import type` from contracts, so zod never lands in the browser bundle.
  */
+import { mediaClaimSubject } from "../../shared/attachments";
 import type {
   Aspect,
   ClaimVerdict,
@@ -222,8 +223,12 @@ export function firstSentence(text: string, max = 220): string {
 export function announcementFor(reply: ConversationReply): string {
   const view = replyView(reply);
   const r = reply.report;
+  if (r?.status === "OK" && r.questionParts?.length) return `Liczba sprawdzonych pytań: ${r.questionParts.length}. Odpowiedzi są gotowe.`;
+  if (view === "verdict" && r && r.verdicts.length > 1 && !r.videoAnalysis) {
+    return `Liczba sprawdzonych twierdzeń: ${r.verdicts.length}. Każde ma osobną ocenę.`;
+  }
   if (view === "verdict" && r?.mainVerdict) {
-    const label = r.videoAnalysis ? "Ocena głównego twierdzenia z filmu" : "Wynik sprawdzenia";
+    const label = r.videoAnalysis ? `Ocena głównego twierdzenia z ${mediaClaimSubject(r.videoAnalysis)}` : "Wynik sprawdzenia";
     return `${label}: ${VERDICT_LABEL_PL[r.mainVerdict]}. ${firstSentence(r.summaryPl)}`.trim();
   }
   if (view === "answer" && r) {

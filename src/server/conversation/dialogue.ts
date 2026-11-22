@@ -8,6 +8,8 @@ import type { ServerContext } from "../context";
 import { getReportForSender } from "../reports";
 import type { SessionRow } from "../sessions";
 import { canVerifyWithoutDialogue, conversationReply, localConversationKind } from "./agent";
+import { asksToCheckMaterial } from "../../engine/article-intent";
+import { separateQuestions } from "../../engine/question-parts";
 import { obviousImageFocus, resolveImageFocus } from "./image-intent";
 import { readDocument } from "./document";
 import { linksIn, maskedConversationText, resolveUserLink } from "./history";
@@ -25,8 +27,8 @@ export function reportReply(kind: "sources" | "why", ctx: ServerContext, session
   if (!report) return { kind: "help", textPl: NO_REPORT_TEXT, quickReplies: [QR.help] };
   const resultUrl = resultUrlFor(ctx, report.token);
   return kind === "sources"
-    ? { kind, textPl: sourcesText(report, resultUrl), quickReplies: [QR.why, QR.delete], resultUrl }
-    : { kind, textPl: whyText(report), quickReplies: [QR.sources, QR.delete], resultUrl };
+    ? { kind, textPl: sourcesText(report, resultUrl), quickReplies: [QR.why], resultUrl }
+    : { kind, textPl: whyText(report), quickReplies: [QR.sources], resultUrl };
 }
 
 export async function respondToMessage(
@@ -59,12 +61,15 @@ ${content}` : content;
   if (built.reject) return built.reject;
   const req = built.req!;
   const verifyOriginal = () => runVerification(ctx, msg, session, { req, logInput: built.logInput }, opts);
+  if (req.kind === "recording") return verifyOriginal();
   if (req.kind === "url" && req.url && socialVideoPlatform(req.url)) return verifyOriginal();
   if (ctx.security.hasInjection?.(msg.text)) {
     if (req.kind === "image") req.imageFocus = "claims";
     return verifyOriginal();
   }
-  if (req.kind === "url" && req.text?.includes("?")) return verifyOriginal();
+  if (req.kind === "url" && (asksToCheckMaterial(req.text) || req.text?.includes("?")
+    || /(?:^|\s)(?:oceń|ocen|rzuć okiem|przyjrzyj się|przejrzyj|sprawdź|zweryfikuj|przeanalizuj)(?!\p{L})/iu.test(req.text ?? ""))) return verifyOriginal();
+  if (req.kind === "text" && separateQuestions(req.text).length) return verifyOriginal();
   if (req.kind === "text" && req.text && !fallbackCommand &&
     asksAboutDemagogReview(req.text) && (!session.state.history?.length || req.text.trim().split(/\s+/u).length > 6)) {
     return verifyOriginal();
@@ -132,6 +137,7 @@ ${content}` : content;
   }
   if (decision.kind === "reply") return { kind: "help", textPl: decision.text, quickReplies: [] };
   if (decision.kind !== "verify") return reportReply(decision.kind, ctx, session);
+  if (req.kind === "url") return verifyOriginal();
 
   const query = decision.query ?? text;
   const selected = linksIn(query);

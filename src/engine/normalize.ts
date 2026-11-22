@@ -31,7 +31,7 @@ export const MAX_PAGE_CHARS = 16000;
 export const MAX_IMAGES = 2;
 
 export interface NormalizeRequest {
-  kind: "text" | "url" | "image";
+  kind: NormalizedInput["kind"];
   text?: string;
   url?: string;
   images?: { mime: string; base64: string }[];
@@ -74,7 +74,7 @@ function finish(
   ctx: NormalizeContext,
   hits: DetectorHit[],
   warnings: string[],
-  extra: Pick<NormalizedInput, "submittedUrl" | "pageTitle" | "pagePublishedAt" | "userNote" | "attachmentText" | "visibleDates">,
+  extra: Pick<NormalizedInput, "submittedUrl" | "pageTitle" | "pagePublishedAt" | "pageDisplayedDate" | "userNote" | "attachmentText" | "visibleDates">,
   usage: ModelUsage[],
   inputHash?: string,
 ): NormalizeOutcome {
@@ -89,6 +89,7 @@ function finish(
     ...(extra.submittedUrl ? { submittedUrl: masked(extra.submittedUrl) } : {}),
     ...(extra.pageTitle ? { pageTitle: masked(extra.pageTitle) } : {}),
     ...(extra.pagePublishedAt ? { pagePublishedAt: extra.pagePublishedAt } : {}),
+    ...(extra.pageDisplayedDate ? { pageDisplayedDate: extra.pageDisplayedDate } : {}),
     receivedAt: ctx.receivedAt.toISOString(),
     textResolvedDates,
     detectorHits: dedupeHits(hits),
@@ -233,7 +234,8 @@ async function normalizeUrl(req: NormalizeRequest, ctx: NormalizeContext): Promi
   hits.push(...noteHits);
   if (noteHits.length > 0 && !warnings.includes("injection_detected")) warnings.push("injection_detected");
   const cleanNote = note ? cleanText(noteHits.length > 0 ? stripFlaggedSentences(note, noteHits) : note) : "";
-  if (!pageText && !(hits.some(h => h.location === "fetched_page") && cleanNote)) {
+  const bodyContent = cleanText(body);
+  if (!bodyContent || bodyContent === cleanText(title)) {
     return fail("NIEPELNE", STATUS_PL.pageEmpty, page.finalUrl, hits);
   }
   const subject = (userNote: string) => userNote && pageText
@@ -250,6 +252,7 @@ async function normalizeUrl(req: NormalizeRequest, ctx: NormalizeContext): Promi
       attachmentText: truncateWords(cleanText(body), MAX_PAGE_CHARS),
       ...(title ? { pageTitle: cleanText(title) } : {}),
       ...(isoDateOrUndefined(page.publishedAt) ? { pagePublishedAt: page.publishedAt } : {}),
+      ...(isoDateOrUndefined(page.displayedDate) ? { pageDisplayedDate: page.displayedDate } : {}),
     },
     [],
   );

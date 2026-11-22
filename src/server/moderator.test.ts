@@ -29,6 +29,7 @@ describe("pętla informacji", () => {
     const a = await chat(env, { text: "Producent lodów dodaje szkło do waniliowych" });
     expect(a.json.reply.report.moderatorCase).toMatchObject({ action: "created" });
     expect(a.json.reply.textPl).toMatch(/Sprawa #1 utworzona/);
+    expect(a.json.reply.shortAnswer.caseNotePl).toMatch(/Sprawa #1 utworzona/);
     const a2 = await chat(env, { text: "Producent lodów dodaje szkło do waniliowych!" }, a.cookie); // ten sam nadawca
     expect(a2.json.reply.report.moderatorCase).toMatchObject({ caseId: "1", action: "updated" });
     expect(n(env, "SELECT sender_count AS n FROM moderator_cases WHERE id = 1")).toBe(1);
@@ -140,6 +141,7 @@ describe("pętla informacji", () => {
     expect(r.json.reply.kind).toBe("verdict");
     expect(r.json.reply.textPl).not.toMatch(/Sprawa #/);
     expect(r.json.reply.textPl).toContain("Nie udało się teraz zapisać sprawy");
+    expect(r.json.reply.shortAnswer.caseNotePl).toContain("Nie udało się teraz zapisać sprawy");
     expect(r.json.reply.report.moderatorCase).toBeUndefined();
     expect(n(env, "SELECT COUNT(*) AS n FROM moderator_cases")).toBe(0); // transakcja wycofana
   });

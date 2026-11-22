@@ -166,7 +166,7 @@ describe("open question → verbatim quote answer built in code", () => {
     expect(e.url).toBe(MINISTER.url);
     expect(MINISTER.text.includes(e.quote)).toBe(true);
     expect(r.summaryPl).toContain("Kancelaria Prezesa Rady Ministrów");
-    expect(r.transparencyPl).toContain("nie pochodzi z wiedzy modelu");
+    expect(r.transparencyPl).toContain("Kod porównał go z zapisanym rekordem");
     expect(d.llm.calls.map((c) => c.purpose)).toEqual(["source_answer", "claims", "open_answer", "verifier"]);
     expect(d.llm.calls.find((c) => c.purpose === "open_answer")!.user).not.toContain("Adam Nowak");
     expect(r.warnings.map((w) => w.kind)).not.toContain("archival_material");
@@ -190,7 +190,7 @@ describe("open question → verbatim quote answer built in code", () => {
     expect(r.summaryPl).toMatch(/^Brak wystarczających dowodów: szukaliśmy odpowiedzi w: baza wiarygodnych źródeł/);
     expect(r.summaryPl).not.toContain("oficjalne kanały");
     expect(r.sourceActivity?.branches).toContainEqual(expect.objectContaining({ id: "official", status: "skipped" }));
-    expect(r.transparencyPl).toContain("nie podajemy odpowiedzi");
+    expect(r.transparencyPl).toContain("Żaden ze sprawdzonych fragmentów nie zawierał bezpośredniej odpowiedzi");
   });
 
   it("a quote that is not in the record is rejected (no answer)", async () => {
@@ -201,8 +201,8 @@ describe("open question → verbatim quote answer built in code", () => {
     expect(r.answer).toBeUndefined();
   });
 
-  it("verifier dissent drops the answer", async () => {
-    const verifier = new FakeLlmProvider({ name: "mistral", family: "mistral", verifierVote: "sprzeciw" });
+  it.each(["sprzeciw", "niepewne"] as const)("withholds an open answer when the quote verifier votes %s", async verifierVote => {
+    const verifier = new FakeLlmProvider({ name: "mistral", family: "mistral", verifierVote });
     const r = await verifyInput(req("Kto jest ministrem spraw zagranicznych?"), deps([MINISTER], new FakeLlmProvider(), verifier));
     expect(r.answer).toBeUndefined();
     expect(verifier.calls.map((c) => c.purpose)).toEqual(["verifier"]);
