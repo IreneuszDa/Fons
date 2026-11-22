@@ -124,35 +124,41 @@ W filmie można prześledzić całe sprawdzenie w Chrome. Pokaz trwa 42 sekundy.
 
 ## ⚡ Co potrafi
 
+Wklej wiadomość, link albo dodaj plik. Przy twierdzeniu Fons pokazuje ocenę i dowody dla poszczególnych części wypowiedzi. Na pytanie otwarte, np. „Kto pełnił ten urząd?”, może odpowiedzieć nazwiskiem i cytatem. Jeśli potrzebuje szczegółów albo sprawdzenie przerwała awaria, czat pokazuje osobny komunikat.
+
 <p align="center">
-  <img src="docs/readme/verdicts.svg" alt="Pięć werdyktów Fons" width="100%">
+  <img src="docs/readme/verdicts.svg" alt="Pięć ocen twierdzenia: potwierdzone, fałszywe, wprowadzające w błąd, brak wystarczających dowodów, nie podlega weryfikacji." width="100%">
 </p>
 
-| | Funkcja | Dlaczego to robi różnicę |
+### Co możesz sprawdzić
+
+| Materiał | Co otrzymujesz |
+|---|---|
+| **Twierdzenie, pytanie lub artykuł** | Krótką odpowiedź po polsku i link do raportu. Przy rozstrzygnięciu raport wskazuje wydawcę, datę i fragment, który wspiera lub obala tezę. Fons sprawdza m.in. daty członkostwa w UE i NATO, kadencje, tury wyborów oraz stawki świadczeń dla wskazanych grup. [Reguły oceny dowodów](docs/VERDICT-RULES.md) |
+| **Zdjęcie lub zrzut ekranu** | Fons może odczytać tekst, metadane i dostępne poświadczenia C2PA. W trybie **Porównaj dwa obrazy** porównuje kopie lokalnie. Przy szukaniu wcześniejszej publikacji korzysta z lokalnego katalogu, a po konfiguracji także z Google Vision. [Zakres porównania](data/image-references/README.md) |
+| **Film lub nagranie** | Możesz przesłać plik albo wkleić link z TikToka, Instagrama, Facebooka lub YouTube. Zakres analizy zależy od dostępnego materiału. Przy pełnym odczycie Fons wskazuje twierdzenia z czasem w nagraniu. Gdy platforma udostępnia tylko opis lub napisy, raport wskazuje tę podstawę. Nagranie możesz też przepisać lub poprosić o jego metadane. |
+| **Dokument** | Dodaj PDF z warstwą tekstową lub plik TXT i zapytaj o jego treść. W czacie możesz również podyktować pytanie i poprawić transkrypcję przed wysłaniem. |
+| **Sprawdzona wiadomość w czytniku** | Otwórz publikację z ekranu startowego, zaznacz fragment i wybierz **Wyjaśnij w czacie**. Fons odnosi się do tych słów w kontekście artykułu. Z czytnika możesz przejść do źródeł. |
+
+Wyszukiwanie łączy dopasowanie słów z wielojęzycznym wyszukiwaniem po znaczeniu. Fons może sięgnąć do urzędowego rejestru, wcześniejszej weryfikacji redakcyjnej albo publikacji z katalogu dopuszczonych wydawców. W zakładce **Źródła** możesz też zachować do 24 fragmentów z obsługiwanych zbiorów GUS BDL i Eurostatu. Każdy fragment ma do 300 znaków i wygasa po siedmiu dniach.
+
+### Raporty i eksport plików
+
+**W czacie** link do wyniku otwiera raport pod `/w/:token`. Raport wygasa po 30 dniach. Do integracji ten sam wynik jest dostępny jako JSON przez `GET /api/report/:token`. PDF jest obsługiwany jako załącznik wejściowy. Widok wyniku nie ma przycisku eksportu do PDF ani DOCX.
+
+**W panelu zespołu** analityk i administrator mogą otworzyć **Eksport** i pobrać plik na dysk. Moderator prowadzi kolejkę spraw, w której system grupuje podobne zgłoszenia. [Panel eksportu](src/web/admin/AccessPanels.tsx) · [Uprawnienia](src/server/auth/permissions.ts)
+
+| Dane do pobrania | Format | Zawartość |
 |---|---|---|
-| 🔬 | **Od twierdzenia do dowodu** | W pełnym raporcie każda sprawdzona część tezy ma własny wynik i przypisane fragmenty wspierające, obalające lub uzupełniające kontekst. Kod sprawdza dosłowność cytatu w zapisanym rekordzie. Przy fragmencie znajdziesz wydawcę, datę i link. |
-| 🗓️ | **Daty, urzędy i liczby** | Fons potrafi zestawić daty przystąpienia kilku państw do UE lub NATO, odróżnić tury wyborów i sprawdzić, kto pełnił urząd w danym okresie. Przy porównaniu stawek świadczenia sprawdza grupę uprawnionych, okres i jednostkę. Gdy źródła podają różne szacunki tego samego zjawiska, może pokazać obie wartości z datami i cytatami. |
-| 📐 | **Jawne reguły werdyktu** | Dziewięć reguł zamienia ocenę dowodów w werdykt. Przy tych samych ocenach i metadanych reguły dają ten sam wynik. [Reguły werdyktu](docs/VERDICT-RULES.md) |
-| 🧑‍⚖️ | **Weryfikacja wniosku** | Osobne wywołanie modelu sprawdza, czy cytaty i metadane uzasadniają wniosek. Raport wskazuje, czy weryfikator korzystał z innego dostawcy. |
-| 🎬 | **Filmy z TikToka, Instagrama, Facebooka i YouTube** | Wklejasz link. Fons czyta opis i napisy, próbkuje do 32 klatek, transkrybuje dźwięk i wskazuje do 6 twierdzeń z **czasem w nagraniu**. |
-| 🖼️ | **Zrzuty ekranu i obrazy** | OCR, metadane, C2PA i wyszukiwanie wcześniejszych publikacji. Wybierz „Dodaj plik” → „Porównaj dwa obrazy”, żeby sprawdzić zgodność dwóch kopii lokalnie. [Zakres porównania i katalog zdjęć](data/image-references/README.md) |
-| 🎙️ | **Głos i dokumenty** | Prześlij nagranie z prośbą „Przepisz nagranie” lub z twierdzeniem do sprawdzenia. Polecenie „Pokaż metadane nagrania” odczytuje lokalnie m.in. czas, kodek, częstotliwość próbkowania i liczbę kanałów. Czat obsługuje również dyktowanie, PDF i TXT. |
-| 🔎 | **Wyszukiwanie wielojęzyczne** | Polskie pytanie może prowadzić do publikacji w innym języku. Odpowiedź jest po polsku, a cytat zachowuje język oryginału. Fons łączy indeks tekstowy BM25 z lokalnym modelem `multilingual-e5-small`. |
-| | **Prywatne archiwum materiałów** | W zakładce **Źródła** wklejasz adres z katalogu danych GUS BDL lub Eurostatu, przeglądasz fragment dopuszczony do zapisu i zatwierdzasz wybór. Archiwum mieści 24 fragmenty do 300 znaków każdy. Zapis wygasa po siedmiu dniach. Możesz go też wcześniej usunąć. |
-| | **Rozszerzenia operatora** | Moduł wskazany przez `FONS_EXTENSIONS_MODULE` może dodać kanał wiadomości, model lub wyszukiwarkę przy starcie usługi. [Kontrakt i sposób podłączenia](docs/MODULES.md#rozszerzenia-instalowane-przez-operatora) |
-| 🌐 | **Wyszukiwanie i ponowne użycie źródeł** | Serwer pobiera publikacje z hostów dopuszczonych w katalogu i sprawdza każde przekierowanie. Jeśli zasady wydawcy pozwalają na zapis, może ponownie wykorzystać dokument lub fragment przez maksymalnie 48 godzin. Przy jednoznacznych dowodach pomija dodatkowe wyszukiwanie adresów. Pytania o stan bieżący wymagają świeżego odczytu. |
-| 🗂️ | **Indeks fact-checków** | Pytanie „czy Demagog to sprawdzał?” trafia do Google Fact Check Tools i porównuje tezę z publikacją. |
-| 🛡️ | **Pancerz na prompt injection** | Deterministyczny detektor (PL/EN/RU/UA, homoglify, zero-width, base64, ukryty HTML) działa na **surowej** treści, zanim zobaczy ją model. Treść niezaufana trafia do modelu tylko w blokach z losowym ogranicznikiem. |
-| 🔐 | **Maskowanie i retencja danych** | Fons maskuje wykryte w tekście numery PESEL, telefony, adresy e-mail, numery IBAN i numery kart. Nadawcę identyfikuje pseudonim HMAC. Raport wygasa po 30 dniach, a sesja po 7 dniach bez aktywności. |
-| 🧭 | **Dobór modelu do zadania** | Konfiguracja przykładowa używa OpenAI. Główny model to `gpt-6.2-sol`, a szybki to `gpt-6-luna`. Operator może je zmienić przez `MODEL_MAIN` i `MODEL_FAST`. Przejście na zapasowego dostawcę wymaga skonfigurowania drugiej rodziny modeli i jej klucza. |
-| 📋 | **Kolejka spraw dla moderatora** | „Zgłoś do sprawdzenia” pozwala połączyć podobne zgłoszenia w jedną sprawę. Panel rozdziela uprawnienia moderatora, analityka i administratora. |
-| 🤖 | **Serwer MCP** | `verify_claim`, `search_sources`, `get_report`, `list_sources` przez stdio i HTTP z tokenem. Fons wpina się w Claude, IDE i narzędzia analityczne. |
-| 📈 | **Obserwowalność** | Logi JSON z `X-Request-Id`, `/metrics` dla Prometheusa (czas na krok, koszt) i weryfikowalny łańcuch hashy przebiegów. |
-| 💾 | **Pamięć wyników** | Trafienie w pamięć wyników pozwala pominąć ponowne sprawdzanie tezy. Każda ponowiona próba z wykrytą instrukcją w materiale dostaje osobny wpis w logu bezpieczeństwa. |
+| Sprawy moderatorów | CSV lub JSON | Wszystkie sprawy, także poza bieżącą stroną listy. Eksport obejmuje m.in. treść reprezentatywnego zgłoszenia, status, liczbę unikalnych nadawców, kanały, daty i notatkę moderatora. |
+| Przebiegi sprawdzeń | CSV lub JSON | Dane techniczne, m.in. kanał, rodzaj wejścia, status, werdykt, czas, szacowany koszt, użycie pamięci wyników i wersja silnika. Treść wiadomości i identyfikatory nadawców są pomijane. |
+| Katalog incydentów | STIX 2.1 w pliku JSON | Publiczne adresy powiązane z incydentami oraz udokumentowane przypisania technik DISARM. Po skonfigurowaniu adresu kolekcji TAXII Push i tokenów operator może wysłać pakiet do OpenCTI poleceniem `npm run export:opencti`. [Integracja OpenCTI](integrations/opencti/push.ts) |
 
-<p align="center">
-  <img src="docs/readme/pipeline.svg" alt="Potok weryfikacji krok po kroku" width="100%">
-</p>
+**Integracje i audyt.** Narzędzia MCP pozwalają sprawdzić tezę, przeszukać źródła, pobrać raport i odczytać katalog wydawców. Zespół może śledzić czas i koszt sprawdzeń, korzystać z metryk Prometheusa i weryfikować integralność dziennika przebiegów. Operator może podłączyć własny kanał, model lub wyszukiwarkę. [Narzędzia MCP](docs/TOOLS.md) · [Rozszerzenia operatora](docs/MODULES.md#rozszerzenia-instalowane-przez-operatora)
+
+![Jak Fons wybiera między zapisanym wynikiem, odczytem rejestru i wyszukaniem dowodów dla tezy.](docs/readme/screens/pipeline.gif)
+
+[Otwórz schemat bez animacji](docs/readme/pipeline.svg)
 
 ---
 
