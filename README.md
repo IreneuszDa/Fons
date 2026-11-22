@@ -85,7 +85,7 @@ Na stronie `/telefon` przechodzisz przez trzy kroki. W ostatnim podajesz polski 
 <details>
 <summary>Zobacz trzy kroki zapisu na WhatsApp</summary>
 
-<img src="docs/readme/screens/wa-flow.gif" alt="Przejście przez instrukcję, opis odpowiedzi ze źródłami i formularz numeru telefonu." width="500">
+<img src="docs/readme/screens/wa-flow.gif" alt="Przejście przez instrukcję, opis odpowiedzi ze źródłami i formularz numeru telefonu." width="100%">
 
 </details>
 
@@ -157,6 +157,13 @@ W filmie można prześledzić całe sprawdzenie w Chrome. Pokaz trwa 42 sekundy.
 ---
 
 ## 🧠 Pod maską
+
+![Przebieg A06 od wydzielenia tezy przez wyszukiwanie i kontrolę cytatu do werdyktu.](docs/readme/screens/backend-flow.gif)
+
+**Jak Fons sprawdził datę uchwalenia Konstytucji RP?** W zapisanym przebiegu A06 (v31) szybki model wydzielił tezę z wiadomości. Wyszukiwanie po słowach zwróciło 48 kandydatów, po znaczeniu 43, baza incydentów 10, a wyszukiwanie na żywo 8. Wyniki częściowo się pokrywały. Po ich połączeniu silnik miał **92 różne rekordy**, z których **8 trafiło do oceny**.
+
+Model główny wskazał zdanie Senatu RP: „2 kwietnia 1997 r. Zgromadzenie Narodowe uchwaliło Konstytucję Rzeczypospolitej Polskiej”. Kod sprawdził obecność cytatu w rekordzie, a osobne wywołanie szybkiego modelu potwierdziło, że fragment uzasadnia ocenę. Reguła 7 dała wynik **„Potwierdzone”**. Całe sprawdzenie trwało **16,33 s**, a oszacowany koszt wyniósł **0,033574 USD**, w tym **0,022093 USD** za wyszukiwanie na żywo. [Zapis przebiegu A06 w zestawie 100 raportów](eval/results/teksty-100-v31.json.gz)
+
 
 **Ile kosztuje sprawdzenie?** W dwóch seriach v33 te same 100 pytań tekstowych kosztowało według telemetrii dostawców **3,54 USD i 3,42 USD**. To około **3,5 centa amerykańskiego za pytanie**, przy medianie czasu odpowiedzi odpowiednio **16,74 s i 15,44 s**. Obie serie zaczynały się z pustą bazą. To pomiar kosztu wywołań dla tej próby, bez hostingu i obsługi operatora. [Wyniki i metodologia](docs/konkurs/PROG-075.md)
 
