@@ -133,7 +133,7 @@ import type { CreateBranchesOptions } from "./retrieval";
 
 type Database = BetterSqlite3.Database;
 
-export const PIPELINE_VERSION = "engine-2026.11.22-34";
+export const PIPELINE_VERSION = "engine-2026.11.22-36";
 
 const PER_BRANCH_TIMEOUT_MS = 4000;
 /** Live search (paid, slow) only for the first units in importance order; the rest use the corpus. */

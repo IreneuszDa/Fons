@@ -71,6 +71,8 @@ export interface OpenAiSearchProviderOptions {
   timeoutMs?: number;
   /** Max proposed URLs returned (default 8). */
   maxResults?: number;
+  /** Hosted searches available within one request. The live branch owns the fallback decision. */
+  maxToolCalls?: 1 | 2;
   /** Reasoning effort sent to the model (default "low"; dropped automatically if the model rejects it). */
   effort?: "low" | "medium" | "high";
   onUsage?: (usage: SearchUsage) => void;
@@ -263,6 +265,7 @@ export class OpenAiSearchProvider implements SearchProvider {
   private readonly fetchImpl: FetchLike;
   private readonly timeoutMs: number;
   private readonly maxResults: number;
+  private readonly maxToolCalls: 1 | 2;
   private readonly onUsage?: (u: SearchUsage) => void;
   private readonly reserveRequest?: () => boolean;
   private supportsReasoning = true;
@@ -276,6 +279,7 @@ export class OpenAiSearchProvider implements SearchProvider {
     this.fetchImpl = opts.fetchImpl ?? ((url, init) => fetch(url, init));
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_SEARCH_TIMEOUT_MS;
     this.maxResults = opts.maxResults ?? DEFAULT_MAX_PROPOSALS;
+    this.maxToolCalls = opts.maxToolCalls ?? 2;
     this.onUsage = opts.onUsage;
     this.reserveRequest = opts.reserveRequest;
     this.effort = opts.effort ?? "low";
@@ -298,7 +302,7 @@ export class OpenAiSearchProvider implements SearchProvider {
       const body = buildSearchRequestBody(q, allowedHosts, {
         model: this.model,
         effort: this.supportsReasoning ? this.effort : null,
-        maxToolCalls: 2,
+        maxToolCalls: this.maxToolCalls,
         maxOutputTokens: 1200,
       });
       let res: Response;

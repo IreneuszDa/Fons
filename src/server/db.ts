@@ -270,6 +270,9 @@ export function purgeRetention(db: Db, now: Date): PurgeResult {
     db.prepare("DELETE FROM token_usage WHERE day < ?").run(tokensCut);
     db.prepare("DELETE FROM image_search_usage WHERE day < ?").run(tokensCut);
     const liveSnapshots = purgeLiveSnapshots(db, now);
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'live_documents'").get()) {
+      db.prepare("DELETE FROM live_documents WHERE expires_at <= ?").run(iso);
+    }
     const archives = db.prepare("DELETE FROM material_archives WHERE expires_at <= ?").run(iso).changes;
     return { runs, sessions, reports, cache, securityEvents, liveSnapshots, archives };
   });

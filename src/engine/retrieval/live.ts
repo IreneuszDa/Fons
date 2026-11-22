@@ -14,7 +14,9 @@
  *       teza/ocena przez detektor (high = recenzja odrzucona, zdarzenie przez onSecurityEvent) → też do `live_snapshots`;
  *   4. fragmenty są punktowane leksykalnie względem twierdzenia; recenzje z tezą pasującą do twierdzenia idą przed
  *      fragmentami; zwracane są najlepsze (via "live").
- * Limity na twierdzenie: 2 wyszukiwania, 5 pobrań stron (najwyżej 2 z jednego hosta), 30 s łącznie.
+ * Znane dokumenty sprawdzane są lokalnie; przy pytaniach o bieżące wydarzenia pobieramy świeżą treść.
+ * Drugie wyszukiwanie następuje po odczycie stron, jeżeli wciąż brakuje jednoznacznego dowodu.
+ * Limity na twierdzenie: najwyżej 2 wyszukiwania, 5 pobrań stron (najwyżej 2 z jednego hosta), 30 s łącznie.
  *
  * Uwaga o rolach: zwykłe fragmenty stron fact-checków mają rolę `stala_rola` z katalogu, ale bez oceny, więc nigdy nie
  * rozstrzygają (decisive.ts wymaga rating.mapped). Rozstrzygać może rekord ClaimReview (3a) — ocena znana tabeli
@@ -31,8 +33,8 @@ import {
   canonicalProposal,
   createOpenAiSearchProvider,
   exactHostOf,
-  filterProposedUrls,
   isSearchResultsUrl,
+  SearchUnavailableError,
   type SearchProvider,
   type SearchResultItem,
 } from "../../tools/search";
@@ -50,7 +52,11 @@ import { claimReviewRecords, withClaimReviews } from "./claimreview";
 import { BranchUnavailableError, skipLookup, throwIfAborted } from "./errors";
 import { stripPiiPlaceholders } from "./fts";
 import { chunkText, foldToken, keywordQuery, queryStems, scorePassages } from "./live-score";
-import { ensureLiveSnapshotsTable, LIVE_ID_PREFIX, LIVE_TTL_MS, reserveLiveRequest, saveLiveSnapshots } from "./live-store";
+import {
+  ensureLiveSnapshotsTable, findLiveDocuments, getLiveDocument, invalidateLiveDocument, LIVE_ID_PREFIX, LIVE_TTL_MS,
+  requiresFreshDocument, reserveLiveRequest, saveLiveDocument, saveLiveSnapshots, type LiveDocument,
+} from "./live-store";
+import { canFinishLiveSearch } from "./live-sufficiency";
 import { currentLiveScope, recordLiveUsage } from "./live-usage";
 
 export { ensureLiveSnapshotsTable, getLiveSnapshot, purgeExpiredLiveSnapshots, saveLiveSnapshots, LIVE_TTL_MS } from "./live-store";
@@ -167,18 +173,24 @@ function isoOrNull(s: string | undefined, now: Date): string | null {
   return new Date(t).toISOString();
 }
 
-interface PageResult {
-  finalUrl: string;
+interface PageResult extends LiveDocument {
   source: CatalogSource;
-  title: string;
-  publishedAt: string | null;
-  passages: string[];
-  lang?: string;
-  /** Rekordy ClaimReview z JSON-LD strony (claimreview.ts); puste dla stron bez recenzji i źródeł bez ocen. */
-  reviews: CorpusRecord[];
 }
 
 class DeadlineError extends Error {}
+
+/** An injected provider may ignore cancellation. Late results must never enter this search. */
+async function withinSignal<T>(signal: AbortSignal, work: () => Promise<T>): Promise<T> {
+  if (signal.aborted) throw new DeadlineError();
+  let abort!: () => void;
+  const cancelled = new Promise<never>((_, reject) => { abort = () => reject(new DeadlineError()); });
+  signal.addEventListener("abort", abort, { once: true });
+  try {
+    return await Promise.race([work(), cancelled]);
+  } finally {
+    signal.removeEventListener("abort", abort);
+  }
+}
 
 /** If a query names a publisher, reserve the second search for its own sites. The first still covers the catalogue. */
 function namedPublisherHosts(query: string, catalog: CatalogSource[]): string[] {
@@ -216,6 +228,84 @@ export function sourceForUrl(catalog: CatalogSource[], url: string): CatalogSour
   const path = parsed.pathname || "/";
   const byPrefix = onHost.find((s) => (s.pathPrefixes?.length ?? 0) > 0 && s.pathPrefixes!.some((p) => p !== "" && path.startsWith(p)));
   return byPrefix ?? onHost.find((s) => !s.pathPrefixes || s.pathPrefixes.length === 0);
+}
+
+/** The first and fallback queries share one deadline, one page budget and one catalogue policy. */
+class LiveSearchRounds {
+  private readonly rejected = new Set<string>();
+  private readonly scheduled = new Set<string>();
+  private readonly perHost = new Map<string, number>();
+  completed = 0;
+  failed = false;
+  timedOut = false;
+  providerBlocked = false;
+
+  constructor(
+    private readonly provider: SearchProvider | undefined,
+    private readonly allowedHosts: string[],
+    private readonly sources: CatalogSource[],
+    private readonly limits: LiveLimits,
+    private readonly signal: AbortSignal,
+    private readonly endsAt: number,
+    private readonly day: string | undefined,
+    private readonly drop: (url: string, reason: LiveDropReason) => void,
+  ) {}
+
+  stageSignal(fraction: number): AbortSignal {
+    const ms = Math.max(1, Math.ceil((this.endsAt - Date.now()) * fraction));
+    return AbortSignal.any([this.signal, AbortSignal.timeout(ms)]);
+  }
+
+  async discover(text: string, hosts: string[], timeFraction: number): Promise<string[]> {
+    const provider = this.provider;
+    if (!provider) throw new BranchUnavailableError("live", "no_provider_configured");
+    const signal = this.stageSignal(timeFraction);
+    let proposals: SearchResultItem[];
+    try {
+      const query = this.day ? `${text} (data pytania: ${this.day})` : text;
+      proposals = await withinSignal(signal, () => provider.search(query, hosts, signal));
+      this.completed++;
+    } catch (err) {
+      this.failed = true;
+      this.timedOut ||= signal.aborted;
+      this.providerBlocked = err instanceof SearchUnavailableError && ["no_key", "budget", "rate_limit", "residency"].includes(err.reason);
+      return [];
+    }
+    const urls = new Set<string>();
+    for (const proposal of proposals) {
+      const url = canonicalProposal(proposal.url) ?? proposal.url;
+      if (this.rejected.has(url)) continue;
+      const host = exactHostOf(url);
+      let reason: LiveDropReason | undefined;
+      if (!host || !this.allowedHosts.includes(host)) reason = host ? "host_not_allowed" : "unreadable_url";
+      else if (isSearchResultsUrl(url)) reason = "search_page";
+      else if (UNSUPPORTED_PATH.test(new URL(url).pathname)) reason = "unsupported_type";
+      else if (!sourceForUrl(this.sources, url)) reason = "path_not_allowed";
+      if (reason) {
+        this.rejected.add(url);
+        this.drop(url, reason);
+      } else urls.add(url);
+    }
+    return [...urls];
+  }
+
+  get remaining(): number {
+    return this.limits.maxFetches - this.scheduled.size;
+  }
+
+  take(urls: string[], count: number): string[] {
+    const batch: string[] = [];
+    for (const url of urls) {
+      if (batch.length >= count || this.remaining <= 0) break;
+      const host = exactHostOf(url)!;
+      const used = this.perHost.get(host) ?? 0;
+      if (used >= LIVE_MAX_PER_HOST || this.scheduled.has(url)) continue;
+      this.perHost.set(host, used + 1);
+      this.scheduled.add(url);
+      batch.push(url);
+    }
+    return batch;
+  }
 }
 
 /**
@@ -257,6 +347,7 @@ export function createLiveBranchFromConfig(
 ): LiveBranch {
   // onUsage: koszt każdego wyszukiwania trafia do zakresu przebiegu (live-usage.ts) → report.models / costUsd.
   return createDbLiveBranch(db, { searchProvider: createOpenAiSearchProvider(cfg, {
+    maxToolCalls: 1,
     onUsage: recordLiveUsage,
     reserveRequest: () => {
       const granted = reserveLiveRequest(db, opts.now?.() ?? new Date(), cfg.webSearchDailyCap);
@@ -299,7 +390,6 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
     required: false,
     timeoutMs: LIVE_BRANCH_TIMEOUT_MS,
     async search(q: RetrievalQuery): Promise<EvidenceCandidate[]> {
-      if (!opts.searchProvider) throw new BranchUnavailableError("live", "no_provider_configured");
       throwIfAborted(q.signal);
       const provider = opts.searchProvider;
       const catalog = getCatalog();
@@ -310,14 +400,9 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
 
       // Łączny limit czasu (LIVE_LIMITS.overallTimeoutMs) lub sygnał wywołującego (co nastąpi wcześniej).
       const deadline = new AbortController();
+      const endsAt = Date.now() + limits.overallTimeoutMs;
       const timer = setTimeout(() => deadline.abort(), limits.overallTimeoutMs);
       const signal = q.signal ? AbortSignal.any([q.signal, deadline.signal]) : deadline.signal;
-      const deadlinePromise = new Promise<never>((_, reject) => {
-        const onAbort = () => reject(new DeadlineError("deadline"));
-        if (signal.aborted) onAbort();
-        else signal.addEventListener("abort", onAbort, { once: true });
-      });
-      deadlinePromise.catch(() => {});
 
       try {
         // 1. Wyszukiwanie (≤ 2): twierdzenie, a jeśli jest — pierwsze dodatkowe zapytanie (np. tłumaczenie EN).
@@ -330,74 +415,31 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
           if (kw && kw !== queries[0]) queries.push(kw);
         }
         queries.length = Math.min(queries.length, limits.maxSearches);
-        if (queries.length === 0) return skipLookup(q);
+        if (queries.length === 0 || limits.maxFetches <= 0) return skipLookup(q);
         const focusedHosts = namedPublisherHosts(texts.join(" "), allowedSources);
-        // Reserve time to actually read the pages even if one of the search requests hangs.
-        const searchSignal = AbortSignal.any([signal, AbortSignal.timeout(Math.ceil(limits.overallTimeoutMs * 0.75))]);
-        const results: (SearchResultItem[] | undefined)[] = [];
         const asOf = Date.parse(q.asOf ?? "");
         const day = Number.isFinite(asOf) ? relativeWindowDay(texts[0]!, new Date(asOf)) : undefined;
-        const searches = queries.map(async (text, index) => {
-          const hosts = index === 1 && focusedHosts.length ? focusedHosts : allowedHosts;
-          results[index] = await provider.search(day ? `${text} (data pytania: ${day})` : text, hosts, searchSignal);
-        });
-        await Promise.race([Promise.allSettled(searches), new Promise<void>(resolve => {
-          if (searchSignal.aborted) resolve();
-          else searchSignal.addEventListener("abort", () => resolve(), { once: true });
-        })]);
-        throwIfAborted(q.signal);
-        const lists = results.filter((result): result is SearchResultItem[] => result !== undefined);
-        if (!lists.length && searchSignal.aborted) throw new BranchUnavailableError("live", "timeout");
-        if (lists.length === 0) throw new BranchUnavailableError("live", "search_failed");
-        if (lists.length < queries.length) q.onCoverage?.("partial");
-
-        // 2. Kod decyduje: dokładny host w katalogu, typ pierwotne/factcheck, deduplikacja, ≤ 5 stron (na przemian z list).
-        const proposals: string[] = [];
-        const maxLen = Math.max(...lists.map((l) => l.length));
-        for (let i = 0; i < maxLen; i++) for (const l of lists) if (l[i]) proposals.push(l[i]!.url);
-        const accepted = filterProposedUrls(proposals.map((url) => ({ url })), allowedHosts).map((p) => p.url);
-        const acceptedSet = new Set(accepted);
-        for (const url of new Set(proposals)) {
-          const canon = canonicalProposal(url);
-          if (!canon || !acceptedSet.has(canon)) drop(url, canon && exactHostOf(url) ? "host_not_allowed" : "unreadable_url");
-        }
+        const refresh = requiresFreshDocument(q);
         const pages: PageResult[] = [];
-        const toFetch: string[] = [];
-        // Różnorodność: najwyżej LIVE_MAX_PER_HOST stron z jednego hosta — host blokujący boty (np. HTTP 429)
-        // nie zabiera wtedy całego limitu pobrań, a dowody pochodzą od różnych wydawców.
-        const perHost = new Map<string, number>();
-        for (const url of accepted) {
-          // Wyszukiwarki serwisów i strony wyników odbijają zapytanie albo zbierają fragmenty z dowolnych podstron
-          // (fora) — treść nie pochodzi od wydawcy z katalogu, więc nigdy nie jest dowodem.
-          if (isSearchResultsUrl(url)) {
-            drop(url, "search_page");
-            continue;
-          }
-          if (UNSUPPORTED_PATH.test(new URL(url).pathname)) {
-            drop(url, "unsupported_type");
-            continue;
-          }
-          // Źródło zaufane tylko pod częścią hosta (pathPrefixes): adres spoza tych ścieżek nie jest pobierany.
-          if (!sourceForUrl(allowedSources, url)) {
-            drop(url, "path_not_allowed");
-            continue;
-          }
-          const host = exactHostOf(url) ?? "";
-          if ((perHost.get(host) ?? 0) >= LIVE_MAX_PER_HOST || toFetch.length >= limits.maxFetches) continue;
-          perHost.set(host, (perHost.get(host) ?? 0) + 1);
-          toFetch.push(url);
-        }
-        if (toFetch.length === 0) return [];
-
-        // 3. Pobranie stron równolegle; wyniki zbierane na bieżąco (po limicie czasu użyjemy tego, co jest).
+        const readCached = (url: string): PageResult | undefined => {
+          if (refresh || !exactHostOf(url) || isSearchResultsUrl(url) || UNSUPPORTED_PATH.test(new URL(url).pathname)) return;
+          const source = sourceForUrl(allowedSources, url);
+          const document = source && getLiveDocument(db, url, now(), source);
+          if (source && document) return { ...document, source };
+        };
         let hardFailures = 0;
-        const processPage = async (url: string): Promise<PageResult | "failed" | undefined> => {
+        const processPage = async (url: string, fetchSignal: AbortSignal): Promise<PageResult | "failed" | undefined> => {
+          const cached = readCached(url);
+          if (cached && !cached.isExcerpt) return cached;
           let page: FetchedPage;
           try {
-            const remaining = Math.max(500, limits.overallTimeoutMs);
-            page = await fetcher(url, { timeoutMs: remaining, maxBytes: limits.maxPageBytes, signal });
+            page = await fetcher(url, { timeoutMs: Math.max(1, endsAt - Date.now()), maxBytes: limits.maxPageBytes, signal: fetchSignal });
+            if (fetchSignal.aborted) return "failed";
           } catch (e) {
-            // Plik zamiast strony (content_type) to nie awaria: nic nie przeczytano, ale gałąź działa.
+            if (e instanceof FetchBlockedError && (e.httpStatus === 404 || e.httpStatus === 410 ||
+              ["scheme", "port", "private_ip", "too_large", "content_type"].includes(e.reason))) {
+              invalidateLiveDocument(db, url);
+            }
             if (e instanceof FetchBlockedError && e.reason === "content_type") {
               drop(url, "unsupported_type");
               return undefined;
@@ -408,16 +450,19 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
           // Host PO przekierowaniach — ta sama zasada co przed pobraniem.
           const finalHost = exactHostOf(page.finalUrl);
           if (!finalHost || !sourceForHost(allowedSources, finalHost)) {
+            invalidateLiveDocument(db, url);
             drop(url, "final_host_not_allowed");
             return undefined;
           }
           // Ta sama zasada dla ścieżki po przekierowaniach (pathPrefixes); wpis katalogu z końcowego adresu.
           const source = sourceForUrl(allowedSources, page.finalUrl);
           if (!source) {
+            invalidateLiveDocument(db, url);
             drop(url, "path_not_allowed");
             return undefined;
           }
           if (isSearchResultsUrl(page.finalUrl)) {
+            invalidateLiveDocument(db, url);
             drop(url, "search_page");
             return undefined;
           }
@@ -430,20 +475,26 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
           const high = dedup.some((h) => h.severity === "high");
           for (const h of dedup) emit(h, { url: page.finalUrl, host: finalHost, pageDropped: high });
           if (high) {
+            invalidateLiveDocument(db, url);
+            invalidateLiveDocument(db, page.finalUrl);
             drop(page.finalUrl, "injection_detected");
             return undefined;
           }
           const clean = dedup.length > 0 ? stripFlaggedSentences(page.cleanText, dedup) : page.cleanText;
           const passages = chunkText(clean, { maxPassages: limits.maxPassagesPerPage });
           if (passages.length === 0) {
+            invalidateLiveDocument(db, url);
+            invalidateLiveDocument(db, page.finalUrl);
             drop(page.finalUrl, "no_text");
             return undefined;
           }
-          return {
+          const fetchedAt = now();
+          let hasSecurityEvents = dedup.length > 0;
+          const document: LiveDocument = {
             finalUrl: page.finalUrl,
-            source,
             title: (page.title ?? passages[0]!.split("\n")[0]!).slice(0, 300),
-            publishedAt: isoOrNull(page.publishedAt, now()),
+            publishedAt: isoOrNull(page.publishedAt, fetchedAt),
+            fetchedAt: fetchedAt.toISOString(),
             passages,
             lang: page.lang,
             reviews: claimReviewRecords({
@@ -451,21 +502,61 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
               lang: page.lang,
               source,
               finalUrl: page.finalUrl,
-              fetchedAt: now(),
-              onSecurityEvent: (h) => emit(h, { url: page.finalUrl, host: finalHost, pageDropped: false }),
+              fetchedAt,
+              onSecurityEvent: (h) => {
+                hasSecurityEvents = true;
+                emit(h, { url: page.finalUrl, host: finalHost, pageDropped: false });
+              },
             }),
           };
+          if (url !== page.finalUrl) invalidateLiveDocument(db, url);
+          if (hasSecurityEvents) invalidateLiveDocument(db, page.finalUrl);
+          else saveLiveDocument(db, document, source, ttlMs, texts[0]);
+          return { ...document, source };
         };
-        const tasks = toFetch.map(async (url) => {
-          const res = await processPage(url);
-          if (res === "failed") hardFailures++;
-          else if (res) pages.push(res);
-        });
-        await Promise.race([Promise.allSettled(tasks), deadlinePromise]).catch((e) => {
-          if (!(e instanceof DeadlineError)) throw e;
-          // Limit czasu: zostają strony, które zdążyły się przetworzyć.
-        });
-        if (hardFailures > 0 || signal.aborted) q.onCoverage?.("partial");
+        const searches = new LiveSearchRounds(provider, allowedHosts, allowedSources, limits, signal, endsAt, day, drop);
+        const read = async (urls: string[], stageSignal: AbortSignal) => {
+          await Promise.all(urls.map(async url => {
+            try {
+              const page = await withinSignal(stageSignal, () => processPage(url, stageSignal));
+              if (page === "failed") hardFailures++;
+              else if (page && !pages.some(p => p.finalUrl === page.finalUrl)) pages.push(page);
+            } catch {
+              hardFailures++;
+            }
+          }));
+        };
+        let sufficient = false;
+        if (!refresh) {
+          const urls = findLiveDocuments(db, texts[0]!, now());
+          const cached = urls.map(readCached).filter((p): p is PageResult => !!p);
+          if (canFinishLiveSearch(q, texts, cached, focusedHosts)) {
+            const excerpts = cached.filter(p => p.isExcerpt);
+            // A short excerpt may omit a correction. Reopen the known URL before trusting it,
+            // and leave room in the shared page budget for discovery if the full text disagrees.
+            if (excerpts.length <= Math.floor(limits.maxFetches / 2)) {
+              pages.push(...cached.filter(p => !p.isExcerpt));
+              const selected = searches.take(excerpts.map(p => p.finalUrl), excerpts.length);
+              await read(selected, searches.stageSignal(0.2));
+              sufficient = pages.length === cached.length && canFinishLiveSearch(q, texts, pages, focusedHosts);
+            }
+          }
+        }
+        if (!sufficient) {
+          throwIfAborted(signal);
+          const first = await searches.discover(queries[0]!, allowedHosts, queries.length > 1 ? 0.55 : 0.75);
+          const hasFallback = queries.length > 1 && !searches.providerBlocked;
+          const firstBatch = searches.take(first, hasFallback ? Math.ceil(searches.remaining / 2) : searches.remaining);
+          await read(firstBatch, hasFallback ? searches.stageSignal(0.45) : signal);
+          throwIfAborted(q.signal);
+          let followup: string[] = [];
+          if (hasFallback && searches.remaining > 0 && !signal.aborted && (hardFailures > 0 || !canFinishLiveSearch(q, texts, pages, focusedHosts))) {
+            followup = await searches.discover(queries[1]!, focusedHosts.length ? focusedHosts : allowedHosts, 0.75);
+          }
+          if (!signal.aborted) await read(searches.take([...followup, ...first], limits.maxFetches), signal);
+          if (searches.failed || hardFailures || signal.aborted) q.onCoverage?.("partial");
+          if (!searches.completed) throw new BranchUnavailableError("live", searches.timedOut ? "timeout" : "search_failed");
+        }
         if (pages.length === 0) {
           if (hardFailures > 0 || signal.aborted) throw new BranchUnavailableError("live", signal.aborted ? "timeout" : "fetch_failed");
           return [];
@@ -487,7 +578,7 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
               title: pg.title,
               publisher: pg.source.publisher,
               publishedAt: pg.publishedAt,
-              fetchedAt: fetchedAt.toISOString(),
+              fetchedAt: pg.fetchedAt,
               lang: guessLang(text, pg.lang),
               text,
               role: pg.source.role,

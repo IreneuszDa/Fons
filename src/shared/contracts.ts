@@ -115,6 +115,8 @@ export const CatalogSource = z.object({
   nonEea: z.boolean().default(false),
   ifcnEfcsn: z.boolean().default(false), // sygnatariusz IFCN/EFCSN (dla fact-checków)
   liveSearch: z.boolean().default(false), // host dopuszczony do wyszukiwania na żywo (flaga polityki, nie gwarancja dostępu)
+  /** Reuse of checked web publications. Absent when the catalogue does not permit storing them. */
+  liveDocumentCache: z.enum(["document", "excerpt"]).optional(),
   /** Prefiksy ścieżek, którym źródło jest zaufane na szerokim hoście (np. ["/eurostat/"] na ec.europa.eu). Brak = cały host. */
   pathPrefixes: z.array(z.string()).optional(),
 });

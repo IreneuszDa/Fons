@@ -7,6 +7,7 @@
  */
 import type { Database } from "better-sqlite3";
 import { CorpusRecord } from "../../shared/contracts";
+export { findLiveDocuments, getLiveDocument, invalidateLiveDocument, requiresFreshDocument, saveLiveDocument, type LiveDocument } from "./live-documents";
 
 export const LIVE_TTL_MS = 48 * 3_600_000;
 export const LIVE_ID_PREFIX = "live:";

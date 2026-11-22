@@ -20,6 +20,7 @@
 # i zostało pominięte (opis w docs/SOURCES.md), albo (b) oczekujemy go w pakiecie organizatora.
 
 - id: ecb
+  liveDocumentCache: excerpt
   hosts: [www.ecb.europa.eu]
   publisher: Europejski Bank Centralny
   type: pierwotne
@@ -71,6 +72,7 @@
   liveSearch: false
 
 - id: gus-publications
+  liveDocumentCache: excerpt
   hosts: [stat.gov.pl]
   publisher: Główny Urząd Statystyczny (publikacje)
   type: pierwotne
@@ -88,6 +90,7 @@
   liveSearch: true
 
 - id: sejm-eli
+  liveDocumentCache: document
   hosts: [api.sejm.gov.pl]
   publisher: Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)
   type: pierwotne
@@ -117,6 +120,7 @@
   liveSearch: true
 
 - id: eur-lex
+  liveDocumentCache: document
   hosts: [eur-lex.europa.eu]
   publisher: Urząd Publikacji Unii Europejskiej (EUR-Lex)
   type: pierwotne
@@ -141,6 +145,7 @@
   liveSearch: true
 
 - id: eurostat
+  liveDocumentCache: document
   archivePolicy: aggregate-statistics-v1
   hosts: [ec.europa.eu]
   publisher: Eurostat (Komisja Europejska)
@@ -166,6 +171,7 @@
   pathPrefixes: ["/eurostat/"]
 
 - id: nato
+  liveDocumentCache: excerpt
   hosts: [www.nato.int]
   publisher: NATO (Organizacja Traktatu Północnoatlantyckiego)
   type: pierwotne
@@ -189,6 +195,7 @@
   liveSearch: true
 
 - id: eu-portal
+  liveDocumentCache: excerpt
   hosts: [european-union.europa.eu]
   publisher: Portal Unii Europejskiej (Urząd Publikacji UE)
   type: pierwotne
@@ -213,6 +220,7 @@
 # a każda strona pod /web/<instytucja> to serwis organu administracji publicznej (poziom 1). Rozdzielenie na instytucje wymagałoby
 # osobnych wpisów katalogu (jeden host nie może być w dwóch wpisach) — nie jest potrzebne, dopóki wszystkie mają ten sam poziom i grupę.
 - id: gov-pl
+  liveDocumentCache: excerpt
   hosts: [www.gov.pl]
   publisher: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne)
   type: pierwotne
@@ -296,6 +304,7 @@
   liveSearch: false
 
 - id: msz-odyseusz
+  liveDocumentCache: excerpt
   hosts: [odyseusz.gov.pl]
   publisher: Ministerstwo Spraw Zagranicznych - serwis Odyseusz (informacje dla podróżujących)
   type: pierwotne
@@ -570,6 +579,7 @@
 # są jawne z mocy prawa i publikowane przez same instytucje). Nie zapisujemy danych prywatnych (adres, e-mail, data urodzenia).
 
 - id: prezydent-pl
+  liveDocumentCache: excerpt
   hosts: [www.prezydent.pl]
   publisher: Kancelaria Prezydenta Rzeczypospolitej Polskiej (prezydent.pl)
   type: pierwotne
@@ -622,6 +632,7 @@
   liveSearch: false
 
 - id: senat-pl
+  liveDocumentCache: excerpt
   hosts: [www.senat.gov.pl]
   publisher: Senat Rzeczypospolitej Polskiej (senat.gov.pl)
   type: pierwotne
@@ -639,6 +650,7 @@
   liveSearch: true
 
 - id: ec-commission
+  liveDocumentCache: excerpt
   hosts: [commission.europa.eu]
   publisher: Komisja Europejska (commission.europa.eu)
   type: pierwotne
@@ -660,6 +672,7 @@
   liveSearch: true
 
 - id: hungarian-government
+  liveDocumentCache: excerpt
   hosts: [kormany.hu]
   publisher: Rząd Węgier (Magyarország Kormánya)
   type: pierwotne
@@ -701,6 +714,7 @@
 # ───────────── Rodziny tematyczne (sankcje, wojna w Ukrainie / FIMI, statystyka GUS) ─────────────
 
 - id: ec-finance
+  liveDocumentCache: excerpt
   hosts: [finance.ec.europa.eu]
   publisher: Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu)
   type: pierwotne
@@ -723,6 +737,7 @@
   liveSearch: true
 
 - id: ec-home-affairs
+  liveDocumentCache: excerpt
   hosts: [home-affairs.ec.europa.eu]
   publisher: Komisja Europejska - DG ds. Migracji i Spraw Wewnętrznych (home-affairs.ec.europa.eu)
   type: pierwotne
@@ -744,6 +759,7 @@
   liveSearch: true
 
 - id: un-news
+  liveDocumentCache: excerpt
   hosts: [news.un.org, ukraine.un.org]
   publisher: Organizacja Narodów Zjednoczonych - UN News i UN w Ukrainie
   type: pierwotne
@@ -767,6 +783,7 @@
   liveSearch: true
 
 - id: onderzoeksraad
+  liveDocumentCache: excerpt
   hosts: [onderzoeksraad.nl, www.onderzoeksraad.nl]
   publisher: Rada ds. Bezpieczeństwa Niderlandów (Onderzoeksraad voor Veiligheid, Dutch Safety Board)
   type: pierwotne
@@ -788,6 +805,7 @@
   liveSearch: true
 
 - id: prosecutionservice
+  liveDocumentCache: excerpt
   hosts: [www.prosecutionservice.nl]
   publisher: Prokuratura Niderlandów (Openbaar Ministerie) - Wspólny Zespół Śledczy JIT ws. MH17
   type: pierwotne
@@ -809,6 +827,7 @@
   liveSearch: true
 
 - id: government-nl
+  liveDocumentCache: excerpt
   hosts: [www.government.nl]
   publisher: Rząd Niderlandów (government.nl)
   type: pierwotne
@@ -932,6 +951,7 @@
   liveSearch: false
 
 - id: sg-pl
+  liveDocumentCache: excerpt
   hosts: [www.strazgraniczna.pl]
   publisher: Straż Graniczna RP
   type: pierwotne
