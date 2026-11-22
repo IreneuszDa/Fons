@@ -47,6 +47,87 @@
         white-space: nowrap;
         text-overflow: ellipsis;
       }
+      .fons-composer-stack { position: relative; }
+      .fons-chat-landing {
+        display: grid;
+        container-type: size;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+        justify-items: center;
+      }
+      .fons-chat-landing > .fons-composer-stack {
+        grid-row: 2;
+        max-inline-size: 44rem;
+      }
+      .fons-chat-landing .fons-composer-extras {
+        max-block-size: calc((100cqh - 100%) / 2);
+      }
+      .fons-composer-extras {
+        position: absolute;
+        inset-inline: 0;
+        inset-block-end: 100%;
+        max-block-size: 60dvh;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+      }
+      .fons-composer-extras > * { flex-shrink: 0; }
+      .fons-composer-extras .astryx-chat-composer-drawer {
+        margin-block-end: 0;
+        padding-block-end: var(--spacing-3);
+        border-radius: var(--radius-container);
+      }
+      .fons-composer-extras [role="alert"] {
+        background-color: var(--color-background-surface);
+        color: var(--color-text-error);
+      }
+      .fons-attachment-guide {
+        container-type: inline-size;
+        background: var(--color-background-surface);
+        border: var(--border-width) solid var(--color-border-emphasized);
+        border-radius: var(--radius-container);
+      }
+      .fons-attachment-guide[data-dragging] {
+        outline: var(--border-width) dashed var(--color-accent);
+        outline-offset: calc(-1 * var(--spacing-1));
+        background: color-mix(in srgb, var(--color-success-muted) 18%, var(--color-background-surface));
+      }
+      .fons-attachment-layout {
+        display: grid;
+        grid-template-columns: clamp(7rem, 24%, 10.5rem) minmax(0, 1fr) auto;
+        grid-template-areas: "art title close" "art description description" "art actions actions" "art formats formats";
+        align-items: center;
+        column-gap: var(--spacing-4);
+      }
+      .fons-attachment-art {
+        grid-area: art;
+        align-self: stretch;
+        isolation: isolate;
+        border-radius: var(--radius-element);
+        background: color-mix(in srgb, var(--color-success-muted) 12%, var(--color-on-dark));
+      }
+      .fons-attachment-art img { width: 100%; height: auto; mix-blend-mode: multiply; }
+      .fons-attachment-title {
+        grid-area: title;
+        font: 500 var(--font-size-2xl)/1.12 "Iowan Old Style", Georgia, serif;
+        letter-spacing: -.025em;
+        outline: none;
+      }
+      .fons-attachment-description { grid-area: description; }
+      .fons-attachment-actions { grid-area: actions; margin-block-start: var(--spacing-1); }
+      .fons-attachment-formats { grid-area: formats; }
+      .fons-attachment-close { grid-area: close; align-self: start; justify-self: end; }
+      @container (max-width: 29rem) {
+        .fons-attachment-layout {
+          grid-template-columns: 6rem minmax(0, 1fr) auto;
+          grid-template-areas: "art title close" "description description description" "actions actions actions" "formats formats formats";
+          column-gap: var(--spacing-3);
+        }
+        .fons-attachment-title { font-size: var(--font-size-xl); }
+      }
+      @media (pointer: coarse) {
+        .fons-attachment-actions button, .fons-attachment-close { min-block-size: 2.75rem; }
+        .fons-attachment-close { min-inline-size: 2.75rem; }
+      }
     </style>
   </head>
   <body>

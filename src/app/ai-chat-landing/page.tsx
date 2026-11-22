@@ -17,11 +17,9 @@ export default function ChatLanding({ onSubmit, isDisabled, editorRef }: ChatLan
       height="fill"
       padding={0}
       content={
-        <LayoutContent padding={0}>
-          <VStack vAlign="center" hAlign="center" minHeight="100%" paddingInline={4}>
-            <VStack width="100%" maxWidth="44rem">
-              <MessageComposer onSubmit={onSubmit} isDisabled={isDisabled} editorRef={editorRef} />
-            </VStack>
+        <LayoutContent padding={0} isScrollable={false}>
+          <VStack className="fons-chat-landing" height="100%" paddingInline={4}>
+            <MessageComposer onSubmit={onSubmit} isDisabled={isDisabled} editorRef={editorRef} />
           </VStack>
         </LayoutContent>
       }
