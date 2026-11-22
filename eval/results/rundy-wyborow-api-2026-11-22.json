@@ -1,0 +1,1005 @@
+{
+  "method": "Prawdziwe POST /api/chat; osobne bazy na przebieg; odczyt każdego zapisanego raportu przez GET; podane teksty są jedynym wejściem obywatela. Dane modelu zawierają rzeczywiste zużycie.",
+  "before": {
+    "citizenReply": "Nie w tej formie. „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.”",
+    "id": "wybory",
+    "q": "Czy pierwsza tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku?",
+    "receivedAt": "2026-11-22T07:24:13.881Z",
+    "http": 200,
+    "ms": 22073,
+    "readback": 200,
+    "match": true,
+    "mainVerdict": "WPROWADZAJACE",
+    "status": "OK",
+    "pipelineVersion": "engine-2026.11.22-33-evidence",
+    "corpusSnapshot": "69d08e00f0ebb9989c6d7e7dd78bd9f90f1a22f2b590ae448f696616e7655623",
+    "cacheHit": false,
+    "costUsd": 0.036211,
+    "models": [
+      {
+        "purpose": "claims",
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "inputTokens": 1410,
+        "outputTokens": 403,
+        "latencyMs": 4337,
+        "costUsd": 0.000343
+      },
+      {
+        "purpose": "assess",
+        "provider": "openai",
+        "model": "gpt-6.2-sol",
+        "inputTokens": 3023,
+        "outputTokens": 742,
+        "latencyMs": 9184,
+        "costUsd": 0.013466
+      },
+      {
+        "purpose": "verifier",
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "inputTokens": 1476,
+        "outputTokens": 177,
+        "latencyMs": 2775,
+        "costUsd": 0.000236
+      },
+      {
+        "purpose": "live_search",
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "inputTokens": 18286,
+        "outputTokens": 674,
+        "latencyMs": 4595,
+        "costUsd": 0.022166
+      }
+    ],
+    "unavailableBranches": [],
+    "claims": [
+      {
+        "id": "c1",
+        "text": "Pierwsza tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+        "type": "fakt",
+        "isMain": true,
+        "temporal": {
+          "kind": "jednorazowe",
+          "date": "2025-06-01"
+        },
+        "inputOverlap": 1,
+        "assertedAspect": "czas"
+      }
+    ],
+    "verdicts": [
+      {
+        "verdict": "WPROWADZAJACE",
+        "ruleApplied": 9,
+        "reasonPl": "Część twierdzenia się zgadza, ale brakuje ważnego kontekstu. Brakujący kontekst: Nie zgadza się: czas (data); materiał pochodzi z innej sytuacji (inny czas, miejsce lub kontekst; dotyczy: zakres (kogo lub czego to dotyczy)). Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (2 czerwca 2025): „Komisja Wyborcza podaje do publicznej wiadomości wyniki ponownego głosowania przeprowadzonego w dniu 1 czerwca\n2025 r. i wynik wyborów Prezydenta Rzeczypospolitej Polskiej zarządzonych na dzień 18 maja 2025 r.”",
+        "evidence": [
+          {
+            "recordId": "sejm-eli:f78f672363f5",
+            "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/714/text/O/D20250714.pdf",
+            "quote": "Komisja Wyborcza podaje do publicznej wiadomości wyniki ponownego głosowania przeprowadzonego w dniu 1 czerwca\n2025 r. i wynik wyborów Prezydenta Rzeczypospolitej Polskiej zarządzonych na dzień 18 maja 2025 r.",
+            "relation": "INNY_KONTEKST",
+            "usedForVerdict": true,
+            "publishedAt": "2025-06-02"
+          },
+          {
+            "recordId": "gov-pl:2c481b3c0545",
+            "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+            "quote": "wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.",
+            "relation": "OBALA",
+            "usedForVerdict": true,
+            "publishedAt": "2025-09-17"
+          }
+        ]
+      }
+    ]
+  },
+  "after": [
+    {
+      "citizenReply": "Nie. „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+      "id": "I-blad",
+      "q": "Czy pierwsza tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku?",
+      "receivedAt": "2026-11-22T07:31:26.566Z",
+      "http": 200,
+      "ms": 28471,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "FALSZYWE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.036205,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1416,
+          "outputTokens": 392,
+          "latencyMs": 4928,
+          "costUsd": 0.000338
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3100,
+          "outputTokens": 682,
+          "latencyMs": 8625,
+          "costUsd": 0.01302
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1482,
+          "outputTokens": 210,
+          "latencyMs": 3189,
+          "costUsd": 0.000253
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 22548,
+          "outputTokens": 677,
+          "latencyMs": 7157,
+          "costUsd": 0.022594
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Pierwsza tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-06-01"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "FALSZYWE",
+          "ruleApplied": 8,
+          "reasonPl": "Przeczą temu 2 niezależne źródła pierwotne: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) i Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI). Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.",
+              "relation": "OBALA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            },
+            {
+              "recordId": "sejm-eli:f78f672363f5",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/714/text/O/D20250714.pdf",
+              "quote": "Komisja Wyborcza podaje do publicznej wiadomości wyniki ponownego głosowania przeprowadzonego w dniu 1 czerwca\n2025 r. i wynik wyborów Prezydenta Rzeczypospolitej Polskiej zarządzonych na dzień 18 maja 2025 r.",
+              "relation": "OBALA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-06-02"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Tak. Pierwsza tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku.",
+      "id": "I-data",
+      "q": "Czy pierwsza tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku?",
+      "receivedAt": "2026-11-22T07:31:26.574Z",
+      "http": 200,
+      "ms": 29507,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "POTWIERDZONE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.035491,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1413,
+          "outputTokens": 231,
+          "latencyMs": 2760,
+          "costUsd": 0.000257
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3512,
+          "outputTokens": 570,
+          "latencyMs": 7339,
+          "costUsd": 0.012724
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1624,
+          "outputTokens": 386,
+          "latencyMs": 5838,
+          "costUsd": 0.000355
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 18599,
+          "outputTokens": 589,
+          "latencyMs": 5563,
+          "costUsd": 0.022155
+        }
+      ],
+      "unavailableBranches": [
+        "live"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Pierwsza tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-05-18"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "POTWIERDZONE",
+          "ruleApplied": 7,
+          "reasonPl": "Potwierdzają to 2 niezależne źródła pierwotne: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) i Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI). Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            },
+            {
+              "recordId": "sejm-eli:2d656810cb81",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/652/text/O/D20250652.pdf",
+              "quote": "W ponownym głosowaniu na Prezydenta Rzeczypospolitej Polskiej wyboru dokonuje się spośród dwóch następujących\nkandydatów, którzy w głosowaniu w dniu 18 maja 2025 r. otrzymali kolejno największą liczbę głosów:",
+              "relation": "WSPIERA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-05-19"
+            },
+            {
+              "recordId": "sejm-eli:cf57086ace7b",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/652/text/O/D20250652.pdf",
+              "quote": "Państwowa\nKomisja Wyborcza podaje do publicznej wiadomości wyniki głosowania i wynik wyborów Prezydenta Rzeczypospolitej\nPolskiej zarządzonych na dzień 18 maja 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-05-19"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Tak. Druga tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+      "id": "II-data",
+      "q": "Czy druga tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku?",
+      "receivedAt": "2026-11-22T07:31:55.045Z",
+      "http": 200,
+      "ms": 20605,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "POTWIERDZONE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.03628,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1415,
+          "outputTokens": 338,
+          "latencyMs": 3771,
+          "costUsd": 0.000311
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3005,
+          "outputTokens": 718,
+          "latencyMs": 9099,
+          "costUsd": 0.01319
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1514,
+          "outputTokens": 33,
+          "latencyMs": 970,
+          "costUsd": 0.000168
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 22785,
+          "outputTokens": 666,
+          "latencyMs": 5045,
+          "costUsd": 0.022611
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Druga tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-06-01"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "POTWIERDZONE",
+          "ruleApplied": 7,
+          "reasonPl": "Potwierdzają to 2 niezależne źródła pierwotne: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) i Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI). Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „Program stanowił element szerszej koncepcji zabezpieczenia demokratycznych procesów państwa polskiego mającej na celu zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "Program stanowił element szerszej koncepcji zabezpieczenia demokratycznych procesów państwa polskiego mającej na celu zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            },
+            {
+              "recordId": "sejm-eli:f78f672363f5",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/714/text/O/D20250714.pdf",
+              "quote": "Komisja Wyborcza podaje do publicznej wiadomości wyniki ponownego głosowania przeprowadzonego w dniu 1 czerwca\n2025 r. i wynik wyborów Prezydenta Rzeczypospolitej Polskiej zarządzonych na dzień 18 maja 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-06-02"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Nie. „zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+      "id": "II-blad",
+      "q": "Czy druga tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku?",
+      "receivedAt": "2026-11-22T07:31:56.084Z",
+      "http": 200,
+      "ms": 27430,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "FALSZYWE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.048052,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1416,
+          "outputTokens": 409,
+          "latencyMs": 5113,
+          "costUsd": 0.000346
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3381,
+          "outputTokens": 817,
+          "latencyMs": 10067,
+          "costUsd": 0.014932
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1323,
+          "outputTokens": 56,
+          "latencyMs": 1108,
+          "costUsd": 0.00016
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 22355,
+          "outputTokens": 758,
+          "latencyMs": 6931,
+          "costUsd": 0.032614
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Druga tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-05-18"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "FALSZYWE",
+          "ruleApplied": 8,
+          "reasonPl": "Przeczy temu źródło pierwotne. Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.",
+              "relation": "OBALA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "id": "inne",
+      "q": "Czy druga tura wyborów samorządowych w Akureyri odbyła się 4 czerwca 1950 roku?",
+      "receivedAt": "2026-11-22T07:32:15.658Z",
+      "http": 200,
+      "ms": 22580,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "BRAK_DOWODOW",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.034683,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1418,
+          "outputTokens": 369,
+          "latencyMs": 3995,
+          "costUsd": 0.000326
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3816,
+          "outputTokens": 474,
+          "latencyMs": 6565,
+          "costUsd": 0.012372
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 18160,
+          "outputTokens": 337,
+          "latencyMs": 4103,
+          "costUsd": 0.021985
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Druga tura wyborów samorządowych w Akureyri odbyła się 4 czerwca 1950 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "1950-06-04"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "BRAK_DOWODOW",
+          "ruleApplied": 2,
+          "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "evidence": []
+        }
+      ]
+    }
+  ],
+  "after_observed_date_check": [
+    {
+      "citizenReply": "Nie. „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.”",
+      "id": "I-blad",
+      "q": "Czy pierwsza tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku?",
+      "receivedAt": "2026-11-22T07:32:56.161Z",
+      "http": 200,
+      "ms": 28404,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "FALSZYWE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.03589,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1416,
+          "outputTokens": 238,
+          "latencyMs": 5100,
+          "costUsd": 0.000261
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3098,
+          "outputTokens": 670,
+          "latencyMs": 8329,
+          "costUsd": 0.012896
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1476,
+          "outputTokens": 33,
+          "latencyMs": 1247,
+          "costUsd": 0.000164
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 22482,
+          "outputTokens": 642,
+          "latencyMs": 6190,
+          "costUsd": 0.022569
+        }
+      ],
+      "unavailableBranches": [
+        "vector",
+        "live"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Pierwsza tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-06-01"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "FALSZYWE",
+          "ruleApplied": 8,
+          "reasonPl": "Przeczy temu źródło pierwotne. Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r.",
+              "relation": "OBALA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            },
+            {
+              "recordId": "sejm-eli:f78f672363f5",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/714/text/O/D20250714.pdf",
+              "quote": "Komisja Wyborcza podaje do publicznej wiadomości wyniki ponownego głosowania przeprowadzonego w dniu 1 czerwca\n2025 r. i wynik wyborów Prezydenta Rzeczypospolitej Polskiej zarządzonych na dzień 18 maja 2025 r.",
+              "relation": "INNY_KONTEKST",
+              "usedForVerdict": false,
+              "publishedAt": "2025-06-02"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Tak. Pierwsza tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku.",
+      "id": "I-data",
+      "q": "Czy pierwsza tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku?",
+      "receivedAt": "2026-11-22T07:32:56.173Z",
+      "http": 200,
+      "ms": 30565,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "POTWIERDZONE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.035384,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1415,
+          "outputTokens": 359,
+          "latencyMs": 5441,
+          "costUsd": 0.000321
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3358,
+          "outputTokens": 556,
+          "latencyMs": 7259,
+          "costUsd": 0.012276
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1637,
+          "outputTokens": 240,
+          "latencyMs": 4921,
+          "costUsd": 0.000284
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 22425,
+          "outputTokens": 519,
+          "latencyMs": 5187,
+          "costUsd": 0.022503
+        }
+      ],
+      "unavailableBranches": [
+        "vector",
+        "live"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Pierwsza tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-05-18"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "POTWIERDZONE",
+          "ruleApplied": 7,
+          "reasonPl": "Potwierdzają to 2 niezależne źródła pierwotne: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) i Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI). Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            },
+            {
+              "recordId": "sejm-eli:cf57086ace7b",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/652/text/O/D20250652.pdf",
+              "quote": "Państwowa\nKomisja Wyborcza podaje do publicznej wiadomości wyniki głosowania i wynik wyborów Prezydenta Rzeczypospolitej\nPolskiej zarządzonych na dzień 18 maja 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-05-19"
+            },
+            {
+              "recordId": "sejm-eli:2d656810cb81",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/652/text/O/D20250652.pdf",
+              "quote": "W ponownym głosowaniu na Prezydenta Rzeczypospolitej Polskiej wyboru dokonuje się spośród dwóch następujących\nkandydatów, którzy w głosowaniu w dniu 18 maja 2025 r. otrzymali kolejno największą liczbę głosów:",
+              "relation": "WSPIERA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-05-19"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Tak. Druga tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+      "id": "II-data",
+      "q": "Czy druga tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku?",
+      "receivedAt": "2026-11-22T07:33:24.583Z",
+      "http": 200,
+      "ms": 64105,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "POTWIERDZONE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.046452,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1415,
+          "outputTokens": 379,
+          "latencyMs": 4902,
+          "costUsd": 0.000331
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3083,
+          "outputTokens": 702,
+          "latencyMs": 10113,
+          "costUsd": 0.013186
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1517,
+          "outputTokens": 33,
+          "latencyMs": 2187,
+          "costUsd": 0.000168
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 24566,
+          "outputTokens": 621,
+          "latencyMs": 10432,
+          "costUsd": 0.032767
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Druga tura wyborów prezydenckich w Polsce odbyła się 1 czerwca 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-06-01"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "POTWIERDZONE",
+          "ruleApplied": 7,
+          "reasonPl": "Potwierdzają to 2 niezależne źródła pierwotne: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) i Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI). Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „Program stanowił element szerszej koncepcji zabezpieczenia demokratycznych procesów państwa polskiego mającej na celu zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "Program stanowił element szerszej koncepcji zabezpieczenia demokratycznych procesów państwa polskiego mającej na celu zapewnienie uczciwości i transparentności wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            },
+            {
+              "recordId": "sejm-eli:f78f672363f5",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/714/text/O/D20250714.pdf",
+              "quote": "Państwowa\nKomisja Wyborcza podaje do publicznej wiadomości wyniki ponownego głosowania przeprowadzonego w dniu 1 czerwca\n2025 r. i wynik wyborów Prezydenta Rzeczypospolitej Polskiej zarządzonych na dzień 18 maja 2025 r.",
+              "relation": "WSPIERA",
+              "usedForVerdict": false,
+              "publishedAt": "2025-06-02"
+            },
+            {
+              "recordId": "sejm-eli:d420d892f6db",
+              "url": "https://api.sejm.gov.pl/eli/acts/DU/2025/714/text/O/D20250714.pdf",
+              "quote": "Zestawienie zbiorczych wyników ponownego głosowania w wyborach Prezydenta Rzeczypospolitej Polskiej stanowi\nzałącznik nr 1 do obwieszczenia.",
+              "relation": "CZESCIOWO",
+              "usedForVerdict": false,
+              "publishedAt": "2025-06-02"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Nie. „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+      "id": "II-blad",
+      "q": "Czy druga tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku?",
+      "receivedAt": "2026-11-22T07:33:26.745Z",
+      "http": 200,
+      "ms": 52776,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "FALSZYWE",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.03544,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1412,
+          "outputTokens": 358,
+          "latencyMs": 4162,
+          "costUsd": 0.00032
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3363,
+          "outputTokens": 555,
+          "latencyMs": 35905,
+          "costUsd": 0.012276
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1480,
+          "outputTokens": 84,
+          "latencyMs": 1588,
+          "costUsd": 0.00019
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 22780,
+          "outputTokens": 752,
+          "latencyMs": 5395,
+          "costUsd": 0.022654
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Druga tura wyborów prezydenckich w Polsce odbyła się 18 maja 2025 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2025-05-18"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "FALSZYWE",
+          "ruleApplied": 8,
+          "reasonPl": "Przeczy temu źródło pierwotne. Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne) (17 września 2025): „wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.”",
+          "evidence": [
+            {
+              "recordId": "gov-pl:2c481b3c0545",
+              "url": "https://www.gov.pl/attachment/437a6184-90e5-4f29-beaf-92b646eb18b0",
+              "quote": "wyborów prezydenckich, których pierwsza tura odbyła się w dniu 18 maja 2025 r. oraz druga tura 1 czerwca 2025 r.",
+              "relation": "OBALA",
+              "usedForVerdict": true,
+              "publishedAt": "2025-09-17"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "citizenReply": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "id": "inne",
+      "q": "Czy druga tura wyborów samorządowych w Akureyri odbyła się 4 czerwca 1950 roku?",
+      "receivedAt": "2026-11-22T07:34:19.672Z",
+      "http": 200,
+      "ms": 30353,
+      "readback": 200,
+      "match": true,
+      "mainVerdict": "BRAK_DOWODOW",
+      "status": "OK",
+      "pipelineVersion": "engine-2026.11.22-34",
+      "corpusSnapshot": "cbab3f2baca18c0c432dba995167e265797435cef9a509af9f45d73a1715deb9",
+      "cacheHit": false,
+      "costUsd": 0.032703,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1420,
+          "outputTokens": 359,
+          "latencyMs": 5634,
+          "costUsd": 0.000322
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 4091,
+          "outputTokens": 226,
+          "latencyMs": 4414,
+          "costUsd": 0.010442
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 18252,
+          "outputTokens": 228,
+          "latencyMs": 4586,
+          "costUsd": 0.021939
+        }
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Druga tura wyborów samorządowych w Akureyri odbyła się 4 czerwca 1950 roku.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "1950-06-04"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "czas"
+        }
+      ],
+      "verdicts": [
+        {
+          "verdict": "BRAK_DOWODOW",
+          "ruleApplied": 2,
+          "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "evidence": []
+        }
+      ]
+    }
+  ]
+}

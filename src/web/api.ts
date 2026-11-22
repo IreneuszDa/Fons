@@ -4,11 +4,13 @@
 import type { ChatImage, ChatDocument, ChatRecording, ImageOptions } from "../shared/attachments";
 import type { CatalogSource, ConversationReply, VerdictReport } from "../shared/contracts";
 import type { ArchiveMaterial, SavedMaterial } from "../shared/archive";
-import { CHAT_STREAM_CONTENT_TYPE, VERIFICATION_STAGES, type ChatDetail, type ChatResponse, type ChatStreamEvent, type ChatSummary, type VerificationStage } from "../shared/chat";
+import type { NewsArticle } from "../shared/news";
+import { CHAT_STREAM_CONTENT_TYPE, VERIFICATION_STAGES, type ChatDetail, type ChatResponse, type ChatStreamEvent, type ChatSummary, type ReaderExcerpt, type VerificationStage } from "../shared/chat";
 
 export interface ChatInput {
   text?: string;
   action?: string;
+  readerExcerpt?: ReaderExcerpt;
   image?: ChatImage;
   comparisonImage?: ChatImage;
   document?: ChatDocument;
@@ -76,6 +78,13 @@ export async function transcribeDictation(recording: ChatRecording, signal: Abor
 export async function listChats(): Promise<ChatSummary[]> {
   const { chats } = await chatResource<{ chats: ChatSummary[] }>("/api/chats", "Nie udało się wczytać historii czatów.");
   return chats;
+}
+
+export async function listNews(signal: AbortSignal): Promise<NewsArticle[]> {
+  const { articles } = await chatResource<{ articles: NewsArticle[] }>(
+    "/api/news", "Nie udało się wczytać wiadomości.", { signal },
+  );
+  return articles;
 }
 
 export const readArchives = () => chatResource<{ items: SavedMaterial[] }>("/api/archives", "Nie udało się otworzyć archiwum.");

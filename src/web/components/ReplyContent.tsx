@@ -8,9 +8,9 @@ import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import { useStreamingText } from "@astryxdesign/core/hooks";
 import { useEffect, useState } from "react";
 import type { ConversationReply, VerdictReport } from "../../shared/contracts";
-import { citizenAnswerPl, citizenWarnings } from "../../shared/citizen-answer";
+import { citizenAnswerPl } from "../../shared/citizen-answer";
 import { hostOf, paragraphs } from "../lib/format";
-import { claimRows, hasArchivalWarning, replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf, STRENGTH_PL } from "../lib/report";
+import { claimRows, replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf } from "../lib/report";
 import { resultPathFor, safeUrl } from "../lib/safeUrl";
 import { AnswerCard } from "./AnswerCard";
 import { ClaimBreakdown } from "./ClaimBreakdown";
@@ -18,8 +18,7 @@ import { ArticleOrigin } from "./Evidence";
 import { QuestionBreakdown } from "./QuestionBreakdown";
 import { ImageFindings } from "./ImageFindings";
 import { StatusNotice } from "./StatusNotice";
-import { TransparencyBlock } from "./TransparencyBlock";
-import { ReportWarnings, VerdictCard } from "./VerdictCard";
+import { VerdictCard } from "./VerdictCard";
 import { VideoFindings } from "./VideoFindings";
 
 export function QuickReplies({
@@ -31,7 +30,7 @@ export function QuickReplies({
   onAction: (id: string, label: string) => void;
   isDisabled?: boolean;
 }) {
-  if (reply.quickReplies.length === 0) return null;
+  if (reply.report?.status === "OK" || reply.kind === "image_analysis" || reply.quickReplies.length === 0) return null;
   return (
     <HStack gap={2} wrap="wrap">
       {reply.quickReplies.map((q) => {
@@ -50,12 +49,10 @@ export function ReplyContent({ reply, anchorId, animateText = false }: { reply: 
   if (analysis && report) return (
     <VStack gap={3}>
       {analysis.only && <ImageFindings analysis={analysis} summaryPl={report.summaryPl} />}
-      {(analysis.only || (reply.kind === "status" && report.status === "DOPRECYZUJ")) &&
-        <TransparencyBlock report={report} />}
       {!analysis.only && (reply.kind === "status" && report.status === "DOPRECYZUJ"
         ? <Text as="p">{report.statusMessagePl || reply.textPl}</Text>
         : <ReplyBody reply={reply} anchorId={anchorId} />)}
-      {reply.kind === "status" && !analysis.visual && <ReportWarnings warnings={report.warnings} />}
+      {analysis.only && <FullResultLink report={report} resultUrl={reply.resultUrl} />}
     </VStack>
   );
   if (animateText && reply.kind === "help" && !reply.report && reply.textPl.length <= 600) {
@@ -87,7 +84,6 @@ function reportSummary(report: VerdictReport): NonNullable<ConversationReply["sh
   return {
     bodyPl: citizenAnswerPl(report),
     sources: report.answer?.evidence ?? claimRows(report)[0]?.verdict.evidence ?? [],
-    caseNotePl: report.moderatorCase && `Sprawa #${report.moderatorCase.caseId} jest zapisana do sprawdzenia.`,
   };
 }
 
@@ -102,10 +98,8 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
       const href = safeUrl(source.url);
       if (href && !publications.has(href)) publications.set(href, source);
     }
-    const permalink = resultPathFor(report.token, reply.resultUrl);
     const showClaims = view === "verdict" && report.verdicts.length > 1;
     const parts = report.questionParts;
-    const strength = !report.answer && report.verdicts.length === 1 ? report.verdicts[0]?.strength : undefined;
     const answerAnchor = report.article ? undefined : anchorId;
     return (
       <VStack gap={2}>
@@ -118,21 +112,7 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
             Źródło · {hostOf(href).replace(/^www\./u, "")}
           </Link>
         ))}
-        {strength && strength.score !== null &&
-          <Text type="supporting" color="secondary">Siła dowodów — {STRENGTH_PL[strength.level]}</Text>}
-        {short.caseNotePl && <Text as="p" color="secondary">{short.caseNotePl}</Text>}
-        {citizenWarnings(report.warnings).map((w, index) => (
-          <VStack key={index} gap={1}>
-            <Text as="p" type="supporting" color="secondary">{w.textPl}</Text>
-            {w.links?.map(link => {
-              const href = safeUrl(link.url);
-              return href && <Link key={href} href={href} type="supporting" isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">{link.title}</Link>;
-            })}
-          </VStack>
-        ))}
-        {hasArchivalWarning(report) && !report.warnings.some(w => w.kind === "archival_material") &&
-          <Text as="p" type="supporting" color="secondary">Źródło jest starsze. Sprawdź, czy informacja jest nadal aktualna.</Text>}
-        {permalink && <Link href={permalink} type="supporting">Pełny wynik</Link>}
+        <FullResultLink report={report} resultUrl={reply.resultUrl} />
       </VStack>
     );
   }
@@ -148,12 +128,15 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
         {reply.report?.videoAnalysis && (
           <VideoFindings analysis={reply.report.videoAnalysis} pendingClaims={reply.report.claims} />
         )}
-        {reply.report && <ReportWarnings warnings={reply.report.warnings} />}
-        {reply.report && <TransparencyBlock report={reply.report} />}
       </VStack>
     );
   }
   return <ReplyParagraphs text={reply.textPl} />;
+}
+
+function FullResultLink({ report, resultUrl }: { report: VerdictReport; resultUrl?: string }) {
+  const href = resultPathFor(report.token, resultUrl);
+  return href && <Link href={href} type="supporting">Pełny wynik ze źródłami</Link>;
 }
 
 function ReplyParagraphs({ text }: { text: string }) {

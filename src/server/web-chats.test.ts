@@ -45,11 +45,16 @@ describe("prywatna historia czatów WWW", () => {
 
     const followup = await chat(env, { sessionId: first.id, action: "why" }, cookie);
     expect(followup.json.reply.resultUrl).toBe(one.json.reply.resultUrl);
+    env.db.prepare("UPDATE web_chat_turns SET reply_json = ? WHERE session_id = ? AND user_text = ?").run(
+      JSON.stringify({ ...followup.json.reply, textPl: "Cytaty sprawdził drugi model tego samego dostawcy." }),
+      first.id, "Jak to sprawdziłeś?",
+    );
     const saved = await detail(env, cookie, first.id);
     expect(saved.entries).toMatchObject([
       { role: "user", text: "Pierwsze pytanie o budżet" },
       { role: "assistant", reply: { kind: "verdict", report: { token: one.json.reply.report.token }, quickReplies: one.json.reply.quickReplies } },
-      { role: "user", text: "Jak to sprawdziłeś?" }, { role: "assistant", reply: { kind: "why" } },
+      { role: "user", text: "Jak to sprawdziłeś?" },
+      { role: "assistant", reply: { kind: "why", textPl: followup.json.reply.textPl, quickReplies: [] } },
     ]);
     expect((await http(env, "DELETE", path + "/" + first.id, cookie)).status).toBe(200);
     expect((await http(env, "GET", path + "/" + first.id, cookie)).status).toBe(404);

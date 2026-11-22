@@ -12,7 +12,7 @@ import type { PublicationRun } from "./verify";
 const events = {
   euro: { object: /^(?:euro|do strefy euro)$/iu,
     field: /^Strefa euro: w strefie euro od /u, label: "wprowadzenia euro" },
-  schengen: { object: /^do strefy Schengen$/iu,
+  schengen: { object: /^do (?:strefy |obszaru )?Schengen$/iu,
     field: /^Strefa Schengen: w strefie Schengen od /u, label: "przystąpienia do strefy Schengen" },
   eu: { object: /^do (?:UE|Unii Europejskiej)$/iu,
     field: /^(?:W UE|Państwo członkowskie UE): od /u, label: "przystąpienia do UE" },
@@ -48,18 +48,28 @@ export function accessionComparison(text: string): Comparison | undefined {
   if (countries.some(c => !c) || new Set(countries).size !== countries.length) return;
   // A coordinated verb can govern both organizations. Explicit simultaneity is stronger than sharing a year.
   const simultaneous = /\s+(?:razem|wraz|jednocześnie|równocześnie) z (?:przystąpieniem|wejściem|dołączeniem) /iu;
-  const objects = m[3]!.split(simultaneous.test(m[3]!) ? simultaneous : /\s+(?:i|oraz)\s+(?=do )/iu);
-  const types = objects.map((object, index) => eventFor(object, index === 0 ? m[2]! : "przystąpił"));
+  const together = simultaneous.test(m[3]!);
+  const objects = m[3]!.split(together ? simultaneous : /\s*,\s*|\s+(?:i|oraz)\s+/iu);
+  const repeatsVerb = new RegExp(`^(${verb}) (.+)$`, "iu");
+  const governingDo = /^do /iu.test(objects[0]!);
+  const types = objects.map((object, i) => {
+    if (i === 0) return eventFor(object, m[2]!);
+    const stated = repeatsVerb.exec(object);
+    if (stated) return eventFor(stated[2]!, stated[1]!);
+    // In "do UE i strefy Schengen" one preposition governs both objects.
+    const target = !together && governingDo && !/^do /iu.test(object) ? "do " + object : object;
+    return eventFor(target, together ? "przystąpił" : m[2]!);
+  });
   if (types.some(e => !e) || new Set(types).size !== types.length) return;
   const subjects = countries.flatMap(country => types.map(event => ({ country: country!, event: event! })));
   if (subjects.length < 2) return;
   const year = Number.parseInt(m[4]!, 10);
   const target = Number.isFinite(year)
-    ? { year, simultaneous: simultaneous.test(m[3]!) }
+    ? { year, simultaneous: together }
     : { sameYear: m[4]!.toLowerCase() === "tym samym roku" };
   if ("sameYear" in target && subjects.length !== 2) return;
   // Without a direct comparison of calendar years, one year alone cannot settle an assertion of simultaneous entry.
-  if ("sameYear" in target && simultaneous.test(m[3]!)) return;
+  if ("sameYear" in target && together) return;
   return { subjects, target, inputMode: /^czy\s/iu.test(input) || input.endsWith("?") ? "question_yesno" : "claim",
     claim: { id: "c1", text: statement + ".", type: "fakt", temporal: { kind: "jednorazowe" },
       assertedAspect: "sedno", isMain: true, inputOverlap: 1 } };

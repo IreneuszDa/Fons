@@ -4,7 +4,7 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import type { VerdictReport } from "../../shared/contracts";
-import { claimRows, STRENGTH_PL, VERDICT_LABEL_PL, VERDICT_TONE } from "../lib/report";
+import { claimRows, VERDICT_LABEL_PL, VERDICT_TONE } from "../lib/report";
 import { ClaimDetails } from "./VerdictCard";
 import { VERDICT_ICON } from "./verdictIcons";
 
@@ -30,8 +30,6 @@ export function ClaimBreakdown({ report, anchorId }: { report: VerdictReport; an
                 <HStack gap={1.5} vAlign="center" wrap="wrap">
                   <Icon icon={VERDICT_ICON[assessment.verdict]} size="sm" color={VERDICT_TONE[assessment.verdict]} />
                   <Text type="supporting">{label}</Text>
-                  {assessment.strength.score != null &&
-                    <Text type="supporting" color="secondary">· Siła dowodów {STRENGTH_PL[assessment.strength.level]}</Text>}
                 </HStack>
               </VStack>
             }>

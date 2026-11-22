@@ -1,5 +1,7 @@
 # Fons — końcowy odbiór silnika i scenariuszy konkursowych
 
+**Archiwalny pomiar v32.** Nowszy raport podaje wyniki tego samego testu po poprawkach oraz pełnego jawnego zbioru tekstowego. [Aktualne wyniki](PROG-075.md)
+
 **22 listopada 2026 r.** Na 100 stałych tekstach wydanie uzyskało **64/100** odpowiedzi zgodnych z kluczem projektu. Macro-F1 na jawnej części wyniosło **0,653** przy celu **0,75**. Mediana odpowiedzi silnika wyniosła **15,06 s** przy limicie 30 s. Silnik nadaje się do demonstracji z możliwością przeczytania źródeł i przekazania trudnej sprawy moderatorowi. Brakujące rozstrzygnięcia oraz jakość uzasadnień ograniczają jego przydatność w samodzielnej obsłudze obywateli.
 
 [Pakiet z kodem dokładnie testowanego wydania, pełnymi odpowiedziami i instrukcją odtworzenia](../../eval/results/msz-odbior-koncowy-2026-11-22.zip) · [Prezentacja](prezentacja.pdf) · [Film, 42 s](demo.mp4) · [Pierwszy odbiór po naprawach](WYNIKI.md)

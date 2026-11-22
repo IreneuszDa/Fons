@@ -6,9 +6,13 @@ import { VStack } from "@astryxdesign/core/Layout";
 import { Spinner } from "@astryxdesign/core/Spinner";
 import { Text } from "@astryxdesign/core/Text";
 import { useAnnounce } from "@astryxdesign/core/hooks";
-import type { ChatSummary } from "../../shared/chat";
+import { readerExcerptMessage, type ChatSummary } from "../../shared/chat";
+import type { NewsArticle } from "../../shared/news";
 import { ApiError, NETWORK_ERROR_PL, createChat, deleteChat, listChats, openChat, sendChat, type ChatInput } from "../api";
 import ChatHistory from "../components/ChatHistory";
+import type { ComposerDraft } from "../components/MessageComposer";
+import { NewsShelf, useLatestNews } from "../components/NewsShelf";
+import { ReaderWorkspace } from "../components/ReaderWorkspace";
 import { imagePreviewSrc } from "../lib/attachment";
 import { announcementFor } from "../lib/report";
 import ChatConversation, { progressLabels, type ChatEntry, type PendingPhase } from "../../app/ai-chat/page";
@@ -36,8 +40,11 @@ function messageFor(error: unknown): string {
 export default function ChatPage() {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [active, setActive] = useState(DRAFT);
+  const [article, setArticle] = useState<NewsArticle | null>(null);
+  const news = useLatestNews();
   const [draftVersion, setDraftVersion] = useState(0);
   const draftEditor = useRef<ChatComposerInputHandle>(null);
+  const composerDraft = useRef<ComposerDraft | null>(null);
   const focusNewDraft = useRef(false);
   const selected = useRef(DRAFT);
   const [threads, setThreads] = useState<Record<string, Thread>>({});
@@ -54,7 +61,8 @@ export default function ChatPage() {
   const initialized = useRef(false);
   const announce = useAnnounce();
 
-  const select = useCallback((id: string) => {
+  const select = useCallback((id: string, keepComposer = false) => {
+    if (!keepComposer) composerDraft.current = null;
     selected.current = id;
     setActive(id);
     try { sessionStorage.setItem(SELECTION, id); } catch { /* Cookies still protect history without tab storage. */ }
@@ -91,6 +99,7 @@ export default function ChatPage() {
 
   const show = (id: string) => {
     if (id === selected.current && !threads[id]?.loadError) return;
+    setArticle(null);
     select(id);
     if (!threads[id]?.entries.some(entry => entry.role === "error")) void load(id);
   };
@@ -112,7 +121,10 @@ export default function ChatPage() {
       setHistoryError(null);
       restoreSelection(list);
       const id = selected.current;
-      if (id !== DRAFT && !sending.current.has(id) && !list.some(chat => chat.id === id)) select(DRAFT);
+      if (id !== DRAFT && !sending.current.has(id) && !list.some(chat => chat.id === id)) {
+        setArticle(null);
+        select(DRAFT);
+      }
     } catch (error) {
       if (version === listVersion.current) setHistoryError(messageFor(error));
     }
@@ -148,7 +160,7 @@ export default function ChatPage() {
       delete rest[id];
       return rest;
     });
-    if (selected.current === id) select(DRAFT);
+    if (selected.current === id) { setArticle(null); select(DRAFT); }
     announce("Usunięto czat.");
     void refreshList();
   }
@@ -175,7 +187,7 @@ export default function ChatPage() {
         listVersion.current++;
         setChats(list => [chat, ...list.filter(item => item.id !== id)]);
         setThreads(all => ({ ...all, [id]: all[DRAFT] ?? EMPTY, [DRAFT]: EMPTY }));
-        select(id);
+        select(id, true);
         sending.current.delete(DRAFT);
         setCreating(false);
       }
@@ -189,6 +201,7 @@ export default function ChatPage() {
         // The server erased the owner's data. Drop local transcripts and attachment previews too.
         for (const other of [...sending.current, ...loading.current]) if (other !== DRAFT) removed.current.add(other);
         setThreads({ [DRAFT]: { entries: [entry], pending: null } });
+        setArticle(null);
         select(DRAFT);
       } else {
         update(id, thread => ({ entries: [...thread.entries, entry], pending: null }));
@@ -215,24 +228,42 @@ export default function ChatPage() {
   }
 
   const thread = threads[active] ?? (active === DRAFT ? EMPTY : undefined);
+  const isReady = !!thread && !thread.loadError && !initializing;
   return (
     <ChatHistory chats={chats} activeId={active === DRAFT ? null : active} isLoading={initializing}
       error={historyError} isBusy={creating || initializing} onRetry={refreshList}
+      newsItems={isReady ? news.articles.filter(item => item.id !== article?.id).map(item => ({
+        label: item.title, onClick: () => setArticle(item),
+      })) : undefined}
       onNew={() => {
         focusNewDraft.current = !window.matchMedia("(max-width: 47.99rem), (pointer: coarse)").matches;
         update(DRAFT, () => EMPTY);
+        setArticle(null);
         select(DRAFT);
         setDraftVersion(previous => previous + 1);
       }} onOpen={show} onDelete={remove}>
-      {initializing || !thread ? (
-        <Center height="100%"><Spinner label="Wczytuję rozmowę…" aria-label="Wczytuję rozmowę" /></Center>
-      ) : thread.loadError ? (
-        <Center height="100%"><VStack gap={3}><Text role="alert">{thread.loadError}</Text>
-          <Button label="Spróbuj ponownie" onClick={() => void load(active)} /></VStack></Center>
-      ) : thread.entries.length || thread.pending ? (
-        <ChatConversation key={thread.entries[0]?.id.startsWith("local-") ? thread.entries[0].id : active} entries={thread.entries} pending={thread.pending} pendingUserId={thread.pendingUserId} onSubmit={submit}
-          onAction={(action, label) => void run(active, { action }, { id: nextId(), role: "user", text: label })} />
-      ) : <ChatLanding key={`${active}-${draftVersion}`} onSubmit={submit} editorRef={draftEditor} />}
+      <ReaderWorkspace article={article} isChatBusy={!isReady || creating || !!thread?.pending}
+        onClose={() => setArticle(null)}
+        onExplain={excerpt => {
+          if (article && isReady && !sending.current.has(active)) {
+            submit({ text: readerExcerptMessage(article.title, excerpt.quote), readerExcerpt: excerpt });
+          }
+        }}>
+        {initializing || !thread ? (
+          <Center height="100%"><Spinner label="Wczytuję rozmowę…" aria-label="Wczytuję rozmowę" /></Center>
+        ) : thread.loadError ? (
+          <Center height="100%"><VStack gap={3}><Text role="alert">{thread.loadError}</Text>
+            <Button label="Spróbuj ponownie" onClick={() => void load(active)} /></VStack></Center>
+        ) : thread.entries.length || thread.pending ? (
+          <ChatConversation key={thread.entries[0]?.id.startsWith("local-") ? thread.entries[0].id : active}
+            entries={thread.entries} pending={thread.pending} pendingUserId={thread.pendingUserId}
+            onSubmit={submit} draftRef={composerDraft}
+            onAction={(action, label) => void run(active, { action }, { id: nextId(), role: "user", text: label })} />
+        ) : (
+          <ChatLanding key={`${active}-${draftVersion}`} onSubmit={submit} editorRef={draftEditor} draftRef={composerDraft}
+            news={article ? undefined : <NewsShelf news={news} onOpen={setArticle} />} />
+        )}
+      </ReaderWorkspace>
     </ChatHistory>
   );
 }

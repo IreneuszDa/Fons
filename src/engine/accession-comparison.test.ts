@@ -41,6 +41,11 @@ describe("porównanie dat akcesji w opublikowanych wykazach UE i NATO", () => {
     ["Czy Chorwacja i Albania dołączyły do NATO w 2009 roku?", "POTWIERDZONE", [2009, 2009], ["WSPIERA", "WSPIERA"]],
     ["Czy Szwecja i Finlandia przystąpiły do NATO w 2022 roku?", "FALSZYWE", [2024, 2023], ["OBALA", "OBALA"]],
     ["Estonia przystąpiła do UE i do strefy Schengen w 2007 roku.", "WPROWADZAJACE", [2004, 2007], ["OBALA", "WSPIERA"]],
+    ["Polska przystąpiła do strefy Schengen i Unii Europejskiej w 2004 roku.", "WPROWADZAJACE", [2007, 2004], ["OBALA", "WSPIERA"]],
+    ["Czy Polska dołączyła do UE oraz strefy Schengen w 2004 roku?", "WPROWADZAJACE", [2004, 2007], ["WSPIERA", "OBALA"]],
+    ["Estonia w 2007 roku weszła do Unii Europejskiej i Schengen.", "WPROWADZAJACE", [2004, 2007], ["OBALA", "WSPIERA"]],
+    ["Słowenia weszła do UE i przystąpiła do strefy Schengen w 2010 roku.", "FALSZYWE", [2004, 2007], ["OBALA", "OBALA"]],
+    ["Litwa i Łotwa przystąpiły do UE i NATO w 2004 roku.", "POTWIERDZONE", [2004, 2004, 2004, 2004], ["WSPIERA", "WSPIERA", "WSPIERA", "WSPIERA"]],
     ["Słowenia i Cypr w 2008 roku przyjęły euro.", "WPROWADZAJACE", [2007, 2008], ["OBALA", "WSPIERA"]],
   ] as const)("%s", async (text, verdict, years, relations) => {
     const report = await verifyInput({ text, channel: "eval", kind: "text", receivedAt: now.toISOString() }, deps);
@@ -64,6 +69,8 @@ describe("porównanie dat akcesji w opublikowanych wykazach UE i NATO", () => {
       "Czy Litwa i Litwa wprowadziły euro w tym samym roku?",
       "Malta i Cypr wprowadziły banknoty euro w tym samym roku.",
       "Czy Grecja i Cypr wprowadziły euro w tym samym roku przed reformą?",
+      "Polska weszła do strefy Schengen i prawdopodobnie UE w 2004 roku.",
+      "Polska weszła do UE i opuściła strefę Schengen w 2004 roku.",
       "Szwecja i Finlandia nie przystąpiły do NATO w 2022 roku.",
       "Estonia i Łotwa przystąpiły do NATO przed 2004 rokiem.",
       "Polska i Czechy przystąpiły do NATO w marcu 1999 roku.",

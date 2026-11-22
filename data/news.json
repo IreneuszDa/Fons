@@ -1,0 +1,116 @@
+[
+  {
+    "id": "grafika-f16",
+    "title": "Skąd pochodzi grafika z trzema F-16?",
+    "publishedAt": "2026-11-22",
+    "paragraphs": [
+      "Trzy polskie myśliwce przechwytują rakietę – tak opisywano obraz sprawdzony przez Demagoga. 20 listopada 2026 roku redakcja podała, że grafikę wygenerowano za pomocą sztucznej inteligencji. Ocena dotyczyła pochodzenia tego konkretnego obrazu.",
+      "Tego samego dnia Kancelaria Prezesa Rady Ministrów opisała nocne naruszenie polskiej przestrzeni powietrznej przez rosyjskie obiekty. W komunikacie wymieniła okolice Nowego Lipowca, Rudnika nad Sanem i Mołodycza. Według przekazanej wówczas informacji premiera nikt nie ucierpiał.",
+      "Oba źródła odpowiadają na różne pytania. Komunikat rządu pozwala ustalić, co władze podały o odnalezionych obiektach. Autor wpisu z grafiką przedstawiał także liczbę samolotów, ich typ i moment przechwycenia. Tak szczegółowego przebiegu wydarzeń nie da się odtworzyć z wygenerowanej sceny.",
+      "Kto chce sprawdzić wiadomość o naruszeniu przestrzeni powietrznej, może sięgnąć do datowanego komunikatu KPRM. Kto chce ustalić, czy udostępniony obraz jest fotografią, znajdzie ocenę tej konkretnej grafiki w publikacji Demagoga."
+    ],
+    "claim": "Obraz przedstawia 3 polskie myśliwce F-16 przechwytujące rakietę",
+    "rating": "Fałsz",
+    "review": {
+      "title": "Grafika z F-16 w pościgu za rakietą. Została wygenerowana przy użyciu AI",
+      "publisher": "Stowarzyszenie Demagog",
+      "publishedAt": "2026-11-20",
+      "url": "https://demagog.org.pl/fake_news/grafika-z-f-16-w-poscigu-za-rakieta-zostala-wygenerowana-przy-uzyciu-ai/"
+    },
+    "sources": [
+      {
+        "title": "Rosyjskie obiekty naruszyły polską przestrzeń powietrzną. Kolejna odsłona rosyjskiej eskalacji",
+        "publisher": "Kancelaria Prezesa Rady Ministrów",
+        "publishedAt": "2026-11-20",
+        "url": "https://www.gov.pl/web/premier/rosyjskie-obiekty-naruszyly-polska-przestrzen-powietrzna-kolejna-odslona-rosyjskiej-eskalacji"
+      }
+    ]
+  },
+  {
+    "id": "krakow-zdjecia-po-ataku",
+    "title": "Co naprawdę widać na zdjęciach po ataku w Krakowie?",
+    "publishedAt": "2026-11-22",
+    "paragraphs": [
+      "Po ataku w Krakowie udostępniano obrazy, na których miały być widoczne twarz sprawcy, noszone przez niego symbole i moment zatrzymania. Demagog sprawdził materiały i 8 listopada 2026 roku zaklasyfikował je jako przerobione zdjęcia. Redakcja zwróciła uwagę między innymi na obrazy poddane „wyostrzeniu” z użyciem sztucznej inteligencji.",
+      "Przy takiej obróbce kontur twarzy może stać się wyraźniejszy dla oka, choć pierwotny kadr zawierał za mało szczegółów, by ustalić jego rzeczywisty kształt. Podobny problem dotyczy napisu lub naszywki. Detal widoczny dopiero w przetworzonej wersji wymaga potwierdzenia w materiale o znanym pochodzeniu.",
+      "9 listopada MSWiA opublikowało komunikat z odprawy po zamachu. Resort opisał udział służb oraz omówienie ich dotychczasowych ustaleń. To odrębne źródło informacji o działaniach władz. Sam fakt, że odbyła się odprawa, nie potwierdza tożsamości osób wskazywanych przez autorów internetowych wpisów.",
+      "Problem z przypisaniem wizerunku pojawił się też w przypadku filmu z Marszu Równości z 2021 roku. Według publikacji Demagoga z 13 listopada autor tego nagrania zaprzeczył, że widać na nim napastnika z Krakowa. Tym razem sprawdzenie twierdzenia wymagało dotarcia do pochodzenia filmu i stanowiska jego autora."
+    ],
+    "claim": "Obrazy przedstawiają twarz, moment zatrzymania i symbole noszone przez sprawcę ataku w Krakowie",
+    "rating": "Przerobione zdjęcia",
+    "review": {
+      "title": "Atak w Krakowie. Uwaga na przerobione i „wyostrzone” obrazy AI",
+      "publisher": "Stowarzyszenie Demagog",
+      "publishedAt": "2026-11-08",
+      "url": "https://demagog.org.pl/fake_news/atak-w-krakowie-uwaga-na-przerobione-i-wyostrzone-obrazy-ai/"
+    },
+    "sources": [
+      {
+        "title": "MSWiA: Odprawa ze służbami po tragicznym zamachu w Krakowie",
+        "publisher": "Ministerstwo Spraw Wewnętrznych i Administracji",
+        "publishedAt": "2026-11-09",
+        "url": "https://www.gov.pl/web/mswia/mswia-odprawa-ze-sluzbami-po-tragicznym-zamachu-w-krakowie"
+      },
+      {
+        "title": "Napastnik z Krakowa był na Marszu Równości? Autor filmu zaprzecza",
+        "publisher": "Stowarzyszenie Demagog",
+        "publishedAt": "2026-11-13",
+        "url": "https://demagog.org.pl/fake_news/napastnik-z-krakowa-byl-na-marszu-rownosci-autor-filmu-zaprzecza/"
+      }
+    ]
+  },
+  {
+    "id": "ochrona-miedzynarodowa-granica",
+    "title": "Gdzie obowiązywało ograniczenie przyjmowania wniosków o ochronę?",
+    "publishedAt": "2026-11-22",
+    "paragraphs": [
+      "W październiku 2026 roku Donald Tusk stwierdził, że wprowadzone przepisy sprawiły, iż w Polsce nie przyjmuje się wniosków o azyl. Demagog ocenił tę wypowiedź jako fałszywą. Sformułowanie premiera obejmowało cały kraj, podczas gdy mechanizm opisany przez administrację miał określony zasięg terytorialny.",
+      "16 listopada MSWiA poinformowało o kolejnym przedłużeniu ograniczenia prawa do złożenia wniosku o ochronę międzynarodową. Wskazało granicę z Białorusią i okres kolejnych 60 dni od 17 listopada. Z komunikatu można więc odczytać zarówno miejsce stosowania przepisu, jak i datę rozpoczęcia tego okresu.",
+      "Resort podał również liczby obejmujące okres od 27 marca 2025 roku do 10 listopada 2026 roku. Według ministerstwa w tym czasie odmówiono przyjęcia wniosków od blisko 500 cudzoziemców, a przyjęto wnioski od ponad 200 osób z grup wrażliwych. Liczby te opisują przyjmowanie wniosków. Rozstrzygnięcie, czy danej osobie przyznano ochronę, następuje na innym etapie postępowania.",
+      "W tym przypadku znaczenie miały dwa pominięte szczegóły. Po pierwsze, ministerstwo opisywało jeden odcinek granicy. Po drugie, samo odnotowało przypadki przyjęcia wniosków w czasie obowiązywania ograniczenia. Oba ustalenia pozwalają ocenić, dlaczego ogólne stwierdzenie o całej Polsce zniekształcało stan opisany w źródłach."
+    ],
+    "claim": "To, co było jednym z najważniejszych naszych działań, to zmiana, taka totalna zmiana polityki azylowej. Wprowadziliśmy przepisy dzięki którym w Polsce nie przyjmujemy wniosków o azyl.",
+    "rating": "Fałsz",
+    "review": {
+      "title": "Czy Polska przyjmuje wnioski o azyl? Fałsz Tuska",
+      "publisher": "Stowarzyszenie Demagog",
+      "publishedAt": "2026-10-21",
+      "url": "https://demagog.org.pl/wypowiedzi/czy-polska-przyjmuje-wnioski-o-azyl-falsz-tuska/"
+    },
+    "sources": [
+      {
+        "title": "Czasowe i terytorialne zawieszenie prawa do azylu przy granicy polsko-białoruskiej przedłużone o następne 60 dni",
+        "publisher": "Ministerstwo Spraw Wewnętrznych i Administracji",
+        "publishedAt": "2026-11-16",
+        "url": "https://www.gov.pl/web/mswia/czasowe-i-terytorialne-zawieszenie-prawa-do-azylu-przy-granicy-polsko-bialoruskiej-przedluzone-o-nastepne-60-dni4"
+      }
+    ]
+  },
+  {
+    "id": "protest-przed-trybunalem",
+    "title": "Nagranie z parawanem przed Trybunałem. Kiedy je zrobiono?",
+    "publishedAt": "2026-11-22",
+    "paragraphs": [
+      "Nagranie policjantów zasłaniających protestujących przed Trybunałem Konstytucyjnym przedstawiano jako przykład działań podległych Marcinowi Kierwińskiemu. Demagog ustalił, że materiał pochodził z marca 2021 roku. Redakcja opublikowała weryfikację 17 września 2026 roku, ponad pięć lat po zarejestrowanej scenie.",
+      "Opisu warszawskiego protestu z tamtego okresu dostarcza Biuletyn Informacji Publicznej Rzecznika Praw Obywatelskich. W wystąpieniu opublikowanym 29 marca 2021 roku rzecznik opisał zgromadzenie czterech osób przed Trybunałem 10 marca. Dwie osoby przypięły się do ogrodzenia. Rzecznik zwrócił uwagę na liczbę skierowanych na miejsce policjantów i ograniczenie możliwości obserwowania protestu przez dziennikarzy.",
+      "Dokument RPO pokazuje, co wówczas budziło zastrzeżenia rzecznika i kiedy interweniował w tej sprawie. Datowanie samego udostępnionego materiału pochodzi z weryfikacji Demagoga. Dzięki zestawieniu tych źródeł można odróżnić relację o zachowaniu funkcjonariuszy od późniejszego komentarza politycznego.",
+      "Do zmiany sensu nagrania wystarczył nowy podpis. Odbiorca widzący je we wrześniu 2026 roku mógł odnieść wrażenie, że ogląda właśnie trwającą interwencję. Przywrócenie daty marca 2021 roku pozwala oceniać działania policji w odpowiednim czasie i z właściwym kontekstem."
+    ],
+    "claim": "Policja Kierwińskiego zasłania protestujących pod Trybunałem Konstytucyjnym parawanem. W jakim kraju my żyjemy?! Co Kierwiński zrobił z tej formacji?!",
+    "rating": "Fałsz",
+    "review": {
+      "title": "Policja zasłania protest parawanem? To stare nagranie",
+      "publisher": "Stowarzyszenie Demagog",
+      "publishedAt": "2026-09-17",
+      "url": "https://demagog.org.pl/wypowiedzi/policja-zaslania-protestujacych-parawanem-wos-udostepnia-stare-nagranie/"
+    },
+    "sources": [
+      {
+        "title": "RPO o działaniach Policji przed TK i w pubie Piw Paw 10 marca. Wystąpienie do Komendanta Głównego Policji",
+        "publisher": "Biuletyn Informacji Publicznej RPO",
+        "publishedAt": "2021-03-29",
+        "url": "https://bip.brpo.gov.pl/pl/content/rpo-o-dzialaniach-policji-przed-tk-i-w-pubie-piw-paw-10-marca-wystapienie-do-komendanta"
+      }
+    ]
+  }
+]

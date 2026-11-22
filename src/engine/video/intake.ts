@@ -1,4 +1,4 @@
-import { LlmUnavailableError, type DetectorHit, type ModelUsage, type VideoAnalysis } from "../../shared/contracts";
+import type { DetectorHit, ModelUsage, VideoAnalysis } from "../../shared/contracts";
 import type { VerificationStage } from "../../shared/chat";
 import { claimStatesDate, mustHaveTerms, type ExtractedClaim } from "../claims";
 import { foldForMatch, isoDateOrUndefined, truncateWords } from "../text";
@@ -67,20 +67,8 @@ const ANALYSIS_DISABLED = "Analiza obrazu i dźwięku jest wyłączona w tej ins
 
 function videoFailure(error: unknown, loading: boolean, platform: VideoAnalysis["platform"], provider?: VideoAnalysis["provider"]): string {
   if (error instanceof Error && error.message === "audio_no_speech") return "Nie rozpoznałem mowy w nagraniu. Możesz podać treść wypowiedzi do sprawdzenia.";
-  if (provider === "openai" && error instanceof LlmUnavailableError) {
-    if (error.message === "eu_residency_not_enabled") return "OpenAI odrzucił żądanie w wybranym regionie UE. Sprawdź ustawienia projektu OpenAI.";
-    if (error.message === "auth" || error.reason === "no_key") return "OpenAI odrzucił dostęp do analizy filmu. Sprawdź klucz OPENAI_API_KEY i jego uprawnienia do modeli.";
-    if (error.reason === "budget") return "OpenAI wstrzymał analizę filmu z powodu limitu środków projektu.";
-    if (error.reason === "rate_limit") return "OpenAI chwilowo ograniczył liczbę żądań. Spróbuj ponownie za chwilę.";
-  }
-  if (error instanceof Error && error.message === "video_decoder_missing") {
-    return "Na serwerze Fons brakuje FFmpeg lub FFprobe do odczytu pliku wideo.";
-  }
   if (error instanceof Error && error.message === "video_decode_failed") {
     return "Nie udało się odczytać pobranego pliku wideo. Możesz wkleić transkrypcję do sprawdzenia.";
-  }
-  if (error instanceof Error && error.message === "gemini_credits_depleted") {
-    return "Google Gemini wstrzymał analizę filmu z powodu wyczerpania środków projektu. Administrator może uzupełnić saldo w Google AI Studio.";
   }
   if ((error instanceof SocialVideoSourceError && error.reason === "too_large") ||
       (error instanceof Error && ["video_too_large", "video_too_long"].includes(error.message))) {
@@ -98,7 +86,7 @@ function videoFailure(error: unknown, loading: boolean, platform: VideoAnalysis[
   }
   return loading
     ? "Serwis nie udostępnił nagrania. Możesz przesłać plik w czacie lub wkleić transkrypcję."
-    : `Nie udało się ukończyć analizy filmu przez ${provider === "openai" ? "OpenAI" : "Gemini"}. Spróbuj ponownie lub wklej transkrypcję.`;
+    : "Nie udało się ukończyć analizy filmu. Spróbuj ponownie lub wklej transkrypcję.";
 }
 
 export async function readVideo(

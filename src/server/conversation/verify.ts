@@ -251,25 +251,24 @@ export async function runVerification(
   const note = outcome ? caseNote(outcome) : caseFailed ? CASE_FAILED_TEXT : undefined;
   const resultUrl = resultUrlFor(ctx, report.token);
   if (report.imageAnalysis?.only) {
-    return { kind: "image_analysis", report, textPl: report.summaryPl, quickReplies: [QR.why], resultUrl };
+    return { kind: "image_analysis", report, textPl: report.summaryPl, quickReplies: [], resultUrl };
   }
   if (report.status !== "OK") {
     return { kind: "status", report, textPl: statusTextFor(report), quickReplies: [QR.help], resultUrl };
   }
   if (report.inputMode === "transcription") {
     const textPl = "Automatyczna transkrypcja\n\n" + report.summaryPl;
-    return { kind: "transcription", report, textPl, shortAnswer: { bodyPl: textPl, sources: [] }, quickReplies: [QR.why], resultUrl };
+    return { kind: "transcription", report, textPl, shortAnswer: { bodyPl: textPl, sources: [] }, quickReplies: [], resultUrl };
   }
   if (report.videoAnalysis?.status === "metadata_only") {
-    return { kind: "answer", report, textPl: report.summaryPl, shortAnswer: { bodyPl: report.summaryPl, sources: [] }, quickReplies: [QR.why], resultUrl };
+    return { kind: "answer", report, textPl: report.summaryPl, shortAnswer: { bodyPl: report.summaryPl, sources: [] }, quickReplies: [], resultUrl };
   }
-  const quick = [QR.sources, QR.why, ...(report.moderatorCase || !report.verdicts.length ? [] : [QR.report])];
   if (report.answer || report.inputMode !== "claim" || (!report.videoAnalysis && !report.imageAnalysis)) {
     const shortAnswer = shortAnswerFor(report, note);
     return { kind: report.answer || report.questionParts ? "answer" : "verdict", report, shortAnswer,
-      textPl: shortAnswerText(shortAnswer, report), quickReplies: report.answer ? [QR.sources, QR.why] : quick, resultUrl };
+      textPl: shortAnswerText(shortAnswer, report), quickReplies: [], resultUrl };
   }
   return {
-    kind: "verdict", report, textPl: verdictText(report, note), quickReplies: quick, resultUrl,
+    kind: "verdict", report, textPl: verdictText(report), quickReplies: [], resultUrl,
   };
 }

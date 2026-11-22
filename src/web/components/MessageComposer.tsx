@@ -15,17 +15,24 @@ import { useVoiceNote } from "../lib/useVoiceNote";
 import { AttachmentGuide } from "./AttachmentGuide";
 
 export type SubmitMessage = (input: ChatInput, fileName?: string) => void;
+export interface ComposerDraft { text: string; attachments: DraftAttachment[]; mode?: AttachmentMode | null }
+export type ComposerDraftRef = RefObject<ComposerDraft | null>;
 
 interface MessageComposerProps {
   onSubmit: SubmitMessage;
   isDisabled?: boolean;
   editorRef?: RefObject<ChatComposerInputHandle | null>;
+  draftRef?: ComposerDraftRef;
 }
 
-export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: MessageComposerProps) {
-  const [text, setText] = useState("");
-  const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
-  const [mode, setMode] = useState<AttachmentMode | null>(null);
+export function MessageComposer({ onSubmit, isDisabled = false, editorRef, draftRef }: MessageComposerProps) {
+  const [text, setText] = useState(() => draftRef?.current?.text ?? "");
+  const [attachments, setAttachments] = useState<DraftAttachment[]>(() => draftRef?.current?.attachments ?? []);
+  const [mode, setMode] = useState<AttachmentMode | null>(() => draftRef?.current?.mode ?? null);
+  // Sending a passage can move the composer from the landing into the transcript mid-draft.
+  useLayoutEffect(() => {
+    if (draftRef) draftRef.current = { text, attachments, mode };
+  }, [draftRef, text, attachments, mode]);
   const [attachment, comparison] = attachments;
   const needsSecondImage = mode === "compare" && attachment?.kind === "image" && !comparison;
   const [reading, setReading] = useState(false);
@@ -121,6 +128,7 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
     } else if (attachment?.kind === "recording") {
       input.recording = attachment.content;
     }
+    if (draftRef) draftRef.current = null;
     onSubmit(input, attachment && attachments.map(file => file.name).join(" · ").slice(0, 512));
     setText("");
     setAttachments([]);

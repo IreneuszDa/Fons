@@ -4,7 +4,7 @@ import { parseHTML } from "linkedom";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { MessageComposer } from "./MessageComposer";
+import { MessageComposer, type ComposerDraft } from "./MessageComposer";
 
 let root: Root;
 const stopTrack = vi.fn();
@@ -158,6 +158,27 @@ it.each([true, false])("accepts a complete pair of images, selected together: %s
     image: { mime: "image/png", base64: Buffer.from("pierwszy").toString("base64") },
     comparisonImage: { mime: "image/jpeg", base64: Buffer.from("drugi").toString("base64") },
   }, "pierwszy.png · drugi.jpg");
+});
+
+it("keeps the first image in comparison mode when a draft moves into the conversation", async () => {
+  const draftRef = { current: null as ComposerDraft | null };
+  async function renderComposer(key: string) {
+    await act(async () => root.render(
+      <InternationalizationProvider locale="pl-PL" messages={{ "pl-PL": plPL }}>
+        <MessageComposer key={key} onSubmit={onSubmit} draftRef={draftRef} />
+      </InternationalizationProvider>,
+    ));
+  }
+  await renderComposer("landing");
+  const panel = await openGuide("Porównaj dwa obrazy");
+  await drop(panel, [new File([sample], "pierwszy.png", { type: "image/png" })]);
+  await renderComposer("conversation");
+  expect(document.body.textContent).toContain("pierwszy.png");
+  expect(button("Wyślij").getAttribute("aria-disabled")).toBe("true");
+  await click("Wybierz drugi obraz");
+  await choose([new File([sample], "drugi.png", { type: "image/png" })]);
+  await click("Wyślij");
+  expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ comparisonImage: expect.anything() }), "pierwszy.png · drugi.png");
 });
 
 it("allows attaching two images and removing either one before the local comparison", async () => {

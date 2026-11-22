@@ -28,8 +28,8 @@ export function reportReply(kind: "sources" | "why", ctx: ServerContext, session
   if (!report) return { kind: "help", textPl: NO_REPORT_TEXT, quickReplies: [QR.help] };
   const resultUrl = resultUrlFor(ctx, report.token);
   return kind === "sources"
-    ? { kind, textPl: sourcesText(report, resultUrl), quickReplies: [QR.why], resultUrl }
-    : { kind, textPl: whyText(report), quickReplies: [QR.sources], resultUrl };
+    ? { kind, textPl: sourcesText(report), quickReplies: [], resultUrl }
+    : { kind, textPl: whyText(report), quickReplies: [], resultUrl };
 }
 
 export async function respondToMessage(
@@ -110,7 +110,7 @@ ${content}` : content;
     if (!overBudget && !canVerifyWithoutDialogue(text)) {
       return {
         kind: "help",
-        textPl: "Mam teraz problem z połączeniem z modelem rozmowy. Jeśli chcesz coś zweryfikować, napisz „Sprawdź” i dodaj konkretne zdanie albo link.",
+        textPl: "Nie mogę teraz odpowiedzieć. Jeśli chcesz coś zweryfikować, napisz „Sprawdź” i dodaj konkretne zdanie albo link.",
         quickReplies: [],
       };
     }
@@ -131,7 +131,7 @@ ${content}` : content;
         const links = [...localLinks, ...searches.flatMap(search => search.matches.map(match => match.url ?? match.host))];
         return {
           kind: "sources", textPl: links.length ? [...new Set(links)].join("\n") : "Google nie znalazło kopii tego zdjęcia w swoim indeksie.",
-          resultUrl: resultUrlFor(ctx, previous.token), quickReplies: [QR.why],
+          resultUrl: resultUrlFor(ctx, previous.token), quickReplies: [],
         };
       }
     }

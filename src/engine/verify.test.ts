@@ -671,7 +671,7 @@ describe("verifyInput — statuses and faults", () => {
     expect(r.mainVerdict).toBeNull();
     expect(r.verdicts).toHaveLength(0);
     expect(r.statusMessagePl).toBe(STATUS_PL.llmNotConfigured);
-    expect(r.statusMessagePl).toContain("model językowy nie jest skonfigurowany");
+    expect(r.statusMessagePl).not.toContain("model");
     expect(llm.calls).toHaveLength(0);
   });
 

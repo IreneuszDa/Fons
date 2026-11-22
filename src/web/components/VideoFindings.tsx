@@ -74,8 +74,6 @@ export function VideoFindings({ analysis, pendingClaims = [] }: { analysis: Vide
       {analysis.status === "subtitles_only" && <Text as="p" type="supporting">Dostępne są napisy platformy. Obraz filmu pozostaje niesprawdzony.</Text>}
       {analysis.status === "caption_only" && <Text as="p" type="supporting">Odczytano wyłącznie publiczny opis posta.</Text>}
       {analysis.status === "transcript_only" && <Text as="p" type="supporting">{analysis.platform === "upload_audio" ? "Sprawdzono treść transkrypcji nagrania." : "Sprawdzono transkrypcję dźwięku. Obraz filmu pozostaje niesprawdzony."}</Text>}
-      {analysis.status === "analyzed" && analysis.provider === "openai" &&
-        <Text as="p" type="supporting" color="secondary">OpenAI przeanalizował wybrane klatki filmu.</Text>}
       {analysis.transcriptSource === "openai" &&
         <Text as="p" type="supporting" color="secondary">Czas przy wypowiedzi wskazuje początek fragmentu dźwięku.</Text>}
       {analysis.mediaIssue && <Text as="p" type="supporting" color="secondary">{analysis.mediaIssue}</Text>}

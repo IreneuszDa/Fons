@@ -1,4 +1,4 @@
-import type { Claim, ClaimVerdict, ReportWarning, VerdictReport } from "./contracts";
+import type { Claim, ClaimVerdict, VerdictReport } from "./contracts";
 import { passageText } from "./evidence";
 
 const sentenceEnd = (text: string) => text.trim().replace(/[.?!]+$/u, "") + ".";
@@ -81,13 +81,4 @@ export function citizenAnswerPl(report: VerdictReport): string {
     return "Nie wiem. W sprawdzonych źródłach brakuje odpowiedzi.";
   }
   return report.summaryPl;
-}
-
-/** Material caveats travel with the answer. Operational details are available in the linked report. */
-export function citizenWarnings(warnings: ReportWarning[]): ReportWarning[] {
-  const important = warnings.filter(w => ["injection_detected", "archival_material", "source_status", "incident_domain", "incident_narrative", "image_limits", "daily_search_limit"].includes(w.kind));
-  const outages = warnings.filter(w => w.kind === "branch_unavailable");
-  if (outages.length) important.push(outages.length === 1 && outages[0]!.textPl.length < 120 ? outages[0]! :
-    { kind: "branch_unavailable", textPl: "Część wyszukiwania była niedostępna." });
-  return important;
 }

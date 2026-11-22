@@ -3,7 +3,7 @@ import type { ChatDetail, ChatSummary, StoredChatEntry } from "../shared/chat";
 import type { ConversationReply, InboundMessage } from "../shared/contracts";
 import type { ServerContext } from "./context";
 import { linksIn, maskedConversationText, visibleLink } from "./conversation/history";
-import { QR } from "./conversation/templates";
+import { QR, whyText } from "./conversation/templates";
 import { SESSION_RETENTION_DAYS } from "./db";
 import { getReportForSender } from "./reports";
 import { createSession, findSession, newSessionId, type SessionRow } from "./sessions";
@@ -138,6 +138,14 @@ export function readWebChat(ctx: ServerContext, senderId: string, id: string): C
     if (row.report_token) {
       const report = getReportForSender(ctx.db, row.report_token, senderId, ctx.now());
       if (report) reply.report = maskSubmittedLinks(report, report.inputEchoMasked);
+    }
+    if (reply.kind === "why" && reply.resultUrl) {
+      const token = /\/w\/([\w-]+)$/u.exec(reply.resultUrl)?.[1];
+      const report = token && getReportForSender(ctx.db, token, senderId, ctx.now());
+      reply.quickReplies = [];
+      reply.textPl = report
+        ? maskSubmittedLinks(whyText(report), report.inputEchoMasked)
+        : "Ten wynik nie jest już dostępny.";
     }
     entries.push({ id: `turn-${row.seq}-user`, role: "user", text: row.user_text, ...(row.file_name && { fileName: row.file_name }) },
       { id: `turn-${row.seq}-assistant`, role: "assistant", reply });

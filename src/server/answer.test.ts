@@ -54,10 +54,7 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     expect(reply.textPl).not.toContain("Wynik:"); // to nie werdykt
     expect(reply.report.answer.evidence).toHaveLength(1);
     expect(reply.resultUrl).toContain("/w/");
-    expect(reply.quickReplies).toEqual([
-      { id: "sources", labelPl: "Źródła" },
-      { id: "why", labelPl: "Jak to sprawdziłeś?" },
-    ]);
+    expect(reply.quickReplies).toEqual([]);
   });
 
   it("źródła i „dlaczego” działają dla odpowiedzi (cytat ze źródła, bez werdyktu)", async () => {
@@ -65,14 +62,14 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     const c = await chat(env, { text: "Kim jest Prezes UOKiK?" });
     const src = await chat(env, { action: "sources" }, c.cookie);
     expect(src.json.reply.kind).toBe("sources");
-    expect(src.json.reply.quickReplies).toEqual([{ id: "why", labelPl: "Jak to sprawdziłeś?" }]);
+    expect(src.json.reply.quickReplies).toEqual([]);
     expect(src.json.reply.textPl).toContain("Ustawa o ochronie konkurencji");
     expect(src.json.reply.textPl).toContain("Prezes Urzędu jest centralnym organem");
     expect(src.json.reply.textPl).not.toContain("nie ma źródeł");
     const why = await chat(env, { action: "why" }, c.cookie);
     expect(why.json.reply.kind).toBe("why");
-    expect(why.json.reply.quickReplies).toEqual([{ id: "sources", labelPl: "Źródła" }]);
-    expect(why.json.reply.textPl).toContain("dosłowny cytat");
+    expect(why.json.reply.quickReplies).toEqual([]);
+    expect(why.json.reply.textPl).toContain(evidence.url);
   });
 
   it("dziennik przebiegów zawiera rekord z answer.evidence, a log JSON ma inputMode", async () => {
@@ -121,7 +118,7 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     for (const id of ["web", "cli"]) {
       const out = env.ctx.channels.get(id)!.render(c.json.reply);
       expect(out, id).toContain("Według Sejm RP");
-      expect(out, id).toContain("Pełny wynik ze źródłami:");
+      expect(out, id).toBe([c.json.reply.shortAnswer.bodyPl, `Źródło: ${evidence.url}`, `Pełny wynik ze źródłami: ${c.json.reply.resultUrl}`].join("\n\n"));
     }
   });
 });

@@ -1,4 +1,3 @@
-import { Banner } from "@astryxdesign/core/Banner";
 import { Blockquote } from "@astryxdesign/core/Blockquote";
 import { Card } from "@astryxdesign/core/Card";
 import { Divider } from "@astryxdesign/core/Divider";
@@ -7,7 +6,7 @@ import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Link } from "@astryxdesign/core/Link";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import type { ClaimVerdict, ReportWarning, Verdict, VerdictReport } from "../../shared/contracts";
+import type { ClaimVerdict, Verdict, VerdictReport } from "../../shared/contracts";
 import { mediaClaimSubject } from "../../shared/attachments";
 import { paragraphs } from "../lib/format";
 import {
@@ -15,13 +14,9 @@ import {
   VERDICT_LABEL_PL,
   VERDICT_MEANING_PL,
   VERDICT_TONE,
-  WARNING_SEVERITY,
-  WARNING_TITLE_PL,
 } from "../lib/report";
-import { resultPathFor, safeUrl } from "../lib/safeUrl";
+import { resultPathFor } from "../lib/safeUrl";
 import { ConflictingSources, EvidenceGroups } from "./Evidence";
-import { TransparencyBlock } from "./TransparencyBlock";
-import { StrengthCard } from "./StrengthCard";
 import { VERDICT_ICON } from "./verdictIcons";
 import { VideoClaimOrigin, VideoFindings } from "./VideoFindings";
 
@@ -32,30 +27,6 @@ export function VerdictLabel({ verdict, size = "md" }: { verdict: Verdict; size?
       <Icon icon={VERDICT_ICON[verdict]} size={size} color={VERDICT_TONE[verdict]} />
       <Text weight="bold">{VERDICT_LABEL_PL[verdict]}</Text>
     </HStack>
-  );
-}
-
-export function ReportWarnings({ warnings }: { warnings: ReportWarning[] }) {
-  if (warnings.length === 0) return null;
-  return (
-    <VStack gap={2}>
-      {warnings.map((w, i) => (
-        <Banner key={`${w.kind}-${i}`} status={WARNING_SEVERITY[w.kind]} title={WARNING_TITLE_PL[w.kind]} description={w.textPl} collapsible={false}>
-          {w.links?.length ? (
-            <VStack gap={1}>
-              {w.links.map(({ title, url }) => {
-                const href = safeUrl(url);
-                return href ? (
-                  <Link key={url} href={href} isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">
-                    {title}
-                  </Link>
-                ) : null;
-              })}
-            </VStack>
-          ) : null}
-        </Banner>
-      ))}
-    </VStack>
   );
 }
 
@@ -113,7 +84,6 @@ export function ClaimDetails({ verdict }: { verdict: ClaimVerdict }) {
           Nie znaleźliśmy pasujących fragmentów w źródłach z katalogu.
         </Text>
       ) : null}
-      <StrengthCard strength={verdict.strength} />
     </VStack>
   );
 }
@@ -150,8 +120,6 @@ export function VerdictCard({ report, showResultLink = true, anchorId }: { repor
         </VStack>
       </Card>
       {report.videoAnalysis && <VideoFindings analysis={report.videoAnalysis} />}
-      <TransparencyBlock report={report} />
-      <ReportWarnings warnings={report.warnings} />
       {rows.map((r, i) => (
         <VStack key={r.claimId} gap={4}>
           {i > 0 ? <Divider /> : null}
@@ -162,7 +130,7 @@ export function VerdictCard({ report, showResultLink = true, anchorId }: { repor
       {resultPath ? (
         <HStack gap={1} vAlign="center">
           <Link href={resultPath} weight="semibold">
-            Pełny wynik
+            Pełny wynik ze źródłami
           </Link>
           <Icon icon={ArrowTopRightOnSquareIcon} size="xsm" color="accent" />
         </HStack>

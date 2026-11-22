@@ -1,4 +1,3 @@
-import { Banner } from "@astryxdesign/core/Banner";
 import { Card } from "@astryxdesign/core/Card";
 import { Divider } from "@astryxdesign/core/Divider";
 import { Icon } from "@astryxdesign/core/Icon";
@@ -9,11 +8,9 @@ import { Heading, Text } from "@astryxdesign/core/Text";
 import { ArrowTopRightOnSquareIcon, BookOpenIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { EvidenceItem, VerdictReport } from "../../shared/contracts";
 import { formatDate, hostOf, paragraphs } from "../lib/format";
-import { hasArchivalWarning, SOURCE_TYPE_PL, WARNING_TITLE_PL } from "../lib/report";
+import { SOURCE_TYPE_PL } from "../lib/report";
 import { resultPathFor, safeUrl } from "../lib/safeUrl";
 import { EvidencePassage, SourceTitle } from "./Evidence";
-import { ReportWarnings } from "./VerdictCard";
-import { TransparencyBlock } from "./TransparencyBlock";
 
 export const ANSWER_TITLE_PL = "Odpowiedź ze źródła";
 export const NO_ANSWER_TITLE_PL = "Nie znalazłem odpowiedzi w źródłach";
@@ -26,7 +23,7 @@ function ResultLink({ token }: { token: string }) {
   return (
     <HStack gap={1} vAlign="center">
       <Link href={path} weight="semibold">
-        Pełny wynik
+        Pełny wynik ze źródłami
       </Link>
       <Icon icon={ArrowTopRightOnSquareIcon} size="xsm" color="accent" />
     </HStack>
@@ -66,30 +63,13 @@ export function AnswerSource({ item }: { item: EvidenceItem }) {
 export function AnswerCard({ report, showResultLink = true, anchorId, inChat = false }: { report: VerdictReport; showResultLink?: boolean; anchorId?: string; inChat?: boolean }) {
   const answer = report.answer;
   const question = answer?.questionPl || report.inputEchoMasked;
-  const archivalOnlyInStrength = hasArchivalWarning(report) && !report.warnings.some((w) => w.kind === "archival_material");
   const [first, ...more] = answer?.evidence ?? [];
-  const warnings = (
-    <>
-      <ReportWarnings warnings={report.warnings} />
-      {archivalOnlyInStrength ? (
-        <Banner
-          status="warning"
-          title={WARNING_TITLE_PL.archival_material}
-          description="Źródło jest starsze. Sprawdź, czy informacja jest nadal aktualna."
-          collapsible={false}
-        />
-      ) : null}
-    </>
-  );
-
   if (inChat && !answer) {
     return (
       <VStack gap={3}>
         <Text as="p" id={anchorId}>
           {NO_ANSWER_TITLE_PL}. Masz link albo fragment wiadomości, od której zaczęło się pytanie? Mogę sprawdzić go osobno.
         </Text>
-        <TransparencyBlock report={report} />
-        {warnings}
         {showResultLink ? <ResultLink token={report.token} /> : null}
       </VStack>
     );
@@ -124,8 +104,6 @@ export function AnswerCard({ report, showResultLink = true, anchorId, inChat = f
           )}
         </VStack>
       </Card>
-      <TransparencyBlock report={report} />
-      {warnings}
       {first ? (
         <VStack gap={3}>
           <Heading level={4}>Źródło odpowiedzi</Heading>

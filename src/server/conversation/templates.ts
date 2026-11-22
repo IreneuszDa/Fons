@@ -1,9 +1,8 @@
 /** Szablony odpowiedzi warstwy rozmowy — bez LLM, prosty polski. */
 import { VERDICT_LABEL_PL, type ConversationReply, type VerdictReport } from "../../shared/contracts";
 import { mediaClaimSubject } from "../../shared/attachments";
-import { plural } from "../../engine/verdict/texts";
 import { passageText, prioritizeConflictEvidence } from "../../shared/evidence";
-import { citizenAnswerPl, citizenWarnings, shortVerdict } from "../../shared/citizen-answer";
+import { citizenAnswerPl, shortVerdict } from "../../shared/citizen-answer";
 import type { CaseOutcome } from "../moderator/cases";
 import { isoDatePart, safeHttpUrl, truncate } from "../util";
 import { ACTION } from "./intents";
@@ -16,8 +15,6 @@ export const QR = {
   report: { id: ACTION.report, labelPl: "Zgłoś do sprawdzenia" },
   help: { id: ACTION.help, labelPl: "Pomoc" },
 } satisfies Record<string, QuickReply>;
-
-export const STRENGTH_PL = { slaba: "słaba", srednia: "średnia", mocna: "mocna" } as const;
 
 export const HELP_TEXT =
   "Wyślij mi informację, którą chcesz sprawdzić (tekst albo link do strony). Odpowiem, czy jest potwierdzona, fałszywa, wprowadzająca w błąd, czy brakuje dowodów, i pokażę źródła. " +
@@ -67,7 +64,7 @@ export function caseNote(o: CaseOutcome): string {
 
 export const CASE_FAILED_TEXT = "Nie udało się teraz zapisać sprawy. Możesz spróbować ponownie za chwilę.";
 
-export function verdictText(report: VerdictReport, note?: string): string {
+export function verdictText(report: VerdictReport): string {
   const lines: string[] = [];
   if (report.mainVerdict && (report.verdicts.length <= 1 || report.videoAnalysis)) {
     const claim = report.videoAnalysis && report.claims.find(c => c.isMain);
@@ -85,8 +82,6 @@ export function verdictText(report: VerdictReport, note?: string): string {
       for (const url of sources) lines.push(`Źródło: ${url}`);
     }
   }
-  for (const w of report.warnings) lines.push(`Uwaga: ${w.textPl}`);
-  if (note) lines.push(note);
   return lines.filter(Boolean).join("\n");
 }
 
@@ -99,8 +94,9 @@ export function mainClaimVerdict(report: VerdictReport) {
 export function shortAnswerFor(report: VerdictReport, note?: string): NonNullable<ConversationReply["shortAnswer"]> {
   const sources = new Map<string, { title: string; publisher: string; url: string }>();
   const verdict = mainClaimVerdict(report);
-  const evidence = report.questionParts?.flatMap(p => p.evidence) ?? report.answer?.evidence ?? prioritizeConflictEvidence(
-    [...(verdict?.evidence ?? [])].sort((a, b) => Number(!!b.usedForVerdict) - Number(!!a.usedForVerdict)), verdict?.conflicting);
+  const evidence = report.questionParts?.flatMap(p => p.evidence) ?? report.answer?.evidence ?? (report.verdicts.length > 1
+    ? report.verdicts.flatMap(item => item.evidence) : prioritizeConflictEvidence(
+    [...(verdict?.evidence ?? [])].sort((a, b) => Number(!!b.usedForVerdict) - Number(!!a.usedForVerdict)), verdict?.conflicting));
   for (const item of evidence) {
     const url = safeHttpUrl(item.url);
     if (url && !sources.has(url)) sources.set(url, { url, title: item.title, publisher: item.publisher });
@@ -113,40 +109,14 @@ export function shortAnswerFor(report: VerdictReport, note?: string): NonNullabl
 }
 
 export function shortAnswerText(answer: NonNullable<ConversationReply["shortAnswer"]>, report: VerdictReport): string {
-  const body = report.questionParts?.length ? report.questionParts.map(p => p.questionPl + "\n" + p.answerPl).join("\n\n")
+  return report.questionParts?.length ? report.questionParts.map(p => p.questionPl + "\n" + p.answerPl).join("\n\n")
     : report.verdicts.length > 1 && !report.answer ? report.verdicts.map(v => {
       const claim = report.claims.find(c => c.id === v.claimId);
       return (claim?.text ?? "") + "\n" + shortVerdict(v, claim);
     }).join("\n\n") : answer.bodyPl;
-  const strength = !report.answer && report.verdicts.length === 1 ? report.verdicts[0]?.strength : undefined;
-  return [
-    body,
-    strength && strength.score !== null ? "Siła dowodów — " + STRENGTH_PL[strength.level] : undefined,
-    ...citizenWarnings(report.warnings).map(w => w.textPl),
-    answer.caseNotePl,
-  ].filter(Boolean).join("\n");
 }
 
-function searchSummary(report: VerdictReport): string {
-  const activity = report.sourceActivity;
-  if (!activity) return "";
-  const summary: string[] = [];
-  if (report.cacheHit) summary.push("Ten wynik pochodzi z zapisanego wcześniej sprawdzenia.");
-  const searched = activity.branches.filter(branch => branch.status === "completed" || branch.status === "partial");
-  if (searched.length) {
-    summary.push(searched.map(b => `• ${b.labelPl}`).join("\n"));
-    const count = activity.candidateCount;
-    const assessed = activity.assessedCount;
-    summary.push(`Wyszukiwanie zwróciło ${count} ${plural(count, "fragment", "fragmenty", "fragmentów")}. Model ocenił ${assessed} ${plural(assessed, "fragment", "fragmenty", "fragmentów")}.`);
-  } else if (!activity.branches.length) {
-    summary.push("W tym sprawdzeniu nie zarejestrowano przeszukania źródeł.");
-  }
-  const unavailable = activity.branches.filter(branch => branch.status === "partial" || branch.status === "unavailable");
-  for (const branch of unavailable) summary.push(`${branch.labelPl} — ${branch.status === "partial" ? "część wyszukiwań się nie powiodła" : "metoda była niedostępna"}.`);
-  return summary.join("\n");
-}
-
-export function sourcesText(report: VerdictReport, resultUrl?: string): string {
+export function sourcesText(report: VerdictReport): string {
   if (report.videoAnalysis?.status === "metadata_only") return "Parametry pochodzą z pliku przesłanego w tej rozmowie.";
   if (report.inputMode === "transcription") return "Źródłem transkrypcji jest nagranie przesłane w tej rozmowie.";
   const visual = report.imageAnalysis?.visual;
@@ -170,14 +140,7 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
   }
   const items = [...report.verdicts.flatMap((v) => v.evidence), ...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(p => p.evidence) ?? [])];
   if (items.length === 0) {
-    const tried = mainClaimVerdict(report)?.triedPl;
-    return [
-      "Dla tego wyniku nie ma źródeł, które by go rozstrzygały.",
-      searchSummary(report) || (tried ? `Co sprawdzałem: ${tried}` : undefined),
-      resultUrl ? `Pełny wynik: ${resultUrl}` : undefined,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    return "Dla tego wyniku nie ma źródeł, które by go rozstrzygały.";
   }
   const passages = new Map(items.map(item => [
     JSON.stringify([safeHttpUrl(item.url) ?? item.recordId, item.quote]), item,
@@ -192,48 +155,12 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
     );
   }
   if (passages.size > 6) lines.push("Pełna lista jest na stronie wyniku.");
-  if (resultUrl) lines.push(`Pełny wynik: ${resultUrl}`);
-  lines.push("Przeczytaj źródło sam: to najpewniejszy sposób, żeby ocenić sprawę.");
   return lines.join("\n");
 }
 
 export function whyText(report: VerdictReport): string {
-  if (report.inputMode === "transcription" || report.videoAnalysis?.status === "metadata_only") return report.transparencyPl;
-  if (report.imageAnalysis?.only) return [report.summaryPl, report.transparencyPl].join("\n");
-  const activity = searchSummary(report);
-  if (report.questionParts) return [report.transparencyPl, activity].filter(Boolean).join("\n");
-  if (report.models.some(model => model.purpose === "source_answer_check") || report.sourceActivity?.branches.some(b => b.id === "publications" || b.id === "google_claimreview")) {
-    return [report.transparencyPl, activity].filter(Boolean).join("\n");
-  }
-  if (report.answer && !mainClaimVerdict(report)) {
-    return [
-      activity,
-      report.models.some(model => model.purpose === "open_answer")
-        ? report.answer.evidence.length && report.answer.evidence.every(item => item.passageKind === "excerpt")
-          ? "Podstawą odpowiedzi jest dosłowny cytat ze źródła z katalogu. Kod sprawdził jego zgodność z zapisanym fragmentem."
-          : "Odczytałem fragmenty zapisane w rekordach źródeł. W szczegółach znajdziesz ich wydawców i odnośniki do publikacji."
-        : undefined,
-      report.transparencyPl,
-    ]
-      .filter(Boolean)
-      .join("\n");
-  }
-  const v = mainClaimVerdict(report);
-  if (!v) return [report.statusMessagePl || report.summaryPl, activity].filter(Boolean).join("\n");
-  const lines: string[] = [`Dlaczego taki wynik: ${v.reasonPl}`];
-  const s = v.strength;
-  const points = typeof s.score === "number" ? `, ${s.score}/100` : "";
-  lines.push(
-    `Siła podstawy: ${STRENGTH_PL[s.level]}${points} (źródła pierwotne: ${s.primarySources}, niezależni wydawcy: ${s.independentPublishers}).`,
-  );
-  for (const f of s.factors ?? []) lines.push(`${f.effect === "plus" ? "+" : "−"} ${f.textPl}`);
-  if (v.missingContext) lines.push(`Brakujący kontekst: ${v.missingContext}`);
-  if (v.conflicting) lines.push("Źródła są sprzeczne: nie wskazuję zwycięzcy, obie strony są na stronie wyniku.");
-  if (activity) lines.push(activity);
-  else if (v.triedPl) lines.push(`Co sprawdzałem: ${v.triedPl}`);
-  for (const n of s.notes) lines.push(`Uwaga: ${n}`);
-  lines.push(report.transparencyPl);
-  return lines.filter(Boolean).join("\n");
+  const reason = report.status === "OK" && !report.answer && !report.questionParts?.length && mainClaimVerdict(report)?.reasonPl;
+  return [reason || citizenAnswerPl(report), sourcesText(report)].filter(Boolean).join("\n\n");
 }
 
 export function deletedText(counts: { reports: number; runs: number; archives: number }): string {

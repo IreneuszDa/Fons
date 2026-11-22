@@ -7,16 +7,18 @@ import { bodyLimit } from "hono/body-limit";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { stream } from "hono/streaming";
 import { z } from "zod";
-import { CHAT_STREAM_CONTENT_TYPE, type ChatResponse, type ChatStreamEvent, type VerificationStage } from "../shared/chat";
+import { CHAT_STREAM_CONTENT_TYPE, MAX_READER_QUOTE_CHARS, readerExcerptMessage, type ChatResponse, type ChatStreamEvent, type VerificationStage } from "../shared/chat";
 import { InboundMessage, type ChannelAdapter } from "../shared/contracts";
 import { createAdminRoutes } from "./admin";
 import { archiveRoutes } from "./material-archive";
+import { latestNews } from "./news";
 import { authenticateBearerRequest, authorizeMetrics } from "./auth/principal";
 import { buildWebInbound } from "./channels/web";
 import { createChatLoomWebhook } from "./channels/chatloom";
 import { forwardWhatsAppSignup, WHATSAPP_SIGNUP_PATH } from "./channels/whatsapp-signup";
 import type { ServerContext } from "./context";
 import { handleInbound, type InboundOptions } from "./conversation";
+import { resolveReaderExcerpt } from "./conversation/reader-excerpt";
 import { RATE_LIMITED_TEXT } from "./conversation/templates";
 import { securityHeaders } from "./headers";
 import { GENERIC_ERROR_PL, clientIp, clientKey } from "./http";
@@ -60,6 +62,10 @@ const ChatBody = z.object({
   sessionId: z.string().max(128).optional(),
   text: z.string().max(50_000).optional(),
   action: z.string().max(64).optional(),
+  readerExcerpt: z.object({
+    articleId: z.string().min(1).max(256), quote: z.string().min(1).max(MAX_READER_QUOTE_CHARS),
+    start: z.number().int().nonnegative(), end: z.number().int().positive(),
+  }).optional(),
   fileName: z.string().max(512).optional(),
   image: ChatImage.optional(),
   comparisonImage: ChatImage.optional(),
@@ -227,6 +233,11 @@ export function createApp(ctx: ServerContext): Hono {
     c.json({ catalog: ctx.corpus.catalog(), counts: ctx.corpus.countsBySource(), snapshotId: ctx.engine.snapshotId() }),
   );
 
+  app.get("/api/news", (c) => {
+    c.header("Cache-Control", "public, max-age=300");
+    return c.json({ articles: latestNews(ctx) });
+  });
+
   app.route("/api/archives", archiveRoutes(ctx, ownerFrom, rememberOwner, crossSiteRejection));
 
   app.get("/api/report/:token", (c) => {
@@ -302,6 +313,13 @@ export function createApp(ctx: ServerContext): Hono {
       return c.json({ error: "bad_request", messagePl: "Wyślij jeden plik lub dwa obrazy do lokalnego porównania." }, 400);
     }
     if (body.comparisonImage) attachments.push(body.comparisonImage);
+    if (body.readerExcerpt && (attachments.length || body.action)) {
+      return c.json({ error: "bad_request", messagePl: "Wyślij zaznaczony fragment jako osobną wiadomość." }, 400);
+    }
+    const readerExcerpt = body.readerExcerpt && resolveReaderExcerpt(ctx, body.readerExcerpt);
+    if (body.readerExcerpt && !readerExcerpt) {
+      return c.json({ error: "invalid_excerpt", messagePl: "Nie udało się odnaleźć fragmentu. Otwórz wiadomość ponownie i zaznacz tekst." }, 400);
+    }
     for (const attachment of attachments) {
       const b64 = attachment.base64;
       const limit = body.recording ? MAX_RECORDING_BYTES : MAX_ATTACHMENT_BYTES;
@@ -347,7 +365,7 @@ export function createApp(ctx: ServerContext): Hono {
     const msg = buildWebInbound(ctx, {
       sessionId: session.id,
       senderId: session.senderId,
-      text: body.text,
+      text: readerExcerpt ? readerExcerptMessage(readerExcerpt.article.title, readerExcerpt.quote) : body.text,
       action: body.action,
       image: body.image,
       comparisonImage: body.comparisonImage,
@@ -365,6 +383,7 @@ export function createApp(ctx: ServerContext): Hono {
       onVerificationStart = () => resolve("verification-start");
     });
     const replyPromise = handleInbound(msg, ctx, {
+      readerExcerpt,
       onReply: reply => recordWebTurn(ctx, msg, reply, body.fileName),
       clientOverBudget: () => clientBudgetExceeded(ctx.clientUsage, ctx.cfg, ip, ctx.now()),
       onRoutingTokens: (tokens) => addClientTokens(ctx.clientUsage, ip, ctx.now(), tokens),

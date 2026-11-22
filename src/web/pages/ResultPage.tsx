@@ -16,8 +16,7 @@ import { ArticleOrigin } from "../components/Evidence";
 import { QuestionBreakdown } from "../components/QuestionBreakdown";
 import { ImageFindings } from "../components/ImageFindings";
 import { StatusNotice } from "../components/StatusNotice";
-import { TransparencyBlock } from "../components/TransparencyBlock";
-import { ReportWarnings, VerdictCard } from "../components/VerdictCard";
+import { VerdictCard } from "../components/VerdictCard";
 import { VideoFindings } from "../components/VideoFindings";
 import { formatDateTime } from "../lib/format";
 import { isOpenQuestion, STATUS_HINT_PL, STATUS_TITLE_PL } from "../lib/report";
@@ -78,8 +77,6 @@ function ReportView({ report }: { report: VerdictReport }) {
   if (report.inputMode === "transcription" || report.videoAnalysis?.status === "metadata_only") return (
     <VStack gap={3}>
       <Text as="p">{report.summaryPl}</Text>
-      <Text as="p" type="supporting" color="secondary">{report.transparencyPl}</Text>
-      <ReportWarnings warnings={report.warnings} />
       <Button label="Wróć do czatu" variant="secondary" href="/" />
     </VStack>
   );
@@ -93,14 +90,9 @@ function ReportView({ report }: { report: VerdictReport }) {
       </VStack>
       {report.article && <ArticleOrigin article={report.article} />}
       {report.imageAnalysis?.only && <ImageFindings analysis={report.imageAnalysis} summaryPl={report.summaryPl} expanded />}
-      {report.imageAnalysis?.only && !report.imageAnalysis.visual && report.status !== "OK" && <ReportWarnings warnings={report.warnings} />}
       {report.questionParts?.length ? (
-        <>
-          <QuestionBreakdown parts={report.questionParts} />
-          <ReportWarnings warnings={report.warnings} />
-          <TransparencyBlock report={report} />
-        </>
-      ) : report.imageAnalysis?.only ? <TransparencyBlock report={report} /> : report.status === "OK" && isOpenQuestion(report) ? (
+        <QuestionBreakdown parts={report.questionParts} />
+      ) : report.imageAnalysis?.only ? null : report.status === "OK" && isOpenQuestion(report) ? (
         <AnswerCard report={report} showResultLink={false} />
       ) : report.status === "OK" && report.mainVerdict ? (
         <VerdictCard report={report} showResultLink={false} />
@@ -115,8 +107,6 @@ function ReportView({ report }: { report: VerdictReport }) {
           {report.videoAnalysis && (
             <VideoFindings analysis={report.videoAnalysis} pendingClaims={report.claims} />
           )}
-          <ReportWarnings warnings={report.warnings} />
-          <TransparencyBlock report={report} />
         </>
       )}
       <Button label="Sprawdź kolejną informację" variant="secondary" href="/" />

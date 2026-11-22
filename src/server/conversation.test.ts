@@ -51,7 +51,7 @@ describe("asystent przed weryfikacją", () => {
     expect(multiple.json.reply.kind).toBe("status");
     expect(env.calls).toHaveLength(2);
   });
-  it("wyjaśnia zapisany przebieg również po przerwaniu sprawdzenia", async () => {
+  it("podaje wynik wcześniejszego sprawdzenia bez szczegółów wyszukiwania", async () => {
     const report = makeReport();
     report.status = "NIEPELNE";
     report.statusMessagePl = "Nie udało się ukończyć sprawdzenia.";
@@ -63,8 +63,8 @@ describe("asystent przed weryfikacją", () => {
     const first = await chat(env, { text: "Polska należy do NATO." });
     const why = await chat(env, { action: "why" }, first.cookie);
     expect(why.json.reply.kind).toBe("why");
-    expect(why.json.reply.textPl).toContain("Wyszukiwanie zwróciło 5 fragmentów");
-    expect(why.json.reply.textPl).toContain("wyszukiwanie na żywo — metoda była niedostępna");
+    expect(why.json.reply.textPl).toContain(report.statusMessagePl);
+    expect(why.json.reply.textPl).not.toContain("wyszukiwanie na żywo");
     expect(env.calls).toHaveLength(1);
   });
 
@@ -466,7 +466,7 @@ describe("źródła / dlaczego / zgłoś", () => {
     const w = await chat(env, { text: "dlaczego" }, a.cookie);
     expect(w.json.reply.kind).toBe("why");
     expect(w.json.reply.textPl).toContain("Uzasadnienie z szablonu.");
-    expect(w.json.reply.textPl).toContain("Siła podstawy: średnia");
+    expect(w.json.reply.textPl).not.toContain("Siła podstawy");
     expect(env.calls).toHaveLength(1);
   });
 

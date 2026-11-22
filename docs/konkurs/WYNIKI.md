@@ -1,5 +1,7 @@
 # Fons po naprawach — odbiór konkursowy MSZ
 
+[Aktualny pomiar macro-F1 po poprawkach](PROG-075.md)
+
 Nowszy raport obejmuje kolejne pełne serie na tych samych pytaniach, kontrolę rzeczywistych rozbieżności, dodatkowe pytania przez WWW i poprawki odczytu rejestrów. [Końcowy odbiór i materiały do odtworzenia](KONTYNUACJA.md)
 
 **22 listopada 2026 r.** Wydanie można pokazać od pytania obywatela do źródła i zapisanej odpowiedzi. Na tych samych 100 wejściach co w pierwszym audycie spełniło klucz **69/100** wobec początkowych **58/100**. Jawna próba osiągnęła **macro-F1 0,719** przy konkursowym progu **0,75**. Wzrost trafności, poprawne multimedia i dobre działanie interfejsu uzasadniają pokaz z udziałem człowieka. Błędy klasyfikacji oraz jakość cytatów ograniczają gotowość do samodzielnego rozstrzygania spraw publicznych.

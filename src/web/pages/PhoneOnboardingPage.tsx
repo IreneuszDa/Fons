@@ -155,7 +155,11 @@ export default function PhoneOnboardingPage() {
               </Text>
             </VStack>
             {result ? (
-              <Button label="Zmień numer" variant="secondary" onClick={editPhone} />
+              <VStack gap={1} hAlign="center" width="100%" maxWidth="19rem">
+                <Button label="Przejdź do chatu" href="/" variant="primary" size="lg" width="100%"
+                  endContent={<Icon icon={ArrowRightIcon} size="sm" />} />
+                <Button label="Zmień numer" variant="secondary" onClick={editPhone} />
+              </VStack>
             ) : isPhoneStep ? (
               <form className="phone-form" onSubmit={submit} noValidate>
                 <VStack gap={3} hAlign="center">

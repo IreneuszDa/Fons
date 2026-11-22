@@ -22,6 +22,7 @@ interface ChatHistoryProps {
   onOpen: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   onRetry?: () => void;
+  newsItems?: { label: string; onClick: () => void }[];
   children: ReactNode;
 }
 
@@ -108,7 +109,7 @@ export function HistoryList({
 }
 
 export default function ChatHistory({
-  chats, activeId, isLoading, error, isBusy, onNew, onOpen, onDelete, onRetry, children,
+  chats, activeId, isLoading, error, isBusy, onNew, onOpen, onDelete, onRetry, newsItems, children,
 }: ChatHistoryProps) {
   const isMobile = useMediaQuery("(max-width: 47.99rem)");
   const historyId = useId();
@@ -159,7 +160,10 @@ export default function ChatHistory({
             <IconButton {...trigger} label="Menu czatu" variant="ghost"
               icon={<Icon icon={EllipsisHorizontalIcon} size="lg" />} />
           )}
-          items={[{ label: "Fons na WhatsAppie", href: "/telefon" }, { label: "Źródła i metoda", href: "/zrodla" }]}
+          items={[
+            ...(newsItems?.length ? [{ label: "Sprawdzone wiadomości", items: newsItems }] : []),
+            { label: "Fons na WhatsAppie", href: "/telefon" }, { label: "Źródła i metoda", href: "/zrodla" },
+          ]}
         />
       </HStack>
     </LayoutHeader>

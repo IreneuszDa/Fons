@@ -32,12 +32,12 @@ describe("VerdictCard", () => {
     expect(out).toContain(VERDICT_LABEL_PL[report.mainVerdict!]);
     expect(out).toContain(report.summaryPl);
     expect(out).toContain(report.verdicts.length > 1 ? "Ocena głównego twierdzenia" : "Wynik sprawdzenia");
-    expect(out).toContain("Jak sprawdziłem");
+    expect(out).not.toContain("Jak sprawdziłem");
     expect(out).not.toContain(`/w/${report.token}`);
-    expect(out).toContain("Siła dowodów");
+    expect(out).not.toContain("Siła dowodów");
   });
 
-  it("renders possible narrative matches with a safe link to the original case", () => {
+  it("omits incidental narrative notices from the full result", () => {
     const reply = structuredClone(FIXTURE_REPLIES.brak!);
     reply.report!.warnings.push({
       kind: "incident_narrative",
@@ -48,8 +48,8 @@ describe("VerdictCard", () => {
       ],
     });
     const out = fullVerdict(reply.report!);
-    expect(out).toContain(WARNING_TITLE_PL.incident_narrative);
-    expect(out).toContain('href="https://euvsdisinfo.eu/report/example/"');
+    expect(out).not.toContain(WARNING_TITLE_PL.incident_narrative);
+    expect(out).not.toContain('href="https://euvsdisinfo.eu/report/example/"');
     expect(out).not.toContain("javascript:");
   });
 
@@ -61,7 +61,7 @@ describe("VerdictCard", () => {
     expect(out).toContain("Pobrano: 20 listopada 2026");
     expect(out).toContain("Redakcja fact-checkingowa — przykład");
     expect(out).toContain("<blockquote");
-    expect(out).toContain(WARNING_TITLE_PL.injection_detected);
+    expect(out).not.toContain(WARNING_TITLE_PL.injection_detected);
   });
 
   it("shows conflicting sources side by side", () => {
@@ -95,7 +95,7 @@ describe("VerdictCard", () => {
 });
 
 describe("text checks in chat", () => {
-  it("renders a stored claim's summary, distinct main-claim publications, warnings and confirmed case", () => {
+  it("renders a stored claim with its answer, source and full result", () => {
     const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
     const report = reply.report!;
     const evidence = report.verdicts[0]!.evidence;
@@ -118,11 +118,11 @@ describe("text checks in chat", () => {
     expect(out).not.toContain(`href="${second.url}"`);
     expect(fullVerdict(report)).toContain(second.url);
     expect(out).not.toContain("javascript:");
-    expect(out).toContain("Sprawa #23");
-    expect(out).toContain(report.warnings[0]!.textPl);
-    expect(out).toContain('href="https://example.org/analiza"');
+    expect(out).not.toContain("Sprawa #23");
+    expect(out).not.toContain(report.warnings[0]!.textPl);
+    expect(out).not.toContain('href="https://example.org/analiza"');
     expect(out).toContain(`href="/w/${report.token}"`);
-    expect(out).toContain("Siła dowodów");
+    expect(out).not.toContain("Siła dowodów");
     for (const detail of ["Wynik sprawdzenia", "<blockquote", "Jak sprawdziłem"]) {
       expect(out).not.toContain(detail);
     }
@@ -153,7 +153,7 @@ describe("text checks in chat", () => {
     const out = html(reply);
     expect(out).toContain(answer.answerPl);
     expect(out).toContain(`href="${answer.evidence[0]!.url}"`);
-    expect(out).toContain(reply.report!.warnings[0]!.textPl);
+    expect(out).not.toContain(reply.report!.warnings[0]!.textPl);
     expect(out).not.toContain("<blockquote");
     expect(out).not.toContain("Sprawa #");
   });
@@ -180,7 +180,7 @@ describe("text checks in chat", () => {
     expect(out).toContain("Serwis źródłowy jest niedostępny.");
   });
 
-  it("preserves the server's short answer and the outcome of a failed case registration", () => {
+  it("preserves the server's short answer and omits the case registration note", () => {
     const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
     reply.report!.claims = reply.report!.claims.slice(0, 1);
     reply.report!.verdicts = reply.report!.verdicts.slice(0, 1);
@@ -191,7 +191,7 @@ describe("text checks in chat", () => {
     };
     const out = html(reply);
     expect(out).toContain(reply.shortAnswer.bodyPl);
-    expect(out).toContain(reply.shortAnswer.caseNotePl!);
+    expect(out).not.toContain(reply.shortAnswer.caseNotePl!);
     expect(out).not.toContain(reply.report!.summaryPl);
     expect(out).not.toContain("Sprawa #");
   });
@@ -215,7 +215,7 @@ describe("status replies", () => {
 });
 
 describe("AnswerCard (open questions)", () => {
-  it("renders the answer sentence, the quote in a blockquote, source metadata and archival warning", () => {
+  it("renders the answer sentence, the quote in a blockquote, and source metadata", () => {
     const report = structuredClone(FIXTURE_REPLIES.odpowiedz!.report!);
     report.answer!.evidence[0]!.passageKind = "excerpt";
     const out = fullAnswer(report);
@@ -229,7 +229,7 @@ describe("AnswerCard (open questions)", () => {
     expect(out).toContain("20 listopada 2026");
     expect(out).toContain("NATO — przykład");
     expect(out).toContain('href="https://example.org/nato/news/sweden-joins"');
-    expect(out).toContain(WARNING_TITLE_PL.archival_material);
+    expect(out).not.toContain(WARNING_TITLE_PL.archival_material);
     expect(out).not.toContain(`/w/${report.token}`);
     for (const label of allVerdictLabels) expect(out).not.toContain(`>${label}<`);
   });
@@ -242,17 +242,17 @@ describe("AnswerCard (open questions)", () => {
     expect(out).not.toContain("<blockquote");
   });
 
-  it("keeps an unanswered chat turn short, with its warnings and a link to the full search details", () => {
+  it("keeps an unanswered chat turn short, with a link to the full result", () => {
     const reply = structuredClone(FIXTURE_REPLIES.brakOdpowiedzi!);
     reply.report!.warnings.push({ kind: "branch_unavailable", textPl: "Wyszukiwanie na żywo było niedostępne." });
     const out = html(reply);
     expect(out).toContain(reply.report!.summaryPl);
-    expect(out).toContain("Wyszukiwanie na żywo było niedostępne.");
+    expect(out).not.toContain("Wyszukiwanie na żywo było niedostępne.");
     expect(out).toContain(`/w/${reply.report!.token}`);
     expect(out).not.toContain("Jak sprawdziłem");
     const full = fullAnswer(reply.report!);
     expect(full).toContain(reply.report!.summaryPl);
-    expect(full).toContain("Jak sprawdziłem");
+    expect(full).not.toContain("Jak sprawdziłem");
   });
 
   it("never links a non-http(s) answer source", () => {
@@ -315,15 +315,15 @@ describe("source activity", () => {
     expect(details(report)).not.toContain("Gdzie szukałem");
     report.sourceActivity = { branches: [], candidateCount: 0, assessedCount: 0 };
     const out = html({ kind: "status", report, textPl: report.summaryPl, quickReplies: [] });
-    expect(out).toContain("Jak sprawdziłem");
-    expect(out).toContain("nie zarejestrowano przeszukania źródeł");
+    expect(out).not.toContain("Jak sprawdziłem");
+    expect(out).not.toContain("nie zarejestrowano przeszukania źródeł");
     expect(out).not.toContain("Cytowane fragmenty");
     expect(html({ kind: "help", textPl: "Nazwa pochodzi od łacińskiego słowa fons.", quickReplies: [] })).not.toContain("Jak sprawdziłem");
   });
 });
 
 describe("image analysis", () => {
-  it("opens with the visual answer and its caption, keeping file diagnostics behind the disclosure", () => {
+  it("shows the visual answer and its caption with a link to the full result", () => {
     const analysis: NonNullable<VerdictReport["imageAnalysis"]> = {
       only: true, images: [{ provenance: { credential: "absent", declaration: "none", basis: "none", textPl: "Brak podpisu C2PA." } }],
       visual: { mode: "identity", citations: [{ url: "https://www.prezydent.pl/galeria", title: "Galeria z uroczystości", quote: "Prezydent podczas uroczystości." }] },
@@ -334,8 +334,8 @@ describe("image analysis", () => {
     expect(out).toContain(summaryPl);
     expect(out).toContain('href="https://www.prezydent.pl/galeria"');
     expect(out).toContain("„Prezydent podczas uroczystości.”");
-    expect(out.indexOf(summaryPl)).toBeLessThan(out.indexOf("Jak sprawdziłem"));
-    expect(out.split("Jak sprawdziłem")[0]).not.toContain("C2PA");
+    expect(out).toContain("Pełny wynik ze źródłami");
+    expect(out).not.toContain("C2PA");
     expect(out).not.toContain("Ocena głównego twierdzenia");
   });
 
@@ -356,15 +356,21 @@ describe("image analysis", () => {
         },
       }],
     };
-    const report = { ...FIXTURE_REPLIES.potwierdzone!.report!, imageAnalysis: analysis };
+    const report = { ...FIXTURE_REPLIES.potwierdzone!.report!, imageAnalysis: analysis,
+      warnings: [
+        { kind: "single_key_verifier" as const, textPl: "Cytaty sprawdził drugi model tego samego dostawcy." },
+        { kind: "non_eea_processing" as const, textPl: "Obraz przetworzył model OpenAI w Stanach Zjednoczonych." },
+      ],
+    };
     const chat = html({ kind: "image_analysis", textPl: "", report, quickReplies: [] });
     const full = renderToStaticMarkup(createElement(ImageFindings, { analysis, summaryPl: report.summaryPl, expanded: true }));
+    for (const warning of report.warnings) expect(chat).not.toContain(warning.textPl);
     for (const output of [chat, full]) {
       expect(output).toContain("Pochodzenie obrazu jest nieznane.");
       expect(output).toContain("Redakcja testowa");
       expect(output).toContain("Ocena redakcji: Błędny kontekst");
       expect(output).toContain('href="https://review.example.org/podpis"');
-      for (const label of allVerdictLabels) expect(output).not.toContain(label);
+      for (const label of allVerdictLabels) expect(output).not.toContain(`>${label}<`);
     }
     expect(full).toContain("media.example.org");
     expect(full).not.toContain('href="https://media.example.org');

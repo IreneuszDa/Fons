@@ -10,6 +10,6 @@ W demonstracji wykorzystano OpenAI. Główny model to gpt-6.2-sol, a szybki gpt-
 
 Dosłowny cytat może dotyczyć innego zdarzenia. Modelowi zdarza się również przeoczyć odpowiedni dokument lub potraktować stary stan jako aktualny. Dobór wydawców i ograniczenie do katalogu wpływają na dostępność dowodów. Usługa zapisuje daty, ograniczenia wyszukiwania i pracę modeli. Tekst od użytkownika i z zewnętrznych stron przechodzi przez kontrole prywatności i instrukcji ukrytych w treści. Limity żądań ograniczają nadużycia. Usunięcie danych własnej sesji wymaga potwierdzenia. Dostępność zależy m.in. od konfiguracji dostawców i czytelności nadesłanego materiału.
 
-[Film z rzeczywistego czatu, 42 s](konkurs/demo.mp4) · [Prezentacja, 7 slajdów](konkurs/prezentacja.pdf) · [Wyniki i ograniczenia](konkurs/KONTYNUACJA.md)
+[Film z rzeczywistego czatu, 42 s](konkurs/demo.mp4) · [Prezentacja, 7 slajdów](konkurs/prezentacja.pdf) · [Trafność i ograniczenia](konkurs/PROG-075.md) · [Pełny odbiór funkcji](konkurs/KONTYNUACJA.md)
 
 [Repozytorium](https://github.com/IreneuszDa/Fons) · [Instrukcja uruchomienia](../README.md) · [Kwalifikacja, licencje i aktualizacja źródeł](SOURCES.md) · [Metoda weryfikacji](METODA-WERYFIKACJI.md)

@@ -47,12 +47,6 @@ function PublisherCell({ row: r }: { row: Row }) {
       <Text type="supporting" color="secondary">
         {r.qualification}
       </Text>
-      <Collapsible trigger="Zasady aktualizacji i wykluczania" chevronPosition="start">
-        <VStack gap={1}>
-          <Text type="supporting">{r.updateFrequency}</Text>
-          {r.exclusion && <Text type="supporting">{r.exclusion}</Text>}
-        </VStack>
-      </Collapsible>
     </VStack>
   );
 }

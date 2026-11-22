@@ -23,7 +23,7 @@ import { QuickReplies, ReplyContent } from "../../web/components/ReplyContent";
 import { StatusNotice } from "../../web/components/StatusNotice";
 import { replyView } from "../../web/lib/report";
 import { resultPathFor } from "../../web/lib/safeUrl";
-import { MessageComposer, type SubmitMessage } from "../../web/components/MessageComposer";
+import { MessageComposer, type ComposerDraftRef, type SubmitMessage } from "../../web/components/MessageComposer";
 import { Token } from "@astryxdesign/core/Token";
 import { Icon } from "@astryxdesign/core/Icon";
 import { PaperClipIcon } from "@heroicons/react/24/outline";
@@ -70,12 +70,14 @@ export default function ChatConversation({
   entries,
   pending,
   pendingUserId,
+  draftRef,
   onSubmit,
   onAction,
 }: {
   entries: ChatEntry[];
   pending: PendingPhase | null;
   pendingUserId?: string;
+  draftRef?: ComposerDraftRef;
   onSubmit: SubmitMessage;
   onAction: (id: string, label: string) => void;
 }) {
@@ -119,7 +121,7 @@ export default function ChatConversation({
             <VStack width="100%" height="100%">
               <ChatLayout
                 density="spacious"
-                composer={<MessageComposer onSubmit={onSubmit} isDisabled={isPending} />}>
+                composer={<MessageComposer onSubmit={onSubmit} isDisabled={isPending} draftRef={draftRef} />}>
                 <ChatMessageList align="top" gap={6} isStreaming={isPending}>
                   {entries.map((e) => {
                     if (e.role === "user") {
@@ -151,7 +153,7 @@ export default function ChatConversation({
                       );
                     }
                     const reply = e.reply;
-                    const showLink = replyView(reply) === "text" || (reply.kind === "status" && (reply.report?.imageAnalysis || reply.report?.videoAnalysis));
+                    const showLink = !reply.report?.imageAnalysis?.only && (replyView(reply) === "text" || (reply.kind === "status" && (reply.report?.imageAnalysis || reply.report?.videoAnalysis)));
                     const resultPath = showLink ? resultPathFor(reply.report?.token, reply.resultUrl) : null;
                     return (
                       <ChatMessage key={e.id} sender="assistant" name={<VisuallyHidden>Fons</VisuallyHidden>}>
@@ -159,7 +161,7 @@ export default function ChatConversation({
                           <VStack gap={3}>
                             <AnswerReaction reaction={reactionFor(reply)} live={!!e.replyTo && e === entries.at(-1)} />
                             <ReplyContent reply={reply} anchorId={replyAnchorId(e.id)} animateText={!pending && e === entries.at(-1)} />
-                            {resultPath ? <Link href={resultPath}>Pełny wynik</Link> : null}
+                            {resultPath ? <Link href={resultPath}>Pełny wynik ze źródłami</Link> : null}
                             {e.id === lastAssistantId ? <QuickReplies reply={reply} onAction={onAction} isDisabled={isPending} /> : null}
                           </VStack>
                         </ChatMessageBubble>

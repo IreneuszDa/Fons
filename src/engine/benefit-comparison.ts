@@ -43,10 +43,10 @@ function monthlyRate(r: CorpusRecord) {
 
 const Read = z.object({
   comparable: z.boolean(), leftMention: z.string(), rightMention: z.string(), leftGroup: z.string(), rightGroup: z.string(),
-  leftAmount: z.number(), rightAmount: z.number(), currency: z.string(),
+  leftAmount: z.number(), rightAmount: z.number(), currency: z.string(), reasonPl: z.string(),
 });
 const readingRules = "Sprawdź wyłącznie przedstawione cytaty i tytuły dokumentów. comparable=true wyłącznie dla porównania podstawowej pieniężnej stawki jednego świadczenia dla DWÓCH wskazanych grup uprawnionych, na dzień weryfikacji. " +
-  "Instrukcja programu musi jawnie obejmować obie grupy i podawać ich wspólną stawkę; drugi niezależny dokument musi potwierdzać kwotę tego samego programu, walutę, okres i jednostkę. Wypowiedź o kwocie dla odbiorców nie jest zapewnieniem, że każdy spełnia warunki. " +
+  "Oceń łącznie pola tej samej publikacji: adresaci są wskazani w osobnych wierszach instrukcji, a kwota standardowa w innym wierszu. Drugi niezależny dokument powinien potwierdzać stawkę, jednostkę i walutę tego samego programu w tym okresie; nie musi powtarzać obu grup. Wypowiedź o kwocie dla odbiorców nie jest zapewnieniem, że każdy spełnia warunki. comparable ocenia możliwość policzenia porównania, a nie to, czy twierdzenie użytkownika jest prawdziwe. Opisz krótko powód odczytu w reasonPl. " +
   "Odrzuć twierdzenia o identycznych warunkach, sumach wypłat, różnym okresie, świadczeniach specjalnych, innym kraju lub innym programie, a także dodatkowe zastrzeżenia nieobjęte źródłami. " +
   "leftMention/rightMention są dosłownymi frazami z TEZY określającymi obie grupy. leftGroup/rightGroup to identyfikatory G z ZAKRESU, leftAmount/rightAmount to stawki jednostkowe odczytane ze źródeł. " +
   "Zachowaj kolejność grup w tekście i zwróć kod ISO waluty. Nie oceniaj prawdziwości tezy; stosunek odczytanych wartości porówna kod." + UNTRUSTED_DATA_RULES;
@@ -89,8 +89,9 @@ export async function benefitComparisonReport(run: Run, input: string, main: Llm
   if (!corroboration || groups.length < 2 || groups.length > 20) return;
   const rate = monthlyRate(guide);
   if (!rate || rates.some(r => { const v = monthlyRate(r); return !v || v.amount !== rate.amount || v.unit !== rate.unit || v.currency !== rate.currency; })) return;
-  const eligible = groups.map((r,i) => ({ ref: "G" + (i + 1), quote: r.text }));
-  const sources = [guide, corroboration].map(r => ({ title: r.title, url: r.url, date: r.publishedAt ?? r.period, quote: r.text }));
+  const eligible = groups.map((r,i) => ({ ref: "G" + (i + 1), document: "P1", url: r.url, quote: r.text }));
+  const sources = [guide, corroboration].map((r, i) => ({ document: "P" + (i + 1), title: r.title, publisher: r.publisher,
+    url: r.url, publishedAt: r.publishedAt, editionUpdated: r.period, quote: r.text }));
   const prompt = [fence("TEZA", input).text, fence("DATA", day).text, fence("STAWKI", JSON.stringify(sources)).text,
     fence("ZAKRES", JSON.stringify(eligible)).text].join("\n");
   run.recordLookup("stawki_swiadczen", "completed", [...groups, guide, corroboration].map(r => r.id));

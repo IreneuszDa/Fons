@@ -28,14 +28,14 @@ describe("pętla informacji", () => {
     const env = makeEnv({ engine: brak });
     const a = await chat(env, { text: "Producent lodów dodaje szkło do waniliowych" });
     expect(a.json.reply.report.moderatorCase).toMatchObject({ action: "created" });
-    expect(a.json.reply.textPl).toMatch(/Sprawa #1 utworzona/);
+    expect(a.json.reply.textPl).not.toContain("Sprawa #");
     expect(a.json.reply.shortAnswer.caseNotePl).toMatch(/Sprawa #1 utworzona/);
     const a2 = await chat(env, { text: "Producent lodów dodaje szkło do waniliowych!" }, a.cookie); // ten sam nadawca
     expect(a2.json.reply.report.moderatorCase).toMatchObject({ caseId: "1", action: "updated" });
     expect(n(env, "SELECT sender_count AS n FROM moderator_cases WHERE id = 1")).toBe(1);
     const b = await chat(env, { text: "producent lodów dodaje SZKŁO do waniliowych" }); // inny nadawca
     expect(b.json.reply.report.moderatorCase).toMatchObject({ caseId: "1", action: "updated" });
-    expect(b.json.reply.textPl).toMatch(/Sprawa #1 zaktualizowana/);
+    expect(b.json.reply.shortAnswer.caseNotePl).toMatch(/Sprawa #1 zaktualizowana/);
     expect(n(env, "SELECT sender_count AS n FROM moderator_cases WHERE id = 1")).toBe(2);
     expect(n(env, "SELECT COUNT(*) AS n FROM moderator_cases")).toBe(1);
   });
@@ -68,7 +68,7 @@ describe("pętla informacji", () => {
     const r3 = await chat(env, { text });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(r3.json.reply.report.moderatorCase.action).toBe("updated");
-    expect(r3.json.reply.textPl).toContain("powiadomiona");
+    expect(r3.json.reply.shortAnswer.caseNotePl).toContain("powiadomiona");
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(WEBHOOK);
     expect(init.method).toBe("POST");
@@ -93,7 +93,7 @@ describe("pętla informacji", () => {
     const r = await chat(env, { text: "Szczepionka zawiera mikroczipy śledzące" });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(r.json.reply.report.moderatorCase).toMatchObject({ action: "recommended" });
-    expect(r.json.reply.textPl).toMatch(/Sprawa #1/);
+    expect(r.json.reply.shortAnswer.caseNotePl).toMatch(/Sprawa #1/);
     expect(r.json.reply.textPl).not.toMatch(/przekaz|powiadomi|wysła|poinformow/i);
     expect(n(env, "SELECT COUNT(*) AS n FROM alerts_log WHERE outcome = 'sent'")).toBe(0);
     expect((env.db.prepare("SELECT alert_state AS s FROM moderator_cases").get() as any).s).toBe("recommended");
@@ -140,7 +140,7 @@ describe("pętla informacji", () => {
     const r = await chat(env, { text: "Producent lodów dodaje szkło do waniliowych" });
     expect(r.json.reply.kind).toBe("verdict");
     expect(r.json.reply.textPl).not.toMatch(/Sprawa #/);
-    expect(r.json.reply.textPl).toContain("Nie udało się teraz zapisać sprawy");
+    expect(r.json.reply.textPl).not.toContain("Nie udało się teraz zapisać sprawy");
     expect(r.json.reply.shortAnswer.caseNotePl).toContain("Nie udało się teraz zapisać sprawy");
     expect(r.json.reply.report.moderatorCase).toBeUndefined();
     expect(n(env, "SELECT COUNT(*) AS n FROM moderator_cases")).toBe(0); // transakcja wycofana

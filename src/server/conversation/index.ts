@@ -9,6 +9,7 @@ import { recordUnresolved } from "../moderator/cases";
 import { createSession, eraseSender, findSession, inTurnOrder, saveSessionState, type SessionRow } from "../sessions";
 import { lastReport, reportReply, respondToMessage } from "./dialogue";
 import { rememberExchange } from "./history";
+import { explainReaderExcerpt, type ResolvedExcerpt } from "./reader-excerpt";
 import { ACTION, detectIntent, type PendingType } from "./intents";
 import {
   CANCELLED_TEXT,
@@ -38,6 +39,7 @@ function ensureSession(msg: InboundMessage, ctx: ServerContext): SessionRow {
 const help = (text: string = HELP_TEXT): ConversationReply => ({ kind: "help", textPl: text, quickReplies: [QR.help] });
 
 export interface InboundOptions {
+  readerExcerpt?: ResolvedExcerpt;
   /** Klient (IP / sieć /64) wyczerpał swój udział w dobowym budżecie: tylko trafienia w cache (SEC-04). */
   clientOverBudget?: () => boolean;
   onRoutingTokens?: (tokens: number) => void;
@@ -76,10 +78,14 @@ async function respond(msg: InboundMessage, ctx: ServerContext, session: Session
   const pendingActive: PendingType | undefined =
     session.state.pending && session.state.pending.expiresAt > nowMs ? session.state.pending.type : undefined;
 
-  const intent = msg.document || msg.recording ? { type: "verify" as const } : detectIntent({ text: msg.text, action: msg.action, images: msg.images }, pendingActive);
-
-  // Każda wiadomość inna niż potwierdzenie/anulowanie kasuje oczekujące potwierdzenie.
   const clearPending = () => saveSessionState(ctx, session.id, { ...session.state, pending: undefined });
+  if (opts.readerExcerpt) {
+    if (pendingActive) clearPending();
+    return explainReaderExcerpt(ctx, opts.readerExcerpt, opts);
+  }
+
+  const intent = msg.document || msg.recording ? { type: "verify" as const } : detectIntent({ text: msg.text, action: msg.action, images: msg.images }, pendingActive);
+  // Każda wiadomość inna niż potwierdzenie/anulowanie kasuje oczekujące potwierdzenie.
   if (pendingActive && intent.type !== "confirm" && intent.type !== "cancel" && intent.type !== "request") clearPending();
 
   switch (intent.type) {

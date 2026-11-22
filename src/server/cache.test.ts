@@ -98,8 +98,7 @@ describe("cache obliczeń", () => {
     expect(count(env, "SELECT COUNT(*) AS n FROM security_events")).toBe(3);
     expect(count(env, "SELECT COUNT(DISTINCT request_id) AS n FROM security_events")).toBe(3);
     expect(count(env, "SELECT COUNT(*) AS n FROM security_events WHERE source = 'cache_replay'")).toBe(2);
-    // komunikat o próbie manipulacji pokazywany także przy trafieniu w cache
-    expect(results[2]!.json.reply.textPl).toContain("próbę wpłynięcia na system");
+    expect(results[2]!.json.reply.textPl).not.toContain("próbę wpłynięcia na system");
     expect(results[2]!.json.reply.report.securityEvents).toHaveLength(1);
     // zdarzenia zapisane w dzienniku przebiegów też
     expect(count(env, "SELECT COUNT(*) AS n FROM runs WHERE security_event_count = 1")).toBe(3);

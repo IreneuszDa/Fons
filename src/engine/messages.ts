@@ -5,9 +5,9 @@ import type { ReportWarning } from "../shared/contracts";
 
 export const STATUS_PL = {
   llmNotConfigured:
-    "Nie mogę teraz sprawdzić tej informacji, bo model językowy nie jest skonfigurowany. Nie wydaję oceny. Administrator usługi musi dodać klucz dostępu.",
+    "Sprawdzanie informacji jest chwilowo niedostępne.",
   llmDown:
-    "Nie mogę teraz sprawdzić tej informacji, bo model językowy jest chwilowo niedostępny. Nie wydaję oceny. Spróbuj ponownie za kilka minut.",
+    "Nie mogę teraz sprawdzić tej informacji. Spróbuj ponownie za kilka minut.",
   llmBudget:
     "Usługa wykorzystała dzisiejszy limit sprawdzeń. Nie wydaję oceny. Spróbuj ponownie jutro.",
   corpusDown:
