@@ -11,7 +11,7 @@ import { Tab, TabList } from "@astryxdesign/core/TabList";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Token } from "@astryxdesign/core/Token";
-import { ApiError, isFixtureMode, NETWORK_ERROR_PL } from "../api";
+import { ApiError, NETWORK_ERROR_PL } from "../api";
 import { CachePanel, ExportsPanel, TokensPanel, UsersPanel } from "./AccessPanels";
 import { adminLogin, adminLogout, adminMe, type AdminUser } from "./adminApi";
 import CasesPanel from "./CasesPanel";
@@ -64,7 +64,6 @@ function LoginView({ notice, onDone }: { notice?: string; onDone: (user: AdminUs
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const fixtures = isFixtureMode();
 
   const signIn = async () => {
     setError("");
@@ -100,15 +99,6 @@ function LoginView({ notice, onDone }: { notice?: string; onDone: (user: AdminUs
             </VStack>
             {notice && !error ? <Banner status="info" title={notice} container="card" collapsible={false} /> : null}
             {error ? <Banner status="error" title={error} container="card" collapsible={false} /> : null}
-            {fixtures ? (
-              <Banner
-                status="info"
-                container="card"
-                collapsible={false}
-                title="Dane przykładowe"
-                description="Zaloguj się jako moderator, analityk albo administrator — dowolnym hasłem."
-              />
-            ) : null}
             <TextInput label="Nazwa użytkownika" value={username} onChange={setUsername} size="lg" autoComplete="username" autoCapitalize="none" />
             <TextInput
               label="Hasło"

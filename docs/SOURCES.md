@@ -17,7 +17,7 @@ Sekcja „Liczby” jest generowana przez `npm run corpus:build` (nie edytuj jej
 
 <!-- COUNTS:START -->
 
-Stan na dzień 2026-11-21: **3629 rekordów**, **604 incydentów**, **26 hostów** (domen źródłowych), **3 typy źródeł**.
+Stan na dzień 2026-11-22: **3637 rekordów**, **604 incydentów**, **31 hostów** (domen źródłowych), **3 typy źródeł**.
 
 Rekordy według źródła z katalogu:
 
@@ -29,7 +29,11 @@ Rekordy według źródła z katalogu:
 | nato | `www.nato.int` | pierwotne | 1 | 314 |
 | eu-portal | `european-union.europa.eu` | pierwotne | 1 | 69 |
 | gov-pl | `www.gov.pl` | pierwotne | 1 | 180 |
-| msz-odyseusz | `odyseusz.gov.pl` | pierwotne | 1 | 0 |
+| rpo | `bip.brpo.gov.pl` | pierwotne | 1 | 1 |
+| pap-depesze | `www.pap.pl` | pierwotne | 1 | 1 |
+| wroclaw-transport | `www.wroclaw.pl` | pierwotne | 1 | 1 |
+| sky-tg24 | `tg24.sky.it` | analiza | 3 | 1 |
+| msz-odyseusz | `odyseusz.gov.pl` | pierwotne | 1 | 1 |
 | eeas | `www.eeas.europa.eu` | analiza | 2 | 6 |
 | euvsdisinfo | `euvsdisinfo.eu` | analiza | 2 | 455 |
 | pravda-pl | `pravda.org.pl` | factcheck | 2 | 70 |
@@ -37,7 +41,7 @@ Rekordy według źródła z katalogu:
 | dw-factcheck | `www.dw.com` | factcheck | 2 | 34 |
 | factcheck-org | `www.factcheck.org` | factcheck | 2 | 25 |
 | politifact | `www.politifact.com` | factcheck | 2 | 25 |
-| demagog | `demagog.org.pl` | factcheck | 2 | 742 |
+| demagog | `demagog.org.pl` | factcheck | 2 | 745 |
 | afp-sprawdzam | `sprawdzam.afp.com` | factcheck | 2 | 0 |
 | konkret24 | `konkret24.tvn24.pl` | factcheck | 3 | 0 |
 | fakehunter | `fakehunter.pap.pl` | factcheck | 3 | 0 |
@@ -61,16 +65,16 @@ Rekordy według typu:
 
 | Typ | Rekordy |
 |---|---|
-| factcheck | 931 |
-| pierwotne | 2237 |
-| analiza | 461 |
+| factcheck | 934 |
+| pierwotne | 2241 |
+| analiza | 462 |
 
 Rekordy według hosta (adres rekordu):
 
 | Host | Rekordy |
 |---|---|
 | `api.sejm.gov.pl` | 946 |
-| `demagog.org.pl` | 742 |
+| `demagog.org.pl` | 745 |
 | `euvsdisinfo.eu` | 455 |
 | `ec.europa.eu` | 382 |
 | `www.nato.int` | 314 |
@@ -95,6 +99,11 @@ Rekordy według hosta (adres rekordu):
 | `ukraine.un.org` | 4 |
 | `www.government.nl` | 2 |
 | `www.prezydent.pl` | 1 |
+| `www.pap.pl` | 1 |
+| `www.wroclaw.pl` | 1 |
+| `odyseusz.gov.pl` | 1 |
+| `tg24.sky.it` | 1 |
+| `bip.brpo.gov.pl` | 1 |
 
 <!-- COUNTS:END -->
 
@@ -222,8 +231,8 @@ Rekord o stałej roli z oceną spoza tabeli mapowania **zostaje** w korpusie (`m
 * **NATO, gov.pl:** brak potwierdzonej licencji otwartej → krótkie fragmenty z linkiem i wskazaniem wydawcy.
 * **EUvsDisinfo:** brak jawnej licencji → wyłącznie metadane (tytuł tezy, data) + link.
 * **Demagog:** robots.txt zawiera sygnał `Content-Signal: search=yes, ai-train=no, use=reference`. **Z serwisem nie łączymy się
-  bezpośrednio** (bez pobierania stron, RSS, map strony, wyszukiwania na żywo i sondy dostępności). Rekordy pochodzą wyłącznie
-  z Google Fact Check Tools API (znaczniki ClaimReview publikowane przez Demagoga; warunki korzystania z API Google).
+  bezpośrednio** (bez pobierania stron, RSS, map strony, wyszukiwania na żywo i sondy dostępności). Ingestor pobiera tezy i oceny
+  z Google Fact Check Tools API. Przy ładowaniu lokalnego indeksu do wybranych rekordów dołączamy krótkie cytaty z uzasadnień wskazane w bibliografii redakcyjnej.
 * Wszystkie żądania: `User-Agent: PrawdowidBot/0.1 (prototyp hackathonowy)` (bez danych kontaktowych), ≤ 1 żądanie/s na host
   (`Crawl-delay` z robots.txt, np. 10 s dla EEAS, ma pierwszeństwo), sprawdzanie robots.txt dla każdego pobieranego adresu
   (brak pliku = dozwolone; błąd 403/5xx = zakaz).
@@ -404,14 +413,14 @@ Każdy rekord ma link do strony/wpisu źródłowego, a osoba może zażądać us
 Licencje poszczególnych źródeł: sekcja 2 i `data/sources.yaml` (gov.pl, prezydent.pl, senat.gov.pl — krótki cytat + link;
 Komisja — CC BY 4.0; API Sejmu — dane urzędowe; PE — krótkie zdania generowane z pól).
 
-**Fact-checki Demagoga — wyłącznie przez Google Fact Check Tools API.** Zasada projektu: żadnej bezpośredniej integracji
+**Pobieranie ocen Demagoga przez Google Fact Check Tools API.** Zasada projektu: żadnej bezpośredniej integracji
 z `demagog.org.pl` (IFCN i EFCSN). Ingestor `demagog` (`src/corpus/ingest/demagog.ts`) woła `claims:search` z filtrem
 `reviewPublisherSiteFilter=demagog.org.pl`, `languageCode=pl`, `maxAgeDays=365` (klucz `FACTCHECK_API_KEY` w nagłówku
 `X-Goog-Api-Key` jako nagłówek tajny klienta — nigdy w adresie, w raporcie ani w kluczu i treści cache'u). Bierze polskojęzyczne
 recenzje z dokładnym hostem `demagog.org.pl` (bez sekcji `/ua/`), z datą recenzji z ostatniego roku (sprawdzane też lokalnie; okno
 zmienia `DEMAGOG_MAX_AGE_DAYS` w `.env`), od najnowszej (najwyżej 2000). Pomiar 2026-11-21: API ma 9338 recenzji Demagoga (2015–2026);
-z okna roku zapisano **742 rekordy** (fake newsy 550, wypowiedzi polityków 191, inne 1; recenzje 2025-11-24 – 2026-11-20). Tekst
-rekordu = teza dosłownie z API; ocena przez tabelę mapowania (FALSZYWE 464, WPROWADZAJACE 259, POTWIERDZONE 15, BRAK_DOWODOW 1,
+z okna roku zapisano **742 rekordy** (fake newsy 550, wypowiedzi polityków 191, inne 1; recenzje 2025-11-24 – 2026-11-20). W surowym pliku
+rekordu pole tekstu zawiera dosłowną tezę z API; ocena przez tabelę mapowania (FALSZYWE 464, WPROWADZAJACE 259, POTWIERDZONE 15, BRAK_DOWODOW 1,
 NIE_PODLEGA 1, niezmapowane 2). **Autora tezy nie ma w tytule** (tytuł waży 10 w BM25 — nazwisko polityka w tytule ściągało do puli
 niezwiązane fact-checki jego innych wypowiedzi); przy wypowiedziach polityków jest w `topics` (`autor-tezy:…`), przy fake newsach
 nie zapisujemy go wcale (autorem bywa osoba prywatna). **Dlaczego rok, a nie 2 lata:** przy oknie 2 lat (ok. 1750 rekordów, połowa
@@ -424,6 +433,8 @@ strony Demagoga wklejony przez użytkownika jest pobierany raz jako PRZEDMIOT sp
 jako dowód i nigdy do korpusu. AFP Sprawdzam: HTTP 403 także dla robots.txt, brak wpisów w feedzie DataCommons (sekcja 9) — 0 rekordów;
 pozostaje pakiet organizatora. Sonda `factcheck-probe` zapisuje w `corpus-report.json` bieżący stan dostępu i liczbę wpisów
 hostów w feedzie ClaimReview.
+
+Przy przebudowie korpusu aplikacja odświeża również cztery wskazane publikacje o depeszy PAP, ulgach i wydatkach na transport we Wrocławiu oraz nagraniu Michała Wosia. Wyszukuje je w Google bez ograniczenia wieku i sprawdza adres każdej recenzji. W pliku `data/publication-links.json` redakcja może wskazać dokładne adresy omawianych postów (`appearances`), dokumenty będące przedmiotem weryfikacji (`documents`), odnośniki samego wydawcy (`references`) oraz niezależne materiały uzupełniające (`context`). Opcjonalne `excerpts` zawierają dosłowne, krótkie cytaty z uzasadnienia o wskazanym adresie. Przy wczytywaniu danych te cytaty trafiają do oddzielnych wierszy indeksowanego fragmentu. Pole `claimReviewed` nadal pochodzi w całości z API. Cytaty zachowują wskazanie wydawcy, adres i opis ich pochodzenia w polu `licence`. Migawka zawiera też dokumenty towarzyszące w `data/corpus/published-documents.jsonl`. Obejmują one nagłówek pierwotnej depeszy, dane miejskiego Wydziału Transportu, wystąpienie RPO o proteście oraz listopadową zapowiedź MSZ wraz z zestawieniem manifestacji Sky TG24.
 
 Podczas weryfikacji lokalny indeks wektorowy wyszukuje metadane Demagoga na podstawie treści twierdzenia i wariantów zapytania.
 Do dwóch mocnych trafień może przejść do oceny mimo małego pokrycia słów. Silnik sprawdza wtedy zgodność twierdzeń, w tym podmiot,

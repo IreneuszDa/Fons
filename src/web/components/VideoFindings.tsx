@@ -1,16 +1,23 @@
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { VStack } from "@astryxdesign/core/Layout";
+import { Link } from "@astryxdesign/core/Link";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import type { Claim, VideoAnalysis } from "../../shared/contracts";
+import { safeUrl } from "../lib/safeUrl";
 
 type ClaimOrigin = VideoAnalysis["claimOrigins"][number];
 
 const originLabels: Record<ClaimOrigin["source"], string> = {
   speech: "Wypowiedź",
+  subtitles: "Napisy platformy",
   onscreen: "Tekst na ekranie",
   visual: "Obraz",
   caption: "Opis posta",
+};
+
+const platformLabels: Record<VideoAnalysis["platform"], string> = {
+  tiktok: "Film z TikToka", instagram: "Film z Instagrama", facebook: "Film z Facebooka", youtube: "Film z YouTube",
 };
 
 function timestamp(seconds: number) {
@@ -49,20 +56,29 @@ function TimedPassages({ title, entries, empty }: {
 }
 
 export function VideoFindings({ analysis, pendingClaims = [] }: { analysis: VideoAnalysis; pendingClaims?: Claim[] }) {
+  const thumbnail = safeUrl(analysis.thumbnailUrl);
   return (
     <VStack gap={2}>
-      <Heading level={4}>{analysis.platform === "tiktok" ? "Film z TikToka" : "Film z Instagrama"}</Heading>
+      <Heading level={4}>{platformLabels[analysis.platform]}</Heading>
+      {analysis.title && <Text weight="semibold">{analysis.title}</Text>}
+      {analysis.author && <Text type="supporting" color="secondary">Autor: {analysis.author}</Text>}
+      {thumbnail && <Link href={thumbnail} isExternalLink newTabLabel="(otwiera się w nowej karcie)" referrerPolicy="no-referrer" type="supporting">Zobacz miniaturę filmu</Link>}
       {analysis.caption ? (
         <Collapsible trigger="Opis posta" chevronPosition="start" defaultIsOpen={false}>
           <Text as="p" wordBreak="break-word" style={{ whiteSpace: "pre-wrap" }}>{analysis.caption}</Text>
         </Collapsible>
       ) : analysis.status === "analyzed" && <Text as="p" type="supporting" color="secondary">Opis posta jest niedostępny.</Text>}
-      {analysis.status === "analyzed" && (
-        <>
-          <TimedPassages title="Transkrypcja" entries={analysis.transcript} empty="Nie rozpoznano wypowiedzi w nagraniu." />
-          <TimedPassages title="Obraz i napisy" entries={analysis.observations} empty="Brak odczytanych szczegółów obrazu." />
-        </>
-      )}
+      {analysis.status === "subtitles_only" && <Text as="p" type="supporting">Dostępne są napisy platformy. Obraz filmu pozostaje niesprawdzony.</Text>}
+      {analysis.status === "transcript_only" && <Text as="p" type="supporting">Sprawdzono transkrypcję dźwięku. Obraz filmu pozostaje niesprawdzony.</Text>}
+      {analysis.status === "analyzed" && analysis.provider === "openai" &&
+        <Text as="p" type="supporting" color="secondary">OpenAI przeanalizował wybrane klatki filmu.</Text>}
+      {analysis.transcriptSource === "openai" &&
+        <Text as="p" type="supporting" color="secondary">Czas przy wypowiedzi wskazuje początek fragmentu dźwięku.</Text>}
+      {analysis.mediaIssue && <Text as="p" type="supporting" color="secondary">{analysis.mediaIssue}</Text>}
+      {analysis.status !== "unavailable" &&
+        <TimedPassages title={analysis.transcriptSource === "platform" ? "Napisy platformy" : "Transkrypcja"} entries={analysis.transcript} empty="Nie rozpoznano wypowiedzi w nagraniu." />}
+      {analysis.status === "analyzed" &&
+        <TimedPassages title="Obraz i napisy" entries={analysis.observations} empty="Brak odczytanych szczegółów obrazu." />}
       {pendingClaims.length > 0 && (
         <List edge="flush" density="compact" hasDividers header={<Text weight="semibold">Twierdzenia bez oceny</Text>}>
           {pendingClaims.map(claim => {

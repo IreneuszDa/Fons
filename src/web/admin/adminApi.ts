@@ -1,10 +1,9 @@
 /**
  * Admin panel client (agreed surface: docs/MODULES.md → src/server admin API).
  * Cookies are httpOnly + SameSite=Strict; every state-changing call carries X-CSRF-Token from login / me.
- * With ?fixtures=1 calls go to an in-browser fake server (fakeServer.ts) instead of the network.
  * Lives in the lazily loaded admin chunk, so citizens never download it.
  */
-import { ApiError, isFixtureMode, messageFrom, NETWORK_ERROR_PL, readJson } from "../api";
+import { ApiError, messageFrom, NETWORK_ERROR_PL, readJson } from "../api";
 
 export const ROLES = ["moderator", "analityk", "administrator"] as const;
 export type Role = (typeof ROLES)[number];
@@ -59,18 +58,7 @@ export interface AdminMetrics {
 export type PanelUser = { username: string; role: string; createdAt?: string | null };
 export type ApiToken = { id: string; label: string; createdAt?: string | null; lastUsedAt?: string | null; role?: string };
 
-export type FakeResult = { status: number; body: unknown; text?: string };
-type FakeHandler = (method: string, path: string, body: unknown, headers: Record<string, string>) => FakeResult;
-
 let csrf: string | undefined;
-let fakeHandler: FakeHandler | undefined;
-
-async function fake(): Promise<FakeHandler> {
-  if (!fakeHandler) fakeHandler = (await import("./fakeServer")).handle;
-  return fakeHandler;
-}
-
-/** Test hook: forget the CSRF token and the fake server (no persistent state anywhere else). */
 export function resetAdminClient(): void {
   csrf = undefined;
 }
@@ -92,10 +80,6 @@ async function transport(method: string, path: string, body: unknown, asBlob: bo
   const headers: Record<string, string> = { Accept: asBlob ? "*/*" : "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (method !== "GET" && csrf) headers["X-CSRF-Token"] = csrf;
-  if (isFixtureMode()) {
-    const r = (await fake())(method, path, body, headers);
-    return { status: r.status, body: r.body, blob: asBlob && r.text !== undefined ? new Blob([r.text]) : undefined };
-  }
   let res: Response;
   try {
     res = await fetch(path, {

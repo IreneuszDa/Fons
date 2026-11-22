@@ -1,0 +1,38 @@
+[
+  {
+    "publicationId": "demagog:4cdc9314f772",
+    "archiveQuery": "depesza PAP",
+    "url": "https://demagog.org.pl/wypowiedzi/donald-tusk-uspokajal-przed-powodzia-depesza-pap-nie-zniknela/",
+    "documents": ["pap-depesze:3b94b3f58daf"],
+    "excerpts": [
+      "Gdy tylko redakcja zorientowała się w pomyłce, przywróciła depeszę w niezmienionej formie.",
+      "depesza była cały czas dostępna dla odbiorców Codziennego Serwisu Informacyjnego PAP"
+    ]
+  },
+  {
+    "publicationId": "demagog:4ae9f77978b4",
+    "archiveQuery": "Wrocław",
+    "url": "https://demagog.org.pl/wypowiedzi/darmowa-komunikacja-dla-65-latkow-tylko-we-wroclawiu-sprawdzamy/",
+    "excerpts": ["Z takiej ulgi korzystają również seniorzy i seniorki w Bydgoszczy, w Toruniu oraz w Lublinie."]
+  },
+  {
+    "publicationId": "demagog:f44fa2419a71",
+    "archiveQuery": "Wrocław",
+    "url": "https://demagog.org.pl/wypowiedzi/darmowa-komunikacja-jaka-kwote-musialby-dolozyc-wroclaw/",
+    "references": ["wroclaw-transport:111330921848"],
+    "excerpts": ["Z miejskiej kasy na transport zbiorowy przeznaczono 650 mln zł."]
+  },
+  {
+    "publicationId": "demagog:50bc8a4be3ef",
+    "archiveQuery": "parawanem",
+    "url": "https://demagog.org.pl/wypowiedzi/policja-zaslania-protestujacych-parawanem-wos-udostepnia-stare-nagranie/",
+    "appearances": ["https://www.tiktok.com/@mwospl/video/7685116354155826465", "https://www.instagram.com/reels/DdPZbdmjjW5/"],
+    "context": ["rpo:8f513ccddebb"],
+    "excerpts": ["Materiał nie dotyczy jednak aktualnych wydarzeń – pochodzi z marca 2021 roku"]
+  },
+  {
+    "publicationId": "msz-odyseusz:8594d348c094",
+    "url": "https://odyseusz.gov.pl/IT",
+    "references": ["sky-tg24:ef7a7aa2e9a9"]
+  }
+]

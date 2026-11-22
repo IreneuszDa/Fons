@@ -23,6 +23,7 @@ import { FetchBlockedError, detectInjection, maskPii, resolveRelativeDates, stri
 import type { fetchPage as FetchPageFn } from "./ports";
 import { PAGE_LABEL, USER_NOTE_LABEL, VISION_SYSTEM, VisionOut } from "./prompts";
 import { cleanText, isoDateOrUndefined, truncateWords } from "./text";
+import { visibleImageDates } from "./attachment-dates";
 
 /** Pasted text: room for a whole article or a video transcript (claims are then ranked by importance). */
 export const MAX_TEXT_CHARS = 20000;
@@ -73,7 +74,7 @@ function finish(
   ctx: NormalizeContext,
   hits: DetectorHit[],
   warnings: string[],
-  extra: Partial<Pick<NormalizedInput, "submittedUrl" | "pageTitle" | "pagePublishedAt">>,
+  extra: Pick<NormalizedInput, "submittedUrl" | "pageTitle" | "pagePublishedAt" | "userNote" | "attachmentText" | "visibleDates">,
   usage: ModelUsage[],
   inputHash?: string,
 ): NormalizeOutcome {
@@ -82,6 +83,9 @@ function finish(
   const normalized: NormalizedInput = {
     kind,
     text: pii.text,
+    ...(extra.userNote ? { userNote: masked(extra.userNote) } : {}),
+    ...(extra.attachmentText ? { attachmentText: masked(extra.attachmentText) } : {}),
+    ...(extra.visibleDates?.length ? { visibleDates: extra.visibleDates } : {}),
     ...(extra.submittedUrl ? { submittedUrl: masked(extra.submittedUrl) } : {}),
     ...(extra.pageTitle ? { pageTitle: masked(extra.pageTitle) } : {}),
     ...(extra.pagePublishedAt ? { pagePublishedAt: extra.pagePublishedAt } : {}),
@@ -224,28 +228,34 @@ async function normalizeUrl(req: NormalizeRequest, ctx: NormalizeContext): Promi
   const body = hits.length > 0 ? stripFlaggedSentences(page.cleanText, hits) : page.cleanText;
   const title = page.title ? (hits.length > 0 ? stripFlaggedSentences(page.title, hits) : page.title) : "";
   const pageText = limit(cleanText([title, body].filter((s) => s.trim()).join("\n\n")), MAX_PAGE_CHARS, warnings);
-  if (!pageText) {
-    return fail("NIEPELNE", STATUS_PL.pageEmpty, page.finalUrl, hits);
-  }
   const note = userNoteBesideUrl(req, url);
   const noteHits = note ? detectInjection(note, "user_message") : [];
   hits.push(...noteHits);
   if (noteHits.length > 0 && !warnings.includes("injection_detected")) warnings.push("injection_detected");
   const cleanNote = note ? cleanText(noteHits.length > 0 ? stripFlaggedSentences(note, noteHits) : note) : "";
-  const subject = cleanNote ? `${USER_NOTE_LABEL} ${cleanNote}\n\n${PAGE_LABEL}\n${pageText}` : pageText;
-  return finish(
+  if (!pageText && !(hits.some(h => h.location === "fetched_page") && cleanNote)) {
+    return fail("NIEPELNE", STATUS_PL.pageEmpty, page.finalUrl, hits);
+  }
+  const subject = (userNote: string) => userNote && pageText
+    ? `${USER_NOTE_LABEL} ${userNote}\n\n${PAGE_LABEL}\n${pageText}` : userNote || pageText;
+  const result = finish(
     "url",
-    subject,
+    subject(cleanNote),
     ctx,
     hits,
     warnings,
     {
       submittedUrl: page.finalUrl || parsed.toString(),
+      userNote: cleanNote,
+      attachmentText: truncateWords(cleanText(body), MAX_PAGE_CHARS),
       ...(title ? { pageTitle: cleanText(title) } : {}),
       ...(isoDateOrUndefined(page.publishedAt) ? { pagePublishedAt: page.publishedAt } : {}),
     },
     [],
   );
+  // A quoted page may be years older than the message. Resolve only the sender's relative dates.
+  if (result.ok) result.normalized.textResolvedDates = masked(subject(resolveRelativeDates(cleanNote, ctx.receivedAt)));
+  return result;
 }
 
 /**
@@ -297,16 +307,19 @@ async function normalizeImage(req: NormalizeRequest, ctx: NormalizeContext): Pro
   const ocrHits = detectInjection(rawText, "ocr");
   const hits = [...noteHits, ...ocrHits];
   const caption = cleanText(stripFlaggedSentences(note, noteHits));
-  if (!caption && cleanText(rawText).length < 10) {
+  const transcriptionText = cleanText(stripFlaggedSentences(rawText, ocrHits));
+  const reviewQuestion = /\bdemagog/i.test(caption);
+  if ((!caption || reviewQuestion) && transcriptionText.length < 10) {
     return fail("DOPRECYZUJ", STATUS_PL.imageUnreadable, "[obraz]", hits, usage);
   }
   const warnings: string[] = ["image_limits"];
   if (hits.length > 0) warnings.push("injection_detected");
-  const transcription = limit(cleanText(stripFlaggedSentences(rawText, ocrHits)), MAX_TEXT_CHARS, warnings);
+  const transcription = limit(transcriptionText, MAX_TEXT_CHARS, warnings);
   const subject = (noteText: string) => noteText && transcription
     ? `${USER_NOTE_LABEL} ${noteText}\n\nTekst z obrazu:\n${transcription}` : noteText || transcription;
-  const date = out.dates.map((d) => isoDateOrUndefined(d)).find((d): d is string => !!d);
-  const result = finish("image", subject(caption), ctx, hits, warnings, date ? { pagePublishedAt: date } : {}, usage, inputHash);
+  const result = finish("image", subject(caption), ctx, hits, warnings, {
+    userNote: caption, attachmentText: transcription, visibleDates: visibleImageDates(transcription),
+  }, usage, inputHash);
   // A screenshot can be archival. Only the sender's own words refer to the submission date.
   if (result.ok) result.normalized.textResolvedDates = masked(subject(resolveRelativeDates(caption, ctx.receivedAt)));
   return result;

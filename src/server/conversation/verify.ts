@@ -2,8 +2,9 @@
  * Przepływ weryfikacji: cache → bezpiecznik budżetu → silnik → zapis (raport, dziennik, zdarzenia,
  * sprawa moderatora). Wszystko, co dotyczy użytkownika, powstaje DOPIERO po udanym zapisie.
  */
-import { VerdictReport, type ConversationReply, type InboundMessage } from "../../shared/contracts";
-import { socialVideoPlatform } from "../../engine/video/social-source";
+import { reportEvidence, VerdictReport, type ConversationReply, type InboundMessage } from "../../shared/contracts";
+import { socialVideoPlatform } from "../../engine/video/platforms";
+import { asksAboutDemagogReview } from "../../engine/retrieval/google-claimreview";
 import { appendRun } from "../audit";
 import { addTokens, budgetExceeded } from "../budget";
 import { computeCacheKey, getCached, putCached } from "../cache";
@@ -17,9 +18,7 @@ import { newRequestId, newToken, safeHttpUrl, truncate } from "../util";
 import { analyzeImage, UnreadableImage } from "./analyze-image";
 import type { InboundOptions } from "./index";
 import { linksIn } from "./history";
-import { BUDGET_TEXT, CASE_FAILED_TEXT, IMAGE_REJECTED_TEXT, QR, TECH_ERROR_TEXT, TOO_LONG_TEXT, answerText, caseNote, statusTextFor, verdictText } from "./templates";
-
-const URL_ONLY = /^https?:\/\/\S+$/i;
+import { BUDGET_TEXT, CASE_FAILED_TEXT, IMAGE_REJECTED_TEXT, QR, TECH_ERROR_TEXT, TOO_LONG_TEXT, caseNote, shortAnswerFor, shortAnswerText, statusTextFor, verdictText } from "./templates";
 
 export interface BuiltRequest {
   req?: EngineRequest;
@@ -65,25 +64,18 @@ export function buildEngineRequest(msg: InboundMessage, ctx: ServerContext): Bui
     return { reject: statusReply(TOO_LONG_TEXT(ctx.options.maxInputChars)), logInput: "", mediaRefs };
   }
   // Mobile share sheets include the scheme, but a post address pasted by hand can start at the host.
-  const withScheme = text.replace(/(?<!\S)(?:[\w-]+\.)*(?:tiktok\.com|instagram\.com|instagr\.am)\//gi, host => "https://" + host);
+  const withScheme = text.replace(/(?<!\S)(?:[\w-]+\.)*(?:tiktok\.com|instagram\.com|instagr\.am|facebook\.com|fb\.watch|fb\.me|youtube\.com|youtube-nocookie\.com|youtu\.be)\//gi, host => "https://" + host);
   const links = linksIn(withScheme);
   const videos = links.filter(url => socialVideoPlatform(url));
   if (videos.length && links.length > 1) {
     return { reject: statusReply("Wklej osobno link do filmu, który chcesz sprawdzić."), logInput: "", mediaRefs };
   }
-  if (videos[0]) {
-    const url = videos[0];
+  if (links.length === 1) {
+    const url = links[0]!;
     const focus = withScheme.replace(url, "").trim();
     return {
-      req: { kind: "url", url, ...(focus && { text: focus }), channel: msg.channel, receivedAt: msg.receivedAt },
+      req: { kind: "url", url, ...(/\p{L}/u.test(focus) && { text: focus }), channel: msg.channel, receivedAt: msg.receivedAt },
       logInput: logUrl(url), mediaRefs,
-    };
-  }
-  if (URL_ONLY.test(text)) {
-    return {
-      req: { kind: "url", url: text, channel: msg.channel, receivedAt: msg.receivedAt },
-      logInput: logUrl(text),
-      mediaRefs,
     };
   }
   return {
@@ -91,13 +83,6 @@ export function buildEngineRequest(msg: InboundMessage, ctx: ServerContext): Bui
     logInput: truncate(ctx.security.maskPii(text).text, 1000),
     mediaRefs,
   };
-}
-
-function evidenceRecordIds(report: VerdictReport): string[] {
-  const ids = new Set<string>();
-  for (const v of report.verdicts) for (const e of v.evidence) ids.add(e.recordId);
-  for (const e of report.answer?.evidence ?? []) ids.add(e.recordId);
-  return [...ids];
 }
 
 function mainClaimText(report: VerdictReport): string {
@@ -144,7 +129,7 @@ export async function runVerification(
       sessionId: session.id,
       status: p.status,
       verdict: p.verdict,
-      recordIds: p.report ? evidenceRecordIds(p.report) : [],
+      recordIds: p.report ? reportEvidence(p.report).map(e => e.recordId) : [],
       models: p.cacheHit || !p.report ? [] : p.report.models,
       timingsMs: p.cacheHit || !p.report ? {} : p.report.timingsMs,
       costUsd: p.cacheHit || !p.report ? 0 : p.report.costUsd,
@@ -168,7 +153,8 @@ export async function runVerification(
 
   // 1. cache (trafienie nic nie kosztuje, więc przed bezpiecznikiem budżetu)
   const key = computeCacheKey(ctx, req);
-  const cached = getCached(ctx.db, key, now);
+  const freshIndex = req.kind === "text" && asksAboutDemagogReview(req.text ?? "");
+  const cached = freshIndex ? undefined : getCached(ctx.db, key, now);
   let base: VerdictReport;
   let cacheHit = false;
 
@@ -214,7 +200,7 @@ export async function runVerification(
     report.mainVerdict = null; // status techniczny nigdy nie jest werdyktem
     report.verdicts = [];
   }
-  if (!cacheHit) putCached(ctx.db, key, report, now, owner, { liveSearch: ctx.cfg.liveSearch });
+  if (!cacheHit && !freshIndex) putCached(ctx.db, key, report, now, owner, { liveSearch: ctx.cfg.liveSearch });
 
   // 5. pętla informacji: tylko status OK i brak dowodów
   let outcome: CaseOutcome | undefined;
@@ -250,11 +236,11 @@ export async function runVerification(
   if (report.status !== "OK") {
     return { kind: "status", report, textPl: statusTextFor(report), quickReplies: [QR.help], resultUrl };
   }
-  // Pytanie otwarte z odpowiedzią złożoną z dosłownego cytatu: osobny rodzaj odpowiedzi.
-  // Bez odpowiedzi zostaje zwykły werdykt/podsumowanie (np. brak dowodów).
-  if (report.inputMode === "question_open" && report.answer) {
-    return { kind: "answer", report, textPl: answerText(report, note), quickReplies: [QR.sources, QR.why, QR.delete], resultUrl };
+  const quick = [QR.sources, QR.why, ...(report.moderatorCase || !report.verdicts.length ? [] : [QR.report]), QR.delete];
+  if (report.answer || report.inputMode !== "claim") {
+    const shortAnswer = shortAnswerFor(report, note);
+    return { kind: report.answer ? "answer" : "verdict", report, shortAnswer,
+      textPl: shortAnswerText(shortAnswer, report), quickReplies: report.answer ? [QR.sources, QR.why, QR.delete] : quick, resultUrl };
   }
-  const quick = [QR.sources, QR.why, ...(report.moderatorCase ? [] : [QR.report]), QR.delete];
   return { kind: "verdict", report, textPl: verdictText(report, note), quickReplies: quick, resultUrl };
 }

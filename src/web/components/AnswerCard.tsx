@@ -19,7 +19,7 @@ import { TransparencyBlock } from "./TransparencyBlock";
 export const ANSWER_TITLE_PL = "Odpowiedź ze źródła";
 export const NO_ANSWER_TITLE_PL = "Nie znalazłem odpowiedzi w źródłach";
 export const ANSWER_DISCLAIMER_PL =
-  "Odpowiadam wyłącznie dosłownym cytatem z jednego ze źródeł z katalogu. Sprawdź datę — informacja mogła się zmienić.";
+  "Przy każdym fragmencie znajdziesz publikację i datę źródła.";
 
 function ResultLink({ token }: { token: string }) {
   const path = resultPathFor(token);

@@ -2,14 +2,12 @@
 import { Activity, lazy, Suspense, useEffect } from "react";
 
 import { AppShell } from "@astryxdesign/core/AppShell";
-import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { Icon } from "@astryxdesign/core/Icon";
 import { Layout, LayoutContent, LayoutFooter } from "@astryxdesign/core/Layout";
 import { TopNav, TopNavHeading, TopNavItem } from "@astryxdesign/core/TopNav";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
-import { isFixtureMode } from "./api";
 import { SiteFooter } from "./components/SiteFooter";
 import { Center } from "@astryxdesign/core/Center";
 import { Spinner } from "@astryxdesign/core/Spinner";
@@ -19,7 +17,6 @@ import { installLinkInterception, matchRoute, usePathname, type Route } from "./
 // Only the citizen chat is in the main chunk; the rest loads on demand (the admin panel never reaches citizens).
 const ResultPage = lazy(() => import("./pages/ResultPage"));
 const SourcesPage = lazy(() => import("./pages/SourcesPage"));
-const PhonePage = lazy(() => import("./pages/PhonePage"));
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 export const BRAND = "Fons";
@@ -29,7 +26,6 @@ export const TITLES: Record<Route["name"], string> = {
   chat: `${BRAND} — ${TAGLINE.toLowerCase()}`,
   result: `Wynik sprawdzenia — ${BRAND}`,
   sources: `Źródła i metoda — ${BRAND}`,
-  phone: `Symulator SMS — ${BRAND}`,
   admin: `Panel zespołu — ${BRAND}`,
   notfound: `Nie ma takiej strony — ${BRAND}`,
 };
@@ -59,8 +55,6 @@ function Page({ route }: { route: Exclude<Route, { name: "chat" }> }) {
       return <ResultPage key={route.token} token={route.token} />;
     case "sources":
       return <SourcesPage />;
-    case "phone":
-      return <PhonePage />;
     case "admin":
       return <AdminApp />;
     default:
@@ -71,7 +65,6 @@ function Page({ route }: { route: Exclude<Route, { name: "chat" }> }) {
 export default function App() {
   const path = usePathname();
   const route = matchRoute(path);
-  const fixtures = isFixtureMode();
 
   useEffect(() => installLinkInterception(), []);
   useEffect(() => {
@@ -82,17 +75,6 @@ export default function App() {
     <AppShell
       variant="surface"
       contentPadding={0}
-      banner={
-        fixtures ? (
-          <Banner
-            status="info"
-            container="section"
-            collapsible={false}
-            title="Tryb danych przykładowych"
-            description="Odpowiedzi pochodzą z plików testowych, nie z prawdziwego sprawdzenia. Aby wyłączyć, dodaj do adresu ?fixtures=0."
-          />
-        ) : undefined
-      }
       topNav={
         <TopNav
           label="Nawigacja główna"
@@ -101,7 +83,6 @@ export default function App() {
             <>
               <TopNavItem label="Sprawdź" href="/" isSelected={route.name === "chat"} />
               <TopNavItem label="Źródła" href="/zrodla" isSelected={route.name === "sources"} />
-              <TopNavItem label="SMS" href="/telefon" isSelected={route.name === "phone"} />
             </>
           }
         />
@@ -109,7 +90,7 @@ export default function App() {
       <Layout
         height="fill"
         content={
-          <LayoutContent padding={0} isScrollable={route.name !== "chat" && route.name !== "phone"}>
+          <LayoutContent padding={0} isScrollable={route.name !== "chat"}>
             <Activity mode={route.name === "chat" ? "visible" : "hidden"}>
               <ChatPage />
             </Activity>

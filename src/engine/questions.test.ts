@@ -138,8 +138,8 @@ describe("yes/no question → declarative claim through the verdict pipeline", (
     expect(r.claims[0]!.text).toBe("Szwecja jest w NATO.");
     expect(r.mainVerdict).toBe("POTWIERDZONE");
     expect(r.answer).toBeUndefined();
-    expect(r.summaryPl).toContain("Sprawdziliśmy pytanie jako twierdzenie: „Szwecja jest w NATO”.");
-    expect(d.llm.calls.map((c) => c.purpose)).toEqual(["claims", "assess", "verifier"]);
+    expect(r.summaryPl).toMatch(/^Tak\. /);
+    expect(d.llm.calls.map((c) => c.purpose)).toEqual(["source_answer", "claims", "assess", "verifier"]);
   });
 });
 
@@ -149,7 +149,7 @@ describe("open question → verbatim quote answer built in code", () => {
     const onActivity = vi.fn();
     const r = await verifyInput({ ...req("Kto jest ministrem spraw zagranicznych?"), onActivity }, d);
     expect(onActivity.mock.calls.flat()).toEqual(["searching", "assessing", "checking_quotes"]);
-    expect(r.sourceActivity).toMatchObject({ assessedCount: 1 });
+    expect(r.sourceActivity).toMatchObject({ assessedCount: 2 });
     expect(VerdictReport.parse(r)).toBeTruthy();
     expect(r.status).toBe("OK");
     expect(r.inputMode).toBe("question_open");
@@ -167,7 +167,7 @@ describe("open question → verbatim quote answer built in code", () => {
     expect(MINISTER.text.includes(e.quote)).toBe(true);
     expect(r.summaryPl).toContain("Kancelaria Prezesa Rady Ministrów");
     expect(r.transparencyPl).toContain("nie pochodzi z wiedzy modelu");
-    expect(d.llm.calls.map((c) => c.purpose)).toEqual(["claims", "open_answer", "verifier"]);
+    expect(d.llm.calls.map((c) => c.purpose)).toEqual(["source_answer", "claims", "open_answer", "verifier"]);
     expect(d.llm.calls.find((c) => c.purpose === "open_answer")!.user).not.toContain("Adam Nowak");
     expect(r.warnings.map((w) => w.kind)).not.toContain("archival_material");
   });

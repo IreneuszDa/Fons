@@ -1,4 +1,6 @@
-# Prawdowid — plan budowy (v3)
+# Prawdowid — archiwalny plan budowy (v3)
+
+Bieżącą architekturę i instrukcję uruchomienia opisuje [README](README.md).
 
 Hackathon HackNation 2026, zadanie MSZ. 24 h, 1 osoba + agenci kodujący. Jury uruchamia system samo, ma ukryty zestaw ≥30 przypadków (scenariusze A–J) i zadaje własne pytania.
 
@@ -37,7 +39,7 @@ Jedna usługa: **Python FastAPI + SQLite (FTS5) + wektory w numpy + Jinja/HTMX +
 
 ```
 Adaptery kanałów ──► Gateway (podpis, deduplikacja, limit, maskowanie PII)
-WWW · Discord · symulator SMS/iMessage/Messenger · CLI · (WhatsApp)
+WWW · CLI
         │
         ▼
 Warstwa rozmowy (przyciski i słowa kluczowe; mały model tylko jako zapas)
@@ -134,7 +136,6 @@ Wiele twierdzeń: werdykt per twierdzenie; etykieta wiadomości = werdykt twierd
 - **URL:** jednorazowe rozwiązanie DNS i połączenie z tym IP, blokada sieci prywatnych, ≤ 3 przekierowania sprawdzane osobno, tylko http/https 80/443, limit 5 MB po dekompresji, limit czasu.
 - **Webhooki:** podpis na surowym ciele (HMAC), deduplikacja po identyfikatorze wiadomości, okno 5 min; test: żądanie bez podpisu → 403.
 - **Discord:** `allowed_mentions=none`, escapowanie markdown (tytuły źródeł nie tworzą zamaskowanych linków), odpowiedzi tylko w wiadomościach prywatnych i na wzmianki.
-- **Symulator telefonu:** własna przestrzeń sesji `sim:{losowy}` powiązana z ciasteczkiem; nie można podać cudzego numeru.
 - **Strona wyniku:** token 128-bit per użytkownik, `noindex`, tylko zamaskowane twierdzenie, allowlista schematów URL, ścisły CSP, pełne escapowanie.
 - **Panel administratora:** hasło wymagane w env lub generowane przy pierwszym starcie, ciasteczko httpOnly + SameSite=Strict, CSRF.
 - **Nadużycia i koszt:** limit per użytkownik i IP, limit znaków, dobowy bezpiecznik budżetu tokenów (po przekroczeniu komunikat techniczny).
@@ -144,15 +145,11 @@ Wiele twierdzeń: werdykt per twierdzenie; etykieta wiadomości = werdykt twierd
 
 ## 7. Kanały
 
-| Kanał | Rola | Droga | Jury bez zespołu? |
-|---|---|---|---|
-| WWW | P0, prawdziwy | publiczne demo + lokalnie | tak |
-| Discord | P0, prawdziwy drugi kanał | bot przez gateway, link zaproszenia w README | tak |
-| Symulator telefonu w WWW + `make ask` | P0, adapter demonstracyjny | ten sam kontrakt webhooka co SMS/iMessage/Messenger | tak |
-| WhatsApp | P2 (limit 1,5 h), prawdziwy — do filmu | sandbox Twilio („join kod”) | tak, z tarciem |
-| SMS | adapter demonstracyjny; prawdziwy po zdobyciu numeru PL | Twilio / SMSAPI.pl; 1–2 segmenty + link do `/w/{token}` | przez symulator |
-| Messenger | adapter demonstracyjny; prawdziwy po App Review Meta | Messenger Platform | przez symulator |
-| iMessage | adapter demonstracyjny | docelowo Apple Messages for Business (zgoda Apple); mosty nieoficjalne odrzucone dla instytucji państwowej | przez symulator |
+| Wejście aplikacji | Uruchomienie |
+|---|---|
+| WWW | Czat na stronie głównej |
+| CLI | `npm run ask -- "pytanie"` |
+| MCP | Transport stdio lub HTTP pod `/mcp` |
 
 Kontrakt `ChannelAdapter`: `verify_signature`, `parse_inbound → InboundMessage`, `send(OutboundMessage)`, `capabilities` (długość, media, przyciski). Dodanie kanału = jeden plik.
 
@@ -173,7 +170,7 @@ Port `LLMProvider`, dwie implementacje: Mistral (endpoint UE) i Claude. Domyśln
 
 ## 11. Zakres
 
-- **P0 (warunek brzegowy):** WWW tekst/URL → werdykt z cytatami; Discord + symulator; korpus; wstrzymanie; zapis przebiegu; publiczne demo; README przechodzące czysty klon w trybie jednego klucza.
+- **P0 (warunek brzegowy):** WWW tekst/URL → werdykt z cytatami; CLI; korpus; wstrzymanie; zapis przebiegu; publiczne demo; README przechodzące czysty klon w trybie jednego klucza.
 - **P1 (trzon oceny, ≤ 10 h):** ingestia + pakiet organizatora + dopasowanie treści do incydentów; wyszukiwanie po katalogu; reguły werdyktu strojone na dev; lista dowodów w raporcie; warstwa bezpieczeństwa i prywatności; `make eval`; minimum pętli informacji; obserwowalność i koszt.
 - **P2 (premia, w tej kolejności):** zrzut ekranu/zdjęcie przez model wizyjny — chroniony slot 2 h (odczytany tekst i data pokazane, użytkownik może poprawić; tekst i adresy ze zrzutu przechodzą przez gotowe dopasowanie do bazy incydentów, co daje „wcześniejsze wystąpienia” treści; jawnie: to nie jest odwrotne wyszukiwanie obrazu) · wizualny łańcuch dowodowy (ok. 1 h, inne wyrenderowanie gotowej listy dowodów) · WhatsApp · panel i eksport CSV/JSON · strona audytu źródeł · sygnały stronniczości przekazu jako kontekst.
 - **Rezerwa:** lokalny indeks pHash, audio/wideo z przesłanego pliku, eksport STIX 2.1 + DISARM, prawdziwy SMS.

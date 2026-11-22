@@ -3,6 +3,7 @@ import { parseFences } from "../llm/fence";
 import { priceFor } from "../llm/pricing";
 import { createGeminiVideoAnalyzer, DEFAULT_GEMINI_VIDEO_MODEL, type GeminiVideoAnalysis } from "./gemini";
 import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "./social-source";
+import { subtitleStart } from "./webvtt";
 
 const video = { bytes: Buffer.from("film"), mimeType: "video/mp4", durationSeconds: 15, caption: "Opis autora", focus: "Co słychać?" };
 const silent: GeminiVideoAnalysis = { transcript: [], observations: [], claims: [] };
@@ -66,6 +67,58 @@ describe("Gemini video analysis", () => {
   it.each([0, 1] as const)("derives duration from mvhd version %i when the platform omits it; allows silent clips", async (version) => {
     const { analyze } = setup(completion(silent));
     expect((await analyze({ bytes: movie(10, version), mimeType: "video/quicktime" })).data).toEqual(silent);
+  });
+
+  it("submits only the canonical watch URL for a public YouTube Short with a known duration", async () => {
+    const { analyze, fetchImpl } = setup(completion(silent));
+    await analyze({ youtubeUrl: "https://m.youtube.com/shorts/jNQXAC9IVRw?si=shared", durationSeconds: 19 });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body)).contents[0].parts[0]).toEqual({
+      fileData: { mimeType: "video/mp4", fileUri: "https://www.youtube.com/watch?v=jNQXAC9IVRw" },
+    });
+  });
+
+  it("blocks unknown URLs, unmeasured YouTube videos and long videos before sending to Google", async () => {
+    const { analyze, fetchImpl } = setup(completion(silent));
+    await expect(analyze({ youtubeUrl: "https://example.org/video.mp4", durationSeconds: 5 })).rejects.toThrow("video_url");
+    const youtubeUrl = "https://youtu.be/jNQXAC9IVRw";
+    await expect(analyze({ youtubeUrl, subtitles: [{ seconds: 0, text: "hello" }] })).rejects.toThrow("video_duration_unknown");
+    await expect(analyze({ youtubeUrl, durationSeconds: 601 })).rejects.toThrow("video_too_long");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("uses public subtitles for speech quotes while retaining Gemini's visual observations", async () => {
+    const captionedSpeech = { ...speech, seconds: 2.42 };
+    const subtitles = [{ seconds: captionedSpeech.seconds, text: speech.quote }];
+    const fakeQuote = "Inne słowa.";
+    const { analyze, fetchImpl } = setup(completion({
+      transcript: [{ seconds: 3, text: fakeQuote }], observations: [{ seconds: 5, text: "Mapa." }],
+      claims: [captionedSpeech, { ...speech, seconds: 3, quote: fakeQuote }],
+    }));
+    const { data } = await analyze({ ...video, subtitles });
+    expect(data).toEqual({ transcript: subtitles, observations: [{ seconds: 5, text: "Mapa." }], claims: [captionedSpeech] });
+    const context = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body)).contents[0].parts[1].text;
+    expect(parseFences(context).find(f => f.label === "NAPISY")?.content).toBe(JSON.stringify(subtitles));
+  });
+
+  it("anchors a sentence split across consecutive platform cues at the selected occurrence", async () => {
+    const subtitles = [
+      { seconds: 0, text: "Na początku: Polska" }, { seconds: 1, text: "należy do NATO." },
+      { seconds: 4.25, text: "Powtarzam: Polska" }, { seconds: 6, text: "należy do NATO. Następny temat." },
+    ];
+    const valid = { ...speech, seconds: 4.25 };
+    const { analyze } = setup(completion({ ...silent, claims: [
+      valid, { ...speech, seconds: 6 }, { ...speech, seconds: null }, { ...valid, quote: "Polska do NATO." },
+    ] }));
+    expect((await analyze({ ...video, subtitles })).data.claims).toEqual([valid]);
+    expect(subtitleStart(subtitles, valid.quote)).toBe(0);
+    expect(subtitleStart(subtitles, valid.quote, 4.25)).toBe(4.25);
+    expect(subtitleStart(subtitles, valid.quote, 1)).toBeUndefined();
+  });
+
+  it("distinguishes exhausted credits from other provider failures", async () => {
+    const { analyze } = setup(new Response(null, { status: 402 }));
+    await expect(analyze(video)).rejects.toThrow("gemini_credits_depleted");
   });
 
   it("rejects long, large and unmeasurable inputs before calling Google", async () => {

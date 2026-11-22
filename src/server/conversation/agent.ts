@@ -59,6 +59,6 @@ export function canVerifyWithoutDialogue(text: string): boolean {
   const words = foldWords(text);
   if (/^(?:sprawdz|zweryfikuj|czy to prawda ze) .+/.test(words)) return true;
   return words.split(" ").length >= 3
-    && /^(?:czy|kto|kiedy|gdzie|ile|jaki|jaka|jakie|ktory|ktora|ktore) /.test(words)
+    && /^(?:czy|kto|kiedy|gdzie|ile|ilu|jaki|jaka|jakie|ktory|ktora|ktore|dlaczego|czemu|skad|od kiedy|do kiedy) /.test(words)
     && !/^(?:czy (?:mozesz|moglbys|moglabys|potrafisz)|(?:gdzie|kiedy|jaka) (?:to|tam|ona) )/.test(words);
 }

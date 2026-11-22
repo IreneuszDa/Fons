@@ -1,6 +1,8 @@
 import { parseHTML } from "linkedom";
 import { z } from "zod";
 import { FetchBlockedError, fetchPublicResource } from "../../security/fetch";
+import { loadTikTokSubtitles, readTikTokEmbed, tikTokMediaAllowed, tikTokPageDetails } from "./tiktok";
+import type { SubtitleSegment } from "./webvtt";
 
 export const MAX_VIDEO_BYTES = 64 * 1024 * 1024;
 export const MAX_VIDEO_SECONDS = 600;
@@ -9,7 +11,13 @@ const videoTypes = ["video/mp4", "video/webm", "video/quicktime", "application/o
 export type SocialVideoPlatform = "tiktok" | "instagram";
 type VideoMime = "video/mp4" | "video/webm" | "video/quicktime";
 
-export interface SocialVideo {
+export interface SocialVideoMetadata {
+  author?: string;
+  thumbnailUrl?: string;
+  subtitles?: SubtitleSegment[];
+}
+
+export interface SocialVideo extends SocialVideoMetadata {
   platform: SocialVideoPlatform;
   url: string;
   caption: string;
@@ -20,10 +28,21 @@ export interface SocialVideo {
 
 export class SocialVideoSourceError extends Error {
   readonly caption: string;
-  constructor(readonly reason: "unavailable" | "too_large" | "unsupported", caption = "") {
+  readonly author?: string;
+  readonly thumbnailUrl?: string;
+  readonly subtitles?: SubtitleSegment[];
+  readonly url?: string;
+  constructor(
+    readonly reason: "unavailable" | "too_large" | "unsupported", caption = "",
+    metadata: SocialVideoMetadata & { url?: string } = {}, readonly confirmedPublicVideo = false,
+  ) {
     super(reason);
     this.name = "SocialVideoSourceError";
     this.caption = caption.trim().slice(0, 8_000);
+    this.author = metadata.author;
+    this.thumbnailUrl = metadata.thumbnailUrl;
+    this.subtitles = metadata.subtitles;
+    this.url = metadata.url;
   }
 }
 
@@ -42,7 +61,7 @@ function parsePost(raw: string): PostLink | undefined {
   url.hash = "";
   const { hostname, pathname } = url;
   if (["www.tiktok.com", "tiktok.com", "m.tiktok.com"].includes(hostname)) {
-    const match = /^\/(?:@[\w.-]+\/video|share\/video)\/(\d{1,22})\/?$/.exec(pathname);
+    const match = /^\/(?:(?:@|%40)[\w.-]+\/video|share\/video)\/(\d{1,22})\/?$/.exec(pathname);
     if (match) return { platform: "tiktok", url, id: match[1] };
     if (/^\/t\/[A-Za-z0-9_-]+\/?$/.test(pathname)) return { platform: "tiktok", url };
   }
@@ -60,18 +79,19 @@ export function socialVideoPlatform(rawUrl: string): SocialVideoPlatform | undef
   return parsePost(rawUrl)?.platform;
 }
 
-interface PostMetadata {
+/** Stable media identifier across alternative post paths and share parameters. */
+export function socialPostId(rawUrl: string): string | undefined {
+  const post = parsePost(rawUrl);
+  return post?.id ? `${post.platform}:${post.id}` : undefined;
+}
+
+interface PostMetadata extends SocialVideoMetadata {
   caption: string;
   mediaUrls: string[];
   durationSeconds?: number;
+  subtitleUrls?: string[];
+  confirmedPublicVideo?: boolean;
 }
-
-const tikTokItem = z.object({
-  id: z.string(), desc: z.string().optional(), video: z.object({
-    duration: z.number().optional(), playAddr: z.string().optional(), downloadAddr: z.string().optional(),
-    PlayAddrStruct: z.object({ UrlList: z.array(z.string()).optional() }).optional(),
-  }),
-});
 
 const instagramEmbed = z.object({
   context: z.object({ shortcode: z.string(), copyright_blocked: z.boolean().optional() }),
@@ -89,18 +109,9 @@ function metadata(html: string, post: PostLink): PostMetadata {
   const doc = parseHTML(html).document;
   if (post.platform === "tiktok") {
     const script = doc.getElementById("__UNIVERSAL_DATA_FOR_REHYDRATION__")?.textContent;
-    const detail = z.object({ __DEFAULT_SCOPE__: z.object({
-      "webapp.video-detail": z.object({ statusCode: z.number().optional(), itemInfo: z.object({ itemStruct: tikTokItem }).optional() }),
-    }) }).safeParse(script && parseJson(script)).data?.__DEFAULT_SCOPE__["webapp.video-detail"];
-    if (detail && detail.statusCode) throw new SocialVideoSourceError("unavailable");
-    const item = detail?.itemInfo?.itemStruct;
-    if (item && item.id === post.id) {
-      return {
-        caption: item.desc ?? "", durationSeconds: item.video.duration,
-        mediaUrls: [item.video.downloadAddr, item.video.playAddr, ...(item.video.PlayAddrStruct?.UrlList ?? [])]
-          .filter((u): u is string => !!u),
-      };
-    }
+    const item = tikTokPageDetails(script && parseJson(script), post.id);
+    if (item?.restricted) throw new SocialVideoSourceError("unavailable");
+    if (item) return { ...item, confirmedPublicVideo: true };
   } else {
     for (const script of doc.querySelectorAll("script")) {
       const js = script.textContent ?? "";
@@ -124,23 +135,25 @@ function metadata(html: string, post: PostLink): PostMetadata {
   if (!canonical?.id || canonical.platform !== post.platform || canonical.id !== post.id) {
     return { caption: "", mediaUrls: [] };
   }
-  return {
-    caption: property("og:description"),
-    mediaUrls: ["og:video:secure_url", "og:video:url", "og:video"].map(property).filter(Boolean),
+  const mediaUrls = ["og:video:secure_url", "og:video:url", "og:video"].map(property).filter(Boolean);
+  const thumbnail = URL.parse(property("og:image"));
+  return { caption: property("og:description").trim().slice(0, 8_000), mediaUrls,
+    confirmedPublicVideo: mediaUrls.some(raw => { const url = URL.parse(raw); return url && mediaAllowed(url, post.platform); }),
+    ...(thumbnail && mediaAllowed(thumbnail, post.platform) && { thumbnailUrl: thumbnail.href }),
   };
 }
 
 const mediaDomains = {
-  tiktok: ["tiktok.com", "tiktokcdn.com", "tiktokcdn-eu.com", "tiktokcdn-us.com", "tiktokv.com", "muscdn.com"],
   instagram: ["cdninstagram.com", "fbcdn.net", "instagram.com"],
 };
 
 function mediaAllowed(url: URL, platform: SocialVideoPlatform) {
+  if (platform === "tiktok") return tikTokMediaAllowed(url);
   return url.protocol === "https:" && !url.username && !url.password && !url.port
     && mediaDomains[platform].some(domain => url.hostname === domain || url.hostname.endsWith(`.${domain}`));
 }
 
-function videoMime(bytes: Buffer, mime: string): VideoMime | undefined {
+export function videoMime(bytes: Buffer, mime: string): VideoMime | undefined {
   if (bytes.length < 12) return;
   if (bytes.toString("ascii", 4, 8) === "ftyp") {
     const brand = bytes.toString("ascii", 8, 12);
@@ -154,12 +167,13 @@ function videoMime(bytes: Buffer, mime: string): VideoMime | undefined {
   }
 }
 
-async function readPublicPost(rawUrl: string, active: AbortSignal) {
+async function readPublicPost(rawUrl: string, active: AbortSignal, includeMedia: boolean) {
   const submitted = parsePost(rawUrl);
   if (!submitted) throw new SocialVideoSourceError("unsupported");
   let caption = "";
+  let post = submitted;
+  let details: PostMetadata = { caption: "", mediaUrls: [] };
   try {
-    let post = submitted;
     const getPost = (url: string) => fetchPublicResource(url, {
       mimeTypes: ["text/html", "application/xhtml+xml"], maxBytes: MAX_PAGE_BYTES, timeoutMs: 8_000, signal: active,
       allowUrl: u => {
@@ -168,13 +182,26 @@ async function readPublicPost(rawUrl: string, active: AbortSignal) {
         return target?.platform === submitted.platform && (!submitted.id || submitted.id === target.id);
       },
     });
-    let details: PostMetadata = { caption: "", mediaUrls: [] };
-    if (submitted.platform === "tiktok" || !submitted.id) {
+    let sharedPage: Awaited<ReturnType<typeof getPost>> | undefined;
+    if (!submitted.id) {
       const page = await getPost(submitted.url.href);
       const resolved = parsePost(page.finalUrl);
       if (!resolved?.id) throw new SocialVideoSourceError("unavailable");
       post = resolved;
-      details = metadata(page.bytes.toString("utf8"), post);
+      sharedPage = page;
+    }
+    if (post.platform === "tiktok" && post.id) {
+      const embed = await readTikTokEmbed(post.url, post.id, active);
+      details = { ...details, ...embed };
+      if (includeMedia || !embed.caption || !embed.author || !embed.thumbnailUrl) {
+        const page = sharedPage ?? await getPost(post.url.href);
+        const parsed = metadata(page.bytes.toString("utf8"), post);
+        details = { ...parsed, ...embed, caption: embed.caption || parsed.caption };
+      }
+      return { post, details };
+    }
+    if (sharedPage) {
+      details = metadata(sharedPage.bytes.toString("utf8"), post);
       caption = details.caption;
     }
     if (post.platform === "instagram" && !details.mediaUrls.length) {
@@ -199,9 +226,9 @@ async function readPublicPost(rawUrl: string, active: AbortSignal) {
     details.caption = (details.caption || caption).trim().slice(0, 8_000);
     return { post, details };
   } catch (err) {
-    active.throwIfAborted();
-    if (err instanceof SocialVideoSourceError) throw new SocialVideoSourceError(err.reason, err.caption || caption);
-    throw new SocialVideoSourceError("unavailable", caption);
+    const info = { ...details, url: post.url.href };
+    if (err instanceof SocialVideoSourceError) throw new SocialVideoSourceError(err.reason, err.caption || details.caption || caption, info);
+    throw new SocialVideoSourceError("unavailable", details.caption || caption, info);
   }
 }
 
@@ -210,26 +237,26 @@ function withDeadline(signal: AbortSignal | undefined, ms: number) {
   return signal ? AbortSignal.any([signal, deadline]) : deadline;
 }
 
-/** Metadata only. This path makes no paid provider requests and never contacts a media CDN. */
-export async function loadSocialCaption(rawUrl: string, signal?: AbortSignal): Promise<{ url: string; caption: string }> {
+/** Public metadata and optionally WebVTT. This path never downloads video. */
+export async function loadSocialCaption(rawUrl: string, signal?: AbortSignal, includeSubtitles = false): Promise<SocialVideoMetadata & { url: string; caption: string }> {
   const active = withDeadline(signal, 18_000);
   try {
-    const { post, details } = await readPublicPost(rawUrl, active);
-    let caption = details.caption;
-    if (!caption && post.platform === "tiktok" && post.id) {
-      const endpoint = new URL("https://www.tiktok.com/oembed");
-      endpoint.searchParams.set("url", post.url.href);
-      const response = await fetchPublicResource(endpoint.href, {
-        mimeTypes: ["application/json"], allowUrl: u => u.href === endpoint.href, signal: active, timeoutMs: 4_000, maxBytes: 64 * 1024,
-      });
-      const embed = z.object({ type: z.literal("video"), embed_product_id: z.string(), title: z.string().optional() })
-        .safeParse(parseJson(response.bytes.toString("utf8"))).data;
-      if (embed?.embed_product_id === post.id) caption = embed.title?.trim().slice(0, 8_000) ?? "";
+    const { post, details } = await readPublicPost(rawUrl, active, includeSubtitles);
+    let subs: SubtitleSegment[] = [];
+    if (includeSubtitles && details.subtitleUrls?.length && (details.durationSeconds ?? 0) <= MAX_VIDEO_SECONDS) {
+      try { subs = await loadTikTokSubtitles(details.subtitleUrls, details.durationSeconds || MAX_VIDEO_SECONDS, active); }
+      catch { signal?.throwIfAborted(); }
     }
-    return { url: post.url.href, caption };
+    return { url: post.url.href, caption: details.caption, ...(details.author && { author: details.author }),
+      ...(details.thumbnailUrl && { thumbnailUrl: details.thumbnailUrl }), ...(subs.length && { subtitles: subs }) };
   } catch (err) {
     signal?.throwIfAborted();
-    if (err instanceof SocialVideoSourceError) throw err;
+    if (err instanceof SocialVideoSourceError) {
+      if (err.url && (err.caption || err.author || err.thumbnailUrl)) {
+        return { url: err.url, caption: err.caption, author: err.author, thumbnailUrl: err.thumbnailUrl };
+      }
+      throw err;
+    }
     throw new SocialVideoSourceError("unavailable");
   }
 }
@@ -238,10 +265,18 @@ export async function loadSocialCaption(rawUrl: string, signal?: AbortSignal): P
 export async function loadSocialVideo(rawUrl: string, signal?: AbortSignal): Promise<SocialVideo> {
   const active = withDeadline(signal, 32_000);
   let caption = "";
+  let metadata: SocialVideoMetadata & { url?: string } = {};
+  let confirmedPublicVideo = false;
   try {
-    const { post, details } = await readPublicPost(rawUrl, active);
+    const { post, details } = await readPublicPost(rawUrl, active, true);
     caption = details.caption;
-    if ((details.durationSeconds ?? 0) > MAX_VIDEO_SECONDS) throw new SocialVideoSourceError("too_large", caption);
+    confirmedPublicVideo = details.confirmedPublicVideo === true;
+    metadata = { url: post.url.href, author: details.author, thumbnailUrl: details.thumbnailUrl };
+    if ((details.durationSeconds ?? 0) > MAX_VIDEO_SECONDS) throw new SocialVideoSourceError("too_large", caption, metadata);
+    if (details.subtitleUrls?.length) {
+      const rows = await loadTikTokSubtitles(details.subtitleUrls, details.durationSeconds || MAX_VIDEO_SECONDS, active);
+      if (rows.length) metadata.subtitles = rows;
+    }
     const urls = [...new Set(details.mediaUrls)].filter(raw => {
       const url = URL.parse(raw);
       return url && mediaAllowed(url, post.platform);
@@ -254,18 +289,18 @@ export async function loadSocialVideo(rawUrl: string, signal?: AbortSignal): Pro
         });
         const mimeType = videoMime(media.bytes, media.mime);
         if (mimeType) {
-          return { platform: post.platform, url: post.url.href, caption, mimeType, bytes: media.bytes, durationSeconds: details.durationSeconds };
+          return { ...metadata, platform: post.platform, url: post.url.href, caption, mimeType, bytes: media.bytes, durationSeconds: details.durationSeconds };
         }
       } catch (err) {
         active.throwIfAborted();
-        if (err instanceof FetchBlockedError && err.reason === "too_large") throw new SocialVideoSourceError("too_large", caption);
+        if (err instanceof FetchBlockedError && err.reason === "too_large") throw new SocialVideoSourceError("too_large", caption, metadata);
       }
     }
-    throw new SocialVideoSourceError("unavailable", caption);
+    throw new SocialVideoSourceError("unavailable", caption, metadata, confirmedPublicVideo);
   } catch (err) {
     signal?.throwIfAborted();
-    if (err instanceof SocialVideoSourceError) throw new SocialVideoSourceError(err.reason, err.caption || caption);
-    throw new SocialVideoSourceError("unavailable", caption);
+    if (err instanceof SocialVideoSourceError) throw err;
+    throw new SocialVideoSourceError("unavailable", caption, metadata, confirmedPublicVideo);
   }
 }
 
@@ -318,8 +353,23 @@ async function loadSocialKitPost(post: PostLink, key: string, signal?: AbortSign
 
 export function createSocialVideoLoader(socialKitApiKey?: string): typeof loadSocialVideo {
   if (!socialKitApiKey) return loadSocialVideo;
-  return (url, signal) => {
-    const post = parsePost(url);
-    return post?.platform === "tiktok" ? loadSocialKitPost(post, socialKitApiKey, signal) : loadSocialVideo(url, signal);
+  return async (url, signal) => {
+    try {
+      return await loadSocialVideo(url, signal);
+    } catch (direct) {
+      signal?.throwIfAborted();
+      if (!(direct instanceof SocialVideoSourceError) || direct.reason !== "unavailable" || !direct.confirmedPublicVideo) throw direct;
+      const post = direct.url && parsePost(direct.url);
+      if (!post || post.platform !== "tiktok" || !post.id) throw direct;
+      const metadata = { url: post.url.href, author: direct.author, thumbnailUrl: direct.thumbnailUrl, subtitles: direct.subtitles };
+      try {
+        const video = await loadSocialKitPost(post, socialKitApiKey, signal);
+        return { ...video, ...metadata, caption: direct.caption || video.caption };
+      } catch (error) {
+        signal?.throwIfAborted();
+        if (error instanceof SocialVideoSourceError) throw new SocialVideoSourceError(error.reason, direct.caption || error.caption, metadata);
+        throw direct;
+      }
+    }
   };
 }

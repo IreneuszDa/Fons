@@ -1,3 +1,4 @@
+import { EXCERPT_ATTRIBUTION, publicationLinks } from "./publication-links";
 import { describe, expect, it } from "vitest";
 import { CorpusRecord } from "../shared/contracts";
 import { catalogSourceForHost, loadCatalog } from "./catalog";
@@ -67,7 +68,21 @@ describe("pliki korpusu data/corpus/*.jsonl", () => {
       expect(r.type, r.id).toBe(src!.type);
       expect(r.role, r.id).toBe(src!.role);
       expect(r.independenceGroup, r.id).toBe(src!.independenceGroup);
-      expect(r.licence, r.id).toBe(src!.licence);
+      const editorial = publicationLinks().find(link => link.publicationId === r.id && link.url === r.url)?.excerpts;
+      expect(r.licence, r.id).toBe(editorial?.length ? src!.licence + " " + EXCERPT_ATTRIBUTION : src!.licence);
+    }
+  });
+
+  it("wiąże bibliografię z rzeczywistymi rekordami i zachowuje źródło każdego dodatkowego cytatu", () => {
+    const records = new Map(readCorpus().records.map(r => [r.id, r]));
+    for (const link of publicationLinks()) {
+      const record = records.get(link.publicationId);
+      expect(record?.url).toBe(link.url);
+      for (const target of [...(link.documents ?? []), ...(link.references ?? []), ...(link.context ?? [])]) expect(records.has(target), target).toBe(true);
+      for (const excerpt of link.excerpts ?? []) {
+        expect(record?.text.split("\n")).toContain(excerpt);
+        expect(record?.claimReviewed).not.toContain(excerpt);
+      }
     }
   });
 

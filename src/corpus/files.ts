@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CorpusRecord } from "../shared/contracts";
 import { paths } from "./paths";
+import { includePublishedExcerpts, publicationLinks } from "./publication-links";
 import { IncidentRecord } from "./types";
 
 export interface JsonlFile {
@@ -46,6 +47,7 @@ export function readCorpus(dataDir?: string): LoadedCorpus {
   const incidents: IncidentRecord[] = [];
   const errors: string[] = [];
   const seen = new Set<string>();
+  const links = new Map(publicationLinks(dataDir).map(link => [link.publicationId, link]));
   for (const f of corpusFiles(dataDir)) {
     f.lines.forEach((line, i) => {
       try {
@@ -55,7 +57,7 @@ export function readCorpus(dataDir?: string): LoadedCorpus {
           return;
         }
         seen.add(r.id);
-        records.push(r);
+        records.push(includePublishedExcerpts(r, links.get(r.id)));
       } catch (e) {
         errors.push(`${f.name}:${i + 1}: ${(e as Error).message.slice(0, 200)}`);
       }

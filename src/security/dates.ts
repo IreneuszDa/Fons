@@ -48,6 +48,12 @@ export function formatPolishDate(v: Ymd): string {
   return `${v.d} ${MONTHS_GENITIVE_PL[v.m - 1]} ${v.y}`;
 }
 
+/** Expressions without a fixed date still change meaning as the calendar advances. */
+export function relativeWindowDay(text: string, receivedAt: Date): string | undefined {
+  if (!/\b(?:ostatnio|niedawno|przyszłego tygodnia|przyszlym tygodniu|przyszłym tygodniu|przyszlego tygodnia)\b/iu.test(text)) return;
+  return formatPolishDate(warsawYmd(receivedAt));
+}
+
 function weekRange(today: Ymd): string {
   const dow = new Date(Date.UTC(today.y, today.m - 1, today.d)).getUTCDay(); // 0 = Sunday
   const mon = addDays(today, -((dow + 6) % 7));

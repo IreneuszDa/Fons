@@ -20,7 +20,8 @@ const PURPOSE_PL: Record<string, string> = {
   vision: "odczyt obrazu",
   image_question: "odpowiedź na pytanie o obraz",
   image_caption: "odczyt podpisów ze źródeł",
-  video_analysis: "odczyt obrazu i dźwięku z filmu",
+  video_analysis: "analiza filmu",
+  video_transcription: "transkrypcja dźwięku z filmu",
   open_answer: "wybór cytatu-odpowiedzi",
 };
 

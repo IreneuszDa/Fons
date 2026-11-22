@@ -141,7 +141,8 @@ API (JSON, prefiks `/api`):
 - `DELETE /api/session` → usuwa dane bieżącej sesji (raporty, przebiegi, sprawy tego nadawcy)
 - `GET /api/health` → `{ ok, corpusRecords, snapshotId, llm: { provider, available, singleKey } }`
 - `POST /api/admin/login`, `GET /api/admin/cases`, `GET /api/admin/metrics`, `GET /api/admin/export.csv|.json` (P2: minimum)
-- `POST /api/channels/:id/webhook` — wejście dla adapterów kanałów (na razie tylko szkielet + symulator)
+- `POST /api/channels/:id/webhook` — odbiera wiadomości tylko dla zarejestrowanych adapterów webhookowych. Dla nieskonfigurowanego kanału zwraca HTTP 501.
+- CLI używa tej samej funkcji `handleInbound` co WWW. Polecenie `npm run ask -- "pytanie"` uruchamia weryfikację. MCP ma osobne wejście `/mcp` oraz transport stdio.
 
 ### `src/web/`
 Czat w języku polskim wołający `POST /api/chat`; karta werdyktu renderowana z `VerdictReport`; strona `/w/:token`; strona `/zrodla` (audyt katalogu). Konwencje Astryx z `AGENTS.md` są obowiązkowe.
@@ -149,7 +150,7 @@ Czat w języku polskim wołający `POST /api/chat`; karta werdyktu renderowana z
 ### `eval/`
 ```ts
 // run.ts — czyta eval/cases/*.jsonl, woła verifyInput bezpośrednio (in-process) z deps z createEngineDeps, liczy metryki, zapisuje eval/results/<timestamp>.json i drukuje tabelę.
-// consistency.ts — to samo wejście przez warstwę rozmowy jako kanał web i jako kanał cli/discord-sim; porównuje werdykt i zestaw recordId.
+// consistency.ts — to samo wejście przez warstwę rozmowy jako kanał web i jako kanał cli. Porównuje status, werdykt i zestaw recordId.
 ```
 
 ## Faza 2 — moduły dodane po pierwszym pomiarze

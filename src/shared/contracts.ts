@@ -188,6 +188,11 @@ export const NormalizedInput = z.object({
   kind: InputKind,
   /** Tekst do weryfikacji (po maskowaniu PII, po usunięciu ukrytego HTML). */
   text: z.string(),
+  /** Separate, detector-checked fields so the sender's question cannot supply missing facts about an attachment. */
+  userNote: z.string().optional(),
+  attachmentText: z.string().optional(),
+  /** Dates transcribed from pixels, with no claim about the original publication date. */
+  visibleDates: z.array(z.string()).optional(),
   submittedUrl: z.string().optional(),
   pageTitle: z.string().optional(),
   pagePublishedAt: z.string().optional(),
@@ -362,14 +367,20 @@ export type SourceActivity = z.infer<typeof SourceActivity>;
 
 const VideoSegment = z.object({ seconds: z.number().nonnegative(), text: z.string() });
 export const VideoAnalysis = z.object({
-  platform: z.enum(["tiktok", "instagram"]),
-  status: z.enum(["analyzed", "unavailable"]),
+  platform: z.enum(["tiktok", "instagram", "facebook", "youtube"]),
+  status: z.enum(["analyzed", "subtitles_only", "transcript_only", "unavailable"]),
+  provider: z.enum(["openai", "gemini"]).optional(),
+  transcriptSource: z.enum(["platform", "openai", "gemini"]).optional(),
+  mediaIssue: z.string().optional(),
+  title: z.string().optional(),
+  author: z.string().optional(),
+  thumbnailUrl: z.url({ protocol: /^https$/ }).optional(),
   caption: z.string(),
   transcript: z.array(VideoSegment),
   observations: z.array(VideoSegment),
   claimOrigins: z.array(z.object({
     claimId: z.string(),
-    source: z.enum(["speech", "onscreen", "visual", "caption"]),
+    source: z.enum(["speech", "subtitles", "onscreen", "visual", "caption"]),
     seconds: z.number().nonnegative().nullable(),
   })),
 });
@@ -442,6 +453,14 @@ export const VerdictReport = z.object({
 });
 export type VerdictReport = z.infer<typeof VerdictReport>;
 
+export function reportEvidence(report: VerdictReport): EvidenceItem[] {
+  const byId = new Map<string, EvidenceItem>();
+  for (const entry of [...report.verdicts.flatMap(v => v.evidence), ...(report.answer?.evidence ?? [])]) {
+    if (!byId.has(entry.recordId)) byId.set(entry.recordId, entry);
+  }
+  return [...byId.values()];
+}
+
 // ───────────────────────────── Odpowiedź rozmowy ─────────────────────────────
 
 /** Odpowiedź warstwy rozmowy dla kanału (renderer zamienia ją na tekst/kartę). */
@@ -449,6 +468,12 @@ export const ConversationReply = z.object({
   kind: z.enum(["verdict", "answer", "image_analysis", "status", "sources", "why", "confirm_delete", "deleted", "confirm_report", "reported", "help", "rate_limited"]),
   report: VerdictReport.optional(),
   textPl: z.string(),
+  /** Short, source-linked message shared by the chat and SMS. The report retains the full evidence. */
+  shortAnswer: z.object({
+    bodyPl: z.string(),
+    sources: z.array(z.object({ title: z.string(), publisher: z.string(), url: z.string() })),
+    caseNotePl: z.string().optional(),
+  }).optional(),
   /** Przyciski szybkich odpowiedzi (kanały, które je obsługują). */
   quickReplies: z.array(z.object({ id: z.string(), labelPl: z.string() })).default([]),
   resultUrl: z.string().optional(),

@@ -5,7 +5,6 @@ export type Route =
   | { name: "chat" }
   | { name: "result"; token: string }
   | { name: "sources" }
-  | { name: "phone" }
   | { name: "admin" }
   | { name: "notfound" };
 
@@ -13,7 +12,6 @@ export function matchRoute(pathname: string): Route {
   const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
   if (p === "/" || p === "") return { name: "chat" };
   if (p === "/zrodla") return { name: "sources" };
-  if (p === "/telefon") return { name: "phone" };
   if (p === "/admin") return { name: "admin" };
   const m = /^\/w\/([^/]+)$/.exec(p);
   if (m && m[1]) {

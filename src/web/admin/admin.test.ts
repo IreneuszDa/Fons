@@ -1,9 +1,9 @@
-/** Admin client (stubbed fetch, no network), fake server role rules, role→tabs and metrics helpers. */
+/** Admin client (stubbed fetch, no network), role→tabs and metrics helpers. */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api";
-import admin from "../fixtures/admin.json";
+import admin from "../../../tests/fixtures/web/admin.json";
 import {
   adminLogin,
   adminLogout,
@@ -16,7 +16,6 @@ import {
   resetAdminClient,
   type AdminMetrics,
 } from "./adminApi";
-import { handle, resetFakeServer } from "./fakeServer";
 import { abstentionOf, countOf, countRows, fixedRows, modelCostRows, percent, purposeRows, stepRows } from "./metricsView";
 import { MetricsBody } from "./MetricsPanel";
 import { canEditCases, tabsForRole } from "./roles";
@@ -110,51 +109,6 @@ describe("adminApi", () => {
     vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("fail"))));
     await adminLogout().catch(() => undefined);
     expect(currentCsrf()).toBeUndefined();
-  });
-});
-
-describe("fake server (fixture mode)", () => {
-  beforeEach(() => resetFakeServer());
-  const login = (username: string) => handle("POST", "/api/admin/login", { username, password: "x" }, {}).body as { csrf: string };
-
-  it("requires login, enforces roles and CSRF", () => {
-    expect(handle("GET", "/api/admin/cases?status=open", undefined, {}).status).toBe(401);
-    const { csrf } = login("moderator");
-    expect(handle("GET", "/api/admin/cases?status=open", undefined, {}).status).toBe(200);
-    expect(handle("GET", "/api/admin/metrics", undefined, {}).status).toBe(403);
-    expect(handle("PATCH", "/api/admin/cases/12", { status: "closed" }, {}).status).toBe(403); // no CSRF header
-    expect(handle("PATCH", "/api/admin/cases/12", { status: "closed" }, { "X-CSRF-Token": csrf }).status).toBe(200);
-    const closed = handle("GET", "/api/admin/cases?status=closed", undefined, {}).body as { cases: { id: string }[] };
-    expect(closed.cases.map((c) => c.id)).toContain("12");
-  });
-
-  it("analityk sees metrics, tokens and exports but cannot edit cases or users", () => {
-    const { csrf } = login("analityk");
-    const h = { "X-CSRF-Token": csrf };
-    expect(handle("GET", "/api/admin/metrics", undefined, {}).status).toBe(200);
-    expect(handle("GET", "/api/admin/export.csv", undefined, {}).text).toContain("representativeText");
-    expect(handle("PATCH", "/api/admin/cases/12", { note: "x" }, h).status).toBe(403);
-    expect(handle("GET", "/api/admin/users", undefined, {}).status).toBe(403);
-    const created = handle("POST", "/api/admin/tokens", { label: "Test" }, h);
-    expect(created.status).toBe(201);
-    expect((created.body as { token: string }).token).toMatch(/^fons_fixture_/);
-  });
-
-  it("administrator manages users but cannot remove itself", () => {
-    const { csrf } = login("administrator");
-    const h = { "X-CSRF-Token": csrf };
-    expect(handle("POST", "/api/admin/users", { username: "nowy", role: "moderator", password: "krotkie" }, h).status).toBe(400);
-    expect(handle("POST", "/api/admin/users", { username: "nowy", role: "moderator", password: "dlugie-haslo-123" }, h).status).toBe(201);
-    expect(handle("DELETE", "/api/admin/users/administrator", undefined, h).status).toBe(400);
-    expect(handle("DELETE", "/api/admin/users/nowy", undefined, h).status).toBe(200);
-    expect(handle("POST", "/api/admin/cache/invalidate", {}, h).status).toBe(200);
-  });
-
-  it("guards CSV cells against formula injection", () => {
-    const { csrf } = login("administrator");
-    handle("PATCH", "/api/admin/cases/12", { representativeText: "=HYPERLINK(1)" }, { "X-CSRF-Token": csrf });
-    handle("PATCH", "/api/admin/cases/12", { status: "open" }, { "X-CSRF-Token": csrf });
-    expect(handle("GET", "/api/admin/export.csv", undefined, {}).text).toContain("'=HYPERLINK(1)");
   });
 });
 

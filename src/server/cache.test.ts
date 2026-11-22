@@ -9,6 +9,38 @@ function count(env: TestEnv, sql: string, ...args: unknown[]): number {
 }
 
 describe("cache obliczeń", () => {
+  it("ponawia analizę filmu po zmianie konfiguracji modelu obrazu", async () => {
+    const env = makeEnv({ cfg: { videoProvider: "openai", openaiApiKey: "test" } });
+    const input = { text: "https://www.instagram.com/reel/AbC123/" };
+    await chat(env, input);
+    expect((await chat(env, input)).json.reply.report.cacheHit).toBe(true);
+    env.ctx.cfg.openaiVideoModel = "model-b";
+    expect((await chat(env, input)).json.reply.report.cacheHit).toBe(false);
+    env.ctx.cfg.videoProvider = "off";
+    expect((await chat(env, input)).json.reply.report.cacheHit).toBe(false);
+    expect(env.calls).toHaveLength(3);
+  });
+
+  it("ponawia próbę odczytu obrazu po raporcie z samą transkrypcją", async () => {
+    const env = makeEnv({ engine: () => makeReport({ videoAnalysis: {
+      platform: "facebook", provider: "openai", status: "transcript_only", transcriptSource: "openai", caption: "",
+      transcript: [{ seconds: 0, text: "Nagranie testowe" }], observations: [], claimOrigins: [],
+    } }) });
+    const input = { text: "https://facebook.com/watch/?v=123" };
+    await chat(env, input);
+    await chat(env, input);
+    expect(env.calls).toHaveLength(2);
+  });
+
+  it("distinguishes watch IDs and shares canonical YouTube results across Shorts and short links", async () => {
+    const env = makeEnv();
+    for (const text of ["youtube.com/watch?v=abcdefghijk", "https://youtu.be/abcdefghijk?t=4", "https://www.youtube.com/shorts/abcdefghijk",
+      "youtube.com/watch?v=abcdefghij2", "facebook.com/watch/?v=123", "facebook.com/watch/?v=456"]) {
+      await chat(env, { text });
+    }
+    expect(env.calls.map(call => call.url)).toEqual(["https://youtube.com/watch?v=abcdefghijk", "https://youtube.com/watch?v=abcdefghij2",
+      "https://facebook.com/watch/?v=123", "https://facebook.com/watch/?v=456"]);
+  });
   it("trafienie: silnik wołany raz, nowa kopia raportu z nowym tokenem i cacheHit=true", async () => {
     const env = makeEnv();
     const a = await chat(env, { text: "Ziemia jest okrągła" });
@@ -110,13 +142,13 @@ describe("cache obliczeń", () => {
     expect(count(env, "SELECT COUNT(*) AS n FROM computation_cache")).toBe(1);
   });
 
-  it("daty względne są rozwiązywane przed liczeniem hasha: „wczoraj” dziś ≠ „wczoraj” jutro", async () => {
+  it.each(["Wczoraj była manifestacja", "Czy ostatnio odbył się strajk generalny?"])("uwzględnia dzień pytania o zmienny okres: %s", async text => {
     const env = makeEnv();
-    await chat(env, { text: "Wczoraj był atak" });
-    await chat(env, { text: "Wczoraj był atak" });
+    await chat(env, { text });
+    await chat(env, { text });
     expect(env.calls).toHaveLength(1);
     env.advance(86_400_000);
-    await chat(env, { text: "Wczoraj był atak" });
+    await chat(env, { text });
     expect(env.calls).toHaveLength(2);
   });
 

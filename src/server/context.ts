@@ -7,7 +7,6 @@ import type { AppConfig } from "./config";
 import type { CatalogSource, ChannelId, InputKind, VerdictReport } from "../shared/contracts";
 import type { VerificationStage } from "../shared/chat";
 import { createChannelRegistry, type ChannelRegistry } from "./channels/registry";
-import { createSmsSimAdapter, deriveSmsSimSecret } from "./channels/sms-sim";
 import type { TopicRule } from "./moderator/topics";
 import type { EngineDeps } from "../engine/verify";
 import type { ConversationAgent } from "../engine/llm/conversation";
@@ -164,25 +163,6 @@ export const DEFAULT_OPTIONS: ServerOptions = {
   confirmTtlMs: 10 * 60 * 1000,
 };
 
-/**
- * Domyślny rejestr: WWW, CLI i demonstracyjny adapter SMS (webhook podpisany HMAC, symulator /telefon).
- * SMS_SIM=off wyłącza adapter demonstracyjny.
- */
-function defaultChannels(parts: ContextParts, now: () => Date): ChannelRegistry {
-  const registry = createChannelRegistry();
-  if (parts.cfg.smsSimulator !== false) {
-    registry.register(
-      createSmsSimAdapter({
-        secret: deriveSmsSimSecret(parts.cfg.userIdPepper),
-        pseudonymize: (raw) => parts.security.pseudonymize(raw),
-        now,
-      }),
-      { webhook: true },
-    );
-  }
-  return registry;
-}
-
 export function createServerContext(parts: ContextParts): ServerContext {
   const perMinute = Math.max(1, parts.cfg.rateLimitPerMinute);
   const now = parts.now ?? (() => new Date());
@@ -201,7 +181,7 @@ export function createServerContext(parts: ContextParts): ServerContext {
     corpus: parts.corpus,
     security: parts.security,
     topics: parts.topics ?? [],
-    channels: parts.channels ?? defaultChannels(parts, now),
+    channels: parts.channels ?? createChannelRegistry(),
     fetch: parts.fetch ?? fetch,
     now,
     options: { ...DEFAULT_OPTIONS, ...parts.options },

@@ -3,8 +3,7 @@
  *
  *   npm run consistency -- [--split dev|heldout|heldout-v2|all] [--limit K] [--all] [--db path]
  *
- * For each selected case the same input is sent as channel "web", as channel "cli" and as "sms" (the signed demo
- * SMS simulator route POST /api/sim/sms through the real app; separate senders and sessions). Pass = same status, same main verdict, same set of evidence record ids, and for attacks a security
+ * For each selected case the same input is sent as channel "web", as channel "cli" with separate senders and sessions. Pass = same status, same main verdict, same set of evidence record ids, and for attacks a security
  * event on both channels. Selection: scenarios G, E, J (text/URL) + first A and D cases (or every text/URL case
  * with --all). Additional checks:
  *  - "the same attack 3× = 3 security events" (PLAN §3),
@@ -24,8 +23,6 @@ import {
   countRows,
   falseForwardingClaims,
   hasLlmKey,
-  fakeProviderRequested,
-  FAKE_PROVIDER_NOTICE,
   inboundTextFor,
   isoStamp,
   loadEvalPool,
@@ -55,8 +52,6 @@ interface PairResult {
   scenario: string;
   web: ChannelResult;
   cli: ChannelResult;
-  /** Absent when the SMS simulator is disabled (SMS_SIM=off). */
-  sms?: ChannelResult;
   consistent: boolean;
   reasons: string[];
 }
@@ -74,42 +69,19 @@ function summarizeReply(channel: ChannelId, reply: ConversationReply | undefined
   };
 }
 
-/** Compares two channel results; `suffix` (e.g. " (sms)") is appended to reasons when comparing against a third channel. */
-export function comparePair(web: ChannelResult, cli: ChannelResult, isAttack: boolean, suffix = ""): string[] {
+export function comparePair(web: ChannelResult, cli: ChannelResult, isAttack: boolean): string[] {
   const reasons: string[] = [];
-  if (web.status !== cli.status) reasons.push(`status ${web.status} ≠ ${cli.status}${suffix}`);
-  if (web.mainVerdict !== cli.mainVerdict) reasons.push(`werdykt ${web.mainVerdict ?? "-"} ≠ ${cli.mainVerdict ?? "-"}${suffix}`);
-  if (web.recordIds.join("|") !== cli.recordIds.join("|")) reasons.push(`różne zestawy rekordów-dowodów${suffix}`);
-  if (isAttack && (web.securityEvents === 0) !== (cli.securityEvents === 0)) reasons.push(`zdarzenie bezpieczeństwa tylko w jednym kanale${suffix}`);
-  if (web.status === "BRAK_RAPORTU" || cli.status === "BRAK_RAPORTU") reasons.push(`brak raportu w co najmniej jednym kanale${suffix}`);
+  if (web.status !== cli.status) reasons.push(`status ${web.status} ≠ ${cli.status}`);
+  if (web.mainVerdict !== cli.mainVerdict) reasons.push(`werdykt ${web.mainVerdict ?? "-"} ≠ ${cli.mainVerdict ?? "-"}`);
+  if (web.recordIds.join("|") !== cli.recordIds.join("|")) reasons.push(`różne zestawy rekordów-dowodów`);
+  if (isAttack && (web.securityEvents === 0) !== (cli.securityEvents === 0)) reasons.push(`zdarzenie bezpieczeństwa tylko w jednym kanale`);
+  if (web.status === "BRAK_RAPORTU" || cli.status === "BRAK_RAPORTU") reasons.push(`brak raportu w co najmniej jednym kanale`);
   return reasons;
-}
-
-/** SMS-specific delivery check: the simulator must return 1+ messages, each within the SMS length limit. */
-export function smsDeliveryProblems(messages: string[] | undefined, maxChars: number): string[] {
-  if (!messages || messages.length === 0) return ["brak SMS-a w skrzynce symulatora"];
-  return messages.some((m) => m.length > maxChars) ? [`SMS dłuższy niż ${maxChars} znaków`] : [];
-}
-
-/** Result-link token (/w/{token}) from the SMS messages of the simulator outbox. */
-export function reportTokenFromSms(messages: string[]): string | undefined {
-  for (const m of messages) {
-    const t = /\/w\/([A-Za-z0-9_-]{16,64})/.exec(m);
-    if (t) return t[1];
-  }
-  return undefined;
-}
-
-/** web vs cli, and (when present) web vs sms; returns all reasons, empty = consistent. */
-export function compareChannels(web: ChannelResult, cli: ChannelResult, sms: ChannelResult | undefined, isAttack: boolean): string[] {
-  return [...comparePair(web, cli, isAttack), ...(sms ? comparePair(web, sms, isAttack, " (sms)") : [])];
 }
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2), { split: "all" });
-  if (fakeProviderRequested()) {
-    console.error(FAKE_PROVIDER_NOTICE);
-  } else if (!hasLlmKey(loadConfig())) {
+  if (!hasLlmKey(loadConfig())) {
     console.error(NO_KEY_MESSAGE);
     process.exit(2);
   }
@@ -118,9 +90,6 @@ async function main(): Promise<void> {
   const { migrate } = await import("../src/server/db");
   const { buildProductionContext } = await import("../src/server/wiring");
   const { handleInbound } = await import("../src/server/conversation");
-  const { getReportByToken } = await import("../src/server/reports");
-  const { createApp } = await import("../src/server/app");
-  const { SMS_MAX_CHARS } = await import("../src/server/channels/sms-sim");
   const dbPath = resolve(args.db ?? process.env.EVAL_DB_PATH ?? "var/eval.db");
   const cfg = loadConfig({ dbPath, liveSearch: false, rateLimitPerMinute: 1_000_000 });
   mkdirSync(dirname(dbPath), { recursive: true });
@@ -137,8 +106,6 @@ async function main(): Promise<void> {
   const ctx = buildProductionContext(cfg, db);
   let currentFault: string | undefined;
   ctx.engine = { ...ctx.engine, verify: (req) => verifyInput({ ...req, ...(currentFault ? { fault: currentFault } : {}) }, deps) };
-  const app = createApp(ctx);
-  const smsEnabled = !!ctx.channels.getWebhook("sms");
 
   const textual = selectCases(pool, { split: args.split }).filter((c) => c.input.kind !== "image");
   let chosen: EvalCaseX[];
@@ -162,45 +129,15 @@ async function main(): Promise<void> {
     }
   };
 
-  // SMS through the signed simulator route (own sim cookie-less request → a fresh sender every time)
-  const sendSms = async (c: EvalCaseX): Promise<{ result: ChannelResult; messages?: string[] }> => {
-    currentFault = c.fault;
-    try {
-      const res = await withTimeout(
-        Promise.resolve(app.request("/api/sim/sms", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: inboundTextFor(c) }) })),
-        TIMEOUT_MS,
-      );
-      const json = (await res.json()) as { messages?: string[] };
-      if (res.status !== 200) return { result: summarizeReply("sms", undefined, `http${res.status}`) };
-      // the SMS text carries the result link /w/{token}; the saved report behind it is what the citizen would open
-      const token = reportTokenFromSms(json.messages ?? []);
-      const report = token ? getReportByToken(db, token, new Date()) : undefined;
-      const fake = report ? ({ kind: "verdict", textPl: "", quickReplies: [], report } as ConversationReply) : undefined;
-      return { result: summarizeReply("sms", fake, "brak_raportu"), messages: json.messages };
-    } catch (e) {
-      return { result: summarizeReply("sms", undefined, e instanceof Error ? e.message.slice(0, 120) : "error") };
-    } finally {
-      currentFault = undefined;
-    }
-  };
-
-  // 1. web vs cli vs sms
   const pairs: PairResult[] = [];
   for (const c of chosen) {
     const w = await send(c, "web", newId(`cons-web-${c.id}`), newId("consw"));
     const k = await send(c, "cli", newId(`cons-cli-${c.id}`), newId("consc"));
     const web = summarizeReply("web", w.reply, w.error);
     const cli = summarizeReply("cli", k.reply, k.error);
-    let sms: ChannelResult | undefined;
-    let smsProblems: string[] = [];
-    if (smsEnabled) {
-      const r = await sendSms(c);
-      sms = r.result;
-      smsProblems = smsDeliveryProblems(r.messages, SMS_MAX_CHARS).map((p) => `${p} (sms)`);
-    }
-    const reasons = [...compareChannels(web, cli, sms, !!c.expected.attack), ...smsProblems];
-    pairs.push({ caseId: c.id, scenario: c.scenario, web, cli, ...(sms ? { sms } : {}), consistent: reasons.length === 0, reasons });
-    console.error(`[consistency] ${c.id}: web=${web.status}/${web.mainVerdict ?? "-"} cli=${cli.status}/${cli.mainVerdict ?? "-"}${sms ? ` sms=${sms.status}/${sms.mainVerdict ?? "-"}` : ""} ${reasons.length ? "NIEZGODNE: " + reasons.join("; ") : "zgodne"}`);
+    const reasons = comparePair(web, cli, !!c.expected.attack);
+    pairs.push({ caseId: c.id, scenario: c.scenario, web, cli, consistent: reasons.length === 0, reasons });
+    console.error(`[consistency] ${c.id}: web=${web.status}/${web.mainVerdict ?? "-"} cli=${cli.status}/${cli.mainVerdict ?? "-"} ${reasons.length ? "NIEZGODNE: " + reasons.join("; ") : "zgodne"}`);
   }
 
   // 2. the same attack 3× from one sender = 3 security-event requests in the log
@@ -239,13 +176,13 @@ async function main(): Promise<void> {
   const consistent = pairs.filter((p) => p.consistent).length;
   const finishedAt = new Date();
   const L: string[] = [];
-  L.push(`# Spójność kanałów (web ↔ cli ↔ sms)`, "");
+  L.push(`# Spójność kanałów (web ↔ cli)`, "");
   L.push(`- Uruchomienie: ${startedAt.toISOString()} → ${finishedAt.toISOString()}; baza: ${displayPath(dbPath)}; podział: ${splitLabel(args)}`);
   L.push(`- Migawka korpusu: ${corpus.snapshotId} (${corpus.records} rekordów); wersja potoku: ${PIPELINE_VERSION}; commit: ${provenanceLabel(provenance)}`);
   L.push(`- Zgodność: **${pairs.length ? ((consistent / pairs.length) * 100).toFixed(1) : "—"}%** (${consistent}/${pairs.length}); próg: 100%`, "");
-  L.push(`| Przypadek | Scen. | web | cli | sms | Wynik |`, `|---|---|---|---|---|---|`);
+  L.push(`| Przypadek | Scen. | web | cli | Wynik |`, `|---|---|---|---|---|`);
   for (const p of pairs)
-    L.push(`| ${p.caseId} | ${p.scenario} | ${p.web.status}/${p.web.mainVerdict ?? "-"} (zdarzenia: ${p.web.securityEvents}) | ${p.cli.status}/${p.cli.mainVerdict ?? "-"} (zdarzenia: ${p.cli.securityEvents}${p.cli.cacheHit ? ", z cache" : ""}) | ${p.sms ? `${p.sms.status}/${p.sms.mainVerdict ?? "-"} (zdarzenia: ${p.sms.securityEvents})` : "wyłączony"} | ${p.consistent ? "zgodne" : `NIEZGODNE: ${p.reasons.join("; ")}`} |`);
+    L.push(`| ${p.caseId} | ${p.scenario} | ${p.web.status}/${p.web.mainVerdict ?? "-"} (zdarzenia: ${p.web.securityEvents}) | ${p.cli.status}/${p.cli.mainVerdict ?? "-"} (zdarzenia: ${p.cli.securityEvents}${p.cli.cacheHit ? ", z cache" : ""}) | ${p.consistent ? "zgodne" : `NIEZGODNE: ${p.reasons.join("; ")}`} |`);
   L.push("", `## Ten sam atak 3 razy`, "", `- Przypadek ${triple.caseId}: żądania ze zdarzeniem bezpieczeństwa w logu: ${triple.requestsWithEvents}/3 → ${triple.ok ? "spełnione" : "NIESPEŁNIONE"}`);
   L.push("", `## Scenariusz H (powtórzone podobne zgłoszenie)`, "");
   for (const h of hResults) L.push(`- ${h.group}: werdykty ${h.verdicts.map((v) => v ?? "-").join(", ")}; nowe sprawy: ${h.newCases}; ${h.ok ? "spełnione" : `NIESPEŁNIONE: ${h.problems.join("; ")}`}`);
@@ -258,7 +195,7 @@ async function main(): Promise<void> {
       {
         startedAt: startedAt.toISOString(),
         finishedAt: finishedAt.toISOString(),
-        meta: { split: splitLabel(args), smsChannel: smsEnabled, corpusSnapshot: corpus.snapshotId, corpusRecords: corpus.records, pipelineVersion: PIPELINE_VERSION, dbPath: displayPath(dbPath), ...provenance },
+        meta: { split: splitLabel(args), corpusSnapshot: corpus.snapshotId, corpusRecords: corpus.records, pipelineVersion: PIPELINE_VERSION, dbPath: displayPath(dbPath), ...provenance },
         pairs,
         triple,
         h: hResults,

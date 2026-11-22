@@ -114,7 +114,7 @@ npm run eval -- --suite demo                      # zestaw demo (10 przypadków)
 npm run eval -- --split all --ids P01,P03,L04     # wybrane przypadki (np. nowe rodziny); --ids działa po --split
 npm run eval:render -- eval/results/<plik>.json   # odtwarza latest.md z zapisanego przebiegu, bez wywołań modelu
 npm run eval -- --split dev --limit 10 --live     # z wyszukiwaniem na żywo; plik wyniku z dopiskiem „-live”
-npm run consistency                               # spójność kanałów (web ↔ cli ↔ sms) + H + „3× ten sam atak”
+npm run consistency                               # spójność kanałów (web ↔ cli) + H + „3× ten sam atak”
 npm run consistency -- --all                      # wszystkie przypadki tekstowe/URL
 npm run consistency -- --split heldout-v2         # spójność na ślepym zestawie v2
 npx vitest run eval/metrics.test.ts eval/cases.test.ts eval/harness.test.ts eval/heldout-v2.test.ts   # testy jednostkowe (bez sieci i klucza)
@@ -131,10 +131,9 @@ Wyniki: `eval/results/<czas>-<zestaw>-<podział>.json` (pełne dane: meta, metry
 | `npm run eval` | główny (`dev` + `heldout`, albo `heldout-v2` osobno) | `verifyInput` w procesie | metryki werdyktów, cytatów, ataków |
 | `npm run eval:redteam` | red-team | `handleInbound` (kanał `web`) | efekty uboczne, renderowane odpowiedzi |
 | `npm run eval -- --suite demo` | demo | jak główny | tabela „Demo” w `latest.md` |
-| `npm run consistency` | główny (też `--split heldout-v2`) | `handleInbound` jako `web` i `cli` + podpisana trasa symulatora SMS `POST /api/sim/sms` (przez `createApp`) | ten sam status, werdykt i rekordy-dowody w trzech kanałach; atak = zdarzenie bezpieczeństwa w każdym; „3× ten sam atak = 3 zdarzenia”; scenariusz H |
+| `npm run consistency` | główny (też `--split heldout-v2`) | `handleInbound` jako `web` i `cli` | ten sam status, werdykt i rekordy-dowody w obu kanałach; atak = zdarzenie bezpieczeństwa w każdym; „3× ten sam atak = 3 zdarzenia”; scenariusz H |
 | `npm run eval:render -- <plik>` | z zapisanego wyniku | bez modelu | odtworzenie `latest.md` (ładuje też `heldout-v2.jsonl`) |
 
-W spójności kanał SMS jest sprawdzany tak, jak zobaczy go obywatel: odpowiedź z skrzynki symulatora musi mieć 1+ SMS-ów ≤ 320 znaków, a raport porównujemy po odnośniku `/w/{token}` z treści SMS-a. Gdy `SMS_SIM=off`, trzeci kanał jest pomijany (kolumna „wyłączony”).
 
 ### `--live` i odcisk plików przypadków
 
@@ -147,7 +146,7 @@ W spójności kanał SMS jest sprawdzany tak, jak zobaczy go obywatel: odpowied�
 - **Pytanie + link:** przypadek `kind: "url"` może mieć też `text`. Do `verifyInput` trafiają oba pola; w warstwie rozmowy (red-team, spójność) wiadomość to „tekst adres”, tak jak wkleiłby ją obywatel.
 - **Zestaw główny:** każdy przypadek trafia bezpośrednio do `verifyInput` (w procesie) z zależnościami z `createEngineDeps(db, loadConfig())`. `deps.fetchPage` jest podmienione: adresy z hosta `fixture.prawdowid.test` (i adresy przypisane w `checks.fixture`, np. `https://www.rt.com/...`) są czytane z `eval/fixtures/pages/` przez ten sam ekstraktor co prawdziwe pobieranie (`extractFromHtml`), więc ukryty HTML trafia do detektora tak jak w produkcji. Pole `fault` jest przekazywane do silnika bez zmian. Przypadek ze zdjęciem (J04) dostaje zastępczy obraz 1×1 bez tekstu.
 - **Red-team:** każdy przypadek przechodzi przez **warstwę rozmowy** (`handleInbound`, kanał `web`, osobny nadawca i sesja), bo tylko tam widać efekty uboczne (usunięta sesja, prośba o potwierdzenie usunięcia/zgłoszenia, sprawa moderatora) i wyrenderowane odpowiedzi. Pod spodem działa ten sam `verifyInput` z tymi samymi zależnościami. Przed każdym przebiegiem cache obliczeń jest czyszczony, żeby „najgorszy z N” naprawdę liczył N razy. Bliźniaki uruchamiają się przed atakami.
-- **Spójność:** to samo wejście jako kanał `web`, `cli` i `sms` (osobni nadawcy). Drugi kanał zwykle trafia w cache obliczeń — tak działa usługa i to również jest przedmiotem testu.
+- **Spójność:** to samo wejście jako kanały `web` i `cli` (osobni nadawcy). Drugi kanał zwykle trafia w cache obliczeń — tak działa usługa i to również jest przedmiotem testu.
 
 ## 4. Definicje metryk
 

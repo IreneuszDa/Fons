@@ -1,6 +1,5 @@
 /**
  * Typed client for the Fons API (docs/MODULES.md, section src/server/ → API).
- * With ?fixtures=1 every call is answered from src/web/fixtures (no server needed); ?fixtures=0 turns it off.
  */
 import type { ChatImage, ChatDocument, ImageOptions } from "../shared/attachments";
 import type { CatalogSource, ConversationReply, VerdictReport } from "../shared/contracts";
@@ -32,23 +31,6 @@ export class ApiError extends Error {
 }
 
 export const NETWORK_ERROR_PL = "Nie mogę połączyć się z serwerem. To problem techniczny, a nie ocena informacji. Sprawdź internet i spróbuj ponownie.";
-
-const FIXTURE_KEY = "pw_fixtures";
-
-/** Dev toggle: ?fixtures=1 enables fixture mode for this browser tab, ?fixtures=0 disables it. */
-export function isFixtureMode(): boolean {
-  if (typeof window === "undefined") return false;
-  const q = new URLSearchParams(window.location.search).get("fixtures");
-  try {
-    if (q === "1") window.sessionStorage.setItem(FIXTURE_KEY, "1");
-    if (q === "0") window.sessionStorage.removeItem(FIXTURE_KEY);
-    return window.sessionStorage.getItem(FIXTURE_KEY) === "1";
-  } catch {
-    return q === "1";
-  }
-}
-
-const loadFixtures = () => import("./fixtures");
 
 export async function readJson(res: Response): Promise<unknown> {
   try {
@@ -102,7 +84,6 @@ async function readChatStream(res: Response, onProgress: ProgressHandler): Promi
 }
 
 export async function sendChat(input: ChatInput, onProgress: ProgressHandler): Promise<ConversationReply> {
-  if (isFixtureMode()) return (await loadFixtures()).fixtureChat(input, onProgress);
   const res = await request("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: `${CHAT_STREAM_CONTENT_TYPE}, application/json` },
@@ -119,30 +100,8 @@ export async function sendChat(input: ChatInput, onProgress: ProgressHandler): P
   throw new ApiError(res.status, messageFrom(body, "Nie udało się wysłać wiadomości. Spróbuj ponownie."));
 }
 
-export interface SimSmsResponse {
-  messages: string[];
-}
-
-/** Phone simulator (/telefon): the server signs the SMS like an SMS gateway and returns the SMS replies. */
-export async function sendSimSms(text: string): Promise<string[]> {
-  if (isFixtureMode()) {
-    return ["Tryb danych przykładowych: symulator SMS działa tylko z uruchomionym serwerem. Dodaj do adresu ?fixtures=0."];
-  }
-  const res = await request("/api/sim/sms", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
-  });
-  const body = await readJson(res);
-  if (res.ok && body && typeof body === "object" && Array.isArray((body as SimSmsResponse).messages)) {
-    return (body as SimSmsResponse).messages.filter((m): m is string => typeof m === "string");
-  }
-  throw new ApiError(res.status, messageFrom(body, "Nie udało się wysłać SMS-a. Spróbuj ponownie."));
-}
-
 /** null = no such report (404). */
 export async function fetchReport(token: string): Promise<VerdictReport | null> {
-  if (isFixtureMode()) return (await loadFixtures()).fixtureReport(token);
   const res = await request(`/api/report/${encodeURIComponent(token)}`);
   if (res.status === 404) return null;
   const body = await readJson(res);
@@ -151,7 +110,6 @@ export async function fetchReport(token: string): Promise<VerdictReport | null> 
 }
 
 export async function fetchSources(): Promise<SourcesResponse> {
-  if (isFixtureMode()) return (await loadFixtures()).fixtureSources();
   const res = await request("/api/sources");
   const body = await readJson(res);
   if (!res.ok || !body) throw new ApiError(res.status, messageFrom(body, "Nie udało się wczytać listy źródeł."));

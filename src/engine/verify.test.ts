@@ -7,6 +7,8 @@ import { failingBranch, memoryBranch, memoryStore, type FetchedPage } from "./te
 import { LIVE_SEARCH_PURPOSE, recordLiveUsage, runWithLiveScope, withLiveUsage } from "./retrieval/live-usage";
 import { PIPELINE_VERSION, cacheKeyFor, gateProposedVerdict, verifyInput, type EngineDeps, type VerifyRequest } from "./verify";
 import { chat, makeEnv } from "../server/testkit";
+import { SocialVideoSourceError } from "./video/social-source";
+import { createOpenAiVideoAnalyzer, DEFAULT_OPENAI_VIDEO_MODEL, OPENAI_TRANSCRIPTION_MODEL } from "./video/openai-video";
 
 // Other modules (security, corpus, retrieval, verdict) are replaced by local stubs.
 vi.mock("./ports", async () => await import("./testing/stubs"));
@@ -101,6 +103,26 @@ describe("social video verification", () => {
     expect(onActivity.mock.calls.flat()).toEqual(["fetching_video", "analyzing_video", "searching", "assessing", "checking_quotes"]);
   });
 
+  it("uses the viewer's question and observations from a previously unlisted recording to search independent sources", async () => {
+    const question = "Jaką stawkę minimalną ogłoszono na 2026 rok?";
+    const llm = new FakeLlmProvider({ override: r => {
+      if (r.schemaName === "SourceAnswer") {
+        const prompt = parseFences(r.user);
+        expect(prompt.find(f => f.label === "PYTANIE")?.content).toBe(question);
+        expect(prompt.find(f => f.label === "MATERIAL")?.content).toContain(data.observations[0]!.text);
+        return { answerPl: WAGE_RECORD.text, evidence: [{ ref: "F1", quote: WAGE_RECORD.text }],
+          claimPl: "", reviewRef: "", neededEvidencePl: "" };
+      }
+      if (r.schemaName === "SourceAnswerCheck") return { supported: true };
+    } });
+    const deps = makeDeps({ llm });
+    deps.video = { load, analyze: async () => ({ data, usage }) };
+    const report = await verifyInput({ ...req, text: question }, deps);
+    expect(report).toMatchObject({ status: "OK", answer: { questionPl: question, evidence: [{ url: WAGE_RECORD.url }] },
+      videoAnalysis: { status: "analyzed" } });
+    expect(report.models.map(m => m.purpose)).toContain("source_answer_check");
+  });
+
   it("retains observations for a clip without checkable claims and never treats its own content as evidence", async () => {
     const deps = makeDeps({ records: [] });
     deps.video = { load, analyze: async () => ({ data, usage }) };
@@ -112,6 +134,41 @@ describe("social video verification", () => {
     const empty = await verifyInput(req, deps);
     expect(empty).toMatchObject({ status: "DOPRECYZUJ", mainVerdict: null, claims: [],
       videoAnalysis: { status: "analyzed", observations: data.observations, claimOrigins: [] } });
+  });
+
+  it.each([true, false])("checks a transcribed OpenAI clip with independent records when vision succeeds=%s", async visionSucceeds => {
+    const deps = makeDeps();
+    const observed = "Na ekranie widać tabelę.";
+    const visionResult = { observations: [{ frameIndex: 0, text: observed }], claims: [
+      { source: "speech", sourceIndex: 0, quote: WAGE_CLAIM, text: WAGE_CLAIM, temporalKind: "stan", date: "2026" },
+    ] };
+    const fetchImpl = vi.fn<(url: string, init: RequestInit) => Promise<Response>>()
+      .mockResolvedValueOnce(Response.json({ text: WAGE_CLAIM, usage: { type: "duration", seconds: 4 } }))
+      .mockResolvedValueOnce(Response.json({
+        model: DEFAULT_OPENAI_VIDEO_MODEL, usage: { prompt_tokens: 300, completion_tokens: 100 },
+        choices: [{ finish_reason: "stop", message: { content: JSON.stringify(visionSucceeds ? visionResult : {}) } }],
+      }));
+    deps.video = {
+      provider: "openai", processingRegion: "eea", load: async () => ({ ...await load(), caption: "" }),
+      analyze: createOpenAiVideoAnalyzer({ apiKey: "test", dataResidency: "eu", fetchImpl, decode: async () => ({
+        durationSeconds: 15, frames: [{ seconds: 0.5, bytes: Buffer.from("jpeg") }],
+        audio: [{ seconds: 3.5, durationSeconds: 4, bytes: Buffer.from("wav") }],
+      }) }),
+    };
+    const report = await verifyInput(req, deps);
+    expect(report).toMatchObject({ status: "OK", mainVerdict: "POTWIERDZONE", claims: [{ text: WAGE_CLAIM }],
+      videoAnalysis: { provider: "openai", status: visionSucceeds ? "analyzed" : "transcript_only", transcriptSource: "openai",
+        transcript: [{ seconds: 3.5, text: WAGE_CLAIM }], observations: visionSucceeds ? [{ seconds: 0.5, text: observed }] : [],
+        claimOrigins: [{ source: "speech", seconds: 3.5 }] },
+    });
+    expect(!!report.videoAnalysis?.mediaIssue).toBe(!visionSucceeds);
+    expect(report.transparencyPl).toContain(visionSucceeds ? "OpenAI odczytał wybrane klatki" : "transkrypcja dźwięku wykonana przez OpenAI");
+    expect(report.warnings).not.toContainEqual(expect.objectContaining({ kind: "non_eea_processing" }));
+    expect(report.verdicts[0]?.evidence[0]?.url).toBe(WAGE_RECORD.url);
+    expect(report.models.filter(row => row.provider === "openai")).toMatchObject([
+      { purpose: "video_transcription", model: OPENAI_TRANSCRIPTION_MODEL, costUsd: 0.0003 },
+      { purpose: "video_analysis", model: DEFAULT_OPENAI_VIDEO_MODEL, inputTokens: 300, outputTokens: 100, costUsd: 0.00008 },
+    ]);
   });
 
   it("saves the video report from chat and reuses it for another share link to the same post", async () => {
@@ -133,6 +190,31 @@ describe("social video verification", () => {
     } finally {
       env.db.close();
     }
+  });
+
+  it.each(["download", "gemini", "no key", "full"])("checks a sentence spanning original subtitle cues in the %s path", async mode => {
+    const deps = makeDeps();
+    const subtitles = [{ seconds: 3.25, text: "Minimalne wynagrodzenie w Polsce" }, { seconds: 4.5, text: "w 2026 roku wynosi 4806 zł brutto." }];
+    const media = { ...await load(), caption: "", subtitles, author: "Autor" };
+    const analyze = vi.fn(async () => {
+      if (mode !== "full") throw new Error("gemini_credits_depleted");
+      return { usage, data: { ...data, claims: data.claims.map(claim => ({ ...claim, seconds: 3.25 })) } };
+    });
+    deps.video = mode === "no key" ? { loadCaption: async () => media } : {
+      load: async () => {
+        if (mode === "download") throw new SocialVideoSourceError("unavailable", "", media);
+        return media;
+      }, analyze,
+    };
+    const r = await verifyInput(req, deps);
+    expect(r).toMatchObject({
+      status: "OK", mainVerdict: "POTWIERDZONE", claims: [{ text: WAGE_CLAIM }],
+      videoAnalysis: { status: mode === "full" ? "analyzed" : "subtitles_only", transcriptSource: "platform",
+        author: "Autor", transcript: subtitles, observations: mode === "full" ? data.observations : [],
+        claimOrigins: [{ source: "subtitles", seconds: 3.25 }] },
+    });
+    expect(r.verdicts[0]?.evidence[0]?.url).toBe(WAGE_RECORD.url);
+    expect(analyze).toHaveBeenCalledTimes(mode === "gemini" || mode === "full" ? 1 : 0);
   });
 
   it("keeps missing configuration, inaccessible posts and provider failures distinct from verdicts", async () => {

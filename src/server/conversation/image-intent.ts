@@ -7,6 +7,7 @@ type ImageFocus = NonNullable<EngineRequest["imageFocus"]>;
 export function obviousImageFocus(req: EngineRequest): ImageFocus | undefined {
   const caption = foldWords(req.text ?? "");
   if (!caption) return req.imageOptions?.searchWeb ? "copies" : "claims";
+  if (/\bdemagog\w*\b/.test(caption) && /\b(?:sprawdz\w*|weryfik\w*|zweryfik\w*|oceni\w*)\b/.test(caption)) return "claims";
   if (/^(czy (to|to jest) ai|czy to ai generated|is this ai generated|sprawdz pochodzenie (obrazu|zdjecia))$/.test(caption)
     || /^czy (ten obraz|to zdjecie|ta grafika) (jest |zostal[oa]? )?(wygenerowan[yae]|stworzon[yae]) przez (ai|sztuczna inteligencje)$/.test(caption)) return "origin";
   if (/^(kto to( jest)?|kim jest (ta osoba|ten (pan|czlowiek|mezczyzna))|kto (jest )?na (tym )?(zdjeciu|obrazie|fotografii))$/.test(caption)

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   APIConnectionTimeoutError,
@@ -277,11 +277,12 @@ describe("createLlmProviders", () => {
     expect(singleKey).toBe(false);
   });
 
-  it("fake only when explicitly requested, never in production", () => {
-    const dev = createLlmProviders({ ...base, llmProvider: "fake" as never });
-    expect(dev.main).toBeInstanceOf(FakeLlmProvider);
-    const prod = createLlmProviders({ ...base, env: "production", llmProvider: "fake" as never });
-    expect(prod.main.available).toBe(false);
+  it("rejects a simulated provider in application configuration", async () => {
+    const { loadConfig } = await import("../../server/config");
+    vi.stubEnv("LLM_PROVIDER", "fake");
+    try {
+      expect(() => loadConfig({ env: "development" })).toThrow(/LLM_PROVIDER/);
+    } finally { vi.unstubAllEnvs(); }
   });
 
   it("UnavailableLlmProvider throws no_key", async () => {

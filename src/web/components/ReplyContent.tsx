@@ -1,5 +1,6 @@
 import { Button } from "@astryxdesign/core/Button";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { Link } from "@astryxdesign/core/Link";
 import { Text } from "@astryxdesign/core/Text";
 import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import { useStreamingText } from "@astryxdesign/core/hooks";
@@ -7,6 +8,7 @@ import { useEffect, useState } from "react";
 import type { ConversationReply } from "../../shared/contracts";
 import { paragraphs } from "../lib/format";
 import { replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf } from "../lib/report";
+import { resultPathFor, safeUrl } from "../lib/safeUrl";
 import { AnswerCard } from "./AnswerCard";
 import { ImageFindings } from "./ImageFindings";
 import { StatusNotice } from "./StatusNotice";
@@ -73,6 +75,29 @@ function TypingReply({ text }: { text: string }) {
 }
 
 function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: string }) {
+  const short = reply.shortAnswer;
+  if (short && reply.report?.status === "OK") {
+    const permalink = resultPathFor(reply.report.token, reply.resultUrl);
+    return (
+      <VStack gap={2}>
+        {paragraphs(short.bodyPl).map((p, i) => <Text key={i} as="p" id={i === 0 ? anchorId : undefined}>{p}</Text>)}
+        {short.sources.map(source => {
+          const href = safeUrl(source.url);
+          return href ? (
+            <Link key={href} href={href} isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">
+              {source.publisher} · {source.title}
+            </Link>
+          ) : null;
+        })}
+        {short.caseNotePl && <Text as="p" color="secondary">{short.caseNotePl}</Text>}
+        {reply.report.warnings.filter(w => w.kind === "injection_detected" || w.kind === "archival_material" ||
+          w.kind === "branch_unavailable" || w.kind === "non_eea_processing" || w.kind === "source_status").map(w => (
+          <Text key={w.textPl} as="p" type="supporting" color="secondary">{w.textPl}</Text>
+        ))}
+        {permalink && <Link href={permalink} type="supporting">Pełny wynik</Link>}
+      </VStack>
+    );
+  }
   const view = replyView(reply);
   if (view === "answer" && reply.report) return <AnswerCard report={reply.report} anchorId={anchorId} inChat />;
   if (view === "verdict" && reply.report) return <VerdictCard report={reply.report} anchorId={anchorId} />;

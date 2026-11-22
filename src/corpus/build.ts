@@ -16,7 +16,7 @@ import { loadCatalog } from "./catalog";
 import { readCorpus } from "./files";
 import { ingestClaimReview } from "./ingest/claimreview";
 import { ingestEeas } from "./ingest/eeas";
-import { ingestDemagog } from "./ingest/demagog";
+import { ingestDemagogWithArchive } from "./ingest/published-reviews";
 import { ingestEli } from "./ingest/eli";
 import { ingestEuPortal } from "./ingest/euportal";
 import { ingestEurLex } from "./ingest/eurlex";
@@ -54,7 +54,7 @@ export const INGESTERS: Record<string, Ingester> = {
   "state-officials": ingestStateOfficials,
   "eu-leadership": ingestEuLeadership,
   "factcheck-probe": ingestFactcheckProbe,
-  demagog: ingestDemagog,
+  demagog: ingestDemagogWithArchive,
   // Rodziny tematyczne: sankcje UE, Schengen, MH17, Bucza, "biolaby" (strony instytucji) oraz statystyka GUS (API BDL).
   "official-pages": ingestOfficialPages,
   "gus-bdl": ingestGus,

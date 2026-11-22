@@ -1,6 +1,6 @@
 # Fons — sprawdź informację u źródła
 
-**Fons** (łac. „źródło”) to obywatelska usługa do szybkiego sprawdzania informacji, zbudowana na zadanie MSZ (HackNation 2026). Obywatel wkleja zdanie, link albo zadaje pytanie („Kto jest ministrem spraw zagranicznych?”, „Czy Szwecja jest w NATO?”). Fons szuka odpowiedzi wyłącznie w zamkniętym, jawnym katalogu wiarygodnych źródeł (akty prawne, API Sejmu, gov.pl, NATO, UE, Eurostat, fact-checki sygnatariuszy IFCN/EFCSN) i odpowiada **dosłownym cytatem z linkiem i datą** albo jednym z pięciu werdyktów. O werdykcie decydują jawne reguły w kodzie, nie model językowy. Gdy źródła milczą, Fons mówi to wprost: „Brak wystarczających dowodów” i nie odpowiada z pamięci modelu.
+**Fons** pomaga sprawdzać informacje po polsku. Przyjmuje pytanie, link, obraz lub dokument. Czat i CLI korzystają z tego samego silnika. Odpowiedź wskazuje konkretną publikację, wyjaśnia rozbieżność albo mówi, czego zabrakło do potwierdzenia informacji.
 
 **Dla obywatela:** jedna rozmowa po polsku, prostym językiem, na telefonie od 360 px. Zamiast kolejnej opinii dostaje źródło, które może sam otworzyć. **Dla analityków MSZ:** każde sprawdzenie to zapisany, audytowalny raport (dowody, cytaty, modele, koszt, czas). Nierozstrzygnięte zgłoszenia trafiają do kolejki spraw z deduplikacją. Panel z rolami pokazuje metryki, eksporty i dziennik audytu, a serwer MCP pozwala podłączyć Fons do narzędzi analitycznych i asystentów AI.
 
@@ -10,27 +10,42 @@
 
 ---
 
+## Jak pytanie staje się odpowiedzią
+
+1. **Pytanie.** Czat WWW i CLI przekazują wiadomość do wspólnego silnika. Przy linku i zrzucie ekranu silnik rozdziela pytanie od materiału wskazanego przez użytkownika. Odczytana z obrazu data jest częścią treści obrazu.
+2. **Wyszukiwanie.** BM25 i lokalny indeks wektorowy znajdują publikacje na podstawie treści pytania. Przy włączonym `LIVE_SEARCH` silnik korzysta również z wyszukiwania w dozwolonych serwisach oraz oficjalnych kanałów instytucji. Uwzględnia powiązane dokumenty źródłowe i przechowuje w raporcie przebieg wyszukiwania.
+3. **Oceny Demagoga.** Pytanie o to, czy Demagog sprawdzał daną tezę, uruchamia wyszukiwanie w Google Fact Check Tools. Silnik porównuje pytanie z tezą w znalezionej publikacji. Zwraca źródło i ocenę, prosi o doprecyzowanie podobnego wyniku albo informuje o braku trafienia lub błędzie dostępu.
+4. **Odpowiedź.** Model opracowuje odpowiedź na podstawie wyszukanych fragmentów. Kod weryfikuje cytaty, a drugie wywołanie modelu sprawdza, czy cytaty i metadane uzasadniają wniosek. Przy braku wystarczających dowodów użytkownik otrzymuje informację o ograniczeniu. Przy braku odpowiedzi z modelu interfejs korzysta z rzeczywistego statusu usługi.
+5. **Zapis.** Czat pokazuje krótką odpowiedź i linki. Szczegóły są w raporcie pod `/w/:token`. Stan zgłoszenia pochodzi z kolejki moderatora w SQLite. Panel pobiera z API rzeczywiste sesje, sprawy i statystyki.
+
 ## Co potrafi
 
-### Filmy z TikToka i Instagrama
+### Filmy z TikToka, Instagrama, Facebooka i YouTube
 
-Wklej w czacie link do publicznego filmu. Możesz dopisać pytanie o wybrany fragment. Fons pobierze opis i nagranie, a Google Gemini odczyta mowę, obraz i napisy. Raport zawiera transkrypcję w języku nagrania, obserwacje ze znacznikami czasu i wyniki sprawdzenia maksymalnie sześciu twierdzeń. Przy każdym twierdzeniu znajdziesz jego pochodzenie oraz dostępne dowody z katalogu Fons.
+Wklej w czacie link do publicznego filmu. Możesz dopisać pytanie o wybrany fragment. Fons odczytuje opis posta i dostępne napisy. W trybie OpenAI wybiera z nagrania do 32 klatek rozłożonych w czasie i przekazuje je do analizy obrazu. Przy braku napisów pobiera transkrypcję ścieżki dźwiękowej. Krótki napis między próbkowanymi klatkami może zostać pominięty. Raport wskazuje pochodzenie maksymalnie sześciu twierdzeń, ich czas oraz dowody z osobnego etapu weryfikacji.
 
-Ustaw `GEMINI_API_KEY` w serwerowym `.env` i uruchom ponownie API. Domyślnym modelem jest `gemini-3.8-flash`. Możesz go zmienić przez `GEMINI_VIDEO_MODEL`. Do sprawdzenia twierdzeń potrzebny jest również skonfigurowany dostawca modeli Fons. Nagranie wraz z dźwiękiem trafia do Google. Przy plikach powyżej 12 MiB Fons używa Gemini Files API i po analizie wysyła żądanie usunięcia pliku. W bazie Fons pozostaje raport z odczytanym tekstem.
+| Platforma | Jak Fons odczytuje materiał |
+|---|---|
+| TikTok | Rozwija link udostępniania, odpytuje oEmbed i uzupełnia brakujące dane z publicznej strony tego samego filmu. Pobiera dostępne napisy WebVTT i próbuje pobrać jeden z mniejszych wariantów nagrania. |
+| Instagram | Czyta opis i adres nagrania z publicznego posta lub jego osadzonego odtwarzacza. |
+| Facebook | Rozwija obsługiwane linki udostępniania, w tym `fb.watch` i `fb.me`. Szuka MP4 na stronie i w publicznym odtwarzaczu tego samego filmu. |
+| YouTube i Shorts | Pobiera metadane i publiczne napisy. W trybie OpenAI pobiera MP4, jeśli publiczny odtwarzacz udostępnia bezpośredni plik z obrazem i dźwiękiem. W trybie Gemini przekazuje modelowi kanoniczny adres filmu. |
 
-Limit analizy wynosi 10 minut i 64 MiB. Domyślnie Fons pobiera media udostępnione publicznie przez platformę. Przy pustym `GEMINI_API_KEY` pobiera jedynie dostępny opis posta. Gdy film jest niedostępny, w czacie można wkleić transkrypcję lub treść posta. [Analiza wideo w Gemini API](https://ai.google.dev/gemini-api/docs/video-understanding)
+W serwerowym `.env` ustaw `VIDEO_PROVIDER=openai` i `OPENAI_API_KEY`, po czym uruchom ponownie API. Serwer używa programów `ffmpeg` i `ffprobe` z pakietu FFmpeg dostępnych w `PATH` (macOS: `brew install ffmpeg`, Debian/Ubuntu: `apt install ffmpeg`). Model `gpt-6-luna` odczytuje klatki, a `gpt-transcribe` przepisuje mowę z krótkich fragmentów audio. Czas transkrypcji OpenAI oznacza początek wysłanego fragmentu. Możesz zmienić model obrazu przez `OPENAI_VIDEO_MODEL`. Obie operacje stosują konfigurację `OPENAI_DATA_RESIDENCY`. [Wejście obrazowe OpenAI](https://developers.openai.com/api/docs/models/gpt-6-luna) · [Transkrypcja plików](https://developers.openai.com/api/docs/guides/speech-to-text)
 
-Opcjonalnie ustaw `SOCIALKIT_API_KEY`, aby pobierać publiczne filmy z TikToka przez SocialKit. W tym trybie adres posta trafia do tego dostawcy. Fons zamawia plik MP4 w 480p. Dostawca podaje limit 30 MB i nalicza własne kredyty za każdą rozpoczętą minutę nagrania. [TikTok Video Download API](https://docs.socialkit.dev/api-reference/tiktok-download-api)
+Przy pustym `VIDEO_PROVIDER` Fons wybiera OpenAI, jeśli ma jego klucz, a przy samym `GEMINI_API_KEY` używa Gemini. Można też wskazać `VIDEO_PROVIDER=gemini` lub wyłączyć analizę obrazu i dźwięku przez `VIDEO_PROVIDER=off`. Limit wynosi 10 minut i 64 MiB na pobierany plik. Gdy dostępna jest wyłącznie transkrypcja lub napisy, Fons może sprawdzić zawarte w nich wypowiedzi. Raport wskazuje zakres analizy.
+
+Opcjonalny `SOCIALKIT_API_KEY` włącza dodatkową próbę pobrania MP4, gdy publiczny post na TikToku jest dostępny, ale bezpośrednie pobranie nagrania zawiedzie. W tym przypadku adres filmu trafia do SocialKit. Fons zamawia plik MP4 w 480p. Dostawca podaje limit 30 MB i nalicza własne kredyty za każdą rozpoczętą minutę nagrania. [TikTok Video Download API](https://docs.socialkit.dev/api-reference/tiktok-download-api)
 
 ### Funkcje Fons
 
 | Obszar | Co to znaczy w praktyce | Gdzie w kodzie |
 |---|---|---|
 | **Potok RAG** | twierdzenia → wyszukiwanie hybrydowe → ocena dowodów → kontrola cytatów → reguły werdyktu → odpowiedź z cytatem. Szybki model wydziela twierdzenia i rozpoznaje, czy to twierdzenie, pytanie tak/nie, czy pytanie otwarte. Główny model czyta tylko znalezione fragmenty. Kod sprawdza, że cytat występuje dosłownie w zapisanym rekordzie, a werdykt liczą reguły 1–9. | `src/engine/` · [VERDICT-RULES](docs/VERDICT-RULES.md) |
-| **Pytania i odpowiedzi** | Pytanie tak/nie jest sprawdzane jak twierdzenie. Pytanie otwarte dostaje odpowiedź „{wydawca} ({data}) podaje: «cytat»” złożoną przez kod z rekordu; bez sprawdzonego cytatu nie ma odpowiedzi. Stare źródło przy pytaniu o teraźniejszość dostaje ostrzeżenie archiwalne. | `src/engine/answer.ts` |
+| **Pytania i odpowiedzi** | Silnik wyszukuje źródła dla treści pytania i weryfikuje cytaty wykorzystane w syntezie. Gdy cytaty nie wystarczą, sprawdza wyodrębnioną tezę lub szuka pojedynczego fragmentu odpowiadającego wprost. | `src/engine/source-question.ts`, `src/engine/answer.ts` |
 | **Baza wektorowa** | SQLite: FTS5 (BM25 z rdzeniowaniem PL/EN) + wektory z lokalnego modelu `multilingual-e5-small` (ONNX, nic nie wychodzi z serwera). Wyniki łączy ważone RRF i tani reranking leksykalny. Embeddingi korpusu są w repozytorium i są sprawdzane względem migawki korpusu. Ścieżka skalowania: ten sam port `RetrievalBranch` na pgvector albo Qdrant. | `src/engine/retrieval/` |
 | **Narzędzia i MCP** | Wyszukiwanie na żywo (opcjonalne, `LIVE_SEARCH=on`): wyszukiwarka tylko **proponuje adresy**, a kod decyduje. Przechodzi tylko dokładny host z katalogu z flagą `liveSearch` (np. Demagog jej nie ma), sprawdzany też po przekierowaniu. Strony wyników wyszukiwania w serwisie i zapytania tekstowe w adresie są odrzucane przed pobraniem i po przekierowaniu. Potem pobranie z ochroną SSRF, detektor wstrzyknięć i migawka z TTL 48 h. **Serwer MCP** (`verify_claim`, `search_sources`, `get_report`, `list_sources`) przez stdio i `POST /mcp` z tokenem. | `src/tools/`, `src/mcp/` · [TOOLS](docs/TOOLS.md) |
-| **Kanały** | WWW (`/`, od 360 px) · demonstracyjny kanał SMS: symulator telefonu `/telefon` i webhook `POST /api/channels/sms/webhook` podpisany HMAC (znacznik czasu + treść, okno 5 min), odpowiedź SMS do 320 znaków z linkiem `/w/:token`; bez operatora, 0 USD, `SMS_SIM=off` wyłącza · CLI (`npm run ask`) · MCP. Ten sam rdzeń i raport w każdym kanale. | `src/server/channels/`, `src/web/pages/PhonePage.tsx` |
+| **Kanały** | Czat WWW i CLI korzystają ze wspólnej warstwy rozmowy. MCP daje dostęp do wyszukiwania i raportów analitycznych. | `src/server/`, `scripts/ask.ts`, `src/mcp/` |
 | **Role i dostęp** | obywatel (bez logowania) · moderator (kolejka spraw) · analityk (metryki, eksporty, tokeny API) · administrator (wszystko + użytkownicy, cache). Jedna macierz uprawnień: trasa bez wpisu blokuje start serwera. Tokeny API `fons_…` są tylko do odczytu, a w bazie leży tylko ich SHA-256. Dziennik działań administracyjnych ma łańcuch hashy. | `src/server/auth/` |
 | **Ochrona przed prompt injection** | Filtry wejścia i limity. Deterministyczny detektor (PL/EN/RU/UA, homoglify, zero-width, base64, ukryty HTML) działa na **surowej** treści, zanim zobaczy ją model. Treść niezaufana trafia do modelu tylko w blokach z losowym ogranicznikiem, a odpowiedzi muszą pasować do schematu JSON. Niezależny weryfikator sprawdza cytaty. Treść od użytkownika nigdy nie jest dowodem. Linki przechodzą przez allowlistę schematów, a pobieranie przez ochronę SSRF (blokada sieci prywatnych, kontrola każdego przekierowania, limit 5 MB). | `src/security/`, `src/engine/prompts.ts` |
 | **Dane osobowe** | PESEL, telefony, e-maile, IBAN i karty są maskowane przed modelem i przed logiem. Nadawca jest pseudonimizowany (HMAC z osobnym kluczem). Retencja: przebiegi i raporty 30 dni, sesje 7 dni, migawki „live” 48 h. „Usuń moje dane” działa w czacie i przez API. Logi nie zawierają treści wiadomości. | `src/security/pii.ts`, `src/server/db.ts` |
@@ -87,8 +102,8 @@ Pomiar z 2026-11-21: modele `gpt-6.2-sol` / `gpt-6-luna`, tryb jednego klucza, p
 Zestaw demo: **DEMO04** („Stany Zjednoczone płacą za 100% NATO”, oczekiwane FAŁSZYWE) → BRAK DOWODÓW; **DEMO05** („UE liczy 28 państw”, oczekiwane WPROWADZAJĄCE) → BRAK DOWODÓW; **DEMO09** (link do fikcyjnej strony dezinformacyjnej, oczekiwane FAŁSZYWE) → BRAK DOWODÓW. Przed nagraniem filmu trzeba te przypadki naprawić albo zmienić scenariusz pokazu.
 
 **Odtwarzalność — czym obecne repozytorium różni się od pomiaru:**
-- **Korpus.** Pomiar wykonano na korpusie sprzed przejścia Demagoga na Google Fact Check Tools API (2037 rekordów, w tym 250 pobranych wtedy wprost ze stron Demagoga). Obecny korpus ma 2529 rekordów (742 recenzje Demagoga wyłącznie z API, bez łączenia się z demagog.org.pl).
-- **Potok.** Kod jest dziś w wersji `engine-2026.11.21-7-longtext` (m.in. punktowa karta siły, reguła 8b, źródła na żywo i oficjalne kanały, długie teksty), a nie `-4`.
+- **Korpus.** Pomiar wykonano na korpusie sprzed przejścia Demagoga na Google Fact Check Tools API (2037 rekordów, w tym 250 pobranych wtedy wprost ze stron Demagoga). Aktualną liczebność i rozkład publikacji podaje raport budowy korpusu w `data/corpus-report.json`.
+- **Potok.** Od czasu pomiaru doszły m.in. źródła na żywo, obsługa długich tekstów, odpowiedzi o konkretnych publikacjach i sprawdzanie indeksu Demagoga. Wersję bieżącego potoku określa `PIPELINE_VERSION` w `src/engine/verify.ts`.
 - **Zestawy.** `dev.jsonl` ma dziś 84 przypadki (zmierzono 76; ST01–ST05 i LT01–LT03 dodano później). Held-out v1 przestał być ślepy przy diagnozie błędów; liczbą raportową ma być odtąd **ślepy zestaw v2** (`eval/cases/heldout-v2.jsonl`, 68 przypadków), **jeszcze niezmierzony** ([EVAL §2a](docs/EVAL.md)).
 - **Commit.** Pomiar powstał przed pierwszym commitem repozytorium, więc z kodem wiąże go tylko `pipelineVersion` i migawka korpusu. Od teraz meta każdego wyniku zapisuje `gitSha` i `gitDirty`.
 
@@ -140,7 +155,7 @@ Jedna usługa w TypeScript (Node 22): Hono (API i serwowanie WWW), SQLite (bette
                                   └► runs (łańcuch hashy) · metryki · sprawy moderatora
 ```
 
-**Przepływ danych.** Fons maskuje dane identyfikacyjne w tekście przed oceną twierdzeń i zapisem raportu. Przy analizie wideo Gemini otrzymuje obraz i dźwięk, w których mogą być widoczne lub słyszalne dane osobowe. Tekst transkrypcji podlega maskowaniu po odczycie. Tytuły, linki, daty i wydawcy cytowanych źródeł pochodzą z bazy. Raport jest zapisywany z tokenem nadawcy i usuwany po 30 dniach.
+**Przepływ danych.** Fons maskuje dane identyfikacyjne w tekście przed oceną twierdzeń i zapisem raportu. Przy analizie wideo OpenAI otrzymuje wybrane klatki oraz fragmenty dźwięku potrzebne do transkrypcji. W trybie Gemini nagranie trafia do Google. W obu trybach na obrazie i w dźwięku mogą występować dane osobowe. Tekst transkrypcji podlega maskowaniu po odczycie. Tytuły, linki, daty i wydawcy cytowanych źródeł pochodzą z bazy. Raport jest zapisywany z tokenem nadawcy i usuwany po 30 dniach.
 
 ### Moduły
 
@@ -175,27 +190,25 @@ Koszt pracy silnika jest liczony z faktycznych tokenów i zapisywany w raporcie 
 
 To szacunki, nie pomiary obciążeniowe (testu obciążenia nie wykonaliśmy).
 
-- **Kanał.** WWW, CLI, MCP i demonstracyjny kanał SMS (`/telefon`) nie mają opłat po stronie usługi. Prawdziwy SMS wymagałby bramki operatora i jej standardowych opłat za wiadomość (ok. 1–2 segmenty na odpowiedź) — dziś nie jest podłączony. Hosting: jeden proces Node na małym VPS w UE (rzędu kilkudziesięciu zł miesięcznie; konkretnej oferty nie wybraliśmy) plus koszt modeli z tabeli wyżej.
+- **Kanały.** Czat WWW, CLI i MCP korzystają z serwera aplikacji. Koszty zależą od wybranych modeli, wyszukiwania i hostingu.
 - **Przepustowość jednej instancji.** Sprawdzenie to głównie czekanie na model (mediana ok. 8 s), więc proces obsługuje wiele zapytań równolegle; ograniczeniem są limity konta OpenAI (RPM/TPM zależne od poziomu konta), a nie CPU. SQLite działa w trybie WAL z jednym zapisującym i `busy_timeout` 5 s — przy jednej instancji wystarcza, bo zapis to kilka wierszy na sprawdzenie.
 - **Przy przeciążeniu.** Limit na klienta (`RATE_LIMIT_PER_MINUTE`, domyślnie 10/min, IPv6 grupowane po /64), dzienny udział jednego klienta w budżecie tokenów (`IP_DAILY_TOKEN_SHARE`, domyślnie 25% `DAILY_TOKEN_BUDGET`) i dobowy bezpiecznik całej usługi. Odpowiedź 429 dostawcy: router przenosi wywołanie na zapasowego dostawcę (jeśli skonfigurowany), inaczej odpowiedź „NIEPEŁNE” bez werdyktu. Po wyczerpaniu budżetu nadal można odczytać zapisany wynik z cache.
 - **Skalowanie.** Kilka procesów za load balancerem wymaga przeniesienia stanu z pamięci (limity, budżet klienta, sesje panelu) i bazy z SQLite do PostgreSQL; wyszukiwanie wektorowe przechodzi na pgvector albo Qdrant za tym samym portem `RetrievalBranch`.
 
 ## Źródła
 
-Korpus (migawka `e47b5fb4…`, 2026-11-21) liczy **2529 rekordów z 18 hostów**, a katalog `data/sources.yaml` ma 21 pozycji:
+Według raportu budowy z 22 listopada 2026 r. korpus liczy **3637 rekordów z 31 hostów**. Obejmuje 2241 rekordów źródeł pierwotnych, 934 fact-checki i 462 analizy. W osobnym zbiorze znajduje się 604 incydentów. [Raport budowy korpusu](data/corpus-report.json)
 
-- **1285 rekordów źródeł pierwotnych i urzędowych:** Dz.U./M.P. przez API ELI Sejmu, posłowie i kluby z API Sejmu (X kadencja), EUR-Lex, Eurostat, NATO, portal UE, Komisja Europejska, europosłowie z otwartych danych PE, gov.pl (Rada Ministrów, kierownictwo MSZ, szefowie placówek), prezydent.pl, senat.gov.pl, EEAS;
-- **931 fact-checków:** Demagog (742 z ostatniego roku, wyłącznie przez Google Fact Check Tools API — bez łączenia się z demagog.org.pl), Pravda.org.pl, dpa, DW, FactCheck.org, PolitiFact (ClaimReview);
-- **313 analiz:** EUvsDisinfo.
+Wśród źródeł są m.in. PAP, RPO, Wrocław, MSZ, Sejm, Eurostat i NATO. Wśród fact-checków jest 745 recenzji Demagoga pobranych przez Google Fact Check Tools, w tym archiwalne publikacje wykorzystane w odpowiedziach o Wrocławiu i depeszy PAP.
 
-Do tego jest 456 incydentów dezinformacji. Poziom źródła i grupa niezależności są przypisane do **dokładnego hosta**. Oceny fact-checków przechodzą przez jawną tabelę `data/rating-map.yaml`, a ocena spoza tabeli niczego nie rozstrzyga. Licencje, kwalifikacja, aktualizacja i to, czego nie udało się pobrać (AFP Sprawdzam, PAP FakeHunter, Rada Europejska blokują boty): **[docs/SOURCES.md](docs/SOURCES.md)**. Katalog jest też w aplikacji, na stronie `/zrodla`. Kod jest na licencji ISC ([LICENSE](LICENSE)); rekordy korpusu zachowują licencje swoich źródeł (pole `licence` w rekordzie i w `data/sources.yaml`).
+Poziom źródła i grupa niezależności są przypisane do **dokładnego hosta**. Oceny fact-checków przechodzą przez jawną tabelę `data/rating-map.yaml`, a ocena spoza tabeli niczego nie rozstrzyga. Licencje, kwalifikacja, aktualizacja i to, czego nie udało się pobrać (AFP Sprawdzam, PAP FakeHunter, Rada Europejska blokują boty): **[docs/SOURCES.md](docs/SOURCES.md)**. Katalog jest też w aplikacji, na stronie `/zrodla`. Kod jest na licencji ISC ([LICENSE](LICENSE)); rekordy korpusu zachowują licencje swoich źródeł (pole `licence` w rekordzie i w `data/sources.yaml`).
 
 ## Szybki start
 
 Wymagania: Node.js ≥ 22 i npm.
 
 ```bash
-cp .env.example .env          # wpisz JEDEN klucz: OPENAI_API_KEY
+cp .env.example .env          # OPENAI_API_KEY dla modelu, FACTCHECK_API_KEY dla indeksu Google
 npm install
 npm run corpus:load           # data/corpus/*.jsonl → SQLite (var/prawdowid.db), ok. 0,1 s
 npm run dev                   # API :8787 + WWW (Vite) :5173 → otwórz http://localhost:5173
@@ -241,7 +254,7 @@ Zdalnie: `claude mcp add --transport http fons https://TWOJA-DOMENA/mcp --header
 | `npm run corpus:verify` · `npm run embed` | kontrola rekordów względem źródeł · przeliczenie wektorów |
 | `npm run mcp` · `npm run live:smoke "twierdzenie"` | serwer MCP (stdio) · próba wyszukiwania na żywo |
 
-Ważne zmienne `.env`: `LIVE_SEARCH=on` (źródła na żywo: oficjalne kanały instytucji i wyszukiwanie w hostach z katalogu; `off` = tylko zamknięty korpus), `VERIFIER_PROVIDER` z drugim kluczem (weryfikator innej rodziny; bez niego weryfikator tej samej rodziny jest jawnym czynnikiem obniżającym punktację siły, a raport to zaznacza), `METRICS_TOKEN`, `USERS_PATH`, `DAILY_TOKEN_BUDGET`, `IP_DAILY_TOKEN_SHARE` (udział jednego klienta w dobowym budżecie, domyślnie 0,25), `RATE_LIMIT_PER_MINUTE`, `SMS_SIM=off` (wyłącza demonstracyjny kanał SMS).
+Ważne zmienne `.env`: `LIVE_SEARCH=on` (źródła na żywo: oficjalne kanały instytucji i wyszukiwanie w hostach z katalogu; `off` = tylko zamknięty korpus), `VERIFIER_PROVIDER` z drugim kluczem (weryfikator innej rodziny; bez niego weryfikator tej samej rodziny jest jawnym czynnikiem obniżającym punktację siły, a raport to zaznacza), `METRICS_TOKEN`, `USERS_PATH`, `DAILY_TOKEN_BUDGET`, `IP_DAILY_TOKEN_SHARE` (udział jednego klienta w dobowym budżecie, domyślnie 0,25), `RATE_LIMIT_PER_MINUTE`.
 
 ## Pliki w czacie
 
@@ -257,7 +270,7 @@ Google oferuje także probabilistyczny klasyfikator obrazów pod nazwą **AI Con
 
 ## Następne kroki
 
-1. **Kanały wiadomości.** Demonstracyjny adapter SMS już działa (`/telefon`, podpisany webhook); następne to prawdziwa bramka SMS operatora (1–2 segmenty i link do `/w/:token`), WhatsApp (Twilio lub Meta Cloud API), iMessage (Apple Messages for Business), Messenger. Każdy kanał to jeden plik `ChannelAdapter` (podpis, deduplikacja i renderer bez LLM są gotowe w `POST /api/channels/:id/webhook`). Rdzeń i raport są wspólne, więc werdykt jest taki sam w każdym kanale.
+1. **Kanały wiadomości.** Podłączenie operatora SMS lub komunikatora wymaga osobnej integracji.
 2. **Wiadomości głosowe:** zamiana mowy na tekst, potem ten sam potok. Transkrypcja jest przedmiotem sprawdzenia, nie dowodem.
 3. **Dokumenty:** obsługa DOCX i wielostronicowych skanów PDF.
 4. **Zdjęcia i zrzuty ekranu:** OCR modelem wizyjnym (ścieżka już istnieje) i wyszukiwanie wcześniejszych wystąpień treści w bazie incydentów.
@@ -274,7 +287,7 @@ Google oferuje także probabilistyczny klasyfikator obrazów pod nazwą **AI Con
 - **Dane o osobach publicznych** się dezaktualizują. Przed pokazem trzeba przebudować `corpus:officials`, a potem `corpus:load` i `embed` (ok. 5 min).
 - **Oficjalne kanały instytucji** (`LIVE_SEARCH=on`): gdy twierdzenie dotyczy MSZ albo RCB, kod pobiera ich kanał bezpośrednio (MSZ Odyseusz, komunikaty na gov.pl) — „najpierw źródło, potem triangulacja”, opis w [TOOLS](docs/TOOLS.md) §1a. Rejestr obejmuje na razie tylko MSZ i RCB. Ewaluacja działa bez źródeł na żywo.
 - **Wyszukiwanie na żywo** (ta sama flaga, wymaga klucza OpenAI) dodaje 4–7 s, w ok. 12% przypadków przekracza limit czasu, a strony EUR-Lex wracają puste z ekstraktora.
-- **Obrazy:** jakość OCR na rzeczywistych zrzutach nie została zmierzona. Wyszukiwanie obrazem obejmuje indeks Google Cloud Vision. Nazwiska widoczne na obrazie mogą trafić do dostawcy. Audio i wideo pozostają poza zakresem.
+- **Obrazy.** Scenariusz depeszy PAP sprawdzono na przygotowanym zrzucie z widoczną datą. Jakość odczytu na reprezentatywnej próbie zrzutów wymaga osobnego pomiaru. Wyszukiwanie obrazem obejmuje indeks Google Cloud Vision. Nazwiska widoczne na obrazie mogą trafić do dostawcy.
 - **Tryb jednego klucza:** weryfikator to model tego samego dostawcy. To jawny czynnik obniżający punktację siły (raport to zaznacza); bez niezależnej kontroli (kontroli dosłownej nazw i liczb w kodzie) jedno źródło kończy się na „średniej”, a jedno źródło urzędowe z kontrolą dosłowną może dostać „mocną” ([VERDICT-RULES §5](docs/VERDICT-RULES.md)).
 - **Deduplikacja spraw moderatora** (scenariusz H) zadziałała w pomiarze w 1 z 2 grup podobnych zgłoszeń: dla „H-elblag” powstały 2 sprawy zamiast jednej. Poprawka jest w kodzie (parafrazy łączone podobieństwem wektorów e5 ze strażnikiem nazw własnych, skrótów i liczb, bo same wektory nie odróżniają innego miasta); progi sprawdzono na prawdziwym modelu wektorowym w teście opcjonalnym (`RUN_E5_TESTS=1`), ale pełnego `npm run consistency` po poprawce nie powtórzyliśmy.
 - **Ostrzeżenia o domenie i statusie źródła** (scenariusz I): domeny incydentów w `data/incidents` są puste, więc ostrzeżenie o znanym incydencie nie pojawia się (0/3 dev, 0/2 held-out), a ostrzeżenia o statusie źródła (np. media objęte sankcjami UE) system jeszcze nie wydaje. Werdykt i tak opiera się wyłącznie na treści.

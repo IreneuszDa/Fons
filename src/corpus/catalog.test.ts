@@ -92,7 +92,7 @@ describe("katalog źródeł", () => {
 
   it("flaga liveSearch uwzględnia kanały API i blokady automatycznego dostępu", () => {
     const catalog = loadCatalog();
-    const offlinePrimary = new Set(["gus-bdl", "consilium-eu", "ohchr", "un-press", "eu-enlargement"]);
+    const offlinePrimary = new Set(["gus-bdl", "consilium-eu", "ohchr", "un-press", "eu-enlargement", "pap-depesze", "wroclaw-transport", "rpo"]);
     for (const s of catalog) expect(typeof s.liveSearch, s.id).toBe("boolean");
     for (const s of catalog) {
       if (s.type === "pierwotne") expect(s.liveSearch, s.id).toBe(!offlinePrimary.has(s.id));

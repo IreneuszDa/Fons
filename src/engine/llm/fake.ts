@@ -1,6 +1,6 @@
 /**
  * FakeLlmProvider — deterministic, heuristic stand-in for a language model.
- * For unit tests and for an explicit LLM_PROVIDER=fake only; never chosen silently.
+ * Test double injected into isolated tests.
  *
  * It reads the fenced blocks of each prompt (see prompts.ts / fence.ts) and answers per schema:
  *  - claims: sentences of the input with >= 3 content words (opinion / forecast markers → type);
@@ -114,6 +114,10 @@ export class FakeLlmProvider implements EngineLlmProvider {
     switch (req.schemaName) {
       case "claims":
         return fakeClaimsOut(byLabel("WEJSCIE"));
+      case "SourceAnswer":
+        return { answerPl: "", evidence: [], reviewRef: "", claimPl: "", neededEvidencePl: "" };
+      case "SourceAnswerCheck":
+        return { supported: false };
       case "open_answer": {
         const question = byLabel("PYTANIE");
         let best = { ref: "", quote: "", score: 0 };

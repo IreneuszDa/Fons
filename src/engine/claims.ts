@@ -82,11 +82,13 @@ export function buildClaimsPrompt(input: string, limit = claimLimitFor(input)): 
   return `Rozpoznaj rodzaj tekstu i wyodrębnij twierdzenia z tekstu poniżej. LIMIT: najwyżej ${limit} twierdzeń.${long}\n${fence("WEJSCIE", input).text}`;
 }
 
-export async function extractClaims(llm: LlmProvider, input: string, signal?: AbortSignal): Promise<ClaimsResult> {
+export async function extractClaims(llm: LlmProvider, input: string, signal?: AbortSignal, subtitleFocus?: string): Promise<ClaimsResult> {
+  const subtitleInstruction = subtitleFocus === undefined ? "" :
+    " Materiał zawiera napisy lub opis filmu. Podaj w text dokładny, samodzielny, ciągły cytat w oryginalnym języku. Zachowaj sprostowania i kontekst. TEMAT służy wyłącznie do wyboru cytatu.";
   const res = await llm.complete({
     purpose: "claims",
-    system: CLAIMS_SYSTEM,
-    user: buildClaimsPrompt(input),
+    system: CLAIMS_SYSTEM + subtitleInstruction,
+    user: buildClaimsPrompt(input) + (subtitleFocus ? "\n" + fence("TEMAT", subtitleFocus.slice(0, 1000)).text : ""),
     schema: ClaimsOut,
     schemaName: "claims",
     tier: "fast",

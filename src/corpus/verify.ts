@@ -1,3 +1,4 @@
+import { publicationLinks } from "./publication-links";
 /**
  * Audyt „dosłowności”: dla rekordów z treścią ze stron/PDF sprawdza, że tekst rekordu jest podciągiem
  * ponownie odczytanego źródła (z cache'u pobrań w .cache/corpus/, bez nowych żądań sieciowych).
@@ -12,6 +13,7 @@ import { resolve } from "node:path";
 import { readCorpus } from "./files";
 import { blockText, parseHtmlPage, plainPageText, squash } from "./ingest/common";
 import { parseFactCheckResponse, ratingLabel, searchUrl } from "./ingest/demagog";
+import { archiveQueries, archiveSearchUrl } from "./ingest/published-reviews";
 import { downloadFeed, iterateFeedItems } from "./ingest/claimreview";
 import { cleanPdfText } from "./ingest/eli";
 import { parseCases } from "./ingest/euvsdisinfo";
@@ -28,9 +30,9 @@ function readCachedBody(url: string, accept: string, headers?: Record<string, st
   return (JSON.parse(readFileSync(file, "utf8")) as { body: string }).body;
 }
 
-function readCachedBinary(url: string): Buffer | null {
+function cachedBinaryPath(url: string): string | null {
   const file = resolve(paths.cacheDir(), cacheKey(url, "*/*#bin") + ".json");
-  return existsSync(file) ? readFileSync(file) : null;
+  return existsSync(file) ? file : null;
 }
 
 /** Indeks cache'u po adresie końcowym (po przekierowaniach) — rekordy mają url = finalUrl. */
@@ -64,6 +66,11 @@ const DEFAULT_ACCEPT = "text/html,application/xhtml+xml,application/json;q=0.9,*
  */
 function cachedDemagogReviews(): Map<string, string> {
   const out = new Map<string, string>();
+  for (const query of archiveQueries()) {
+    const body = readCachedBody(archiveSearchUrl(query), "application/json");
+    if (!body) continue;
+    for (const review of parseFactCheckResponse(JSON.parse(body)).reviews) out.set(`${review.url}|${review.claim}`, review.rating);
+  }
   let token: string | null = null;
   for (let page = 0; page < 100; page++) {
     const body = readCachedBody(searchUrl(token), "application/json");
@@ -159,7 +166,8 @@ export function verifyAll(log: (m: string) => void = console.log): { checked: nu
           continue;
         }
         checked++;
-        if (r.text !== r.claimReviewed) failed.push({ id: r.id, why: "tekst rekordu inny niż teza z API" });
+        const cited = publicationLinks().find(link => link.publicationId === r.id && link.url === r.url)?.excerpts ?? [];
+        if (r.text !== [r.claimReviewed, ...cited].join("\n")) failed.push({ id: r.id, why: "tekst nie zgadza się z tezą z API i przypisanymi cytatami" });
         else if (ratingLabel(raw) !== r.rating?.raw) failed.push({ id: r.id, why: `etykieta oceny "${r.rating?.raw}" niezgodna z API ("${raw}")` });
         continue;
       }
@@ -176,8 +184,11 @@ export function verifyAll(log: (m: string) => void = console.log): { checked: nu
         if (m) {
           const url = `https://api.sejm.gov.pl/eli/acts/${m[1]}/text/${m[2]}/${m[3]}`;
           if (!pdfCache.has(url)) {
-            const bin = readCachedBinary(url);
-            pdfCache.set(url, bin ? squash(cleanPdfText(execFileSync("pdftotext", ["-enc", "UTF-8", "-", "-"], { input: bin, maxBuffer: 1 << 28 }).toString("utf8")).replace(/\n/g, " ")) : "");
+            const file = cachedBinaryPath(url);
+            const text = file ? execFileSync("pdftotext", ["-enc", "UTF-8", file, "-"], {
+              encoding: "utf8", maxBuffer: 1 << 28, timeout: 90_000,
+            }) : "";
+            pdfCache.set(url, squash(cleanPdfText(text).replace(/\n/g, " ")));
           }
           haystack = pdfCache.get(url) || null;
           // Podpis Marszałka Sejmu: krótka linia (< 40 znaków) — sprawdzamy ją wprost, nie przez filtr zdań PDF.

@@ -6,13 +6,11 @@ import { bodyLimit } from "hono/body-limit";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { stream } from "hono/streaming";
 import { z } from "zod";
-import { randomBytes } from "node:crypto";
 import { CHAT_STREAM_CONTENT_TYPE, type ChatResponse, type ChatStreamEvent, type VerificationStage } from "../shared/chat";
 import { InboundMessage, type ChannelAdapter } from "../shared/contracts";
 import { createAdminRoutes } from "./admin";
 import { authenticateBearerRequest, authorizeMetrics } from "./auth/principal";
 import { buildWebInbound } from "./channels/web";
-import type { SmsSimAdapter } from "./channels/sms-sim";
 import type { ServerContext } from "./context";
 import { handleInbound, type InboundOptions } from "./conversation";
 import { RATE_LIMITED_TEXT } from "./conversation/templates";
@@ -25,8 +23,6 @@ import { createSession, eraseSender, findSession, inTurnOrder, newSessionId } fr
 import { createStaticHandler } from "./static";
 
 export const SESSION_COOKIE = "pw_sid";
-/** Ciasteczko symulatora telefonu (/telefon): losowy „numer” sim:{hex}, nigdy prawdziwy numer. */
-export const SIM_COOKIE = "pw_sim";
 const SESSION_COOKIE_MAX_AGE = 7 * 86_400;
 const CHAT_BODY_MAX = 8 * 1024 * 1024;
 const WEBHOOK_BODY_MAX = 1024 * 1024;
@@ -50,8 +46,6 @@ const defaultMcpLoader = async (): Promise<unknown> => {
   const spec = "../mcp/http";
   return import(spec);
 };
-
-const SimSmsBody = z.object({ text: z.string().min(1).max(1000) });
 
 const ChatBody = z.object({
   sessionId: z.string().max(128).optional(),
@@ -117,7 +111,6 @@ async function processWebhook(
   raw: string,
   headers: Record<string, string | undefined>,
   url: string,
-  opts: InboundOptions & { onReply?: (reply: Awaited<ReturnType<typeof handleInbound>>) => void } = {},
 ): Promise<{ status: WebhookStatus; body: Record<string, unknown> }> {
   let signatureOk = false;
   try {
@@ -143,8 +136,7 @@ async function processWebhook(
   if (ctx.seenMessages.has(dedupeKey)) return { status: 200, body: { ok: true, duplicate: true } };
   ctx.seenMessages.set(dedupeKey, nowMs);
 
-  const reply = await handleInbound(msg.data, ctx, opts);
-  opts.onReply?.(reply);
+  const reply = await handleInbound(msg.data, ctx);
   try {
     await adapter.send({ channel: adapter.id, sessionId: msg.data.sessionId, reply });
   } catch {
@@ -393,43 +385,6 @@ export function createApp(ctx: ServerContext): Hono {
     });
     const res = await processWebhook(ctx, adapter, raw, headers, c.req.url);
     return c.json(res.body, res.status);
-  });
-
-  // ───────── symulator telefonu (/telefon) — adapter demonstracyjny SMS ─────────
-  // Przeglądarka nie zna sekretu webhooka: serwer podpisuje wiadomość jak bramka SMS i przepuszcza ją przez
-  // dokładnie tę samą ścieżkę co prawdziwy webhook (podpis → parseInbound → deduplikacja → rozmowa → send).
-  app.post("/api/sim/sms", async (c) => {
-    const crossSite = crossSiteRejection(c, ctx, { requireJson: true });
-    if (crossSite) return crossSite;
-    const adapter = ctx.channels.getWebhook("sms") as SmsSimAdapter | undefined;
-    if (!adapter || typeof adapter.takeOutbox !== "function") {
-      return c.json({ error: "not_configured", messagePl: "Symulator SMS jest wyłączony w tej instalacji." }, 501);
-    }
-    const ip = clientKey(clientIp(c, ctx));
-    if (!ctx.limiters.ip.check(`ip:${ip}`)) {
-      c.header("Retry-After", "60");
-      return c.json({ error: "rate_limited", messagePl: RATE_LIMITED_TEXT }, 429);
-    }
-    const parsed = SimSmsBody.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) return c.json({ error: "bad_request", messagePl: "Nieprawidłowe żądanie." }, 400);
-
-    let simId = getCookie(c, SIM_COOKIE);
-    if (!simId || !/^[0-9a-f]{32}$/.test(simId)) simId = randomBytes(16).toString("hex");
-    setCookie(c, SIM_COOKIE, simId, { httpOnly: true, sameSite: "Strict", secure: secureCookie, path: "/", maxAge: SESSION_COOKIE_MAX_AGE });
-    const from = `sim:${simId}`;
-    const raw = JSON.stringify({ from, messageId: randomBytes(8).toString("hex"), text: parsed.data.text });
-    const headers = adapter.sign(raw, Math.floor(ctx.now().getTime() / 1000));
-    const res = await processWebhook(ctx, adapter, raw, headers, c.req.url, {
-      clientOverBudget: () => clientBudgetExceeded(ctx.clientUsage, ctx.cfg, ip, ctx.now()),
-      onRoutingTokens: (tokens) => addClientTokens(ctx.clientUsage, ip, ctx.now(), tokens),
-      onReply: (reply) => {
-        if (reply.report && !reply.report.cacheHit) {
-          addClientTokens(ctx.clientUsage, ip, ctx.now(), reply.report.models.reduce((s, m) => s + m.inputTokens + m.outputTokens, 0));
-        }
-      },
-    });
-    if (res.status !== 200) return c.json(res.body, res.status);
-    return c.json({ messages: adapter.takeOutbox(adapter.sessionIdFor(from)) });
   });
 
   app.all("/api/*", (c) => c.json({ error: "not_found", messagePl: "Nie ma takiego adresu." }, 404));

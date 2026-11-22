@@ -9,6 +9,15 @@
     <meta property="og:description" content="Wklej tekst, link albo zadaj pytanie — Fons pokaże, co mówią wiarygodne źródła. Prototyp." />
     <meta name="referrer" content="no-referrer" />
     <title>Fons — sprawdź informację u źródła</title>
+    <style>
+      .astryx-chat-layout > :has(.astryx-chat-layout-scroll-button) {
+        background-color: var(--color-background-surface);
+      }
+      /* Astryx places its decorative blur immediately after the scroll button wrapper. */
+      .astryx-chat-layout :has(> .astryx-chat-layout-scroll-button) + :empty {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <noscript>Ta strona wymaga włączonej obsługi JavaScript.</noscript>

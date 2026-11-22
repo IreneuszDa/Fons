@@ -79,22 +79,33 @@ export function verdictText(report: VerdictReport, note?: string): string {
   return lines.filter(Boolean).join("\n");
 }
 
-/** Odpowiedź na pytanie otwarte: tekst złożony przez kod z cytatu + odnośnik do źródła (nigdy z wiedzy modelu). */
-export function answerText(report: VerdictReport, note?: string): string {
-  const a = report.answer;
-  if (!a) return verdictText(report, note);
-  const lines: string[] = [a.answerPl];
-  const first = a.evidence[0];
-  const url = first ? safeHttpUrl(first.url) : null;
-  if (first && url) lines.push(`Źródło: ${first.title} (${first.publisher}): ${url}`);
-  for (const w of report.warnings) lines.push(`Uwaga: ${w.textPl}`);
-  if (note) lines.push(note);
-  return lines.filter(Boolean).join("\n");
-}
-
 export function mainClaimVerdict(report: VerdictReport) {
   const main = report.claims.find((c) => c.isMain) ?? report.claims[0];
   return report.verdicts.find((v) => v.claimId === main?.id) ?? report.verdicts[0];
+}
+
+/** Both public channels lead with the same answer and reference the same publications. */
+export function shortAnswerFor(report: VerdictReport, note?: string): NonNullable<ConversationReply["shortAnswer"]> {
+  const sources = new Map<string, { title: string; publisher: string; url: string }>();
+  const evidence = report.answer?.evidence ?? mainClaimVerdict(report)?.evidence ?? [];
+  for (const item of evidence) {
+    const url = safeHttpUrl(item.url);
+    if (url && !sources.has(url)) sources.set(url, { url, title: item.title, publisher: item.publisher });
+  }
+  return {
+    bodyPl: report.answer?.answerPl ?? report.summaryPl,
+    sources: [...sources.values()],
+    ...(note && { caseNotePl: note }),
+  };
+}
+
+export function shortAnswerText(answer: NonNullable<ConversationReply["shortAnswer"]>, report: VerdictReport): string {
+  return [
+    answer.bodyPl,
+    ...answer.sources.map(s => `Źródło: ${s.title} (${s.publisher}): ${s.url}`),
+    ...report.warnings.map(w => w.textPl),
+    answer.caseNotePl,
+  ].filter(Boolean).join("\n");
 }
 
 function searchSummary(report: VerdictReport): string {
@@ -163,10 +174,15 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
 export function whyText(report: VerdictReport): string {
   if (report.imageAnalysis?.only) return [report.summaryPl, report.transparencyPl].join("\n");
   const activity = searchSummary(report);
+  if (report.models.some(model => model.purpose === "source_answer_check") || report.sourceActivity?.branches.some(b => b.id === "publications" || b.id === "google_claimreview")) {
+    return [report.transparencyPl, activity].filter(Boolean).join("\n");
+  }
   if (report.answer && !mainClaimVerdict(report)) {
     return [
       activity,
-      "Podstawą odpowiedzi jest dosłowny cytat ze źródła z katalogu. Kod sprawdził jego zgodność z zapisanym fragmentem.",
+      report.models.some(model => model.purpose === "open_answer")
+        ? "Podstawą odpowiedzi jest dosłowny cytat ze źródła z katalogu. Kod sprawdził jego zgodność z zapisanym fragmentem."
+        : undefined,
       report.transparencyPl,
     ]
       .filter(Boolean)

@@ -1,0 +1,95 @@
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it, vi } from "vitest";
+import { decodeVideo } from "./decode";
+
+const installed = ["ffmpeg", "ffprobe"].every(tool => spawnSync(tool, ["-version"], { stdio: "ignore" }).status === 0);
+
+async function movie(args: string[], webm = false) {
+  const dir = await mkdtemp(join(tmpdir(), "fons-test-movie-"));
+  try {
+    const path = join(dir, webm ? "clip.webm" : "clip.mp4");
+    execFileSync("ffmpeg", ["-v", "error", "-nostdin", ...args, path], { timeout: 10_000 });
+    return { mimeType: webm ? "video/webm" : "video/mp4", bytes: await readFile(path) };
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+it("rejects cancelled jobs and out-of-bounds metadata before launching any decoder", async () => {
+  const media = { mimeType: "video/mp4", bytes: Buffer.alloc(0), durationSeconds: 601 };
+  await expect(decodeVideo(media, { includeAudio: true })).rejects.toThrow("video_too_long");
+  await expect(decodeVideo(media, { includeAudio: true, signal: AbortSignal.abort() })).rejects.toMatchObject({ name: "AbortError" });
+});
+
+it("reports a missing system decoder", async () => {
+  vi.stubEnv("PATH", "");
+  try {
+    const media = { mimeType: "video/mp4", bytes: Buffer.from([0]) };
+    await expect(decodeVideo(media, { includeAudio: true })).rejects.toThrow("video_decoder_missing");
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
+
+describe.skipIf(!installed)("FFmpeg video decoder", () => {
+  it("preserves variable-rate frame times and the audio offset, including when platform captions skip audio", async () => {
+    const media = await movie([
+      "-f", "lavfi", "-i", "color=c=red:s=48x80:r=10:d=0.3",
+      "-itsoffset", "1.2", "-f", "lavfi", "-i", "sine=frequency=450:duration=1",
+      "-vf", "setpts='if(eq(N,0),0,if(eq(N,1),24,46))'", "-fps_mode", "vfr", "-c:v", "mpeg4", "-c:a", "aac",
+    ]);
+    const v = await decodeVideo(media, { includeAudio: true });
+    expect(v.durationSeconds).toBeCloseTo(4.7);
+    expect(v.frames.map(frame => frame.seconds)).toEqual([0, 2.4, 4.6]);
+    expect(v.frames.every(frame => frame.bytes.readUInt16BE(0) === 0xffd8)).toBe(true);
+    expect(v.audio).toHaveLength(1);
+    expect(v.audio![0]!.seconds).toBeCloseTo(1.2, 1);
+    expect(v.audio![0]!.durationSeconds).toBeCloseTo(1, 1);
+    expect(v.audio![0]!.bytes.toString("ascii", 8, 12)).toBe("WAVE");
+    const captions = await decodeVideo(media, { includeAudio: false });
+    expect(captions.frames.map(frame => frame.seconds)).toEqual([0, 2.4, 4.6]);
+    expect(captions.audio).toBeUndefined();
+  });
+
+  it("reads WebM and preserves the difference between a silent and missing audio track", async () => {
+    const image = ["-f", "lavfi", "-i", "color=c=blue:s=32x32:r=2:d=1"];
+    const silent = await movie([...image, "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono:d=1",
+      "-c:v", "libvpx", "-c:a", "libopus"], true);
+    const result = await decodeVideo(silent, { includeAudio: true });
+    expect(result.frames.length).toBeGreaterThan(0);
+    expect(result.audio).toEqual([]);
+    const mute = await movie([...image, "-c:v", "mpeg4"]);
+    expect((await decodeVideo(mute, { includeAudio: true })).audio).toBeUndefined();
+  });
+
+  it("covers the full timeline with at most 32 frames and splits speech at a pause", async () => {
+    const media = await movie(["-f", "lavfi", "-i", "color=s=32x32:r=2:d=54",
+      "-f", "lavfi", "-i", "sine=frequency=390:duration=54",
+      "-af", "volume='if(between(t,20,24),0,1)':eval=frame", "-c:v", "mpeg4", "-c:a", "aac"]);
+    const { frames, audio } = await decodeVideo(media, { includeAudio: true });
+    expect(frames).toHaveLength(32);
+    expect(frames.at(-1)!.seconds).toBeGreaterThan(51);
+    expect(audio).toHaveLength(3);
+    expect(audio!.every(a => a.durationSeconds <= 25)).toBe(true);
+    expect(audio![0]!.durationSeconds).toBeCloseTo(20, 0);
+    expect(audio![1]!.seconds).toBeCloseTo(24, 0);
+    expect(audio!.at(-1)!.seconds + audio!.at(-1)!.durationSeconds).toBeCloseTo(54, 1);
+  });
+
+  it("rejects overlong packet timelines even when both declared durations are shorter", async () => {
+    const media = await movie(["-f", "lavfi", "-i", "color=s=32x32:r=1/601:d=620", "-c:v", "libvpx"], true);
+    // Matroska Duration. Intentionally shorten the declared double; the second packet is still at 601 s.
+    const offset = media.bytes.indexOf(Buffer.from([0x44, 0x89, 0x88]));
+    expect(offset).toBeGreaterThan(0);
+    media.bytes.writeDoubleBE(1000, offset + 3);
+    await expect(decodeVideo({ ...media, durationSeconds: 1 }, { includeAudio: false })).rejects.toThrow("video_too_long");
+  });
+
+  it("rejects text masquerading as MP4", async () => {
+    await expect(decodeVideo({ bytes: Buffer.from("not a media file"), mimeType: "video/mp4" },
+      { includeAudio: false })).rejects.toThrow("video_decode_failed");
+  });
+});

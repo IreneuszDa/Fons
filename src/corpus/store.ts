@@ -13,6 +13,7 @@ import Database from "better-sqlite3";
 import { CorpusRecord, type CorpusStore, type FixedRating } from "../shared/contracts";
 import { corpusFiles, incidentFiles, readCorpus } from "./files";
 import type { IncidentRecord } from "./types";
+import { publicationLinks } from "./publication-links";
 
 type Db = Database.Database;
 
@@ -99,6 +100,8 @@ export function computeSnapshotId(dataDir?: string): string {
     ...corpusFiles(dataDir).map((f) => ({ name: `corpus/${f.name}`, lines: f.lines })),
     ...incidentFiles(dataDir).map((f) => ({ name: `incidents/${f.name}`, lines: f.lines })),
   ];
+  const links = publicationLinks(dataDir);
+  if (links.length) parts.push({ name: "publication-links", lines: links.map(link => JSON.stringify(link)) });
   parts.sort((a, b) => (a.name < b.name ? -1 : 1));
   for (const p of parts) {
     h.update(`#${p.name}\n`);

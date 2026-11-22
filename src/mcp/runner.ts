@@ -9,7 +9,7 @@
 import { maskPii, pseudonymize } from "../security/pii";
 import { PIPELINE_VERSION, verifyInput, type EngineDeps, type VerifyRequest } from "../engine/verify";
 import { runWithLiveScope, withLiveUsage } from "../engine/retrieval/live";
-import { VerdictReport } from "../shared/contracts";
+import { reportEvidence, VerdictReport } from "../shared/contracts";
 import type { AppConfig } from "../server/config";
 import { appendRun } from "../server/audit";
 import { addTokens, budgetExceeded } from "../server/budget";
@@ -106,7 +106,6 @@ export async function verifyForMcp(
       persisted = false;
     }
     try {
-      const evidenceIds = [...new Set(report.verdicts.flatMap((v) => v.evidence.map((e) => e.recordId)))];
       appendRun(opts.db, {
         requestId,
         createdAt: started.toISOString(),
@@ -116,7 +115,7 @@ export async function verifyForMcp(
         senderId,
         status: report.status,
         verdict: report.mainVerdict,
-        recordIds: evidenceIds,
+        recordIds: reportEvidence(report).map(e => e.recordId),
         models: report.models,
         timingsMs: report.timingsMs,
         costUsd: report.costUsd,

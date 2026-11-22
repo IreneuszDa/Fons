@@ -1,6 +1,7 @@
 import type { ConversationDecision } from "../../engine/llm/conversation";
 import { MAX_TEXT_CHARS } from "../../engine/normalize";
-import { socialVideoPlatform } from "../../engine/video/social-source";
+import { asksAboutDemagogReview } from "../../engine/retrieval/google-claimreview";
+import { socialVideoPlatform } from "../../engine/video/platforms";
 import type { ConversationReply, InboundMessage } from "../../shared/contracts";
 import { addTokens, budgetExceeded } from "../budget";
 import type { ServerContext } from "../context";
@@ -61,6 +62,11 @@ ${content}` : content;
   if (req.kind === "url" && req.url && socialVideoPlatform(req.url)) return verifyOriginal();
   if (ctx.security.hasInjection?.(msg.text)) {
     if (req.kind === "image") req.imageFocus = "claims";
+    return verifyOriginal();
+  }
+  if (req.kind === "url" && req.text?.includes("?")) return verifyOriginal();
+  if (req.kind === "text" && req.text && !fallbackCommand &&
+    asksAboutDemagogReview(req.text) && (!session.state.history?.length || req.text.trim().split(/\s+/u).length > 6)) {
     return verifyOriginal();
   }
   if (req.kind === "image") {

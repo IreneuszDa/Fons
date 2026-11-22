@@ -25,6 +25,7 @@
  * recorded in report.models through a request-scoped route trace.
  */
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { relativeWindowDay } from "../security/dates";
 import type BetterSqlite3 from "better-sqlite3";
 import {
   LlmUnavailableError,
@@ -87,9 +88,15 @@ import {
   warning,
 } from "./messages";
 import { normalizeInput, userNoteBesideUrl } from "./normalize";
-import { createGeminiVideoAnalyzer } from "./video/gemini";
-import { createSocialVideoLoader, loadSocialCaption, socialVideoPlatform } from "./video/social-source";
-import { readVideo, type VideoServices } from "./video/intake";
+import { socialVideoPlatform } from "./video/platforms";
+import { findPublicationReport, reportPublication } from "./publication-report";
+import { answerSourceQuestion } from "./source-question";
+import { compareReviewedDocument, linkedPublicationRecords, screenshotClaim, withScreenshotReading } from "./attachment-answer";
+import { reviewedMediaRecords } from "./attachment-answer";
+import { findLocalTransportRecords, localTransportQuestion, unresolvedQuestion } from "./local-transport";
+import { createDemagogTopicIndex, type DemagogTopicIndex } from "./retrieval/demagog-topic";
+import { anchorSubtitleClaims, hasOnlyTranscript, readVideo, type VideoServices } from "./video/intake";
+import { createVideoServices } from "./video/services";
 import {
   createCorpusStore,
   createRetrievalBranches,
@@ -110,7 +117,7 @@ import type { CreateBranchesOptions } from "./retrieval";
 
 type Database = BetterSqlite3.Database;
 
-export const PIPELINE_VERSION = "engine-2026.11.22-12-video";
+export const PIPELINE_VERSION = "engine-2026.11.22-17-source-search";
 
 const PER_BRANCH_TIMEOUT_MS = 4000;
 /** Live search (paid, slow) only for the first units in importance order; the rest use the corpus. */
@@ -179,6 +186,7 @@ export interface EngineDeps {
   db: Database;
   branches: RetrievalBranch[];
   fetchPage: typeof fetchPage;
+  demagogTopicIndex?: DemagogTopicIndex;
   video?: VideoServices;
   now: () => Date;
   verdictMode: "rules" | "model_proposed";
@@ -211,10 +219,8 @@ export function createEngineDeps(
     db,
     branches,
     fetchPage,
-    video: cfg.geminiApiKey ? {
-      load: createSocialVideoLoader(cfg.socialKitApiKey),
-      analyze: createGeminiVideoAnalyzer({ apiKey: cfg.geminiApiKey, model: cfg.geminiVideoModel }),
-    } : { loadCaption: loadSocialCaption },
+    demagogTopicIndex: createDemagogTopicIndex(cfg.factCheckApiKey),
+    video: createVideoServices(cfg),
     now: () => new Date(),
     verdictMode: cfg.verdictMode,
     smoothing: false,
@@ -240,6 +246,7 @@ export function cacheKeyFor(req: VerifyRequest, normalized: NormalizedInput, dep
     snapshot,
     kind: normalized.kind,
     text: normalized.textResolvedDates,
+    relativeDay: relativeWindowDay(req.text ?? "", new Date(req.receivedAt)),
     url: normalized.submittedUrl ?? null,
     image: imageHash ?? null,
     mode: deps.verdictMode,
@@ -463,10 +470,14 @@ class Run {
   /** Router decisions and failed attempts of this request (filled by llm/router.ts). */
   readonly route: RouteTrace = { usages: [], decisions: [] };
 
+  readonly faults: Set<string>;
+
   constructor(
     readonly req: VerifyRequest,
     readonly deps: EngineDeps,
-  ) {}
+  ) {
+    this.faults = parseFaults(req.fault);
+  }
 
   stage(stage: VerificationStage): void {
     if (this.startedStages.has(stage)) return;
@@ -485,19 +496,21 @@ class Run {
       const outcome = await retrieve(branches, q, {
         perBranchTimeoutMs: PER_BRANCH_TIMEOUT_MS,
         onBranchResult: (id, status, candidates) => {
-          const result = this.branchResults.get(id) ?? { outcomes: new Set<SearchStatus>(), records: new Set<string>() };
-          result.outcomes.add(status);
           if (status === "completed" || status === "partial") searched.push(id);
-          for (const candidate of candidates) {
-            if (candidate?.recordId && Number.isFinite(candidate.score)) result.records.add(candidate.recordId);
-          }
-          this.branchResults.set(id, result);
+          this.recordLookup(id, status, candidates.filter(c => c?.recordId && Number.isFinite(c.score)).map(c => c.recordId));
         },
       });
       return { ...outcome, searched };
     } catch {
       return { candidates: [], requiredFailed: true, searched };
     }
+  }
+
+  recordLookup(id: string, status: SearchStatus, ids: string[]): void {
+    const result = this.branchResults.get(id) ?? { outcomes: new Set<SearchStatus>(), records: new Set<string>() };
+    result.outcomes.add(status);
+    for (const recordId of ids) result.records.add(recordId);
+    this.branchResults.set(id, result);
   }
 
   sourceActivity(): SourceActivity {
@@ -535,11 +548,13 @@ class Run {
 
   report(fields: {
     status: TechStatus;
+    verdictMode?: VerdictReport["verdictMode"];
     statusMessagePl?: string;
     verdicts?: ClaimVerdict[];
     mainVerdict?: Verdict | null;
     summaryPl?: string;
     answer?: OpenAnswer;
+    transparencyPl?: string;
   }): VerdictReport {
     this.timings.total = Math.round(performance.now() - this.started);
     // Paid live search (web_search tokens + call fees) recorded in the request scope (retrieval/live-usage.ts).
@@ -547,6 +562,7 @@ class Run {
     const processingWarning = modelProcessingWarning(models, this.deps);
     if (processingWarning) this.warn(processingWarning.kind, processingWarning.textPl);
     const ok = fields.status === "OK";
+    const verdictMode = fields.verdictMode ?? this.deps.verdictMode;
     const sourceActivity = this.sourceActivity();
     const degraded = sourceActivity.branches.filter(b => b.status === "partial" || b.status === "unavailable");
     for (const b of degraded) this.warn("branch_unavailable", branchUnavailablePl(b.id, b.status === "partial"));
@@ -558,7 +574,7 @@ class Run {
       createdAt: this.deps.now().toISOString(),
       pipelineVersion: PIPELINE_VERSION,
       corpusSnapshot: this.snapshot(),
-      verdictMode: this.deps.verdictMode,
+      verdictMode,
       status: fields.status,
       ...(fields.statusMessagePl ? { statusMessagePl: fields.statusMessagePl } : {}),
       inputKind: this.req.kind,
@@ -569,9 +585,8 @@ class Run {
       mainVerdict: ok ? (fields.mainVerdict ?? null) : null,
       summaryPl: fields.summaryPl ?? fields.statusMessagePl ?? "",
       warnings: this.warnings,
-      transparencyPl: (this.videoAnalysis?.status === "analyzed"
-        ? "Google Gemini odczytał dźwięk i obraz nagrania. Znaczniki czasu wskazują pochodzenie twierdzeń w materiale. " : "") + buildTransparencyPl({
-        mode: this.deps.verdictMode,
+      transparencyPl: fields.transparencyPl ?? (videoTransparencyPl(this.videoAnalysis) + buildTransparencyPl({
+        mode: verdictMode,
         main: this.deps.llm,
         verifier: this.deps.verifier,
         singleKey: this.deps.singleKey,
@@ -579,7 +594,7 @@ class Run {
         status: fields.status,
         inputMode: this.inputMode,
         answered: !!fields.answer,
-      }),
+      })),
       models,
       timingsMs: this.timings,
       costUsd: Math.round(models.reduce((s, m) => s + m.costUsd, 0) * 1_000_000) / 1_000_000,
@@ -596,8 +611,33 @@ class Run {
   }
 }
 
+export type PublicationRun = Pick<Run, "req" | "deps" | "faults" | "inputMode" | "claims" | "models" | "stage" | "recordLookup" | "report">;
+
+function videoTransparencyPl(analysis?: VideoAnalysis): string {
+  if (!analysis || analysis.status === "unavailable") return "";
+  if (analysis.status === "subtitles_only") return "Podstawą sprawdzenia były publiczne napisy i dostępny opis posta. ";
+  if (analysis.status === "transcript_only") return "Podstawą sprawdzenia była transkrypcja dźwięku wykonana przez OpenAI i dostępny opis posta. ";
+  if (analysis.provider === "openai") {
+    if (!analysis.transcript.length) return "OpenAI odczytał wybrane klatki filmu. ";
+    return "OpenAI odczytał wybrane klatki filmu. " + (analysis.transcriptSource === "platform"
+      ? "Cytaty z napisów mają czas podany przez platformę. " : "Czasy wypowiedzi wskazują początek analizowanego fragmentu dźwięku. ");
+  }
+  return "Google Gemini przeanalizował nagranie. Znaczniki czasu wskazują pochodzenie twierdzeń w materiale. ";
+}
+
 export function modelProcessingWarning(models: ModelUsage[], deps: EngineDeps): ReportWarning | undefined {
-  const us = models.filter(m => processingRegionFor(m.provider, deps) === "us");
+  const us = models.filter(m => {
+    if ((m.purpose === "video_analysis" || m.purpose === "video_transcription") && deps.video && "processingRegion" in deps.video
+        && deps.video.provider === m.provider && deps.video.processingRegion) return deps.video.processingRegion === "us";
+    return processingRegionFor(m.provider, deps) === "us";
+  });
+  const media = us.filter(m => m.purpose === "video_analysis" || m.purpose === "video_transcription");
+  if (media.length) {
+    const frames = media.some(m => m.purpose === "video_analysis");
+    const audio = media.some(m => m.purpose === "video_transcription");
+    const subject = frames && audio ? "Klatki filmu i dźwięk" : frames ? "Klatki filmu" : "Dźwięk z filmu";
+    return { kind: "non_eea_processing", textPl: `${subject} przetworzono w USA przez ${providerBrand(media[0]!.provider)}, poza Europejskim Obszarem Gospodarczym.` };
+  }
   const image = us.find(m => m.purpose === "vision" || m.purpose === "image_question");
   const usage = image ?? us[0];
   return usage ? { kind: "non_eea_processing", textPl: nonEeaPl(providerBrand(usage.provider), !!image) } : undefined;
@@ -773,7 +813,7 @@ export async function verifyInput(req: VerifyRequest, deps: EngineDeps, opts: Ve
 
 async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   const { req, deps } = run;
-  const faults = parseFaults(req.fault);
+  const faults = run.faults;
   const llm: LlmProvider = faults.has("llm_down") ? new DownProvider(deps.llm) : deps.llm;
   const verifier: LlmProvider = faults.has("llm_down") ? new DownProvider(deps.verifier) : deps.verifier;
   const branches = applyBranchFaults(deps.branches, faults);
@@ -785,32 +825,75 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   const url = req.kind === "url" ? (req.url ?? req.text ?? "").trim() : "";
   const platform = url && socialVideoPlatform(url);
   let videoClaims: ExtractedClaim[] | undefined;
+  let subtitleFocus: string | undefined;
   let normalized = opts.normalized;
+  const answerMediaQuestion = async (mediaUrl: string, note: string) => {
+    if (faults.has("corpus_down") || !llm.available || detectInjection(note, "user_message").length) return;
+    const records = reviewedMediaRecords(mediaUrl, deps.store);
+    if (!records.length) return;
+    run.stage("searching");
+    run.recordLookup("publications", "completed", records.map(r => r.id));
+    const question = safeMask(note) || "Czego dotyczy ten materiał i co ustalono w jego weryfikacji?";
+    run.stage("assessing");
+    const result = await answerSourceQuestion({ question, records, llm, verifier, receivedAt, signal,
+      subject: "Adres materiału jest przypisany do publikacji „" + records[0]!.title + "” w bibliografii źródeł." });
+    run.models.push(...result.usage);
+    run.events.push(...result.events);
+    for (const record of records) run.assessedRecords.add(record.id);
+    if (result.events.length) run.warn("injection_detected", WARNING_PL.injection);
+    if (!result.publication) return;
+    run.verifierUsed = true;
+    run.stage("checking_quotes");
+    if (deps.singleKey) run.warn("single_key_verifier", WARNING_PL.singleKey);
+    return reportPublication(run, result.publication, question, { origin: "retrieval",
+      basisPl: "Adres materiału powiązano z publikacją źródłową. Odpowiedź i jej cytaty przeszły osobne sprawdzenie." });
+  };
+  if (url) {
+    const reviewed = await answerMediaQuestion(url, userNoteBesideUrl(req, url));
+    if (reviewed) return reviewed;
+  }
   if (platform) {
     const started = performance.now();
     const video = await readVideo(url, platform, userNoteBesideUrl(req, url), deps.video, stage => run.stage(stage), signal);
     run.time("video", started);
     run.echo = safeMask(video.url);
-    run.videoAnalysis = video.analysis;
     run.events.push(...video.hits);
     if (video.hits.length) run.warn("injection_detected", WARNING_PL.injection);
-    if (video.usage) run.models.push(video.usage);
-    if (video.message) return run.stop("NIEPELNE", video.message);
-    videoClaims = video.claims;
-    run.claims = videoClaims.map(c => c.claim);
-    if (!videoClaims.length) {
-      return run.stop("DOPRECYZUJ", "Po analizie filmu nie udało się wskazać konkretnego twierdzenia do sprawdzenia. Możesz podać zdanie, które masz na myśli.");
+    run.models.push(...video.usages);
+    // A share link has no stable post ID until the platform's guarded redirect resolves.
+    // The reviewed post can be identified even if full media access is unavailable.
+    if (video.url !== url && socialVideoPlatform(video.url) === platform && !faults.has("corpus_down")
+        && !video.hits.some(hit => hit.location === "user_message")) {
+      const focus = video.focus ?? "";
+      const reviewed = await answerMediaQuestion(video.url, focus);
+      if (reviewed) return reviewed;
     }
-    const text = videoClaims.map(c => c.claim.text).join("\n");
+    run.videoAnalysis = video.analysis;
+    if (video.message) return run.stop("NIEPELNE", video.message);
+    const question = video.focus && /\?|^(?:czy|kto|co|kiedy|ile|gdzie|dlaczego|skąd|porównaj|wyjaśnij)\s/iu.test(video.focus)
+      && !video.hits.some(hit => hit.location === "user_message") ? video.focus : undefined;
+    const observed = [video.analysis.title, video.analysis.caption,
+      ...video.analysis.observations.map(row => row.text), ...video.analysis.transcript.map(row => row.text)].filter(Boolean).join("\n");
+    let text: string;
+    if (hasOnlyTranscript(video.analysis)) {
+      subtitleFocus = video.focus ?? "";
+      text = [video.analysis.transcript.map(cue => cue.text).join(" "), video.analysis.caption].filter(Boolean).join("\n");
+    } else {
+      videoClaims = video.claims;
+      run.claims = videoClaims.map(c => c.claim);
+      if (!videoClaims.length && !(question && observed)) {
+        return run.stop("DOPRECYZUJ", "Po analizie filmu nie udało się wskazać konkretnego twierdzenia do sprawdzenia. Możesz podać zdanie, które masz na myśli.");
+      }
+      text = videoClaims.map(c => c.claim.text).join("\n") || observed;
+    }
     // A repost can be archival. Dates spoken in the clip are never resolved against submission time.
     normalized = {
       kind: "url", text, textResolvedDates: text, submittedUrl: run.echo,
+      ...(question && { userNote: question, attachmentText: observed || text }),
       receivedAt: receivedAt.toISOString(), piiMasked: true, detectorHits: [], warnings: [],
     };
   }
 
-  // Scenario J: no key → NIEPELNE, never a verdict, never provider text.
-  if (!deps.llm.available) return run.stop("NIEPELNE", STATUS_PL.llmNotConfigured);
   if (faults.has("llm_down")) return run.stop("NIEPELNE", STATUS_PL.llmDown);
 
   // ── 1. normalize ──
@@ -826,9 +909,14 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       run.echo = n.echo || run.echo;
       run.events.push(...n.hits);
       if (n.hits.length > 0) run.warn("injection_detected", WARNING_PL.injection);
-      return run.stop(n.status, n.messagePl);
-    }
-    normalized = n.normalized;
+      const note = url && userNoteBesideUrl(req, url);
+      const independent = note && /^(.*\?)\s*(?:sprawdź|sprawdz|zobacz)\s+(?:również|też|dodatkowo|tez|rowniez)(?!\p{L})/isu.exec(note)?.[1];
+      if (!independent || detectInjection(independent, "user_message").length) return run.stop(n.status, n.messagePl);
+      const question = await normalizeInput({ kind: "text", text: independent, receivedAt: req.receivedAt }, { fetchPage: deps.fetchPage, llm, receivedAt, ocrDown: false, signal });
+      if (!question.ok) return run.stop(n.status, n.messagePl);
+      normalized = question.normalized;
+      run.warn("source_status", "Dodatkowej strony nie udało się odczytać. Pozostałe źródła wyszukano na podstawie pytania.");
+    } else normalized = n.normalized;
   }
   run.echo =
     normalized.kind === "url"
@@ -846,23 +934,99 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     return run.stop("DOPRECYZUJ", normalized.detectorHits.length > 0 ? STATUS_PL.noClaims : STATUS_PL.emptyInput);
   }
 
+  if (faults.has("corpus_down")) {
+    for (const branch of branches.filter(b => b.required)) run.recordLookup(branch.id, "unavailable", []);
+    return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+  }
+  if (!platform) {
+    const published = await findPublicationReport(run, normalized, receivedAt, signal);
+    if (published) return published;
+  }
+
+  const local = normalized.kind === "text" ? localTransportQuestion(normalized.text) : undefined;
+  let localOutcome: RetrievalOutcome | undefined;
+  if (local) {
+    run.inputMode = "question_yesno";
+    run.claims = [local.claim];
+    const result = await run.search(branches, { claim: local.claim, extraQueries: local.searchTerms, limit: CLAIM_QUERY_LIMIT, signal });
+    if (result.requiredFailed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+    try {
+      const ids = [...new Set([...findLocalTransportRecords(deps.db, local), ...result.candidates.map(c => c.recordId)])];
+      const records = deps.store.getMany(ids).filter(r => local.mayAddress(r));
+      const candidates = records.map(r => ({ recordId: r.id, via: "bm25" as const, score: 1 }));
+      run.recordLookup("local_transport", "completed", candidates.map(c => c.recordId));
+      localOutcome = { ...result, candidates };
+    } catch {
+      return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+    }
+  }
+
   // ── 3 ∥ 4. claims + raw-text retrieval ──
   t = performance.now();
   const noLive = branches.filter((b) => b.id !== "live");
+  const question = normalized.kind !== "text" ? normalized.userNote :
+    !platform && normalized.text.length <= 1400 && /\?|^(?:czy|kto|kiedy|ile|gdzie|dlaczego|porównaj|wyjaśnij)\s/iu.test(normalized.text) ? normalized.text : undefined;
+  const subject = normalized.kind === "image" ? screenshotClaim(normalized) : normalized.attachmentText;
+  const queryText = question
+    ? [question, normalized.pageTitle, subject?.slice(0, 420)].filter(Boolean).join(" ")
+    : normalized.textResolvedDates;
   const rawBranches = normalized.textResolvedDates.length <= RAW_LIVE_MAX_CHARS ? branches : noLive;
-  const rawRetrieval = run.search(rawBranches, {
-    claim: pseudoClaim(normalized.textResolvedDates),
+  if (!question && !deps.llm.available) return run.stop("NIEPELNE", STATUS_PL.llmNotConfigured);
+  const rawRetrieval = localOutcome ? Promise.resolve(localOutcome) : run.search(question ? branches : rawBranches, {
+    claim: pseudoClaim(queryText),
     limit: RAW_QUERY_LIMIT,
     signal,
   });
+  let neededEvidencePl: string | undefined;
+  if (question && !normalized.detectorHits.some(hit => hit.location === "user_message")) {
+    const search = await rawRetrieval;
+    if (search.requiredFailed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+    const indexed = loadRecords(deps.store, search.candidates.map(c => c.recordId), hostOf(normalized.submittedUrl));
+    if (!indexed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+    const ranked = lexicalRerank(search.candidates, indexed, { queryTexts: [queryText] });
+    const ids = diversifyFragments(ranked.map(c => c.recordId), indexed, { max: 12, fixedRole: 5 });
+    const records = linkedPublicationRecords(ids.map(id => indexed.get(id)!), deps.store);
+    const comparison = !platform && normalized.kind === "url" && compareReviewedDocument(normalized, records, deps.store);
+    if (comparison) return reportPublication(run, comparison, question, { origin: "retrieval", basisPl: "Porównano cechy materiału z dokumentem wskazanym w wyszukanej publikacji." });
+    if (llm.available) {
+      run.stage("assessing");
+      const synthesis = await answerSourceQuestion({ question, subject, records, llm, verifier, receivedAt, signal });
+      run.models.push(...synthesis.usage);
+      run.events.push(...synthesis.events);
+      for (const record of records.slice(0, 12)) run.assessedRecords.add(record.id);
+      if (synthesis.events.length) run.warn("injection_detected", WARNING_PL.injection);
+      if (synthesis.publication) {
+        run.stage("checking_quotes");
+        run.verifierUsed = true;
+        if (run.videoAnalysis) run.videoAnalysis = { ...run.videoAnalysis, claimOrigins: [] };
+        const answer = normalized.kind === "image" ? withScreenshotReading(normalized, synthesis.publication) : synthesis.publication;
+        if (deps.singleKey) run.warn("single_key_verifier", WARNING_PL.singleKey);
+        return reportPublication(run, answer, question, { origin: "retrieval", verdictMode: "rules",
+          basisPl: "Odpowiedź opracowano z wyszukanych źródeł. Kod sprawdził cytaty, a drugie wywołanie modelu oceniło, czy uzasadniają odpowiedź." });
+      }
+      neededEvidencePl = synthesis.neededEvidencePl;
+    }
+    if (!records.length && (local || neededEvidencePl)) {
+      const claim = local?.claim ?? pseudoClaim(question);
+      run.claims = [claim];
+      run.inputMode = /^czy\s/iu.test(question) ? "question_yesno" : "question_open";
+      return run.report({ status: "OK", verdictMode: "rules",
+        ...unresolvedQuestion(claim, run.sourceActivity().branches.map(b => b.labelPl), neededEvidencePl),
+        transparencyPl: "Przeszukano dostępne źródła pod kątem informacji, której dotyczy pytanie." });
+    }
+  }
+  if (!deps.llm.available) return run.stop("NIEPELNE", STATUS_PL.llmNotConfigured);
   let extracted: ExtractedClaim[];
   let claimLimit = Number.POSITIVE_INFINITY;
   try {
-    const res = videoClaims
+    const res = local
+      ? { claims: [{ claim: local.claim, extraQueries: local.searchTerms, mustHave: [local.place], parts: [] }], inputMode: "question_yesno" as const,
+          claimLimit: 1, rejected: [], usage: undefined, question: undefined }
+      : videoClaims
       ? { claims: videoClaims, inputMode: "claim" as const, claimLimit: MAX_CLAIMS_LONG, rejected: [], usage: undefined, question: undefined }
-      : await extractClaims(llm, normalized.textResolvedDates, signal);
+      : await extractClaims(llm, normalized.textResolvedDates, signal, subtitleFocus);
     if (res.usage) run.models.push(res.usage);
-    extracted = res.claims;
+    extracted = run.videoAnalysis && hasOnlyTranscript(run.videoAnalysis) ? anchorSubtitleClaims(res.claims, run.videoAnalysis) : res.claims;
     claimLimit = res.claimLimit;
     // Links and images are always checked as claims (their content is the subject, not a question to us).
     run.inputMode = normalized.kind !== "text" && res.inputMode !== "claim" ? "claim" : res.inputMode;
@@ -896,7 +1060,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   const [raw, ...rest] = await Promise.all([
     rawRetrieval,
     ...factClaims.map((e, i) =>
-      run.search(liveUnits.has(e.claim.id) ? branches : noLive, {
+      localOutcome ? Promise.resolve(localOutcome) : run.search(liveUnits.has(e.claim.id) ? branches : noLive, {
         claim: e.claim,
         extraQueries: e.extraQueries,
         includeSemanticFactCheck: !roleQueries[i],
@@ -1195,7 +1359,11 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     allVerdicts: verdicts.map((v) => v.verdict),
     selectedFromLong: isLongInput(normalized.textResolvedDates) && extracted.length >= claimLimit,
   });
-  if (run.inputMode === "question_yesno") summaryPl = `Sprawdziliśmy pytanie jako twierdzenie: „${mainClaim.claim.text.trim().replace(/[.!?…]+$/, "")}”. ${summaryPl}`;
+  if (run.inputMode === "question_yesno" && mainVerdict) {
+    const lead = mainVerdict.verdict === "POTWIERDZONE" ? "Tak. " : mainVerdict.verdict === "FALSZYWE" ? "Nie. " : "";
+    summaryPl = neededEvidencePl && mainVerdict.verdict === "BRAK_DOWODOW" && !mainVerdict.conflicting
+      ? unresolvedQuestion(mainClaim.claim, [], neededEvidencePl).summaryPl : lead + mainVerdict.reasonPl;
+  }
   if (normalized.warnings.includes("truncated")) summaryPl += ` ${WARNING_PL.truncated}`;
   return run.report({ status: "OK", verdicts, mainVerdict: mainVerdict?.verdict ?? null, summaryPl });
 }

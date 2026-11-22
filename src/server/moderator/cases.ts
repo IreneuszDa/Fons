@@ -13,9 +13,11 @@
  * Odpowiedź dla użytkownika jest budowana dopiero z wyniku tej funkcji, czyli po zapisie do bazy;
  * „przekazano” nigdy nie pada, jeśli alert faktycznie nie wyszedł.
  */
+import { localTransportQuestion } from "../../engine/local-transport";
 import type { ChannelId } from "../../shared/contracts";
 import type { Db, ServerContext } from "../context";
-import { anchorsCompatible, claimAnchors, claimTokens, dayKey, jaccard, normalizeClaim, truncate } from "../util";
+import { anchorsCompatible, claimAnchors, claimTokens, dayKey, foldWords, jaccard, normalizeClaim, truncate } from "../util";
+import { dieselRestriction, sameDieselRestriction } from "./transport-case";
 import { matchTopics } from "./topics";
 
 export const JACCARD_THRESHOLD = 0.6;
@@ -79,16 +81,34 @@ export interface DuplicateQuery {
   tokens: string[];
   anchors: string[];
   vec?: Float32Array;
+  text?: string;
 }
 
 /** Wybór sprawy-duplikatu (eksport dla testów kalibracji). */
 export function findDuplicate(db: Db, q: DuplicateQuery): CaseRow | undefined {
+  const restriction = q.text ? dieselRestriction(q.text) : undefined;
+  if (restriction) {
+    // This narrow lookup also finds older open cases outside the generic similarity window.
+    const rows = db.prepare("SELECT * FROM moderator_cases WHERE status = 'open' AND claim_norm LIKE '%dies%' ORDER BY updated_at DESC")
+      .iterate() as Iterable<CaseRow>;
+    for (const row of rows) {
+      const previous = dieselRestriction(row.representative_text);
+      if (previous && sameDieselRestriction(restriction, previous)) return row;
+    }
+    return undefined;
+  }
+  const qualifiedRestriction = q.text && localTransportQuestion(q.text)?.policy === "diesel_access";
   const rows = db
     .prepare("SELECT * FROM moderator_cases WHERE status = 'open' ORDER BY updated_at DESC LIMIT ?")
     .all(MAX_CANDIDATES) as CaseRow[];
   let best: { row: CaseRow; sim: number } | undefined;
   let bestSemantic: { row: CaseRow; sim: number } | undefined;
   for (const row of rows) {
+    // An exception, another zone or a reversal of the restriction is a different allegation.
+    if (q.text && qualifiedRestriction && localTransportQuestion(row.representative_text)?.policy === "diesel_access") {
+      if (foldWords(q.text) === foldWords(row.representative_text)) return row;
+      continue;
+    }
     if (row.claim_norm === q.norm) return row;
     const rowAnchors = claimAnchors(row.representative_text);
     if (!anchorsCompatible(q.anchors, rowAnchors)) continue;
@@ -137,7 +157,7 @@ function writeCase(
   const tokens = claimTokens(p.text);
   const anchors = claimAnchors(p.text);
   const tx = db.transaction(() => {
-    const existing = findDuplicate(db, { norm, tokens, anchors, vec });
+    const existing = findDuplicate(db, { norm, tokens, anchors, vec, text: p.text });
     let id: number;
     let created = false;
     if (existing) {
@@ -165,7 +185,7 @@ function writeCase(
     const row = db.prepare("SELECT * FROM moderator_cases WHERE id = ?").get(id) as CaseRow;
     return { row, created, alreadyCounted: ins.changes === 0 };
   });
-  return tx();
+  return tx.immediate();
 }
 
 function logAlert(ctx: ServerContext, caseId: number, outcome: string, reason: string, detail?: string): void {

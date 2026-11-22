@@ -6,7 +6,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { ConversationReply, VerdictReport } from "../../shared/contracts";
-import { FIXTURE_REPLIES } from "../fixtures";
+import { FIXTURE_REPLIES } from "../../../tests/fixtures/web";
 import { TITLES } from "../App";
 import { announcementFor, replyView, VERDICT_LABEL_PL, WARNING_TITLE_PL } from "../lib/report";
 import ChatConversation, { type PendingPhase } from "../pages/ChatConversation";
@@ -272,6 +272,15 @@ describe("social video analysis", () => {
     expect(out).not.toContain("Transkrypcja");
     expect(out).not.toContain("Nie rozpoznano wypowiedzi");
     expect(out).not.toContain("Ocena głównego twierdzenia z filmu");
+  });
+
+  it("labels public subtitle evidence even when the post has a thumbnail and the frames are unavailable", () => {
+    const reply = structuredClone(FIXTURE_REPLIES.potwierdzone!);
+    reply.report!.videoAnalysis = { ...analysis, platform: "youtube", status: "subtitles_only", transcriptSource: "platform",
+      title: "Short", author: "Kanał", thumbnailUrl: "https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg", observations: [] };
+    const out = html(reply);
+    for (const label of ["Film z YouTube", "Kanał", "Zobacz miniaturę filmu", "Napisy platformy", "Obraz filmu pozostaje niesprawdzony"]) expect(out).toContain(label);
+    expect(out).not.toContain("Obraz i napisy");
   });
 
   it("keeps extracted claims available if verification fails after the video was read", () => {

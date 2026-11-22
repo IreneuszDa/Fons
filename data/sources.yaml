@@ -170,6 +170,62 @@
   ifcnEfcsn: false
   liveSearch: true
 
+- id: rpo
+  hosts: [bip.brpo.gov.pl]
+  publisher: Biuletyn Informacji Publicznej RPO
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: rpo
+  licence: Krótki cytat z opublikowanego wystąpienia RPO wraz z metadanymi i odnośnikiem.
+  fetchMethod: metadane
+  updateFrequency: przy aktualizacji archiwum wystąpień
+  qualification: Rzecznik Praw Obywatelskich publikuje wystąpienia opisujące podjęte interwencje.
+  homepage: https://bip.brpo.gov.pl/
+  liveSearch: false
+
+- id: pap-depesze
+  hosts: [www.pap.pl]
+  publisher: Polska Agencja Prasowa
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: pap
+  licence: Metadane depeszy wraz z jej nagłówkiem i odnośnikiem do wydawcy.
+  fetchMethod: metadane
+  updateFrequency: przy aktualizacji archiwum depesz
+  qualification: PAP jest źródłem pierwotnym dla tożsamości, tytułu i daty własnej depeszy.
+  homepage: https://www.pap.pl/
+  liveSearch: false
+
+- id: wroclaw-transport
+  hosts: [www.wroclaw.pl]
+  publisher: Wrocław.pl
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: miasto-wroclaw
+  licence: Krótki cytat z wypowiedzi dyrektorki Wydziału Transportu, tytuł, data i link.
+  fetchMethod: metadane
+  updateFrequency: przy aktualizacji archiwum danych transportowych
+  qualification: Dane Wydziału Transportu Urzędu Miejskiego Wrocławia o finansowaniu przewozów.
+  homepage: https://www.wroclaw.pl/
+  liveSearch: false
+
+- id: sky-tg24
+  hosts: [tg24.sky.it]
+  publisher: Sky TG24
+  type: analiza
+  level: 3
+  role: tresc
+  independenceGroup: sky-italia
+  licence: Krótki cytat, metadane i link do zestawienia, do którego odsyła MSZ.
+  fetchMethod: metadane
+  updateFrequency: przy aktualizacji archiwum komunikatów
+  qualification: Redakcja opublikowała zestawienie zgromadzeń wskazane w komunikacie dla podróżujących.
+  homepage: https://tg24.sky.it/
+  liveSearch: false
+
 - id: msz-odyseusz
   hosts: [odyseusz.gov.pl]
   publisher: Ministerstwo Spraw Zagranicznych - serwis Odyseusz (informacje dla podróżujących)
@@ -360,16 +416,17 @@
   fetchMethod: api
   updateFrequency: >-
     przy przebudowaniu korpusu (npm run corpus:demagog; wymaga FACTCHECK_API_KEY w .env); recenzje z ostatniego roku
-    (maxAgeDays=365, zmiana: DEMAGOG_MAX_AGE_DAYS w .env), od najnowszej, najwyżej 2000
+    (maxAgeDays=365, zmiana: DEMAGOG_MAX_AGE_DAYS w .env), od najnowszej, najwyżej 2000.
+    Dodatkowo przypisane do pytań publikacje archiwalne wyszukujemy w indeksie po stałych hasłach.
   qualification: >-
     Największy polski fact-checker; na liście IFCN (Active, "Demagog Association", weryfikacja 04.10.2024) i EFCSN (Verified,
     "DEMAGOG", od 25.05.2023). Rekordy: recenzje z claims:search Google Fact Check Tools API z filtrem
     reviewPublisherSiteFilter=demagog.org.pl (wypowiedzi polityków i fake newsy), tylko adresy z dokładnym hostem demagog.org.pl.
     Pomiar 2026-11-21: API zwraca 9338 recenzji Demagoga (2015–2026); z ostatniego roku zapisano 742. Okno roku, bo przy 2 latach
-    (ok. 1750 rekordów) Demagog wypierał z wyszukiwania rekordy urzędowe. Zapytanie do API zawiera tylko filtr wydawcy — żadnych
-    danych użytkowników. Link do Demagoga wklejony przez użytkownika jest pobierany raz jako przedmiot sprawdzenia (nie dowód).
+    (ok. 1750 rekordów) Demagog wypierał z wyszukiwania rekordy urzędowe. Przebudowa odpytuje indeks z filtrem wydawcy,
+    a dla wskazanych publikacji także ze stałym hasłem. Wklejony przez użytkownika link do Demagoga może być przedmiotem sprawdzenia.
   exclusion: >-
-    Wykluczamy recenzje spoza hosta demagog.org.pl, z sekcji obcojęzycznych (/ua/), starsze niż okno, bez tezy lub oceny, z tezą
+    Wykluczamy recenzje spoza hosta demagog.org.pl, z sekcji obcojęzycznych (/ua/), starsze niż okno poza przypisanymi publikacjami archiwalnymi, bez tezy lub oceny, z tezą
     krótszą niż 21 znaków i z oceną bez czytelnej etykiety. Bez pobierania
     stron Demagoga: bez treści analiz, bez wyszukiwania na żywo (liveSearch: false) i bez sondy dostępności.
   homepage: https://demagog.org.pl/

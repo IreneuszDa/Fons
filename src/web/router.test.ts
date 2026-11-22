@@ -7,7 +7,7 @@ describe("matchRoute", () => {
     expect(matchRoute("/zrodla")).toEqual({ name: "sources" });
     expect(matchRoute("/zrodla/")).toEqual({ name: "sources" });
     expect(matchRoute("/admin")).toEqual({ name: "admin" });
-    expect(matchRoute("/telefon")).toEqual({ name: "phone" });
+    expect(matchRoute("/telefon")).toEqual({ name: "notfound" });
     expect(matchRoute("/w/abc123")).toEqual({ name: "result", token: "abc123" });
   });
   it("returns notfound for anything else", () => {

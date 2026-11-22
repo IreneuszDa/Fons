@@ -26,8 +26,6 @@ import {
   NO_KEY_MESSAGE,
   clearComputationCache,
   hasLlmKey,
-  fakeProviderRequested,
-  FAKE_PROVIDER_NOTICE,
   inboundTextFor,
   isoStamp,
   judgeReport,
@@ -84,9 +82,7 @@ function withTwins(selected: EvalCaseX[], pool: EvalCaseX[]): { c: EvalCaseX; re
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const cfg0 = loadConfig();
-  if (fakeProviderRequested()) {
-    console.error(FAKE_PROVIDER_NOTICE);
-  } else if (!hasLlmKey(cfg0)) {
+  if (!hasLlmKey(cfg0)) {
     console.error(NO_KEY_MESSAGE);
     process.exit(2);
   }

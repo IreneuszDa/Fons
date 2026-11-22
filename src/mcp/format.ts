@@ -51,15 +51,8 @@ export function evidenceView(e: EvidenceItem) {
 
 /** Raport → kształt zwracany klientowi MCP (bez modeli, kosztów i szczegółów wewnętrznych). */
 export function reportView(report: VerdictReport, resultUrl: string | undefined) {
-  const evidence: ReturnType<typeof evidenceView>[] = [];
-  const seen = new Set<string>();
-  for (const v of report.verdicts) {
-    for (const e of v.evidence) {
-      if (seen.has(e.recordId)) continue;
-      seen.add(e.recordId);
-      evidence.push(evidenceView(e));
-    }
-  }
+  const passages = new Map([...report.verdicts.flatMap(v => v.evidence), ...(report.answer?.evidence ?? [])]
+    .map(e => [JSON.stringify([e.recordId, e.quote]), evidenceView(e)]));
   return {
     reportId: report.id,
     ...(resultUrl ? { resultUrl } : {}),
@@ -91,7 +84,7 @@ export function reportView(report: VerdictReport, resultUrl: string | undefined)
     ...(report.answer
       ? { answer: { questionPl: report.answer.questionPl, answerPl: report.answer.answerPl, evidence: report.answer.evidence.map(evidenceView) } }
       : {}),
-    evidence,
+    evidence: [...passages.values()],
     warnings: report.warnings,
     unavailableBranches: report.unavailableBranches,
     securityEventCount: report.securityEvents.length,

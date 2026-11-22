@@ -11,7 +11,7 @@ Jak działa: szybki model wydziela twierdzenia i rozpoznaje, czy to twierdzenie,
 
 Dla analityków MSZ: każde sprawdzenie to audytowalny raport (dowody, cytaty, modele, koszt, czas) z dziennikiem w łańcuchu hashy. Nierozstrzygnięte zgłoszenia trafiają do kolejki spraw moderatora z deduplikacją. Panel z rolami pokazuje metryki i eksporty, a serwer MCP pozwala podłączyć Fons do narzędzi analitycznych.
 
-Kanały: czat WWW (od 360 px), demonstracyjny kanał SMS (symulator telefonu i podpisany webhook HMAC, bez operatora i bez opłat), CLI i MCP. Rdzeń i raport są wspólne, więc werdykt jest ten sam w każdym kanale.
+Kanały: czat WWW (od 360 px), CLI i MCP. Rdzeń i raport są wspólne, więc werdykt jest ten sam w każdym kanale.
 
 Bezpieczeństwo i prywatność: deterministyczny detektor prompt injection na surowej treści (PL/EN/RU/UA, ukryty HTML, homoglify, zero-width, base64), treść niezaufana tylko w blokach z losowym ogranicznikiem, odpowiedzi modeli w schemacie JSON, niezależna kontrola cytatów, ochrona SSRF. PESEL, telefony, e-maile, IBAN i karty są maskowane przed modelem i logiem; nadawca jest pseudonimizowany; retencja 30/7 dni; „usuń moje dane” działa w czacie i przez API. Przetwarzanie u OpenAI odbywa się w USA (bez rezydencji danych w UE) i każdy raport to ujawnia.
 

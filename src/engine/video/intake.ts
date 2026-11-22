@@ -1,22 +1,48 @@
-import type { DetectorHit, ModelUsage, VideoAnalysis } from "../../shared/contracts";
+import { LlmUnavailableError, type DetectorHit, type ModelUsage, type VideoAnalysis } from "../../shared/contracts";
 import type { VerificationStage } from "../../shared/chat";
 import { claimStatesDate, mustHaveTerms, type ExtractedClaim } from "../claims";
-import { isolateFenceMarkers } from "../normalize";
-import { detectInjection, maskPii, stripFlaggedSentences } from "../ports";
-import { cleanText, foldForMatch, isoDateOrUndefined, truncateWords } from "../text";
-import { GeminiVideoResponseError, type GeminiVideoAnalyzer } from "./gemini";
-import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, SocialVideoSourceError, type loadSocialCaption, type loadSocialVideo } from "./social-source";
+import { foldForMatch, isoDateOrUndefined, truncateWords } from "../text";
+import { sanitizeVideoText, type VideoAnalyzer } from "./analysis";
+import { GeminiVideoResponseError } from "./gemini";
+import { OpenAiVideoAnalysisError } from "./openai-video";
+import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, SocialVideoSourceError, type SocialVideoMetadata } from "./social-source";
+import { publicPostUrl, type createVideoLoader, type loadVideoCaption } from "./platforms";
+import { subtitleStart } from "./webvtt";
 
 export type VideoServices =
-  | { load: typeof loadSocialVideo; analyze: GeminiVideoAnalyzer }
-  | { loadCaption: typeof loadSocialCaption };
+  | { load: ReturnType<typeof createVideoLoader>; analyze: VideoAnalyzer; provider?: "openai" | "gemini"; processingRegion?: "us" | "eea" }
+  | { loadCaption: typeof loadVideoCaption };
+
+export function hasOnlyTranscript(video: VideoAnalysis): boolean {
+  return video.status === "subtitles_only" || video.status === "transcript_only";
+}
+
+/** Keep the original cue time, including for a sentence split over adjacent WebVTT cues. */
+export function anchorSubtitleClaims(proposals: ExtractedClaim[], analysis: VideoAnalysis): ExtractedClaim[] {
+  const claims: ExtractedClaim[] = [];
+  for (const proposed of proposals) {
+    if (proposed.claim.type !== "fakt") continue;
+    const quote = proposed.claim.text.trim();
+    if (!quote) continue;
+    const seconds = subtitleStart(analysis.transcript, quote);
+    if (seconds === undefined && !analysis.caption.includes(quote)) continue;
+    const id = `c${claims.length + 1}`;
+    const { kind, date } = proposed.claim.temporal;
+    const temporal = date && claimStatesDate(date, [quote]) ? { kind, date } : { kind };
+    claims.push({ ...proposed, claim: { ...proposed.claim, id, temporal, isMain: claims.length === 0 }, parts: [] });
+    const spokenSource = analysis.transcriptSource === "platform" ? "subtitles" : "speech";
+    analysis.claimOrigins.push({ claimId: id, source: seconds === undefined ? "caption" : spokenSource, seconds: seconds ?? null });
+  }
+  return claims;
+}
 
 interface VideoIntake {
   analysis: VideoAnalysis;
   url: string;
   claims: ExtractedClaim[];
   hits: DetectorHit[];
-  usage?: ModelUsage;
+  usages: ModelUsage[];
+  focus?: string;
   message?: string;
 }
 
@@ -25,7 +51,22 @@ const MAX_ACTIVE_VIDEOS = 3;
 let activeVideos = 0;
 const ANALYSIS_DISABLED = "Analiza obrazu i dźwięku jest wyłączona w tej instalacji. Możesz wkleić transkrypcję lub treść twierdzenia.";
 
-function videoFailure(error: unknown, loading: boolean): string {
+function videoFailure(error: unknown, loading: boolean, platform: VideoAnalysis["platform"], provider?: VideoAnalysis["provider"]): string {
+  if (provider === "openai" && error instanceof LlmUnavailableError) {
+    if (error.message === "eu_residency_not_enabled") return "OpenAI odrzucił żądanie w wybranym regionie UE. Sprawdź ustawienia projektu OpenAI.";
+    if (error.message === "auth" || error.reason === "no_key") return "OpenAI odrzucił dostęp do analizy filmu. Sprawdź klucz OPENAI_API_KEY i jego uprawnienia do modeli.";
+    if (error.reason === "budget") return "OpenAI wstrzymał analizę filmu z powodu limitu środków projektu.";
+    if (error.reason === "rate_limit") return "OpenAI chwilowo ograniczył liczbę żądań. Spróbuj ponownie za chwilę.";
+  }
+  if (error instanceof Error && error.message === "video_decoder_missing") {
+    return "Na serwerze Fons brakuje FFmpeg lub FFprobe do odczytu pliku wideo.";
+  }
+  if (error instanceof Error && error.message === "video_decode_failed") {
+    return "Nie udało się odczytać pobranego pliku wideo. Możesz wkleić transkrypcję do sprawdzenia.";
+  }
+  if (error instanceof Error && error.message === "gemini_credits_depleted") {
+    return "Google Gemini wstrzymał analizę filmu z powodu wyczerpania środków projektu. Administrator może uzupełnić saldo w Google AI Studio.";
+  }
   if ((error instanceof SocialVideoSourceError && error.reason === "too_large") ||
       (error instanceof Error && ["video_too_large", "video_too_long"].includes(error.message))) {
     return `Ten film przekracza limit pobierania lub analizy. Wybierz krótsze nagranie (maksymalnie ${MAX_VIDEO_SECONDS / 60} min i ${MAX_VIDEO_BYTES / 1024 ** 2} MiB) lub wklej transkrypcję.`;
@@ -36,14 +77,12 @@ function videoFailure(error: unknown, loading: boolean): string {
   if (error instanceof SocialVideoSourceError && error.reason === "unsupported") {
     return "Ten post nie zawiera obsługiwanego filmu. Możesz wkleić opis lub dołączyć obraz do sprawdzenia.";
   }
+  if (loading && platform === "youtube" && provider === "openai") {
+    return "YouTube nie udostępnił pliku nagrania w tym połączeniu. Możesz wkleić transkrypcję albo treść twierdzenia.";
+  }
   return loading
     ? "Serwis nie udostępnił nagrania. Jeśli post jest prywatny lub wymaga logowania, wklej jego transkrypcję albo konkretne twierdzenie."
-    : "Nie udało się odczytać obrazu i dźwięku przez Gemini. Spróbuj ponownie lub wklej transkrypcję.";
-}
-
-function publicPostUrl(raw: string): string {
-  const url = new URL(raw);
-  return url.origin + url.pathname;
+    : `Nie udało się ukończyć analizy filmu przez ${provider === "openai" ? "OpenAI" : "Gemini"}. Spróbuj ponownie lub wklej transkrypcję.`;
 }
 
 export async function readVideo(
@@ -55,7 +94,7 @@ export async function readVideo(
   signal?: AbortSignal,
 ): Promise<VideoIntake> {
   const analysis: VideoAnalysis = { platform, status: "unavailable", caption: "", transcript: [], observations: [], claimOrigins: [] };
-  const result: VideoIntake = { analysis, url: publicPostUrl(url), claims: [], hits: [] };
+  const result: VideoIntake = { analysis, url: publicPostUrl(url), claims: [], hits: [], usages: [] };
   if (!services) {
     result.message = ANALYSIS_DISABLED;
     return result;
@@ -66,46 +105,68 @@ export async function readVideo(
   }
 
   function sanitize(raw: string, location: DetectorHit["location"]): string {
-    const input = isolateFenceMarkers(raw);
-    const hits = detectInjection(input, location);
-    result.hits.push(...hits);
-    return maskPii(cleanText(hits.length ? stripFlaggedSentences(input, hits) : input)).text;
+    return sanitizeVideoText(raw, location, result.hits);
+  }
+
+  const segments = (rows: VideoAnalysis["transcript"]) => rows
+    .map(row => ({ seconds: row.seconds, text: sanitize(row.text, "ocr") }))
+    .filter(row => row.text);
+
+  function savePost(post: SocialVideoMetadata & { url?: string; caption: string; title?: string }) {
+    if (post.url) result.url = publicPostUrl(post.url);
+    analysis.caption = sanitize(post.caption, "fetched_page");
+    if (post.title) analysis.title = sanitize(post.title, "fetched_page");
+    if (post.author) analysis.author = sanitize(post.author, "fetched_page");
+    if (post.thumbnailUrl) {
+      const thumbnail = URL.parse(post.thumbnailUrl);
+      if (thumbnail?.protocol === "https:" && !thumbnail.username && !thumbnail.password) analysis.thumbnailUrl = thumbnail.href;
+    }
+    if (post.subtitles?.length) {
+      analysis.transcript = segments(post.subtitles);
+      if (analysis.transcript.length) {
+        analysis.transcriptSource = "platform";
+        analysis.status = "subtitles_only";
+      }
+    }
   }
 
   let loading = true;
   activeVideos++;
   try {
     stage("fetching_video");
+    result.focus = sanitize(note, "user_message");
     if ("loadCaption" in services) {
-      const post = await services.loadCaption(url, signal);
-      result.url = publicPostUrl(post.url);
-      analysis.caption = sanitize(post.caption, "fetched_page");
-      result.message = ANALYSIS_DISABLED;
+      savePost(await services.loadCaption(url, signal));
+      if (analysis.status !== "subtitles_only") result.message = ANALYSIS_DISABLED;
       return result;
     }
+    analysis.provider = services.provider ?? "gemini";
     const media = await services.load(url, signal);
-    result.url = publicPostUrl(media.url);
-    analysis.caption = sanitize(media.caption, "fetched_page");
+    savePost(media);
     loading = false;
     stage("analyzing_video");
-    const { data, usage } = await services.analyze({
-      bytes: media.bytes, mimeType: media.mimeType, durationSeconds: media.durationSeconds,
-      caption: analysis.caption, focus: sanitize(note, "user_message"),
+    const { data, usage, additionalUsage } = await services.analyze({
+      ...("youtubeUrl" in media ? { youtubeUrl: media.youtubeUrl } : { bytes: media.bytes, mimeType: media.mimeType }),
+      durationSeconds: media.durationSeconds,
+      ...(analysis.transcript.length && { subtitles: analysis.transcript }),
+      caption: analysis.caption, focus: result.focus,
     }, signal);
-    result.usage = usage;
+    result.usages.push(...(additionalUsage ?? []), usage);
     analysis.status = "analyzed";
-    const segments = (rows: VideoAnalysis["transcript"]) => rows
-      .map(row => ({ seconds: row.seconds, text: sanitize(row.text, "ocr") }))
-      .filter(row => row.text);
-    analysis.transcript = segments(data.transcript);
+    if (analysis.transcriptSource !== "platform") {
+      analysis.transcript = segments(data.transcript);
+      if (analysis.transcript.length) analysis.transcriptSource = analysis.provider;
+    }
     analysis.observations = segments(data.observations);
 
     const seen = new Set<string>();
     for (const candidate of data.claims) {
       const quote = sanitize(candidate.quote, candidate.source === "caption" ? "fetched_page" : "ocr");
       const source = candidate.source === "speech" ? analysis.transcript : analysis.observations;
-      const anchored = candidate.source === "caption"
-        ? candidate.seconds === null && analysis.caption.includes(quote)
+      const platformQuote = candidate.source === "speech" && analysis.transcriptSource === "platform";
+      const anchored = candidate.source === "caption" ? candidate.seconds === null && analysis.caption.includes(quote)
+        : candidate.source === "speech" && (platformQuote || analysis.transcriptSource === "openai")
+          ? candidate.seconds !== null && subtitleStart(source, quote, candidate.seconds) !== undefined
         : source.some(row => row.seconds === candidate.seconds && row.text.includes(quote));
       const key = foldForMatch(quote);
       if (!anchored || !key || seen.has(key)) continue;
@@ -123,13 +184,26 @@ export async function readVideo(
         mustHave: mustHaveTerms(quote, []),
         parts: [],
       });
-      analysis.claimOrigins.push({ claimId: id, source: candidate.source, seconds: candidate.seconds });
+      analysis.claimOrigins.push({ claimId: id, source: platformQuote ? "subtitles" : candidate.source, seconds: candidate.seconds });
     }
     return result;
   } catch (error) {
-    if (error instanceof GeminiVideoResponseError) result.usage = error.usage;
-    if (error instanceof SocialVideoSourceError && error.caption) analysis.caption = sanitize(error.caption, "fetched_page");
-    result.message = videoFailure(error, loading);
+    signal?.throwIfAborted();
+    if (error instanceof GeminiVideoResponseError) result.usages.push(error.usage);
+    if (error instanceof OpenAiVideoAnalysisError) {
+      result.usages.push(...error.usages);
+      if (analysis.transcriptSource !== "platform" && error.transcript?.length) {
+        analysis.transcript = segments(error.transcript);
+        if (analysis.transcript.length) {
+          analysis.transcriptSource = "openai";
+          analysis.status = "transcript_only";
+        }
+      }
+    }
+    if (error instanceof SocialVideoSourceError) savePost(error);
+    const message = videoFailure(error, loading, platform, analysis.provider);
+    if (!hasOnlyTranscript(analysis)) result.message = message;
+    else if (!(error instanceof SocialVideoSourceError && error.reason === "unavailable")) analysis.mediaIssue = message;
     return result;
   } finally {
     activeVideos--;

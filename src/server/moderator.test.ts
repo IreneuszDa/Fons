@@ -185,6 +185,18 @@ describe("deduplikacja parafraz (Pętla informacji, scenariusz H)", () => {
     });
   const caseOf = (r: { json: any }) => r.json.reply.report.moderatorCase.caseId as string;
 
+  it("łączy obie wersje pytania o diesle w Pcimiu bez modelu, zachowując miejscowość i zakres zakazu", async () => {
+    const env = makeEnv({ engine: brak });
+    const first = await chat(env, { text: "Czy od przyszłego tygodnia diesle nie będą mogły wjechać do centrum Pcimia?" });
+    const second = await chat(env, { text: "Czy Pcim wprowadza zakaz wjazdu diesli do centrum?" });
+    expect(caseOf(second)).toBe(caseOf(first));
+    expect(n(env, "SELECT sender_count AS n FROM moderator_cases WHERE id = ?", Number(caseOf(first)))).toBe(2);
+    const otherCity = await chat(env, { text: "Czy Kraków wprowadza zakaz wjazdu diesli do centrum?" });
+    const otherPolicy = await chat(env, { text: "Czy Pcim nie wprowadza zakazu wjazdu diesli do centrum?" });
+    const otherScope = await chat(env, { text: "Czy Pcim wprowadza zakaz wjazdu diesli do centrum tylko w niedziele?" });
+    expect(new Set([first, otherCity, otherPolicy, otherScope].map(caseOf)).size).toBe(4);
+  });
+
   it("parafrazy H03/H04 i H01/H02 trafiają do jednej sprawy; inne miasto i inne zdarzenie to nowe sprawy", async () => {
     const env = makeEnv({ engine: brak });
     env.ctx.embedClaims = fakeEmbed;

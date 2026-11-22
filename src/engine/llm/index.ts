@@ -9,19 +9,15 @@
  *    fast → main escalation, and — for the main provider — a fallback to the other family when a
  *    second key is configured (docs/ROUTER.md).
  *  - no key → providers with available = false; the engine then answers NIEPELNE (scenario J).
- *  - FakeLlmProvider only for an explicit LLM_PROVIDER=fake (and never in production).
  */
 import { LlmUnavailableError, type LlmProvider, type LlmResponse } from "../../shared/contracts";
 import { defaultModelsFor, type AppConfig, type ProviderName } from "../../server/config";
 import { AnthropicProvider } from "./anthropic";
-import { FakeLlmProvider } from "./fake";
 import { MistralProvider } from "./mistral";
 import { OpenAiProvider } from "./openai";
 import { ModelRouter } from "./router";
 import type { EngineLlmProvider, EngineLlmRequest, ProviderModels } from "./types";
 
-export { FakeLlmProvider } from "./fake";
-export type { FakeLlmOptions, FakeCall } from "./fake";
 export { AnthropicProvider } from "./anthropic";
 export { MistralProvider } from "./mistral";
 export { OpenAiProvider } from "./openai";
@@ -60,22 +56,7 @@ function makeProvider(cfg: AppConfig, provider: ProviderName, models: ProviderMo
     : new UnavailableLlmProvider("mistral", "mistral", models);
 }
 
-function fakeRequested(cfg: AppConfig): boolean {
-  // config.ts narrows LLM_PROVIDER to anthropic|mistral; accept an explicit "fake" from either place.
-  return String(cfg.llmProvider) === "fake" || process.env.LLM_PROVIDER === "fake";
-}
-
 export function createLlmProviders(cfg: AppConfig): { main: LlmProvider; verifier: LlmProvider; singleKey: boolean } {
-  if (fakeRequested(cfg)) {
-    if (cfg.env === "production") {
-      const models = { main: "fake-heuristic", fast: "fake-heuristic-fast" };
-      const off = new UnavailableLlmProvider("fake", "fake", models);
-      return { main: off, verifier: off, singleKey: true };
-    }
-    const fake = new FakeLlmProvider();
-    return { main: fake, verifier: fake, singleKey: true };
-  }
-
   const mainModels = { main: cfg.modelMain, fast: cfg.modelFast };
   const mainRaw = makeProvider(cfg, cfg.llmProvider, mainModels, "main");
 

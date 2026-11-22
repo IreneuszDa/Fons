@@ -21,6 +21,7 @@ const answerReport = (text: string) =>
   makeReport({
     claim: text,
     inputMode: "question_open",
+    models: [{ purpose: "open_answer", provider: "stub", model: "stub-main", inputTokens: 100, outputTokens: 50, latencyMs: 10, costUsd: 0.01 }],
     verdicts: [],
     mainVerdict: null,
     summaryPl: "Znalazłem odpowiedź w źródle.",

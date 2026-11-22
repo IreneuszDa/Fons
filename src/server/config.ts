@@ -19,6 +19,8 @@ export interface AppConfig {
   anthropicApiKey?: string;
   mistralApiKey?: string;
   openaiApiKey?: string;
+  videoProvider?: "openai" | "gemini" | "off";
+  openaiVideoModel?: string;
   geminiApiKey?: string;
   geminiVideoModel?: string;
   socialKitApiKey?: string;
@@ -46,8 +48,6 @@ export interface AppConfig {
   reverseImageDailyCap?: number;
   googleVisionApiKey?: string;
   factCheckApiKey?: string;
-  /** Demonstracyjny kanał SMS (symulator /telefon, webhook HMAC); domyślnie włączony, SMS_SIM=off wyłącza. */
-  smsSimulator?: boolean;
   /** Webhook odbiorcy alertów pętli informacji (wskazany przez administratora). */
   alertWebhookUrl?: string;
   /** Tryb werdyktu: reguły (A, domyślny) albo propozycja modelu z bramkami kodu (B). */
@@ -90,6 +90,16 @@ function nonEmpty(v: string | undefined): string | undefined {
   return v && v.trim() !== "" ? v.trim() : undefined;
 }
 
+function readVideoProvider(raw: string | undefined): AppConfig["videoProvider"] {
+  const value = nonEmpty(raw)?.toLowerCase();
+  if (value === undefined || value === "openai" || value === "gemini" || value === "off") return value;
+  throw new Error("VIDEO_PROVIDER musi mieć wartość openai, gemini lub off.");
+}
+
+export function selectedVideoProvider(cfg: Pick<AppConfig, "videoProvider" | "openaiApiKey" | "geminiApiKey">) {
+  return cfg.videoProvider ?? (cfg.openaiApiKey ? "openai" : cfg.geminiApiKey ? "gemini" : "off");
+}
+
 let cached: AppConfig | undefined;
 
 export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
@@ -108,6 +118,9 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     openai: !!openaiApiKey,
   };
   // Dostawca główny: jawnie z env, a jeśli jego klucza brak, a innego jest — pierwszy dostawca z kluczem.
+  if (e.LLM_PROVIDER?.trim() && !asProvider(e.LLM_PROVIDER)) {
+    throw new Error("LLM_PROVIDER musi wskazywać obsługiwanego dostawcę: openai, anthropic lub mistral.");
+  }
   let llmProvider: ProviderName = asProvider(e.LLM_PROVIDER) ?? "anthropic";
   if (!keyed[llmProvider]) llmProvider = PROVIDERS.find((p) => keyed[p]) ?? llmProvider;
 
@@ -128,6 +141,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     anthropicApiKey,
     mistralApiKey,
     openaiApiKey,
+    videoProvider: readVideoProvider(e.VIDEO_PROVIDER),
+    openaiVideoModel: nonEmpty(e.OPENAI_VIDEO_MODEL),
     geminiApiKey: nonEmpty(e.GEMINI_API_KEY),
     geminiVideoModel: nonEmpty(e.GEMINI_VIDEO_MODEL),
     socialKitApiKey: nonEmpty(e.SOCIALKIT_API_KEY),
@@ -146,7 +161,6 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     reverseImageDailyCap: Number(e.REVERSE_IMAGE_DAILY_CAP ?? 500),
     googleVisionApiKey,
     factCheckApiKey: nonEmpty(e.FACTCHECK_API_KEY),
-    smsSimulator: e.SMS_SIM !== "off",
     alertWebhookUrl: nonEmpty(e.ALERT_WEBHOOK_URL),
     verdictMode: e.VERDICT_MODE === "model_proposed" ? "model_proposed" : "rules",
     trustProxy: e.TRUST_PROXY === "on",

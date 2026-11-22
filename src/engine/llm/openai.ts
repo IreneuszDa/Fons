@@ -13,7 +13,7 @@
  *    if an endpoint rejects the parameter (400), it is dropped once for this instance.
  * Provider error bodies are never surfaced to users — only LlmUnavailableError reasons.
  */
-import { LlmUnavailableError, type LlmResponse } from "../../shared/contracts";
+import { LlmUnavailableError, type LlmResponse, type ModelUsage } from "../../shared/contracts";
 import { toStrictJsonSchema } from "./mistral";
 import { costUsd } from "./pricing";
 import {
@@ -38,6 +38,8 @@ export interface OpenAiProviderOptions {
   /** Injected for tests. */
   fetchImpl?: FetchLike;
   baseUrl?: string;
+  /** Capture billed attempts even if local validation later rejects the result. */
+  onUsage?: (usage: ModelUsage) => void;
 }
 
 interface ChatCompletionLike {
@@ -61,6 +63,7 @@ export class OpenAiProvider implements EngineLlmProvider {
   private readonly apiKey: string | undefined;
   private readonly fetchImpl: FetchLike;
   private readonly baseUrl: string;
+  private readonly onUsage?: (usage: ModelUsage) => void;
   private sendEffort = true;
   private sendStore = true;
   static residencyWarned = false;
@@ -72,6 +75,7 @@ export class OpenAiProvider implements EngineLlmProvider {
     this.available = !!opts.apiKey;
     this.fetchImpl = opts.fetchImpl ?? ((url, init) => fetch(url, init));
     this.baseUrl = opts.baseUrl ?? openAiBaseUrl(opts.dataResidency);
+    this.onUsage = opts.onUsage;
     this.processingRegion = opts.dataResidency?.trim().toLowerCase() === "eu" ? "eea" : "us";
   }
 
@@ -111,6 +115,7 @@ export class OpenAiProvider implements EngineLlmProvider {
       if (this.sendEffort) body.reasoning_effort = effortFor(req, tier);
       if (this.sendStore) body.store = false;
 
+      const attemptStart = Date.now();
       let res: Response;
       try {
         res = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
@@ -169,8 +174,15 @@ export class OpenAiProvider implements EngineLlmProvider {
       } catch {
         throw new LlmUnavailableError("schema", "invalid_json");
       }
-      inputTokens += json.usage?.prompt_tokens ?? 0;
-      outputTokens += json.usage?.completion_tokens ?? 0;
+      const servedModel = json.model ?? model;
+      const attemptInput = json.usage?.prompt_tokens ?? 0;
+      const attemptOutput = json.usage?.completion_tokens ?? 0;
+      inputTokens += attemptInput;
+      outputTokens += attemptOutput;
+      if (json.usage && this.onUsage) this.onUsage({
+        purpose: req.purpose, provider: this.name, model: servedModel, inputTokens: attemptInput, outputTokens: attemptOutput,
+        latencyMs: Date.now() - attemptStart, costUsd: costUsd(servedModel, this.name, attemptInput, attemptOutput),
+      });
       const choice = json.choices?.[0];
       if (choice?.message?.refusal) throw new LlmUnavailableError("refusal");
       if (choice?.finish_reason === "content_filter") throw new LlmUnavailableError("refusal");
@@ -188,7 +200,6 @@ export class OpenAiProvider implements EngineLlmProvider {
       }
       const check = req.schema.safeParse(parsed);
       if (!check.success) throw new LlmUnavailableError("schema", "schema_mismatch");
-      const servedModel = json.model ?? model;
       return {
         data: check.data,
         usage: {

@@ -1,17 +1,10 @@
 {
-  "builtAt": "2026-11-21T21:44:08.490Z",
+  "builtAt": "2026-11-22T00:30:39.191Z",
   "node": "v22.15.0",
   "args": {
     "refresh": false,
     "only": [
-      "eli",
-      "eur-lex",
-      "eurostat",
-      "nato",
-      "eu-portal",
-      "euvsdisinfo",
-      "official-pages",
-      "gus-bdl"
+      "demagog"
     ]
   },
   "ingesters": [
@@ -131,20 +124,21 @@
     },
     {
       "ingester": "demagog",
-      "records": 742,
+      "records": 745,
       "incidents": 0,
-      "requests": 8,
+      "requests": 0,
       "skippedCount": 1,
       "skipped": [
         {
           "what": "https://factchecktools.googleapis.com/v1alpha1/claims:search",
-          "reason": "3 recenzji bez daty lub starszych niż 2025-11-21"
+          "reason": "3 recenzji bez daty lub starszych niż 2025-11-22"
         }
       ],
       "notes": [
-        "Demagog: 742 recenzji z Google Fact Check Tools API (filtr reviewPublisherSiteFilter=demagog.org.pl, maxAgeDays=365 i lokalnie data recenzji >= 2025-11-21, limit 2000; 8 stron; recenzje innych hostów: 1, starsze/bez daty: 3, sekcje obcojęzyczne: 0); wypowiedzi 191, fake newsy 550, inne 1; daty recenzji 2025-11-24 – 2026-11-20. Bez bezpośrednich żądań do demagog.org.pl. Tekst = teza dosłownie z API; autor tezy nie jest w tytule. Etykiety spoza tabeli mapowania (mapped=null): przerobione zdjęcie lub film (1), Scam (1)."
+        "Demagog: 742 recenzji z Google Fact Check Tools API (filtr reviewPublisherSiteFilter=demagog.org.pl, maxAgeDays=365 i lokalnie data recenzji >= 2025-11-22, limit 2000; 8 stron; recenzje innych hostów: 1, starsze/bez daty: 3, sekcje obcojęzyczne: 0); wypowiedzi 191, fake newsy 550, inne 1; daty recenzji 2025-11-24 – 2026-11-20. Bez bezpośrednich żądań do demagog.org.pl. Tekst = teza dosłownie z API; autor tezy nie jest w tytule. Etykiety spoza tabeli mapowania (mapped=null): przerobione zdjęcie lub film (1), Scam (1).",
+        "Sprawdzono dodatkowo 4 wskazanych publikacji bez ograniczenia wieku. Liczba publikacji spoza bieżącego zestawu wyniosła 3."
       ],
-      "durationMs": 2536
+      "durationMs": 178
     },
     {
       "ingester": "eeas",
@@ -358,10 +352,10 @@
     }
   ],
   "stats": {
-    "total": 3629,
+    "total": 3637,
     "incidents": 604,
     "bySource": {
-      "demagog": 742,
+      "demagog": 745,
       "dpa-factchecking": 35,
       "dw-factcheck": 34,
       "ec-commission": 27,
@@ -383,17 +377,22 @@
       "pravda-pl": 70,
       "prezydent-pl": 1,
       "prosecutionservice": 8,
+      "pap-depesze": 1,
+      "wroclaw-transport": 1,
+      "msz-odyseusz": 1,
+      "sky-tg24": 1,
+      "rpo": 1,
       "sejm-eli": 946,
       "senat-pl": 6,
       "un-news": 24
     },
     "byType": {
-      "factcheck": 931,
-      "pierwotne": 2237,
-      "analiza": 461
+      "factcheck": 934,
+      "pierwotne": 2241,
+      "analiza": 462
     },
     "byHost": {
-      "demagog.org.pl": 742,
+      "demagog.org.pl": 745,
       "dpa-factchecking.com": 35,
       "www.dw.com": 34,
       "commission.europa.eu": 27,
@@ -415,22 +414,28 @@
       "pravda.org.pl": 70,
       "www.prezydent.pl": 1,
       "www.prosecutionservice.nl": 8,
+      "www.pap.pl": 1,
+      "www.wroclaw.pl": 1,
+      "odyseusz.gov.pl": 1,
+      "tg24.sky.it": 1,
+      "bip.brpo.gov.pl": 1,
       "api.sejm.gov.pl": 946,
       "www.senat.gov.pl": 6,
       "news.un.org": 20,
       "ukraine.un.org": 4
     },
     "byLevel": {
-      "1": 2237,
-      "2": 1392
+      "1": 2241,
+      "2": 1395,
+      "3": 1
     },
     "byRole": {
-      "stala_rola": 1386,
-      "tresc": 2243
+      "stala_rola": 1389,
+      "tresc": 2248
     },
-    "domains": 26,
-    "withPublishedAt": 2807,
-    "newestFetchedAt": "2026-11-21T21:44:06.981Z",
+    "domains": 31,
+    "withPublishedAt": 2815,
+    "newestFetchedAt": "2026-11-22T00:25:34.428Z",
     "oldestFetchedAt": "2026-11-21T16:07:22.030Z"
   }
 }

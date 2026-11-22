@@ -76,7 +76,7 @@ export function buildProductionContext(cfg: AppConfig, db: Db): ServerContext {
     cfg,
     db,
     embedClaims,
-    conversationAgent: deps.llm.name !== "fake" ? createConversationAgent(deps.llm) : undefined,
+    conversationAgent: deps.llm.available ? createConversationAgent(deps.llm) : undefined,
     engine: {
       // Zakres przebiegu: koszt wyszukiwania na żywo (tokeny + opłata za web_search) trafia do report.models
       // („live_search”) i report.costUsd, a zdarzenia bezpieczeństwa gałęzi live dostają identyfikator przebiegu.

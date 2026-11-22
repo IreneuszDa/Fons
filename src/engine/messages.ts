@@ -50,6 +50,9 @@ export function branchUnavailablePl(branchId: string, partial = false): string {
 /** Polish name of a retrieval branch (ids are owned by the retrieval module; matched loosely). */
 export function branchNamePl(id: string): string {
   const s = id.toLowerCase();
+  if (s === "google_claimreview") return "indeks Google Fact Check Tools";
+  if (s === "publications") return "publikacje źródłowe w katalogu";
+  if (s === "local_transport") return "dokumenty dotyczące transportu w tej miejscowości";
   if (s.includes("official")) return "oficjalne kanały instytucji";
   if (s.includes("live")) return "wyszukiwanie na żywo w serwisach z katalogu źródeł";
   if (s.includes("vector") || s.includes("embed") || s.includes("wektor")) return "wyszukiwanie po znaczeniu";

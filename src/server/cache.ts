@@ -5,7 +5,9 @@
  */
 import { createHash } from "node:crypto";
 import { VerdictReport } from "../shared/contracts";
-import { socialVideoPlatform } from "../engine/video/social-source";
+import { relativeWindowDay } from "../security/dates";
+import { publicPostUrl, socialVideoPlatform } from "../engine/video/platforms";
+import { selectedVideoProvider } from "./config";
 import type { Db, EngineRequest, ServerContext } from "./context";
 import { sha256Hex } from "./util";
 
@@ -61,9 +63,11 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest): string 
   if (req.kind === "url" && req.url) {
     normalized = canonicalUrl(req.url);
     if (socialVideoPlatform(req.url)) {
-      const post = new URL(req.url);
-      normalized = JSON.stringify([post.hostname, post.pathname, ctx.cfg.geminiVideoModel ?? "default",
-        !!ctx.cfg.geminiApiKey, !!ctx.cfg.socialKitApiKey]);
+      const provider = selectedVideoProvider(ctx.cfg);
+      const model = provider === "openai" ? ctx.cfg.openaiVideoModel : ctx.cfg.geminiVideoModel;
+      const enabled = provider === "openai" ? !!ctx.cfg.openaiApiKey : provider === "gemini" && !!ctx.cfg.geminiApiKey;
+      normalized = JSON.stringify([publicPostUrl(req.url), provider, model ?? "default", enabled,
+        provider === "openai" ? ctx.cfg.openaiDataResidency : undefined, !!ctx.cfg.socialKitApiKey]);
     }
     // The same article can be submitted for different claims.
     if (req.text?.trim()) {
@@ -79,6 +83,8 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest): string 
     const masked = ctx.security.maskPii(req.text ?? "").text;
     normalized = normalizeText(ctx.security.resolveRelativeDates(masked, receivedAt));
   }
+  const asOf = relativeWindowDay(req.text ?? "", receivedAt);
+  if (asOf) normalized = JSON.stringify([normalized, asOf]);
   return sha256Hex(
     // Źródła na żywo zmieniają wynik, więc wynik z zamkniętego korpusu nie może być podany po ich włączeniu (i odwrotnie).
     [req.kind, normalized, ctx.engine.snapshotId(), ctx.engine.pipelineVersion, ctx.cfg.verdictMode, ctx.cfg.liveSearch ? "live" : "closed"].join(
@@ -114,6 +120,7 @@ export function putCached(
   opts: { liveSearch?: boolean } = {},
 ): boolean {
   if (report.status !== "OK") return false;
+  if (report.videoAnalysis && report.videoAnalysis.status !== "analyzed") return false;
   if (report.imageAnalysis?.images.some(({ provenance, search }) =>
     provenance.credential === "unavailable" || (search && (search.status !== "ok" || search.factCheckStatus === "unavailable")))) return false;
   // Klucz skasowany przez „usuń moje dane” (SEC-02): wynik trafia tylko do pytającego, nie do cache.

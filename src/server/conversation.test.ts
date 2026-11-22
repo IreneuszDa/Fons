@@ -535,12 +535,12 @@ describe("limity", () => {
 });
 
 describe("rozpoznawanie wejścia", () => {
-  it("sam adres URL → kind=url; tekst z adresem → kind=text; kanał trafia do silnika, pole fault nigdy", async () => {
+  it("przekazuje pojedynczy link razem z pytaniem i kanałem, bez pola fault", async () => {
     const env = makeEnv();
     await chat(env, { text: "https://example.com/artykul?utm_source=x" });
     await chat(env, { text: "Zobacz to https://example.com/artykul i powiedz czy to prawda" });
     expect(env.calls[0]).toMatchObject({ kind: "url", url: "https://example.com/artykul?utm_source=x", channel: "web" });
-    expect(env.calls[1]!.kind).toBe("text");
+    expect(env.calls[1]).toMatchObject({ kind: "url", url: "https://example.com/artykul", text: expect.stringMatching(/Zobacz to\s+i powiedz czy to prawda/) });
     expect(env.calls.every((c) => c.fault === undefined)).toBe(true);
   });
 

@@ -32,13 +32,6 @@ export function hasLlmKey(cfg: Pick<AppConfig, "anthropicApiKey" | "mistralApiKe
   return !!(cfg.anthropicApiKey || cfg.mistralApiKey || cfg.openaiApiKey);
 }
 
-/** LLM_PROVIDER=fake: deterministic heuristic provider — proves the harness runs; numbers are NOT representative. */
-export function fakeProviderRequested(): boolean {
-  return process.env.LLM_PROVIDER === "fake";
-}
-
-export const FAKE_PROVIDER_NOTICE =
-  "UWAGA: LLM_PROVIDER=fake — heurystyczny model testowy. Ewaluacja sprawdza tylko, czy harness działa; liczby NIE są reprezentatywne.";
 
 export const NO_KEY_MESSAGE =
   "Brak klucza do modelu językowego (OPENAI_API_KEY, ANTHROPIC_API_KEY albo MISTRAL_API_KEY w pliku .env).\n" +
