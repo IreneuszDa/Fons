@@ -5,6 +5,7 @@ import { matchTerms, stripPiiPlaceholders } from "./fts";
 import { BM25_MAX_SOURCE_SHARE, capPerSource } from "./diversity";
 import { reciprocalRankFusion } from "./fusion";
 import { fold } from "./stem";
+import { institutionalMeasure, sourceMeasureValues } from "../verdict/slots";
 
 /** Wagi kolumn records_fts(title, text, claim_reviewed): tytuł wyżej niż treść. */
 export const BM25_WEIGHTS = { title: 10, text: 1, claim: 5 } as const;
@@ -97,6 +98,34 @@ export function createBm25Branch(db: Database): RetrievalBranch {
       const match = terms.join(" OR ");
       const sources = new Map<string, string>();
       const full = toCandidates(run("full", "records_fts", match, rowLimit), sources);
+      const measure = institutionalMeasure(q.claim.text);
+      // Legal terms are often written out ("czteroletnią kadencję"). Requiring the
+      // user's number would hide the very provision capable of correcting it.
+      let statutory: EvidenceCandidate[] = [];
+      if (measure?.kind === "term" || (/\bkadencj\p{L}*/iu.test(q.claim.text) && /(?:\blat\b|\brok\p{L}*|letni\p{L}*)/iu.test(q.claim.text))) {
+        const offices = q.claim.text.match(/(?:prezydent|sejm|senat|posł|radn|wójt|burmistrz)\p{L}*/giu) ?? [];
+        const names = matchTerms(offices);
+        if (names.length) {
+          const rows = prep("statutory-term", `SELECT r.id, r.source_id AS src, bm25(records_fts) AS s
+            FROM records_fts JOIN records r ON records_fts.rowid = r.rowid
+            WHERE records_fts MATCH ? AND r.source_id = 'sejm-eli'
+              AND (r.text LIKE '%letni%' OR r.text LIKE '% lat%')
+            ORDER BY s LIMIT 4`).all(`text : ("kadencj"* AND (${names.join(" OR ")}))`) as { id: string; src: string; s: number }[];
+          statutory = toCandidates(rows, sources);
+        }
+      }
+      if (measure?.kind === "count") {
+        const subjects = matchTerms([measure.subject.replace(/ (?:rp|rzeczypospolitej polskiej)$/, "")]);
+        const units = matchTerms([measure.unit]);
+        if (subjects.length && units.length) {
+          const table = foldAvailable() ? "records_fold" : "records_fts";
+          const rows = prep("count:" + table, `SELECT r.id, r.source_id AS src, r.text AS body, bm25(${table}) AS s
+            FROM ${table} JOIN records r ON ${table}.rowid = r.rowid
+            WHERE ${table} MATCH ? AND r.level = 1 AND r.role = 'tresc' AND r.type = 'pierwotne'
+            ORDER BY s LIMIT 60`).all(`text : ((${subjects.join(" OR ")}) AND (${units.join(" OR ")}))`) as { id: string; src: string; body: string; s: number }[];
+          statutory = toCandidates(rows.filter(row => sourceMeasureValues(measure, row.body, row.src === "sejm-eli").length === 1), sources);
+        }
+      }
 
       let head: EvidenceCandidate[] = [];
       try {
@@ -114,8 +143,8 @@ export function createBm25Branch(db: Database): RetrievalBranch {
         }
       }
       throwIfAborted(q.signal);
-      if (head.length === 0 && folded.length === 0) return capped(full, sources, limit);
-      const fused = reciprocalRankFusion([full, head, folded], undefined, [BM25_LIST_WEIGHTS.full, BM25_LIST_WEIGHTS.head, BM25_LIST_WEIGHTS.fold]);
+      if (head.length === 0 && folded.length === 0 && statutory.length === 0) return capped(full, sources, limit);
+      const fused = reciprocalRankFusion([full, head, folded, statutory], undefined, [BM25_LIST_WEIGHTS.full, BM25_LIST_WEIGHTS.head, BM25_LIST_WEIGHTS.fold, 2]);
       return capped(fused, sources, limit).map((c) => ({ ...c, via: "bm25" as const }));
     },
   };

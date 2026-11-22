@@ -13,6 +13,8 @@ export const IncidentRecord = z.object({
   url: z.string().url(),
   /** Domeny serwisów rozpowszechniających narrację (bez platform społecznościowych), gdy źródło je podaje. */
   domains: z.array(z.string()).default([]),
+  /** Explicitly attributed profiles, separate from the host of a shared platform. */
+  channels: z.array(z.string().url()).optional(),
   publishedAt: z.string().nullable().default(null),
   /** Powiązany rekord korpusu (CorpusRecord.id), jeśli istnieje. */
   recordId: z.string().nullable().default(null),

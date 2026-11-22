@@ -99,7 +99,14 @@ export function ClaimDetails({ verdict }: { verdict: ClaimVerdict }) {
         </Text>
       ) : null}
       <ConflictingSources verdict={verdict} />
-      {verdict.evidence.length > 0 ? (
+      {verdict.parts?.length && verdict.parts.every(part => part.evidence !== undefined) ? verdict.parts.map((part, i) => (
+        <VStack key={i} gap={2}>
+          <Heading level={5}>{part.text}</Heading>
+          <VerdictLabel verdict={part.verdict} size="sm" />
+          {part.reasonPl && <Text as="p">{part.reasonPl}</Text>}
+          {part.evidence!.length > 0 && <EvidenceGroups evidence={part.evidence!} headingLevel={6} />}
+        </VStack>
+      )) : verdict.evidence.length > 0 ? (
         <EvidenceGroups evidence={verdict.evidence} />
       ) : verdict.verdict !== "NIE_PODLEGA" ? (
         <Text as="p" color="secondary">

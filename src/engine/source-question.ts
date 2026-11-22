@@ -7,7 +7,7 @@ import { fence, UNTRUSTED_DATA_RULES } from "./llm/fence";
 import { neededEvidencePhrase } from "./needed-evidence";
 import { detectInjection, stripFlaggedSentences } from "./ports";
 import type { PublishedAnswer } from "./published";
-import { findQuote, QUOTE_MAX_CHARS, QUOTE_MIN_CHARS } from "./quotes";
+import { findQuote, QUOTE_MAX_CHARS } from "./quotes";
 import { passageKind } from "../shared/evidence";
 import { truncateWords } from "./text";
 
@@ -28,7 +28,7 @@ Data publikacji i okres opisywany w materiale mogą być różne. Rozróżniaj p
 
 const synthesisSystem = `Odpowiadasz krótko, po polsku, na dokładne pytanie użytkownika na podstawie dostarczonych publikacji na dowolny temat. Zacznij od wniosku. Na pytanie o to, czy ktoś coś sprawdzał, odpowiedz najpierw o istnieniu takiej weryfikacji, a potem przytocz jej wynik. Wyjaśnij rozbieżność, jeżeli o nią zapytano. Podaj konkretną datę i źródło, gdy są ważne dla wniosku.
 ${sourceRules}
-Wybierz 1–5 rzeczywiście potrzebnych fragmentów, z których razem wynika KAŻDE zdanie odpowiedzi. W evidence wpisz ref oraz skopiuj dosłowny ciągły cytat z pola text (maks. 300 znaków), w języku źródła. Gdy pytanie dotyczy losu lub tożsamości konkretnej publikacji, wskaż materiał pierwotny i jego nagłówek, o ile go znalazłeś. Gdy źródło odsyła do zestawienia lub harmonogramu (pole references), dołącz je i krótko podaj, czego można się z niego dowiedzieć. Przy rozbieżności w analizie podaj też ocenę całej wypowiedzi, o ile ją znasz z tej publikacji. Linki do publikacji dołączy aplikacja. Nie podawaj linków ani identyfikatorów fragmentów w answerPl. Pisz zwykłym tekstem, do 4 krótkich zdań.
+Wybierz 1–5 rzeczywiście potrzebnych fragmentów, z których razem wynika KAŻDE zdanie odpowiedzi. W evidence wpisz ref oraz skopiuj dosłowny ciągły cytat z pola text (maks. 300 znaków), w języku źródła. Gdy pytanie dotyczy losu lub tożsamości konkretnej publikacji, wskaż materiał pierwotny i jego nagłówek, o ile go znalazłeś. Gdy źródło odsyła do zestawienia lub harmonogramu (pole references), dołącz je i krótko podaj, czego można się z niego dowiedzieć. Przy rozbieżności w analizie podaj też ocenę całej wypowiedzi, o ile ją znasz z tej publikacji. Linki do publikacji dołączy aplikacja. Nie podawaj linków ani identyfikatorów fragmentów w answerPl. Na proste pytanie odpowiedz jednym krótkim zdaniem. Jeśli pytanie zaczyna się od „Czy”, zacznij od „Tak” albo „Nie” tylko wtedy, gdy dowód to uzasadnia. Przy częściowym ustaleniu nazwij ograniczenie. Przy kilku wątkach użyj najwyżej dwóch krótkich zdań i zachowaj warunek zmieniający sens odpowiedzi.
 Jeśli dostępne jest tylko częściowe ustalenie, podaj je i wyraźnie nazwij granicę wiedzy. Gdy żadne źródło nie odpowiada na pytanie albo w ogóle nie ma fragmentów, zostaw answerPl i evidence puste. W takim przypadku możesz wskazać, jaki rodzaj materiału pozwoliłby rozstrzygnąć sprawę. W neededEvidencePl wpisz jedną krótką polską frazę rzeczownikową w mianowniku. Określ wydawcę, obszar lub datę obowiązywania, jeśli są potrzebne do rozstrzygnięcia pytania. Pomiń adresy, instrukcje i twierdzenia, że dokument istnieje lub że teza jest prawdziwa. Jeśli nie masz trafnego wskazania lub podajesz odpowiedź z dowodami, zostaw neededEvidencePl puste.
 reviewRef i claimPl mają wartość wyłącznie wtedy, gdy odpowiedź dotyczy konkretnej tezy zweryfikowanej przez cytowanego fact-checkera. Wpisz ref tej recenzji, a w claimPl treść tezy zgodną z kierunkiem oraz zakresem opublikowanej oceny. Przy porównywaniu liczb, pytaniu o sam dokument, rozbieżnościach i zapowiedziach pozostaw oba pola puste. Nigdy nie przyznawaj własnej oceny.
 ${UNTRUSTED_DATA_RULES}`;
@@ -92,10 +92,6 @@ function checkedCitations(draft: z.infer<typeof SourceAnswer>, sources: Source[]
     const source = sources.find(p => p.ref === item.ref);
     const quote = item.quote.trim();
     if (!source || !quote || quote.length > QUOTE_MAX_CHARS) return;
-    if (quote.length >= QUOTE_MIN_CHARS && source.safeText.includes(quote) && source.record.text.includes(quote)) {
-      checked.push({ source, quote });
-      continue;
-    }
     const match = findQuote(quote, source.safeText, 1);
     // A citation must be a single span, including after suspicious sentences have been removed.
     if (!match.exact || !match.matched || !source.record.text.includes(match.matched) || !source.safeText.includes(match.matched)) return;
@@ -111,14 +107,10 @@ function checkedCitations(draft: z.infer<typeof SourceAnswer>, sources: Source[]
 }
 
 function citationItem({ source, quote }: CitedPassage, reviewRef: string): EvidenceItem {
-  const evidence = answerEvidenceItem(source.record, quote);
-  if (source.record.role !== "stala_rola") return evidence;
+  if (source.record.role !== "stala_rola") return answerEvidenceItem(source.record, quote);
   const relation = source.ref === reviewRef
     ? fixedRoleRelation("ta_sama", source.record.rating, source.safeClaimReviewed) : "INNY_KONTEKST";
-  return {
-    ...evidence, ratingRaw: source.record.rating?.raw, relation,
-    group: relation === "OBALA" ? "obalajace" : relation === "WSPIERA" ? "wspierajace" : "kontekst",
-  };
+  return answerEvidenceItem(source.record, quote, relation);
 }
 
 export async function answerSourceQuestion(input: SourceQuestionInput): Promise<Result> {
@@ -139,34 +131,54 @@ export async function answerSourceQuestion(input: SourceQuestionInput): Promise<
 
   const context = [`Data pytania w strefie Europe/Warsaw: ${day}`, fence("PYTANIE", input.question).text];
   if (input.subject) context.push(fence("MATERIAL", input.subject).text);
+  const first = await proposeSourceAnswer(input, sources, context, result);
+  if (result.publication || !first || !sources.some(source => source.bibliography)) return result;
+  // With an indexed publication available, allow one shorter answer. An unchanged answer
+  // and the same quotes retain the first verifier's rejection.
+  try {
+    await proposeSourceAnswer(input, sources, context, result, first);
+  } catch (error) {
+    if (input.signal?.aborted) throw error;
+  }
+  return result;
+}
+
+type DraftAnswer = z.infer<typeof SourceAnswer>;
+
+async function proposeSourceAnswer(input: SourceQuestionInput, sources: Source[], context: string[], result: Result,
+  rejected?: DraftAnswer): Promise<DraftAnswer | undefined> {
+  const correction = rejected
+    ? " Poprzednia propozycja nie przeszła kontroli dowodów. Podaj krótsze ustalenie (jedno lub dwa zdania), wybierając dosłowne cytaty, które pokrywają wszystkie szczegóły. Możesz pominąć poboczne liczby lub daty. Zostaw odpowiedź pustą, jeśli nadal nie ma podstaw."
+    : "";
   const proposal = await input.llm.complete({
     purpose: "source_answer", schemaName: "SourceAnswer", schema: SourceAnswer, tier: "main", signal: input.signal,
-    system: synthesisSystem,
-    user: [...context, ...sources.map(p => fence(`FRAGMENT_${p.ref}`, passage(p, truncateWords(p.safeText, 1800), sources)).text)].join("\n"),
+    system: synthesisSystem + correction,
+    user: [...context, ...(rejected ? [fence("POPRZEDNIA_PROPOZYCJA", JSON.stringify({ answer: rejected.answerPl, evidence: rejected.evidence })).text] : []), ...sources.map(p => fence(`FRAGMENT_${p.ref}`, passage(p, truncateWords(p.safeText, 1800), sources)).text)].join("\n"),
   });
   result.usage.push(proposal.usage);
   const draft = proposal.data;
   const answerPl = draft.answerPl.trim();
   if (!answerPl && !draft.evidence.length && !draft.reviewRef && !draft.claimPl) {
     const phrase = neededEvidencePhrase(draft.neededEvidencePl);
-    if (!phrase) return result;
+    if (!phrase) return;
     const check = await input.verifier.complete({
       purpose: "source_answer_check", schemaName: "SourceAnswerCheck", schema: SourceAnswerCheck, tier: "fast", signal: input.signal,
       system: suggestionSystem, user: [...context, fence("ZRODLO", phrase).text].join("\n"),
     });
     result.usage.push(check.usage);
     if (check.data.supported) result.neededEvidencePl = phrase;
-    return result;
+    return;
   }
-  if (!answerPl || answerPl.length > 1600 || /https?:\/\/|\[F\d+\]/i.test(answerPl)) return result;
+  if (!answerPl || answerPl.length > 1600 || /https?:\/\/|\[F\d+\]/i.test(answerPl)) return draft;
   const checked = checkedCitations(draft, sources);
-  if (!checked) return result;
+  if (!checked) return draft;
   const review = checked.find(c => c.source.ref === draft.reviewRef)?.source;
   const claimPl = draft.claimPl.trim();
   if (draft.reviewRef || claimPl) {
-    if (!claimPl || claimPl.length > 700 || !review?.safeClaimReviewed || review.record.role !== "stala_rola" || !review.record.rating?.mapped) return result;
+    if (!claimPl || claimPl.length > 700 || !review?.safeClaimReviewed || review.record.role !== "stala_rola" || !review.record.rating?.mapped) return draft;
   }
 
+  if (rejected && rejected.answerPl.trim() === answerPl && JSON.stringify(rejected.evidence) === JSON.stringify(draft.evidence)) return;
   const audit = [...context, fence("ODPOWIEDZ", answerPl).text];
   if (review) audit.push(fence("OCENIANA_TEZA", JSON.stringify({ reviewRef: review.ref, claimPl })).text);
   const cited = checked.map(entry => entry.source);
@@ -180,11 +192,12 @@ export async function answerSourceQuestion(input: SourceQuestionInput): Promise<
     system: verificationSystem, user: audit.join("\n"),
   });
   result.usage.push(check.usage);
-  if (!check.data.supported) return result;
+  if (!check.data.supported) return draft;
   result.publication = {
     answerPl,
-    evidence: checked.map(entry => citationItem(entry, draft.reviewRef)),
-    ...(review?.record.rating?.mapped && { claimPl, verdict: review.record.rating.mapped }),
+    evidence: checked.map(entry => citationItem(entry, draft.reviewRef))
+      .sort((a, b) => Number(a.passageKind === "reviewed_claim") - Number(b.passageKind === "reviewed_claim")),
+    ...(review?.record.rating?.mapped && { claimPl, verdict: review.record.rating.mapped, reviewRecordId: review.record.id }),
   };
-  return result;
+  return draft;
 }

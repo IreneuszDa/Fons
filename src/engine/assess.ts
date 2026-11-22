@@ -12,17 +12,23 @@ import type {
   CorpusRecord,
   DetectorHit,
   EvidenceAssessment,
-  FixedRating,
   FixedRoleMatch,
   LlmProvider,
   ModelUsage,
-  Relation,
   Verdict,
 } from "../shared/contracts";
+import { publicationLinks } from "../corpus/publication-links";
+import { asksForElectionWinner, electionResultStage } from "./election-result";
+import { preciseDateAssessment, requestedEventDay } from "./event-day";
+import { fixedRoleRelation, reviewExplanation } from "./reviewed-verdict";
+import { onlyAnnouncesFutureAction } from "./verdict/periods";
+
 import { fence } from "./llm/fence";
 import { ASSESS_PROPOSAL_ADDENDUM, ASSESS_SYSTEM, AssessOut, AssessProposalOut } from "./prompts";
 import { QUOTE_MAX_CHARS, findQuote, type QuoteMatch } from "./quotes";
 import { formatDatePl, truncateWords } from "./text";
+
+export { fixedRoleRelation, isCompoundClaim } from "./reviewed-verdict";
 
 export const MAX_FRAGMENTS_PER_CLAIM = 8;
 const FRAGMENT_MAX_CHARS = 1800;
@@ -79,6 +85,8 @@ export function buildAssessPrompt(claim: Claim, prepared: PreparedRecord[]): str
     for (const p of fixed) {
       parts.push(`[${p.ref}] data publikacji: ${formatDatePl(p.record.publishedAt)}`);
       parts.push(fence(`TEZA_${p.ref}`, p.safeClaimReviewed ?? truncateWords(p.safeText, 400)).text);
+      const explanation = reviewExplanation(p.record, p.safeText, p.safeClaimReviewed);
+      if (explanation) parts.push(fence(`UZASADNIENIE_${p.ref}`, explanation).text);
     }
   } else {
     parts.push("\nLista 'fixedRole' ma być pusta.");
@@ -124,40 +132,6 @@ export async function runAssessment(
   return { out: res.data, usage: res.usage };
 }
 
-/** Relation shown for a fixed-role record, derived by code from rating + match (never by the model). */
-/**
- * A reviewed claim made of several statements (e.g. „Prezydent zawetował X! Żołnierze zostają w Polsce.”).
- * „Fałsz” on such a conjunction only says that AT LEAST ONE part is false, so its negation proves nothing about
- * the user's claim — inverting it confirmed „Wojsko Polskie walczy w Ukrainie” from a Demagog „Fałsz” on a veto
- * story (dev A22). A „Prawda” on a conjunction still refutes the negation of any part, so only that direction is safe.
- */
-export function isCompoundClaim(text: string | undefined): boolean {
-  if (!text) return false;
-  const statements = text
-    .split(/[.!?…]+(?:\s+|$)/u)
-    .map((s) => s.trim())
-    .filter((s) => s.split(/\s+/u).filter(Boolean).length >= 3);
-  return statements.length >= 2;
-}
-
-export function fixedRoleRelation(match: FixedRoleMatch, rating: FixedRating | undefined, claimReviewed?: string): Relation {
-  const mapped = rating?.mapped ?? null;
-  if (match === "inna") return "BEZ_ZWIAZKU";
-  if (!mapped || match === "niepewne") return "INNY_KONTEKST";
-  if (match === "ta_sama") {
-    if (mapped === "POTWIERDZONE") return "WSPIERA";
-    if (mapped === "FALSZYWE") return "OBALA";
-    if (mapped === "WPROWADZAJACE") return "CZESCIOWO";
-    return "INNY_KONTEKST";
-  }
-  // zaprzeczona: only binary ratings are inverted.
-  if (rating?.binary) {
-    if (mapped === "POTWIERDZONE") return "OBALA";
-    if (mapped === "FALSZYWE") return isCompoundClaim(claimReviewed) ? "INNY_KONTEKST" : "WSPIERA";
-  }
-  return "INNY_KONTEKST";
-}
-
 function blank(claimId: string, recordId: string): EvidenceAssessment {
   return {
     claimId,
@@ -200,7 +174,9 @@ export function toAssessments(
     done.add(p.ref);
     const a: EvidenceAssessment = {
       ...blank(claim.id, p.record.id),
-      relation: item.relation === "KORYGUJE_CZESC" ? "CZESCIOWO" : item.relation,
+      relation: item.relation === "KORYGUJE_CZESC" ? "CZESCIOWO"
+        : item.relation === "POTWIERDZA_DAWNY_STAN" ? "INNY_KONTEKST" : item.relation,
+      ...(item.relation === "POTWIERDZA_DAWNY_STAN" && { historicalSupport: true as const }),
       ...(item.relation === "KORYGUJE_CZESC" ? { partialMeaning: "correction" as const }
         : item.relation === "CZESCIOWO" ? { partialMeaning: "coverage" as const } : {}),
       aspect: item.aspect,
@@ -234,7 +210,17 @@ export function toAssessments(
       assessments.push({ ...verified, excluded: "detector_hit" });
       continue;
     }
-    assessments.push(verified);
+    if (claim.temporal.kind === "stan" && onlyAnnouncesFutureAction(claim.text, recordQuote)) {
+      assessments.push({ ...verified, excluded: "future_announcement_only" });
+      continue;
+    }
+    if (verified.relation === "INNY_KONTEKST" && asksForElectionWinner(claim.text)
+        && electionResultStage(p.record) === "runoff_pending") {
+      // A bulletin announcing another vote cannot show who ultimately won it.
+      assessments.push({ ...verified, relation: "CZESCIOWO", partialMeaning: "coverage" });
+    } else {
+      assessments.push(verified);
+    }
   }
 
   const fixedByRef = new Map((raw?.fixedRole ?? []).map((f) => [f.ref.trim(), f.match]));
@@ -243,14 +229,13 @@ export function toAssessments(
     done.add(p.ref);
     const match: FixedRoleMatch = fixedByRef.get(p.ref) ?? "niepewne";
     const r = p.record;
-    // The quote is chosen by code from the record: the reviewed claim if it appears in the text,
-    // otherwise the beginning of the record text.
+    // A verbatim published finding is more informative than repeating the words under review.
     const cr = p.safeClaimReviewed?.trim();
     const crInText = cr ? findQuote(cr, p.safeText) : undefined;
-    const quote =
-      crInText?.found && crInText.matched
-        ? truncateWords(crInText.matched, QUOTE_MAX_CHARS)
-        : truncateWords(p.safeText.trim(), QUOTE_MAX_CHARS);
+    const finding = match === "ta_sama" && (reviewExplanation(r, p.safeText, cr) ?? publicationLinks()
+      .find(link => link.publicationId === r.id && link.url === r.url)?.excerpts
+      ?.find(text => p.safeText.includes(text) && !cr?.includes(text)));
+    const quote = truncateWords(finding || crInText?.matched || p.safeText.trim(), QUOTE_MAX_CHARS);
     const quoteHits = detect(quote, "quote", r.id);
     if (!quote || !r.text.includes(quote) || quoteHits.length) {
       events.push(...quoteHits);
@@ -273,7 +258,9 @@ export function toAssessments(
   for (const p of prepared) {
     if (!done.has(p.ref)) assessments.push({ ...blank(claim.id, p.record.id), excluded: "not_assessed" });
   }
-  return { assessments, events };
+  const day = requestedEventDay(claim);
+  const records = new Map(prepared.map(p => [p.record.id, p.record]));
+  return { assessments: assessments.map(a => preciseDateAssessment(day, a, records.get(a.recordId))), events };
 }
 
 /**

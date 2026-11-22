@@ -49,7 +49,8 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     const reply = c.json.reply;
     expect(reply.kind).toBe("answer");
     expect(reply.textPl).toContain("Według Sejm RP (2024-03-01): «Prezes Urzędu jest centralnym organem administracji rządowej.»");
-    expect(reply.textPl).toContain("Źródło: Ustawa o ochronie konkurencji (Sejm RP): https://eli.gov.pl/akt/42");
+    expect(reply.shortAnswer.sources).toEqual([{ title: evidence.title, publisher: evidence.publisher, url: evidence.url }]);
+    expect(reply.textPl).toBe(reply.shortAnswer.bodyPl);
     expect(reply.textPl).not.toContain("Wynik:"); // to nie werdykt
     expect(reply.report.answer.evidence).toHaveLength(1);
     expect(reply.resultUrl).toContain("/w/");
@@ -89,7 +90,7 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     });
     const c = await chat(env, { text: "Kim jest Prezes UOKiK?" });
     expect(c.json.reply.kind).toBe("verdict");
-    expect(c.json.reply.textPl).toContain("Nie znalazłem w źródłach odpowiedzi na to pytanie.");
+    expect(c.json.reply.textPl).toMatch(/^Nie wiem\. /);
     expect(c.json.reply.report.answer).toBeUndefined();
   });
 
@@ -99,7 +100,7 @@ describe("tryb odpowiedzi na pytanie otwarte", () => {
     });
     const c = await chat(env, { text: "Kto jest sekretarzem generalnym NATO?" });
     expect(c.json.reply.kind).toBe("verdict");
-    expect(c.json.reply.textPl).toBe("Brak odpowiedzi w źródłach.");
+    expect(c.json.reply.textPl).toBe("Nie wiem. Brak odpowiedzi w źródłach.");
     const st = makeEnv({ engine: (r) => makeReport({ claim: r.text, inputMode: "question_open", status: "NIEPELNE", mainVerdict: null, verdicts: [] }) });
     expect((await chat(st, { text: "Kto jest sekretarzem generalnym NATO?" })).json.reply.kind).toBe("status");
   });

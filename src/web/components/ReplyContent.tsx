@@ -8,8 +8,9 @@ import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import { useStreamingText } from "@astryxdesign/core/hooks";
 import { useEffect, useState } from "react";
 import type { ConversationReply, VerdictReport } from "../../shared/contracts";
-import { paragraphs } from "../lib/format";
-import { claimRows, hasArchivalWarning, replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf } from "../lib/report";
+import { citizenAnswerPl, citizenWarnings } from "../../shared/citizen-answer";
+import { hostOf, paragraphs } from "../lib/format";
+import { claimRows, hasArchivalWarning, replyView, STATUS_HINT_PL, STATUS_KEY_TITLE_PL, statusOf, STRENGTH_PL } from "../lib/report";
 import { resultPathFor, safeUrl } from "../lib/safeUrl";
 import { AnswerCard } from "./AnswerCard";
 import { ClaimBreakdown } from "./ClaimBreakdown";
@@ -84,7 +85,7 @@ function TypingReply({ text }: { text: string }) {
 /** Stored conversations may predate the shortAnswer field. */
 function reportSummary(report: VerdictReport): NonNullable<ConversationReply["shortAnswer"]> {
   return {
-    bodyPl: report.answer?.answerPl ?? report.summaryPl,
+    bodyPl: citizenAnswerPl(report),
     sources: report.answer?.evidence ?? claimRows(report)[0]?.verdict.evidence ?? [],
     caseNotePl: report.moderatorCase && `Sprawa #${report.moderatorCase.caseId} jest zapisana do sprawdzenia.`,
   };
@@ -104,6 +105,7 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
     const permalink = resultPathFor(report.token, reply.resultUrl);
     const showClaims = view === "verdict" && report.verdicts.length > 1;
     const parts = report.questionParts;
+    const strength = !report.answer && report.verdicts.length === 1 ? report.verdicts[0]?.strength : undefined;
     const answerAnchor = report.article ? undefined : anchorId;
     return (
       <VStack gap={2}>
@@ -111,13 +113,15 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
         {parts?.length ? <QuestionBreakdown parts={parts} anchorId={answerAnchor} /> :
           showClaims ? <ClaimBreakdown report={report} anchorId={answerAnchor} /> :
           paragraphs(short.bodyPl).map((p, i) => <Text key={i} as="p" type="large" weight="normal" id={i === 0 ? answerAnchor : undefined}>{p}</Text>)}
-        {!showClaims && !parts?.length && Array.from(publications, ([href, source]) => (
-          <Link key={href} href={href} isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">
-            {source.publisher} · {source.title}
+        {!showClaims && !parts?.length && Array.from(publications).slice(0, 1).map(([href, source]) => (
+          <Link key={href} href={href} label={`Źródło · ${source.title} (otwiera się w nowej karcie)`} isExternalLink newTabLabel="(otwiera się w nowej karcie)" rel="noopener noreferrer nofollow">
+            Źródło · {hostOf(href).replace(/^www\./u, "")}
           </Link>
         ))}
+        {strength && strength.score !== null &&
+          <Text type="supporting" color="secondary">Siła dowodów — {STRENGTH_PL[strength.level]}</Text>}
         {short.caseNotePl && <Text as="p" color="secondary">{short.caseNotePl}</Text>}
-        {report.warnings.filter(w => w.kind !== "single_key_verifier").map((w, index) => (
+        {citizenWarnings(report.warnings).map((w, index) => (
           <VStack key={index} gap={1}>
             <Text as="p" type="supporting" color="secondary">{w.textPl}</Text>
             {w.links?.map(link => {
@@ -142,11 +146,9 @@ function ReplyBody({ reply, anchorId }: { reply: ConversationReply; anchorId?: s
       <VStack gap={3}>
         <StatusNotice title={STATUS_KEY_TITLE_PL[key]} message={message} hint={reply.report?.videoAnalysis ? undefined : hint} />
         {reply.report?.videoAnalysis && (
-          <>
-            <VideoFindings analysis={reply.report.videoAnalysis} pendingClaims={reply.report.claims} />
-            <ReportWarnings warnings={reply.report.warnings} />
-          </>
+          <VideoFindings analysis={reply.report.videoAnalysis} pendingClaims={reply.report.claims} />
         )}
+        {reply.report && <ReportWarnings warnings={reply.report.warnings} />}
         {reply.report && <TransparencyBlock report={reply.report} />}
       </VStack>
     );

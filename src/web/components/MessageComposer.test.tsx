@@ -74,6 +74,29 @@ async function click(label: string) {
   await act(async () => button(label).click());
 }
 
+it("allows attaching two images and removing either one before the local comparison", async () => {
+  const picker = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+  async function choose(files: File[]) {
+    Object.defineProperty(picker, "files", { configurable: true, value: files });
+    await act(async () => { picker.dispatchEvent(new window.Event("change", { bubbles: true })); });
+  }
+  const first = new File([sample], "pierwszy.png", { type: "image/png" });
+  const second = new File(["drugi"], "drugi.jpg", { type: "image/jpeg" });
+  await choose([first]);
+  await click("Dodaj drugi obraz do porównania");
+  await choose([second]);
+  expect(document.body.textContent).toContain("porówna oba obrazy lokalnie");
+  await click("Usuń obraz 1");
+  expect(document.body.textContent).not.toContain("pierwszy.png");
+  await click("Dodaj drugi obraz do porównania");
+  await choose([first]);
+  await click("Wyślij");
+  expect(onSubmit).toHaveBeenCalledWith({
+    image: { mime: "image/jpeg", base64: Buffer.from("drugi").toString("base64") },
+    comparisonImage: { mime: "image/png", base64: Buffer.from(sample).toString("base64") },
+  }, "drugi.jpg · pierwszy.png");
+});
+
 it("transcribes dictation into the editable draft and sends only text", async () => {
   expect(getUserMedia).not.toHaveBeenCalled();
   await click("Dyktuj wiadomość");

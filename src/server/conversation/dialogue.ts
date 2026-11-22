@@ -10,6 +10,7 @@ import type { SessionRow } from "../sessions";
 import { canVerifyWithoutDialogue, conversationReply, localConversationKind } from "./agent";
 import { asksToCheckMaterial } from "../../engine/article-intent";
 import { separateQuestions } from "../../engine/question-parts";
+import { parseMembership } from "../../engine/membership";
 import { obviousImageFocus, resolveImageFocus } from "./image-intent";
 import { readDocument } from "./document";
 import { linksIn, maskedConversationText, resolveUserLink } from "./history";
@@ -61,7 +62,7 @@ ${content}` : content;
   if (built.reject) return built.reject;
   const req = built.req!;
   const verifyOriginal = () => runVerification(ctx, msg, session, { req, logInput: built.logInput }, opts);
-  if (req.kind === "recording") return verifyOriginal();
+  if (req.kind === "recording" || req.imageFocus === "comparison") return verifyOriginal();
   if (req.kind === "url" && req.url && socialVideoPlatform(req.url)) return verifyOriginal();
   if (ctx.security.hasInjection?.(msg.text)) {
     if (req.kind === "image") req.imageFocus = "claims";
@@ -69,7 +70,7 @@ ${content}` : content;
   }
   if (req.kind === "url" && (asksToCheckMaterial(req.text) || req.text?.includes("?")
     || /(?:^|\s)(?:oceń|ocen|rzuć okiem|przyjrzyj się|przejrzyj|sprawdź|zweryfikuj|przeanalizuj)(?!\p{L})/iu.test(req.text ?? ""))) return verifyOriginal();
-  if (req.kind === "text" && separateQuestions(req.text).length) return verifyOriginal();
+  if (req.kind === "text" && (separateQuestions(req.text).length || parseMembership(req.text ?? ""))) return verifyOriginal();
   if (req.kind === "text" && req.text && !fallbackCommand &&
     asksAboutDemagogReview(req.text) && (!session.state.history?.length || req.text.trim().split(/\s+/u).length > 6)) {
     return verifyOriginal();
@@ -125,8 +126,9 @@ ${content}` : content;
   if (decision.kind === "image_copies" || decision.kind === "image_visual" || decision.kind === "image_identity" || decision.kind === "image_context") {
     if (decision.kind === "image_copies" && previous?.imageAnalysis) {
       const searches = previous.imageAnalysis.images.flatMap(image => image.search?.status === "ok" ? [image.search] : []);
-      if (searches.length) {
-        const links = searches.flatMap(search => search.matches.map(match => match.url ?? match.host));
+      const localLinks = previous.imageAnalysis.images.flatMap(image => image.localSearch?.matches.map(match => match.url) ?? []);
+      if (searches.length || localLinks.length) {
+        const links = [...localLinks, ...searches.flatMap(search => search.matches.map(match => match.url ?? match.host))];
         return {
           kind: "sources", textPl: links.length ? [...new Set(links)].join("\n") : "Google nie znalazło kopii tego zdjęcia w swoim indeksie.",
           resultUrl: resultUrlFor(ctx, previous.token), quickReplies: [QR.why],
@@ -135,7 +137,17 @@ ${content}` : content;
     }
     return { kind: "help", textPl: "Dołącz zdjęcie do tej wiadomości, żebym mógł je sprawdzić.", quickReplies: [] };
   }
-  if (decision.kind === "reply") return { kind: "help", textPl: decision.text, quickReplies: [] };
+  if (decision.kind === "reply") {
+    const previousUser = history.filter(turn => turn.role === "user").at(-1);
+    const weatherFollowUp = previousUser && localConversationKind(previousUser.text) === "weather"
+      && /^w\s+[\p{L}\s-]{2,45}[.!]?$/iu.test(text.trim());
+    // Dialogue can ask for missing context. It cannot settle a claim, opinion or prediction in free text.
+    const clarification = /^(?:o\s+któr|któr|jak[iąe]|co\s|czy\s+(?:chcesz|chodzi|mam)|mam\s+sprawdzić|w\s+jak|doprecyzuj)[^.!?]{1,155}\?$/iu.test(decision.text.trim());
+    if (localConversationKind(text) || weatherFollowUp || clarification || fallbackCommand) {
+      return { kind: "help", textPl: decision.text, quickReplies: [] };
+    }
+    return verifyOriginal();
+  }
   if (decision.kind !== "verify") return reportReply(decision.kind, ctx, session);
   if (req.kind === "url") return verifyOriginal();
 

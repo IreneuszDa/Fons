@@ -2,7 +2,8 @@
 import { VERDICT_LABEL_PL, type ConversationReply, type VerdictReport } from "../../shared/contracts";
 import { mediaClaimSubject } from "../../shared/attachments";
 import { plural } from "../../engine/verdict/texts";
-import { passageText } from "../../shared/evidence";
+import { passageText, prioritizeConflictEvidence } from "../../shared/evidence";
+import { citizenAnswerPl, citizenWarnings, shortVerdict } from "../../shared/citizen-answer";
 import type { CaseOutcome } from "../moderator/cases";
 import { isoDatePart, safeHttpUrl, truncate } from "../util";
 import { ACTION } from "./intents";
@@ -97,30 +98,31 @@ export function mainClaimVerdict(report: VerdictReport) {
 /** Both public channels lead with the same answer and reference the same publications. */
 export function shortAnswerFor(report: VerdictReport, note?: string): NonNullable<ConversationReply["shortAnswer"]> {
   const sources = new Map<string, { title: string; publisher: string; url: string }>();
-  const evidence = report.questionParts?.flatMap(p => p.evidence) ?? report.answer?.evidence ?? mainClaimVerdict(report)?.evidence ?? [];
+  const verdict = mainClaimVerdict(report);
+  const evidence = report.questionParts?.flatMap(p => p.evidence) ?? report.answer?.evidence ?? prioritizeConflictEvidence(
+    [...(verdict?.evidence ?? [])].sort((a, b) => Number(!!b.usedForVerdict) - Number(!!a.usedForVerdict)), verdict?.conflicting);
   for (const item of evidence) {
     const url = safeHttpUrl(item.url);
     if (url && !sources.has(url)) sources.set(url, { url, title: item.title, publisher: item.publisher });
   }
   return {
-    bodyPl: report.answer?.answerPl ?? report.summaryPl,
+    bodyPl: citizenAnswerPl(report),
     sources: [...sources.values()],
     ...(note && { caseNotePl: note }),
   };
 }
 
 export function shortAnswerText(answer: NonNullable<ConversationReply["shortAnswer"]>, report: VerdictReport): string {
-  if (report.questionParts?.length) {
-    const parts = report.questionParts.map(part => [
-      part.questionPl, part.answerPl,
-      ...new Set(part.evidence.map(e => safeHttpUrl(e.url)).filter(Boolean)),
-    ].join("\n"));
-    return [...parts, ...report.warnings.map(w => w.textPl)].join("\n\n");
-  }
+  const body = report.questionParts?.length ? report.questionParts.map(p => p.questionPl + "\n" + p.answerPl).join("\n\n")
+    : report.verdicts.length > 1 && !report.answer ? report.verdicts.map(v => {
+      const claim = report.claims.find(c => c.id === v.claimId);
+      return (claim?.text ?? "") + "\n" + shortVerdict(v, claim);
+    }).join("\n\n") : answer.bodyPl;
+  const strength = !report.answer && report.verdicts.length === 1 ? report.verdicts[0]?.strength : undefined;
   return [
-    answer.bodyPl,
-    ...answer.sources.map(s => `Źródło: ${s.title} (${s.publisher}): ${s.url}`),
-    ...report.warnings.map(w => w.textPl),
+    body,
+    strength && strength.score !== null ? "Siła dowodów — " + STRENGTH_PL[strength.level] : undefined,
+    ...citizenWarnings(report.warnings).map(w => w.textPl),
     answer.caseNotePl,
   ].filter(Boolean).join("\n");
 }
@@ -145,15 +147,22 @@ function searchSummary(report: VerdictReport): string {
 }
 
 export function sourcesText(report: VerdictReport, resultUrl?: string): string {
+  if (report.videoAnalysis?.status === "metadata_only") return "Parametry pochodzą z pliku przesłanego w tej rozmowie.";
+  if (report.inputMode === "transcription") return "Źródłem transkrypcji jest nagranie przesłane w tej rozmowie.";
   const visual = report.imageAnalysis?.visual;
   if (visual) {
+    if (visual.mode === "context") {
+      const links = [...visual.citations.map(item => item.url), ...report.imageAnalysis!.images.flatMap(image => image.localSearch?.matches.map(item => item.url) ?? [])];
+      return links.length ? [...new Set(links)].join("\n") : report.summaryPl;
+    }
     if (!visual.citations.length) return visual.mode === "identity"
       ? "Nie mam publikacji z podpisem, który wskazywałby osobę na tym zdjęciu."
       : "Ta odpowiedź dotyczy tego, co widać na przesłanym obrazie.";
     return visual.citations.map(({ title, url, quote }) => [title, `„${quote}”`, safeHttpUrl(url)].filter(Boolean).join("\n")).join("\n\n");
   }
   if (report.imageAnalysis?.only) {
-    const links = report.imageAnalysis.images.flatMap(({ search }) => [
+    const links = report.imageAnalysis.images.flatMap(({ search, localSearch }) => [
+      ...(localSearch?.matches ?? []).map(match => match.url),
       ...(search?.matches ?? []).map(match => match.url ?? match.host),
       ...(search?.factChecks ?? []).map(review => review.url),
     ]);
@@ -189,6 +198,7 @@ export function sourcesText(report: VerdictReport, resultUrl?: string): string {
 }
 
 export function whyText(report: VerdictReport): string {
+  if (report.inputMode === "transcription" || report.videoAnalysis?.status === "metadata_only") return report.transparencyPl;
   if (report.imageAnalysis?.only) return [report.summaryPl, report.transparencyPl].join("\n");
   const activity = searchSummary(report);
   if (report.questionParts) return [report.transparencyPl, activity].filter(Boolean).join("\n");
@@ -226,9 +236,10 @@ export function whyText(report: VerdictReport): string {
   return lines.filter(Boolean).join("\n");
 }
 
-export function deletedText(counts: { reports: number; runs: number }): string {
+export function deletedText(counts: { reports: number; runs: number; archives: number }): string {
   return (
     `Usunąłem Twoje rozmowy, raporty (${counts.reports}) i historię zapytań (${counts.runs}). ` +
+    (counts.archives ? `Usunąłem też zapisane fragmenty materiałów (${counts.archives}). ` : "") +
     "Zostają tylko zanonimizowane statystyki techniczne, bez treści wiadomości."
   );
 }

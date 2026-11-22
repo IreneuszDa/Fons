@@ -91,38 +91,50 @@ function slice(text: string, n: { map: number[]; ends: number[] }, s: number, e:
   return { matched: text.slice(start, end), start, end };
 }
 
-/** indexOf that only accepts matches starting and ending on word boundaries (no „1999” inside „19990”). */
+// Keep words and decimal values whole. Trimming the end of „10,5” would change the evidence.
+function splitsToken(text: string, at: number): boolean {
+  const left = text[at - 1] ?? "";
+  const right = text[at] ?? "";
+  return (/[\p{L}\p{N}]/u.test(left) && /[\p{L}\p{N}]/u.test(right))
+    || (/\d/u.test(left) && /[.,]\d/u.test(text.slice(at, at + 2)))
+    || (/\d[.,]/u.test(text.slice(Math.max(0, at - 2), at)) && /\d/u.test(right));
+}
+
+/** indexOf that only accepts whole words and numbers. */
 function indexOfWord(t: string, q: string): number {
   let from = 0;
   for (;;) {
     const i = t.indexOf(q, from);
     if (i < 0) return -1;
-    const before = i === 0 ? "" : t[i - 1]!;
-    const after = t[i + q.length] ?? "";
-    if (!/[\p{L}\p{N}]/u.test(before) && !/[\p{L}\p{N}]/u.test(after)) return i;
+    if (!splitsToken(t, i) && !splitsToken(t, i + q.length)) return i;
     from = i + 1;
   }
 }
 
-function findSingle(quote: string, text: string, threshold: number): QuoteMatch {
+function findSingle(quote: string, text: string, threshold: number, anchoredPart = false): QuoteMatch {
   const q = normalizeQuoteText(quote);
   const n = normalizeWithMap(text);
   const t = n.norm;
   if (q.length < QUOTE_MIN_CHARS) {
-    const shortOk = q.length >= QUOTE_SHORT_EXACT_MIN_CHARS && /\d/.test(q) && q.includes(" ");
+    const shortOk = (anchoredPart && q.length > 0) || (q.length >= QUOTE_SHORT_EXACT_MIN_CHARS && /\d/.test(q) && q.includes(" "));
     const idx = shortOk ? indexOfWord(t, q) : -1;
     if (idx >= 0) return { found: true, score: 1, exact: true, ...slice(text, n, idx, idx + q.length) };
     return { found: false, score: 0, exact: false, tooShort: true };
   }
   if (t.length === 0) return { found: false, score: 0, exact: false };
 
-  const idx = t.indexOf(q);
+  const idx = indexOfWord(t, q);
   if (idx >= 0) return { found: true, score: 1, exact: true, ...slice(text, n, idx, idx + q.length) };
+  if (threshold >= 1 || t.includes(q)) return { found: false, score: 0, exact: false };
+
+  // A typographical match may restore accents. It must never substitute a number or a negation.
+  const anchors = (s: string) => JSON.stringify(s.match(/\d+(?:[.,]\d+)*|(?<!\p{L})(?:nie|nigdy|bez|no|not|never|without)(?!\p{L})/gu) ?? []);
+  const critical = anchors(q);
 
   const L = q.length;
   if (t.length <= L) {
     const r = ratio(q, t);
-    return r >= threshold ? { found: true, score: r, exact: false, ...slice(text, n, 0, t.length) } : { found: false, score: r, exact: false };
+    return r >= threshold && anchors(t) === critical ? { found: true, score: r, exact: false, ...slice(text, n, 0, t.length) } : { found: false, score: r, exact: false };
   }
 
   // Coarse pass over positions, then refine position and window length around the best one.
@@ -153,14 +165,21 @@ function findSingle(quote: string, text: string, threshold: number): QuoteMatch 
     }
   }
   if (best >= threshold) {
-    return { found: true, score: best, exact: false, ...slice(text, n, bestPos, bestPos + bestLen) };
+    let end = bestPos + bestLen;
+    while (splitsToken(t, bestPos)) bestPos--;
+    while (splitsToken(t, end)) end++;
+    const candidate = t.slice(bestPos, end);
+    const score = ratio(q, candidate);
+    if (score >= threshold && anchors(candidate) === critical) {
+      return { found: true, score, exact: false, ...slice(text, n, bestPos, end) };
+    }
   }
   return { found: false, score: Math.max(0, best), exact: false };
 }
 
 /**
- * Looks for `quote` in `text`. A quote with an ellipsis ("…" / "...") is split into parts and every
- * part (>= 15 chars) must be found; `matched` then joins the original spans with " … ".
+ * Accept omissions only in source order. Return the full original span, so an elided negation or
+ * qualification is visible to both the verifier and the reader. Reject spans too long to display.
  */
 export function findQuote(quote: string, text: string, threshold = QUOTE_FUZZY_THRESHOLD): QuoteMatch {
   const trimmed = quote.trim().slice(0, QUOTE_MAX_CHARS + 20);
@@ -169,18 +188,20 @@ export function findQuote(quote: string, text: string, threshold = QUOTE_FUZZY_T
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
   if (parts.length <= 1) return findSingle(trimmed, text, threshold);
-  const long = parts.filter((p) => normalizeQuoteText(p).length >= QUOTE_MIN_CHARS);
-  if (long.length === 0) return { found: false, score: 0, exact: false, tooShort: true };
-  const results = long.map((p) => findSingle(p, text, threshold));
-  if (!results.every((r) => r.found)) {
-    return { found: false, score: Math.min(...results.map((r) => r.score)), exact: false };
+  if (!parts.some(p => normalizeQuoteText(p).length >= QUOTE_MIN_CHARS)) return { found: false, score: 0, exact: false, tooShort: true };
+  let start = 0;
+  let end = 0;
+  let score = 1;
+  let exact = true;
+  for (const [i, part] of parts.entries()) {
+    const remaining = text.slice(end);
+    const match = findSingle(part, remaining, threshold, true);
+    if (!match.found || match.start === undefined || match.end === undefined) return { found: false, score: match.score, exact: false };
+    if (i === 0) start = match.start;
+    end += match.end;
+    score = Math.min(score, match.score);
+    exact = exact && match.exact;
   }
-  return {
-    found: true,
-    score: Math.min(...results.map((r) => r.score)),
-    exact: results.every((r) => r.exact),
-    matched: results.map((r) => r.matched).join(" … "),
-    start: Math.min(...results.map((r) => r.start ?? 0)),
-    end: Math.max(...results.map((r) => r.end ?? 0)),
-  };
+  if (end - start > QUOTE_MAX_CHARS) return { found: false, score: 0, exact: false };
+  return { found: true, score, exact, matched: text.slice(start, end), start, end };
 }

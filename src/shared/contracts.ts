@@ -13,7 +13,7 @@
  */
 import { z } from "zod";
 import { ImageProvenance } from "./image-provenance";
-import { ImageCitation, ImageSearchResult } from "./image-search";
+import { ImageCitation, ImageComparison, ImageSearchResult, LocalImageSearch } from "./image-search";
 
 // ───────────────────────────── Enumy ─────────────────────────────
 
@@ -89,7 +89,8 @@ export type Strength = z.infer<typeof Strength>;
 export const ClaimType = z.enum(["fakt", "opinia", "prognoza"]);
 export type ClaimType = z.infer<typeof ClaimType>;
 
-export const ChannelId = z.enum(["web", "chatloom", "discord", "whatsapp", "sms", "imessage", "messenger", "cli", "eval", "mcp"]);
+/** A webhook additionally requires a registered adapter with this exact id. */
+export const ChannelId = z.string().regex(/^[a-z][a-z0-9-]{0,47}$/);
 export type ChannelId = z.infer<typeof ChannelId>;
 
 // ───────────────────────────── Katalog i korpus ─────────────────────────────
@@ -104,6 +105,8 @@ export const CatalogSource = z.object({
   role: SourceRole,
   independenceGroup: z.string(), // wydawcy z tej samej grupy liczą się jako jedno potwierdzenie
   licence: z.string(),
+  /** Local archive opt-in after checking the publisher's terms for aggregated API data. */
+  archivePolicy: z.literal("aggregate-statistics-v1").optional(),
   fetchMethod: z.string(), // "api", "rss", "html", "dump", "organizer-pack"
   updateFrequency: z.string(),
   qualification: z.string(), // dlaczego źródło jest w katalogu
@@ -146,6 +149,8 @@ export const CorpusRecord = z.object({
   topics: z.array(z.string()).default([]),
   /** Okres, którego dotyczą dane (np. "2024", "2025-Q2"), jeśli znany. */
   period: z.string().optional(),
+  /** Pierwszy potwierdzony dzień obowiązywania rewizji wydawcy dla tego samego pomiaru. */
+  supersededAt: z.string().date().optional(),
   origin: z.enum(["corpus", "live_snapshot", "organizer"]).default("corpus"),
 });
 export type CorpusRecord = z.infer<typeof CorpusRecord>;
@@ -167,6 +172,7 @@ export const InboundMessage = z.object({
   /** Przycisk/akcja wybrana przez użytkownika (np. potwierdzenie usunięcia danych). */
   action: z.string().optional(),
   images: z.array(z.object({ mime: z.string(), dataRef: z.string() })).default([]),
+  compareImages: z.literal(true).optional(),
   document: z.object({ dataRef: z.string() }).optional(),
   recording: z.object({ dataRef: z.string() }).optional(),
   imageOptions: z.object({ searchWeb: z.boolean().optional() }).optional(),
@@ -220,6 +226,7 @@ export const Claim = z.object({
     kind: z.enum(["jednorazowe", "stan", "brak"]),
     date: z.string().optional(), // ISO, jeśli ustalona
     asOf: z.string().optional(), // punkt odniesienia dla stanu opisanego w datowanym artykule
+    publishedBy: z.string().date().optional(), // jawnie żądany stan publikacji, niezależny od okresu pomiaru
   }),
   /** Zgodność n-gramów z wejściem (0–1); poniżej progu twierdzenie odrzucane. */
   inputOverlap: z.number(),
@@ -258,6 +265,7 @@ export const EvidenceAssessment = z.object({
   quoteMatchScore: z.number(),
   fixedRoleMatch: FixedRoleMatch.optional(), // tylko dla stala_rola
   partialMeaning: z.enum(["coverage", "correction"]).optional(),
+  historicalSupport: z.literal(true).optional(),
   verifier: VerifierVote.default("brak"),
   /** Czy dowód jest rozstrzygający wg PLAN §4 (wyliczane w kodzie). */
   decisive: z.boolean().default(false),
@@ -275,6 +283,8 @@ export const EvidenceItem = z.object({
   fetchedAt: z.string(),
   url: z.string(),
   quote: z.string(),
+  lang: z.string().optional(),
+  usedForVerdict: z.boolean().optional(),
   passageKind: z.enum(["excerpt", "structured_data", "reviewed_claim"]).optional(),
   partialMeaning: EvidenceAssessment.shape.partialMeaning,
   relation: Relation,
@@ -315,11 +325,20 @@ export type StrengthCard = z.infer<typeof StrengthCard>;
 export const ClaimVerdict = z.object({
   claimId: z.string(),
   verdict: Verdict,
+  parts: z.array(z.object({
+    text: z.string(),
+    verdict: Verdict,
+    ruleApplied: z.number().int().min(1).max(9).optional(),
+    reasonPl: z.string().optional(),
+    evidence: z.array(EvidenceItem).optional(), // older reports only stored the combined evidence
+  })).optional(),
   /** Numer reguły z PLAN §4 (1–9), która wyznaczyła werdykt. */
   ruleApplied: z.number().int().min(1).max(9),
   strength: StrengthCard,
   /** Uzasadnienie z szablonu (domyślnie) lub zwalidowane wygładzenie. */
   reasonPl: z.string(),
+  /** Fakt odczytany z jednoznacznego wiersza oficjalnego wykazu. */
+  registerFactPl: z.string().optional(),
   missingContext: z.string().optional(),
   conflicting: z
     .object({ supporting: z.array(z.string()), refuting: z.array(z.string()) })
@@ -338,6 +357,7 @@ export const ReportWarning = z.object({
     "incident_domain", // domena/kanał w katalogu incydentów — tylko ostrzeżenie
     "incident_narrative", // dopasowanie twierdzenia do przypadku EUvsDisinfo
     "branch_unavailable", // gałąź opcjonalna niedostępna
+    "daily_search_limit",
     "single_key_verifier", // weryfikator tej samej rodziny
     "non_eea_processing",
     "image_limits",
@@ -374,7 +394,12 @@ export type SourceActivity = z.infer<typeof SourceActivity>;
 const VideoSegment = z.object({ seconds: z.number().nonnegative(), text: z.string() });
 export const VideoAnalysis = z.object({
   platform: z.enum(["tiktok", "instagram", "facebook", "youtube", "upload_audio", "upload_video"]),
-  status: z.enum(["analyzed", "subtitles_only", "transcript_only", "caption_only", "unavailable"]),
+  status: z.enum(["analyzed", "subtitles_only", "transcript_only", "caption_only", "metadata_only", "unavailable"]),
+  file: z.object({
+    mime: z.string(), bytes: z.number().int().positive(), durationSeconds: z.number().positive(),
+    audio: z.object({ codec: z.string(), sampleRateHz: z.number().int().positive(), channels: z.number().int().positive() }).optional(),
+    video: z.object({ width: z.number().int().positive(), height: z.number().int().positive() }).optional(),
+  }).optional(),
   provider: z.enum(["openai", "gemini"]).optional(),
   transcriptSource: z.enum(["platform", "openai", "gemini"]).optional(),
   mediaIssue: z.string().optional(),
@@ -418,7 +443,9 @@ export const VerdictReport = z.object({
   transparencyPl: z.string(),
   models: z.array(ModelUsage),
   timingsMs: z.record(z.string(), z.number()),
+  /** Known subtotal. A partial cost excludes services whose API does not return a charge. */
   costUsd: z.number(),
+  costStatus: z.literal("partial").optional(),
   /** Gałęzie wyszukiwania, które nie zadziałały (bez treści błędów). */
   unavailableBranches: z.array(z.string()),
   sourceActivity: SourceActivity.optional(),
@@ -430,7 +457,7 @@ export const VerdictReport = z.object({
    * Tryb wejścia: twierdzenie do sprawdzenia, pytanie tak/nie (zamienione na twierdzenie)
    * albo pytanie otwarte („Kto jest…?”), na które odpowiadamy WYŁĄCZNIE dosłownym cytatem ze źródła.
    */
-  inputMode: z.enum(["claim", "question_yesno", "question_open"]).default("claim"),
+  inputMode: z.enum(["claim", "question_yesno", "question_open", "transcription"]).default("claim"),
   /**
    * Odpowiedź na pytanie otwarte — złożona przez kod z zweryfikowanego cytatu (nigdy z wiedzy modelu).
    * Brak cytatu → brak odpowiedzi i status OK z BRAK_DOWODOW w summaryPl.
@@ -456,10 +483,11 @@ export const VerdictReport = z.object({
     .optional(),
   imageAnalysis: z.object({
     only: z.boolean(),
+    comparison: ImageComparison.optional(),
     focus: z.enum(["copies", "origin"]).optional(),
-    images: z.array(z.object({ provenance: ImageProvenance, search: ImageSearchResult.optional() })),
+    images: z.array(z.object({ provenance: ImageProvenance, search: ImageSearchResult.optional(), localSearch: LocalImageSearch.optional() })),
     visual: z.object({
-      mode: z.enum(["visual", "identity"]),
+      mode: z.enum(["visual", "identity", "context"]),
       citations: z.array(ImageCitation),
     }).optional(),
   }).optional(),
@@ -470,7 +498,8 @@ export type VerdictReport = z.infer<typeof VerdictReport>;
 
 export function reportEvidence(report: VerdictReport): EvidenceItem[] {
   const byId = new Map<string, EvidenceItem>();
-  for (const entry of [...report.verdicts.flatMap(v => v.evidence), ...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(p => p.evidence) ?? [])]) {
+  const verdictEvidence = report.verdicts.flatMap(v => [...v.evidence, ...(v.parts?.flatMap(p => p.evidence ?? []) ?? [])]);
+  for (const entry of [...verdictEvidence, ...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(p => p.evidence) ?? [])]) {
     if (!byId.has(entry.recordId)) byId.set(entry.recordId, entry);
   }
   return [...byId.values()];
@@ -480,7 +509,7 @@ export function reportEvidence(report: VerdictReport): EvidenceItem[] {
 
 /** Odpowiedź warstwy rozmowy dla kanału (renderer zamienia ją na tekst/kartę). */
 export const ConversationReply = z.object({
-  kind: z.enum(["verdict", "answer", "image_analysis", "status", "sources", "why", "confirm_delete", "deleted", "confirm_report", "reported", "help", "rate_limited"]),
+  kind: z.enum(["verdict", "answer", "image_analysis", "transcription", "status", "sources", "why", "confirm_delete", "deleted", "confirm_report", "reported", "help", "rate_limited"]),
   report: VerdictReport.optional(),
   textPl: z.string(),
   /** Short, source-linked message shared by the chat and SMS. The report retains the full evidence. */
@@ -545,8 +574,12 @@ export interface RetrievalQuery {
   claim: Claim;
   /** Dodatkowe zapytania (np. tłumaczenie EN, słowa kluczowe). */
   extraQueries?: string[];
-  /** Zachowaj miejsce dla trafienia semantycznego z bazy Demagoga przy sprawdzaniu twierdzenia. */
+  /** Day of the request, for interpreting relative dates in external searches. */
+  asOf?: string;
+  /** Zachowaj miejsce dla bliskiej semantycznie tezy sprawdzonej przez kwalifikowane źródło. */
   includeSemanticFactCheck?: boolean;
+  /** Search only dated, recent primary material for claims about the present. */
+  recentPrimaryOnly?: boolean;
   limit?: number;
   signal?: AbortSignal;
   /** Reports inapplicable or incomplete searches without changing the evidence returned. */
@@ -563,6 +596,8 @@ export interface RetrievalBranch {
 
 export interface CorpusStore {
   get(recordId: string): CorpusRecord | undefined;
+  /** Previously ingested fragments at this exact URL. Never imports a user-supplied page. */
+  catalogPage?(url: string): CorpusRecord[];
   getMany(recordIds: string[]): CorpusRecord[];
   snapshotId(): string;
   count(): number;

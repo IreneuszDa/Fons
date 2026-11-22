@@ -1,0 +1,36 @@
+{
+  "caseId": "L05",
+  "input": "Stany Zjednoczone płacą cały budżet NATO, zobacz sam: https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+  "httpCompletedAt": "2026-11-22T05:20:20.774Z",
+  "httpLatencyMs": 18319,
+  "cacheHit": false,
+  "method": "Osobne zgłoszenie przez /api/chat z pobraniem wskazanego adresu NATO. Dane diagnostyczne wcześniejszej próby były przechowywane wyłącznie lokalnie.",
+  "status": "OK",
+  "verdict": "FALSZYWE",
+  "rule": 8,
+  "verifierAgreement": "zgoda",
+  "evidence": [
+    {
+      "recordId": "nato:d1b39789a32d",
+      "title": "NATO: Funding NATO (cz. 1)",
+      "url": "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+      "publishedAt": "2026-04-08",
+      "fetchedAt": "2026-11-21T16:08:06.312Z",
+      "quote": "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries.",
+      "relation": "OBALA",
+      "usedForVerdict": true,
+      "passageKind": "excerpt"
+    },
+    {
+      "recordId": "dw-factcheck:51f88296cc46",
+      "title": "Deutsche Welle - DW Fact Check: \"The United States had never received anything from NATO, despite having paid for it.\"",
+      "url": "https://www.dw.com/en/fact-check-trumps-speech-at-the-world-economic-forum/a-75601073",
+      "publishedAt": "2026-01-22",
+      "fetchedAt": "2026-11-21T16:51:49.875Z",
+      "quote": "\"The United States had never received anything from NATO, despite having paid for it.\"",
+      "relation": "INNY_KONTEKST",
+      "usedForVerdict": false,
+      "passageKind": "reviewed_claim"
+    }
+  ]
+}

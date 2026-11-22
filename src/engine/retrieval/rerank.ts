@@ -6,6 +6,8 @@
  * Funkcja czysta: dostaje rekordy już pobrane z bazy (silnik i tak je pobiera), nie dotyka bazy ani sieci.
  */
 import type { CorpusRecord, EvidenceCandidate } from "../../shared/contracts";
+import { asksForElectionWinner, electionResultStage } from "../election-result";
+import { institutionalMeasure, sourceMeasureValues } from "../verdict/slots";
 import { contentTokens } from "./fts";
 import { detectLang, fold, mobileEVariant, stemsFor } from "./stem";
 
@@ -101,6 +103,9 @@ export function scoreCandidates(
   const w = { ...DEFAULT_RERANK_WEIGHTS, ...opts.weights };
   const stems = queryStems(opts.queryTexts);
   const must = opts.mustHave ?? [];
+  const electionWinner = asksForElectionWinner(opts.queryTexts[0] ?? "");
+  const measure = institutionalMeasure(opts.queryTexts[0] ?? "");
+  const years = (opts.queryTexts[0] ?? "").match(/\b(?:19|20)\d{2}\b/g) ?? [];
   return candidates.map((c, i) => {
     const r = records.get(c.recordId);
     const rank = 1 / (1 + i * 0.12);
@@ -113,7 +118,13 @@ export function scoreCandidates(
       title: coverage(stems, head),
       text: coverage(stems, body),
     };
-    const score = w.rank * parts.rank + w.mustHave * parts.mustHave + w.title * parts.title + w.text * parts.text;
+    // Among relevant official results for the requested election, favor the passage naming the winner.
+    const finalResult = electionWinner && parts.title > 0 && electionResultStage(r) === "elected"
+      && years.every(year => body.includes(year));
+    const suppliesMeasure = measure && r.level === 1 && r.role === "tresc" && r.type === "pierwotne"
+      && sourceMeasureValues(measure, r.text, r.sourceId === "sejm-eli").length === 1;
+    const score = w.rank * parts.rank + w.mustHave * parts.mustHave + w.title * parts.title + w.text * parts.text
+      + (finalResult ? w.rank * parts.text : 0) + (suppliesMeasure ? w.rank + w.title : 0);
     return { candidate: c, score, parts };
   });
 }

@@ -8,13 +8,14 @@
  * Wynik to lista adresów do pobrania; o tym, czy host wolno pobrać, decyduje dopiero gałąź (katalog źródeł).
  */
 import { existsSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { dataDir } from "../../corpus/paths";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import { foldToken } from "./live-score";
 
-export const DEFAULT_AUTHORITIES_PATH = fileURLToPath(new URL("../../../data/authorities.yaml", import.meta.url));
-export const DEFAULT_COUNTRIES_PATH = fileURLToPath(new URL("../../../data/odyseusz-countries.json", import.meta.url));
+export const DEFAULT_AUTHORITIES_PATH = join(dataDir(), "authorities.yaml");
+export const DEFAULT_COUNTRIES_PATH = join(dataDir(), "odyseusz-countries.json");
 
 /** Najwyżej tyle adresów na jedno twierdzenie (profil kraju, strona tematyczna, listy komunikatów). */
 export const MAX_OFFICIAL_LOOKUPS = 4;

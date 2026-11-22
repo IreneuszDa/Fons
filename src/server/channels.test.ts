@@ -8,16 +8,16 @@ import { createHmac } from "node:crypto";
 
 const SECRET = "shared-secret";
 
-function fakeAdapter(sent: ConversationReply[]): ChannelAdapter {
+function fakeAdapter(sent: ConversationReply[], id = "sms"): ChannelAdapter {
   return {
-    id: "sms",
+    id,
     capabilities: { maxChars: 320, supportsImagesIn: false, supportsButtons: false, supportsMarkdown: false },
     verifySignature: (raw, headers) => verifyHmacSha256(SECRET, raw, headers["x-signature"]),
     parseInbound(raw): InboundMessage | null {
       const b = JSON.parse(raw) as { from: string; id: string; text: string };
       if (!b.text) return null;
       return {
-        channel: (b as any).channel ?? "sms",
+        channel: (b as any).channel ?? id,
         senderId: `sms-${b.from}`,
         sessionId: `sms-sess-${b.from}`,
         messageId: b.id,
@@ -40,6 +40,15 @@ const post = (env: TestEnv, id: string, body: string, sig?: string) =>
   });
 
 describe("webhook kanałów", () => {
+  it("obsługuje podpisaną wiadomość z nowego kanału bez zmiany kontraktu wiadomości", async () => {
+    const env = makeEnv();
+    const replies: ConversationReply[] = [];
+    env.ctx.channels.register(fakeAdapter(replies, "partner-chat"), { webhook: true });
+    const body = JSON.stringify({ from: "1", id: "delivery", text: "Czy Polska należy do NATO?" });
+    expect((await post(env, "partner-chat", body, sign(body))).status).toBe(200);
+    expect(env.calls[0]?.channel).toBe("partner-chat");
+    expect(replies[0]?.report?.id).toBeTruthy();
+  });
   it("nieznany lub nieskonfigurowany kanał → 501", async () => {
     const env = makeEnv();
     expect((await post(env, "whatsapp", "{}")).status).toBe(501);

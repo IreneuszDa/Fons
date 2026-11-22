@@ -102,8 +102,10 @@ export function MetricsBody({ m }: { m: NonNullable<Awaited<ReturnType<typeof fe
         <StatTile label="Z pamięci podręcznej" value={intPl(m.totals.cacheHits)} hint={percent(cacheRate)} />
         <StatTile label="Czas odpowiedzi p50" value={ms(m.latency.p50)} />
         <StatTile label="Czas odpowiedzi p95" value={ms(m.latency.p95)} />
-        <StatTile label="Koszt na 100 sprawdzeń" value={formatUsd(m.cost.per100Usd)} />
-        <StatTile label="Koszt razem" value={formatUsd(m.cost.totalUsd)} />
+        <StatTile label="Koszt na 100 sprawdzeń (znana część)" value={formatUsd(m.cost.per100Usd)} />
+        <StatTile label="Suma znanych kosztów" value={formatUsd(m.cost.totalUsd)} />
+        {m.cost.googleVisionToday && <StatTile label="Wywołania Google Vision dzisiaj" value={intPl(m.cost.googleVisionToday.requests)}
+          hint="Google rozlicza Vision osobno. Kwotę podaje na rachunku projektu." />}
         <StatTile label="Wywołania modeli" value={intPl(m.llm.calls)} hint={`tokeny: ${intPl(m.llm.tokensIn)} wej. / ${intPl(m.llm.tokensOut)} wyj.`} />
       </Grid>
       <Divider />

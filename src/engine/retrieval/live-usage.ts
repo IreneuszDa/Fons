@@ -20,6 +20,7 @@ import type { SearchUsage } from "../../tools/search";
 export interface LiveRunScope {
   requestId?: string;
   usages: SearchUsage[];
+  dailySearchLimitReached?: boolean;
 }
 
 export const LIVE_SEARCH_PURPOSE = "live_search";

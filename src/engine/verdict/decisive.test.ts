@@ -99,12 +99,24 @@ describe("isDecisive", () => {
     const r1 = rec("a", { level: 3, independenceGroup: "g1" });
     const r2 = rec("b", { level: 3, independenceGroup: "g2" });
     const a1 = asm("a", { relation: "CZESCIOWO", partialMeaning: "correction" });
-    const a2 = asm("b", { relation: "INNY_KONTEKST" });
+    const a2 = asm("b", { relation: "INNY_KONTEKST", verifier: "zgoda" });
     const m = new Map([
       ["a", r1],
       ["b", r2],
     ]);
     expect(isDecisive(a1, r1, [a1, a2], m)).toBe(true);
+  });
+
+  it("niezweryfikowane tło nie podważa potwierdzonej tezy", () => {
+    const primary = rec("primary");
+    const background = rec("background");
+    const records = new Map([[primary.id, primary], [background.id, background]]);
+    const claim = { id: "c1", text: "Zakaz dotyczy węgla.", type: "fakt" as const, isMain: true, temporal: { kind: "brak" as const }, inputOverlap: 1 };
+    for (const vote of ["brak", "niepewne", "sprzeciw"] as const) {
+      const context = asm(background.id, { verifier: vote, relation: "INNY_KONTEKST" });
+      expect(decideVerdict({ claim, records, assessments: [asm(primary.id), context],
+        now: new Date("2026-11-22"), singleKeyVerifier: true })).toMatchObject({ verdict: "POTWIERDZONE", decisiveRecordIds: [primary.id] });
+    }
   });
 
   it("wtórne: rekord o stałej roli nie jest drugim źródłem wtórnym", () => {
@@ -136,6 +148,17 @@ describe("effectiveFixedVerdict", () => {
   it("zaprzeczona odwraca tylko binarne", () => {
     expect(effectiveFixedVerdict(asm("f", { fixedRoleMatch: "zaprzeczona" }), fc({ raw: "Fałsz", mapped: "FALSZYWE", binary: true }))).toBe("POTWIERDZONE");
     expect(effectiveFixedVerdict(asm("f", { fixedRoleMatch: "zaprzeczona" }), fc({ raw: "Manipulacja", mapped: "WPROWADZAJACE", binary: false }))).toBeNull();
+  });
+  it("negacja jednego zdania fałszywej recenzji wielowątkowej nie stanowi dowodu w regule 6", () => {
+    const record = { ...fc({ raw: "Fałsz", mapped: "FALSZYWE", binary: true }),
+      claimReviewed: "Zdecydowane veto prezydenta! Nasi żołnierze zostają w Polsce, nie pojadą na Ukrainę." };
+    const a = asm(record.id, { fixedRoleMatch: "zaprzeczona", relation: "INNY_KONTEKST" });
+    const decision = decideVerdict({
+      claim: { id: "c1", text: "Wojsko Polskie oficjalnie walczy na froncie w Ukrainie.", type: "fakt",
+        temporal: { kind: "stan" }, isMain: true, inputOverlap: 1 },
+      assessments: [a], records: new Map([[record.id, record]]), now: new Date("2026-11-22"), singleKeyVerifier: true,
+    });
+    expect(decision).toMatchObject({ verdict: "BRAK_DOWODOW", ruleApplied: 2, decisiveRecordIds: [] });
   });
   it("brak dopasowania → null", () => {
     expect(effectiveFixedVerdict(asm("f"), fc({ raw: "Fałsz", mapped: "FALSZYWE", binary: true }))).toBeNull();

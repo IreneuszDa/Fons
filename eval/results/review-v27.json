@@ -1,0 +1,519 @@
+{
+  "reviewer": "Recenzja semantyczna wykonana przez asystenta AI. Niezależna recenzja człowieka nie została wykonana.",
+  "reviewedAt": "2026-11-22T05:24:37.598845+00:00",
+  "sample": "eval/results/acceptance-2026-11-22T05-20-28-908Z.json",
+  "acceptanceSha256": "bea1d8d2281437bf2ca856b3abb003baf791b2c749f27bd96e6ecf3b90dd7a90",
+  "pipeline": "engine-2026.11.22-27-evidence-time",
+  "method": "Dla każdej udzielonej odpowiedzi porównano wejście i odpowiedź z cytatem, polem źródła, wydawcą, datą publikacji i pobrania oraz ewentualną oceną wydawcy. Pierwsze źródło to pierwszy rekord użyty do werdyktu lub pierwszy rekord answer.evidence. Pełny łańcuch obejmuje wyłącznie źródła użyte do rozstrzygnięcia. Wspólne twierdzenie wymaga pokrycia każdej części. Czas pobrania nie zastępuje daty opisanego zdarzenia.",
+  "limitations": "Ocena dotyczy odpowiedzi w pojedynczej, celowo dobranej próbie. Nie obejmuje ponownego pobrania stron. Identyfikatory odwołują się do fragmentów i czasem kilku fragmentów tej samej publikacji. Zasadność wstrzymania oceniono wyłącznie na podstawie treści raportu. Osobno podano porównanie z kluczem zestawu.",
+  "sampleSize": 30,
+  "abstentions": 14,
+  "nonFactual": 3,
+  "technicalStatuses": 0,
+  "scores": {
+    "all": {
+      "firstSource": {
+        "numerator": 11,
+        "denominator": 13
+      },
+      "decisiveChain": {
+        "numerator": 12,
+        "denominator": 13
+      }
+    },
+    "verdicts": {
+      "firstSource": {
+        "numerator": 9,
+        "denominator": 11
+      },
+      "decisiveChain": {
+        "numerator": 10,
+        "denominator": 11
+      }
+    },
+    "openQuestions": {
+      "firstSource": {
+        "numerator": 2,
+        "denominator": 2
+      },
+      "decisiveChain": {
+        "numerator": 2,
+        "denominator": 2
+      }
+    }
+  },
+  "abstentionReview": {
+    "withholdingSupportedByReport": {
+      "numerator": 14,
+      "denominator": 14
+    },
+    "expectedByTestKeyAmongAbstentions": {
+      "numerator": 8,
+      "denominator": 14
+    },
+    "items": [
+      {
+        "caseId": "A22",
+        "input": "Wojsko Polskie oficjalnie walczy na froncie w Ukrainie.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": false,
+        "reason": "W raporcie brak materiału dokumentującego bieżący udział polskich oddziałów na froncie. W v26 komunikat KPRM mówił o stanowisku rządu wobec przyszłego wysyłania wojska. Wstrzymanie unika przeniesienia tej deklaracji na stan faktyczny."
+      },
+      {
+        "caseId": "N01",
+        "input": "Polska nie jest członkiem NATO.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [
+          "nato:bb383ce7e3a2"
+        ],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": false,
+        "reason": "W raporcie pokazano jako kontekst komunikat o akcesji Polski w 1999 r. Brakuje cytatu wyraźnie odnoszącego się do obecnego statusu. Nadmierna abstencja względem dostępnej migawki: w v26 oficjalny wykaz członków NATO (nato:17b2896c4813) pozwolił odpowiedzieć na tę samą tezę."
+      },
+      {
+        "caseId": "N02",
+        "input": "Ukraina nie jest członkiem Unii Europejskiej.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": false,
+        "reason": "Raport nie pokazuje dowodu. W tej samej migawce UE opisuje Ukrainę jako kraj kandydujący (eu-portal:9ce4a9d60272), o czym świadczą A13 v27 i N02 v26. Pominięcie dostępnego wpisu pozbawiło odbiorcę uzasadnionej odpowiedzi."
+      },
+      {
+        "caseId": "B01",
+        "input": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": false,
+        "reason": "Silnik rozpoznał osobne tezy o dostawach do Polski i na Węgry, lecz nie przywołał materiału o żadnej z dwóch decyzji Gazpromu. Odpowiedź nie potwierdza grupy na podstawie jednego kraju. Klucz oczekiwał rozstrzygnięcia złożonego."
+      },
+      {
+        "caseId": "B08",
+        "input": "Inflacja w Polsce wynosi ponad 18 procent.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": false,
+        "reason": "Do rozstrzygnięcia tezy o obecnej inflacji potrzeba bieżącego wskaźnika, okresu odniesienia i jego definicji. Raport nie przytacza żadnego pomiaru. Klucz zakłada wykazanie nieaktualności."
+      },
+      {
+        "caseId": "C01",
+        "input": "W 2023 roku odnotowano ponad 26 tysięcy prób nielegalnego przekroczenia granicy polsko-białoruskiej.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "W raporcie brak pomiaru liczby prób na granicy polsko-białoruskiej w 2023 r. Brak źródeł uzasadnia ostrożność bieżącego odczytu. Odrębne porównanie C01 wykazało, że komunikat SG potwierdza próg, a Frontex zlicza inną wielkość."
+      },
+      {
+        "caseId": "C02",
+        "input": "Rosyjska flota cieni liczy ponad tysiąc statków.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "W raporcie brak oszacowania całej floty przy określonej definicji i dacie. Liczebność list sankcyjnych odnotowana w poprzednich materiałach nie stanowi rozmiaru całej floty. Panel nie pokazał dwóch przeciwstawnych źródeł."
+      },
+      {
+        "caseId": "D01",
+        "input": "Wczoraj wieczorem w Białymstoku zatrzymano trzech rosyjskich dyplomatów podczas fotografowania koszar.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "Brak materiału o zatrzymaniu trzech dyplomatów w Białymstoku wskazanego wieczoru. Nie wyprowadzono wniosku o zaistnieniu ani niezaistnieniu zdarzenia."
+      },
+      {
+        "caseId": "D02",
+        "input": "Dziś rano w porcie w Gdyni zatrzymano tankowiec floty cieni z ładunkiem rosyjskiej ropy.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "Raport nie wskazuje publikacji o zatrzymaniu tankowca tego ranka w Gdyni, jego przynależności do floty i rodzaju ładunku."
+      },
+      {
+        "caseId": "D04",
+        "input": "Burmistrz Suwałk ogłosił wczoraj zamknięcie szkół z powodu ćwiczeń wojsk białoruskich.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "W zapisie brak datowanego komunikatu właściwego organu o szkołach w Suwałkach i wskazanej przyczynie zamknięcia."
+      },
+      {
+        "caseId": "D06",
+        "input": "PKW unieważniła wczoraj wybory w jednej z gmin na Podkarpaciu z powodu ingerencji z zagranicy.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "W raporcie brak rozstrzygnięcia PKW dla konkretnej gminy, dnia i wskazanej ingerencji. Silnik powstrzymał się od oceny zdarzenia."
+      },
+      {
+        "caseId": "G02",
+        "input": "Szwecja nie jest członkiem NATO.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": false,
+        "reason": "Bieżący raport nie przywołuje dowodu. W tej samej migawce dostępny jest wykaz państw członkowskich NATO ze Szwecją (nato:67d8c689b833), użyty w v26. Obecna odmowa oznacza utratę dostępnej odpowiedzi."
+      },
+      {
+        "caseId": "H01",
+        "input": "Wczoraj w Olsztynie otwarto tajny ośrodek dla migrantów przerzucanych z Białorusi.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "Brak dowodu na otwarcie ośrodka w Olsztynie danego dnia. Odpowiedź zachowuje niepewność."
+      },
+      {
+        "caseId": "H02",
+        "input": "Słyszałem, że wczoraj w Olsztynie otworzyli tajny ośrodek dla migrantów z Białorusi.",
+        "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+        "contextRecordIds": [],
+        "withholdingSupportedByReport": true,
+        "expectedAbstentionInTestKey": true,
+        "reason": "Parafraza pogłoski o ośrodku w Olsztynie nie dostarczyła nowego źródła. Udzielono tej samej ostrożnej odpowiedzi co w H01."
+      }
+    ],
+    "metricScope": "Ocena wystarczalności dowodów faktycznie przedstawionych. W przeciwieństwie do skuteczności wyszukiwania lub trafności odpowiedzi w świecie uwzględnia wyłącznie treść bieżącego raportu.",
+    "availableInSameCorpusButOmitted": [
+      {
+        "caseId": "N01",
+        "recordId": "nato:17b2896c4813"
+      },
+      {
+        "caseId": "N02",
+        "recordId": "eu-portal:9ce4a9d60272"
+      },
+      {
+        "caseId": "G02",
+        "recordId": "nato:67d8c689b833"
+      }
+    ]
+  },
+  "nonFactualItems": [
+    {
+      "caseId": "O01",
+      "input": "Rząd powinien zwiększyć wydatki na obronność do 6 procent PKB.",
+      "answer": "To opinia.",
+      "reason": "Słowo „powinien” wyraża postulat dotyczący wydatków. Wartość 6% określa cel postulatu."
+    },
+    {
+      "caseId": "O02",
+      "input": "Za pięć lat Ukraina będzie członkiem Unii Europejskiej.",
+      "answer": "To prognoza. Jej wynik można sprawdzić dopiero po zdarzeniu.",
+      "reason": "Zdanie przypisuje przyszłej dacie członkostwo Ukrainy w UE. W chwili sprawdzania jest prognozą."
+    },
+    {
+      "caseId": "O04",
+      "input": "Członkostwo w Unii Europejskiej to najlepsze, co spotkało Polskę.",
+      "answer": "To opinia.",
+      "reason": "Sformułowanie „najlepsze, co spotkało Polskę” wyraża ocenę wartościującą."
+    }
+  ],
+  "technicalStatusItems": [],
+  "items": [
+    {
+      "caseId": "A01",
+      "kind": "werdykt",
+      "input": "Polska jest członkiem NATO od 12 marca 1999 roku.",
+      "verdict": "POTWIERDZONE",
+      "answer": "Tak. Polska jest członkiem NATO od 12 marca 1999 roku.",
+      "firstSource": {
+        "recordId": "nato:17b2896c4813",
+        "title": "NATO: Polska — członkostwo w NATO od 1999 r.",
+        "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+        "publishedAt": "2024-03-11",
+        "fetchedAt": "2026-11-21T16:07:22.030Z",
+        "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+        "passageKind": "structured_data",
+        "ratingRaw": null,
+        "quote": "Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12)."
+      },
+      "additionalDecisiveRecordIds": [
+        "nato:bb383ce7e3a2",
+        "live:4452897a70334a18548a",
+        "live:a36f8207ab0f14ae1fd8"
+      ],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Wpis z wykazu członków NATO identyfikuje Polskę, datę 12 marca 1999 r. i trwające od niej członkostwo. Dwa językowe warianty komunikatu rządu RP stanowią dodatkowe potwierdzenie daty."
+    },
+    {
+      "caseId": "A06",
+      "kind": "werdykt",
+      "input": "Konstytucja RP została uchwalona przez Zgromadzenie Narodowe 2 kwietnia 1997 roku.",
+      "verdict": "POTWIERDZONE",
+      "answer": "Tak. Konstytucja RP została uchwalona przez Zgromadzenie Narodowe 2 kwietnia 1997 roku.",
+      "firstSource": {
+        "recordId": "senat-pl:14307efce215",
+        "title": "Senat RP: 25. rocznica uchwalenia Konstytucji RP",
+        "publisher": "Senat Rzeczypospolitej Polskiej (senat.gov.pl)",
+        "publishedAt": "2022-04-01",
+        "fetchedAt": "2026-11-22T04:43:33.947Z",
+        "url": "https://www.senat.gov.pl/aktualnoscilista/art,14652,25-rocznica-uchwalenia-konstytucji-rp.html",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "2 kwietnia 1997 r. Zgromadzenie Narodowe uchwaliło Konstytucję Rzeczypospolitej Polskiej"
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Senat przypisuje uchwalenie Konstytucji Zgromadzeniu Narodowemu i podaje dokładnie 2 kwietnia 1997 r. Data publikacji materiału rocznicowego jest odrębna od daty uchwalenia."
+    },
+    {
+      "caseId": "A08",
+      "kind": "werdykt",
+      "input": "Kadencja Sejmu trwa 5 lat.",
+      "verdict": "FALSZYWE",
+      "answer": "Nie. „Sejm i Senat są wybierane na czteroletnie kadencje.”",
+      "firstSource": {
+        "recordId": "sejm-eli:4b0cf68c664f",
+        "title": "Konstytucja Rzeczypospolitej Polskiej z dnia 2 kwietnia 1997 r. (Dz.U. 1997 nr 78 poz. 483, tekst ujednolicony) — art. 98",
+        "publisher": "Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)",
+        "publishedAt": "1997-04-02",
+        "fetchedAt": "2026-11-21T16:18:44.587Z",
+        "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "Art. 98. 1. Sejm i Senat są wybierane na czteroletnie kadencje."
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Artykuł 98 ust. 1 w tekście ujednoliconym określa kadencje obu izb jako czteroletnie. Przepis obejmuje Sejm i bezpośrednio przeczy tezie o pięciu latach."
+    },
+    {
+      "caseId": "A10",
+      "kind": "werdykt",
+      "input": "Senat RP liczy 150 senatorów.",
+      "verdict": "FALSZYWE",
+      "answer": "Nie. „Senat składa się ze 100 senatorów.”",
+      "firstSource": {
+        "recordId": "sejm-eli:a52a0a8b9e4e",
+        "title": "Konstytucja Rzeczypospolitej Polskiej z dnia 2 kwietnia 1997 r. (Dz.U. 1997 nr 78 poz. 483, tekst ujednolicony) — art. 97",
+        "publisher": "Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)",
+        "publishedAt": "1997-04-02",
+        "fetchedAt": "2026-11-21T16:18:44.587Z",
+        "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "Art. 97. 1. Senat składa się ze 100 senatorów."
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Artykuł 97 ust. 1 tekstu ujednoliconego określa skład Senatu na 100 senatorów. Udzielona odpowiedź prawidłowo koryguje liczbę 150."
+    },
+    {
+      "caseId": "A13",
+      "kind": "werdykt",
+      "input": "Ukraina otrzymała status kraju kandydującego do Unii Europejskiej w czerwcu 2022 roku.",
+      "verdict": "POTWIERDZONE",
+      "answer": "Tak. Ukraina otrzymała status kraju kandydującego do Unii Europejskiej w czerwcu 2022 roku.",
+      "firstSource": {
+        "recordId": "eu-portal:9ce4a9d60272",
+        "title": "Unia Europejska: Ukraina — kraj kandydujący do UE (daty wniosku i statusu kandydata)",
+        "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+        "publishedAt": null,
+        "fetchedAt": "2026-11-21T21:22:36.719Z",
+        "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+        "passageKind": "structured_data",
+        "ratingRaw": null,
+        "quote": "Ukraina (kraj kandydujący do UE), portal UE: Wniosek o członkostwo w UE złożyła w lutym 2022 r. Status kandydata otrzymała w czerwcu 2022 r."
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Portal UE podaje czerwiec 2022 r. jako miesiąc uzyskania statusu kandydata przez Ukrainę. Brak daty publikacji nie utrudnia odczytania daty opisanego zdarzenia."
+    },
+    {
+      "caseId": "A15",
+      "kind": "werdykt",
+      "input": "Unia Europejska zakazała importu węgla z Rosji.",
+      "verdict": "POTWIERDZONE",
+      "answer": "Tak. Unia Europejska zakazała importu węgla z Rosji.",
+      "firstSource": {
+        "recordId": "ec-finance:fdf25764850d",
+        "title": "Komisja Europejska: Sanctions adopted following Russia’s military aggression against Ukraine (sankcje UE wobec Rosji i Białorusi, pakiety sankcji, zakaz importu węgla i ropy) (cz. 5)",
+        "publisher": "Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu)",
+        "publishedAt": "2026-11-06",
+        "fetchedAt": "2026-11-21T21:28:41.589Z",
+        "url": "https://finance.ec.europa.eu/eu-and-world/sanctions-restrictive-measures/sanctions-adopted-following-russias-military-aggression-against-ukraine_en",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "Prohibition on the import of coal, peat and LPG (liquified petroleum gas) and seaborne crude oil"
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": false,
+      "allDecisiveSourcesSufficient": false,
+      "reason": "Cytat Komisji potwierdza zakaz importu węgla, lecz pomija kraj pochodzenia. Temat zestawienia obejmuje sankcje UE przyjęte po rosyjskiej agresji, a tytuł rekordu wskazuje także Białoruś. W tej próbie raport nie przywołuje rozstrzygającego przepisu EUR-Lex określającego pochodzenie węgla."
+    },
+    {
+      "caseId": "A19",
+      "kind": "werdykt",
+      "input": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+      "verdict": "FALSZYWE",
+      "answer": "Nie. Źródła przeczą twierdzeniu „Samolot MH17 został zestrzelony przez ukraiński myśliwiec”.",
+      "firstSource": {
+        "recordId": "euvsdisinfo:5e2f2b01f2bd",
+        "title": "EUvsDisinfo: Ukrainian pilots shot down MH17",
+        "publisher": "EUvsDisinfo (East StratCom Task Force, EEAS)",
+        "publishedAt": "2016-10-24",
+        "fetchedAt": "2026-11-21T21:43:52.128Z",
+        "url": "https://euvsdisinfo.eu/report/ukrainian-pilots-shot-down-mh17/",
+        "passageKind": "reviewed_claim",
+        "ratingRaw": "DISINFO",
+        "quote": "Ukrainian pilots shot down MH17"
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "EUvsDisinfo oznacza twierdzenie o zestrzeleniu MH17 przez ukraińskich pilotów jako DISINFO. Podstawą jest tu para złożona z tezy i oceny wydawcy. Materiały JIT i holenderskiej rady bezpieczeństwa opisujące naziemny system Buk pojawiają się dodatkowo jako kontekst."
+    },
+    {
+      "caseId": "B02",
+      "kind": "werdykt",
+      "input": "Polska i Litwa wstąpiły do NATO w 1999 roku.",
+      "verdict": "WPROWADZAJACE",
+      "answer": "Nie w całości. „Polska wstąpiła do NATO w 1999 roku” — tak, „Litwa wstąpiła do NATO w 1999 roku” — nie.",
+      "firstSource": {
+        "recordId": "nato:17b2896c4813",
+        "title": "NATO: Polska — członkostwo w NATO od 1999 r.",
+        "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+        "publishedAt": "2024-03-11",
+        "fetchedAt": "2026-11-21T16:07:22.030Z",
+        "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+        "passageKind": "structured_data",
+        "ratingRaw": null,
+        "quote": "Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12)."
+      },
+      "additionalDecisiveRecordIds": [
+        "nato:34422af68eb6",
+        "nato:bb383ce7e3a2",
+        "nato:c9907d0339b4"
+      ],
+      "firstSourceSufficient": false,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Pierwszy fragment NATO dotyczy Polski i roku 1999. Drugi podaje rok 2004 dla Litwy. Dopiero zestawienie obu rekordów uzasadnia podział odpowiedzi na prawdziwą i fałszywą część."
+    },
+    {
+      "caseId": "B04",
+      "kind": "werdykt",
+      "input": "Polska weszła do strefy Schengen razem z przystąpieniem do UE w 2004 roku.",
+      "verdict": "WPROWADZAJACE",
+      "answer": "Nie w tej formie. „Państwo członkowskie UE od 2004 r., w strefie Schengen od 2007 r.”",
+      "firstSource": {
+        "recordId": "eu-portal:30c6faa24471",
+        "title": "Unia Europejska: Polska — członkostwo w UE, strefie euro i strefie Schengen",
+        "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+        "publishedAt": null,
+        "fetchedAt": "2026-11-21T21:33:00.542Z",
+        "url": "https://european-union.europa.eu/principles-countries-history/eu-countries_pl",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "Państwo członkowskie UE od 2004 r., w strefie Schengen od 2007 r."
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "W urzędowym profilu Polski zestawiono akcesję do UE w 2004 r. i wejście do strefy Schengen w 2007 r. Różne lata bezpośrednio rozstrzygają kwestię jednoczesności i zostały pokazane w krótkiej odpowiedzi."
+    },
+    {
+      "caseId": "G01",
+      "kind": "werdykt",
+      "input": "Litwa jest członkiem NATO od 2004 roku.",
+      "verdict": "POTWIERDZONE",
+      "answer": "Tak. Litwa jest członkiem NATO od 2004 roku.",
+      "firstSource": {
+        "recordId": "nato:34422af68eb6",
+        "title": "NATO: Litwa — członkostwo w NATO od 2004 r.",
+        "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+        "publishedAt": "2024-03-11",
+        "fetchedAt": "2026-11-21T16:07:22.030Z",
+        "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+        "passageKind": "structured_data",
+        "ratingRaw": null,
+        "quote": "Litwa — członkostwo w NATO od 29 marca 2004 r. (2004-03-29)."
+      },
+      "additionalDecisiveRecordIds": [
+        "nato:c9907d0339b4"
+      ],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Krajowy wpis w wykazie członków NATO podaje rok 2004 i dokładną datę dla Litwy. Drugi wpis uzupełnia wykaz państw przyjętych tego dnia."
+    },
+    {
+      "caseId": "P05",
+      "kind": "pytanie_otwarte",
+      "input": "Kto jest marszałkiem Senatu?",
+      "verdict": null,
+      "answer": "„Małgorzata Kidawa-Błońska Marszałek”",
+      "firstSource": {
+        "recordId": "senat-pl:415fab3185e3",
+        "title": "Prezydium Senatu RP: Małgorzata Kidawa-Błońska - Marszałek Senatu",
+        "publisher": "Senat Rzeczypospolitej Polskiej (senat.gov.pl)",
+        "publishedAt": null,
+        "fetchedAt": "2026-11-21T17:42:43.798Z",
+        "url": "https://www.senat.gov.pl/sklad/senatorowie/prezydium.html",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "Małgorzata Kidawa-Błońska Marszałek"
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Oficjalny wykaz prezydium Senatu łączy Małgorzatę Kidawę-Błońską z funkcją marszałka. Stronę pobrano w przeddzień próby. Data publikacji pozostaje nieznana."
+    },
+    {
+      "caseId": "P07",
+      "kind": "pytanie_otwarte",
+      "input": "Kto stoi na czele Komisji Europejskiej?",
+      "verdict": null,
+      "answer": "Przewodniczącą Komisji Europejskiej jest Ursula von der Leyen.",
+      "firstSource": {
+        "recordId": "ec-commission:626977281173",
+        "title": "Komisja Europejska (Kolegium Komisarzy): Ursula von der Leyen - President of the European Commission (przewodniczący Komisji Europejskiej)",
+        "publisher": "Komisja Europejska (commission.europa.eu)",
+        "publishedAt": null,
+        "fetchedAt": "2026-11-21T17:44:46.314Z",
+        "url": "https://commission.europa.eu/about/organisation/college-commissioners_en",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "The President Ursula von der Leyen"
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "Aktualny w chwili pobrania wykaz kolegium Komisji Europejskiej podaje funkcję President i nazwisko Ursuli von der Leyen. Krótka polska odpowiedź odpowiada wykazowi."
+    },
+    {
+      "caseId": "L05",
+      "kind": "werdykt",
+      "input": "Stany Zjednoczone płacą cały budżet NATO, zobacz sam: https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+      "verdict": "FALSZYWE",
+      "answer": "Nie. Źródła przeczą twierdzeniu „Stany Zjednoczone płacą cały budżet NATO”.",
+      "firstSource": {
+        "recordId": "nato:d1b39789a32d",
+        "title": "NATO: Funding NATO (cz. 1)",
+        "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+        "publishedAt": "2026-04-08",
+        "fetchedAt": "2026-11-21T16:08:06.312Z",
+        "url": "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+        "passageKind": "excerpt",
+        "ratingRaw": null,
+        "quote": "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries. This is the principle of common funding and it demonstrates burden-sharing in action."
+      },
+      "additionalDecisiveRecordIds": [],
+      "firstSourceSufficient": true,
+      "allDecisiveSourcesSufficient": true,
+      "reason": "NATO wyjaśnia w czasie teraźniejszym, że wszyscy sojusznicy finansują wspólny budżet według ustalonego klucza. To bezpośrednio przeczy tezie o pokrywaniu całości przez USA. Archiwalne oceny wypowiedzi polityka mają w raporcie rolę kontekstu."
+    }
+  ]
+}

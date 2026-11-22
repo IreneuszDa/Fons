@@ -18,3 +18,12 @@ export function mediaClaimSubject(analysis: VideoAnalysis): string {
   return analysis.platform === "upload_audio" ? "nagrania audio" : "filmu";
 }
 export type ImageOptions = { searchWeb?: boolean };
+
+export function recordingFileLabel(file: NonNullable<VideoAnalysis["file"]>): string {
+  return [
+    file.mime, `${file.durationSeconds.toLocaleString("pl-PL", { maximumFractionDigits: 2 })} s`,
+    `${file.bytes.toLocaleString("pl-PL")} B`,
+    file.audio && `Dźwięk ${file.audio.codec.toUpperCase()}, ${file.audio.sampleRateHz.toLocaleString("pl-PL")} Hz, liczba kanałów ${file.audio.channels}`,
+    file.video && `Obraz ${file.video.width} × ${file.video.height} pikseli`,
+  ].filter(Boolean).join(" · ");
+}

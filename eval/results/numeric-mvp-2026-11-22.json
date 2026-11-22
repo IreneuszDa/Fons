@@ -1,0 +1,51 @@
+{
+  "at": "2026-11-22T05:13:29.300Z",
+  "method": "POST /api/chat, dwa osobne zgłoszenia, świeża baza, GET zapisanych raportów i porównanie użytych cytatów oraz adresów z rekordami korpusu",
+  "reproduce": "node --env-file-if-exists=.env --import tsx eval/institutional-measures-smoke.ts",
+  "rows": [
+    {
+      "text": "Kadencja Sejmu trwa 5 lat.",
+      "http": 200,
+      "elapsedMs": 18439,
+      "status": "OK",
+      "verdict": "FALSZYWE",
+      "rule": 8,
+      "evidence": [
+        {
+          "recordId": "sejm-eli:4b0cf68c664f",
+          "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+          "usedForVerdict": true,
+          "relation": "OBALA",
+          "quote": "Sejm i Senat są wybierane na czteroletnie kadencje.",
+          "urlMatchesRecord": true,
+          "quoteInRecord": true
+        }
+      ],
+      "answer": "Nie. „Sejm i Senat są wybierane na czteroletnie kadencje.”",
+      "persisted": true,
+      "pass": true
+    },
+    {
+      "text": "Senat RP liczy 150 senatorów.",
+      "http": 200,
+      "elapsedMs": 15500,
+      "status": "OK",
+      "verdict": "FALSZYWE",
+      "rule": 8,
+      "evidence": [
+        {
+          "recordId": "sejm-eli:a52a0a8b9e4e",
+          "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+          "usedForVerdict": true,
+          "relation": "OBALA",
+          "quote": "Art. 97. 1. Senat składa się ze 100 senatorów.",
+          "urlMatchesRecord": true,
+          "quoteInRecord": true
+        }
+      ],
+      "answer": "Nie. „Senat składa się ze 100 senatorów.”",
+      "persisted": true,
+      "pass": true
+    }
+  ]
+}

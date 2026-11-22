@@ -7,11 +7,13 @@
  *                    zero-width / bidi characters stripped;
  *  - hiddenSegments: each hidden piece separately (for the detector's "hidden imperative" rule).
  */
+import { sourceLanguageTag } from "../shared/language";
 import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
 import { stripInvisible, tidyText } from "./text";
 
 export interface ExtractedPage {
+  lang?: string;
   rawText: string;
   cleanText: string;
   title?: string;
@@ -211,7 +213,11 @@ function nodeText(node: Node): string {
 
 function pushSegment(out: string[], s: string | null | undefined) {
   if (out.length >= MAX_SEGMENTS || !s) return;
-  const t = tidyText(s);
+  // Some CMSes retain complete HTML video players inside comments. A paired source
+  // tag in this markup is structural. Keep its attributes and the rest of the comment.
+  const commentText = /<(?:audio|video)\b/i.test(s)
+    ? s.replace(/(<source\b[^<>]*>\s*)<\/source\s*>/giu, "$1") : s;
+  const t = tidyText(commentText);
   if (t === "") return;
   const v = t.length > MAX_SEGMENT_CHARS ? t.slice(0, MAX_SEGMENT_CHARS) : t;
   if (!out.includes(v)) out.push(v);
@@ -278,7 +284,17 @@ function extractPublishedAt(doc: Document): string | undefined {
     }
   }
   const timeEl = doc.querySelector("time[itemprop='datePublished'], time[pubdate], time.published");
-  return normaliseDate(timeEl?.getAttribute("datetime"));
+  const machineDate = normaliseDate(timeEl?.getAttribute("datetime"));
+  if (machineDate) return machineDate;
+  // A publisher dateline can contain the issue date followed by a nested update date.
+  const dateline = doc.querySelector(".articleInfo > .date, .article-info > .date, [itemprop='datePublished']");
+  const text = dateline && Array.from(dateline.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join(" ").trim();
+  const date = text && /^(\d{2})\.(\d{2})\.(\d{4})(?:\s|$)/u.exec(text);
+  if (date) {
+    const day = `${date[3]}-${date[2]}-${date[1]}`;
+    if (new Date(day).toJSON()?.slice(0, 10) === day) return day;
+  }
+  return undefined;
 }
 
 /** The date in an article's dateline can describe the material without establishing publication. */
@@ -301,6 +317,7 @@ export function extractFromHtml(html: string, url?: string): ExtractedPage {
     doc.querySelector('meta[property="og:title"]')?.getAttribute("content")?.trim() ||
     undefined;
   const publishedAt = extractPublishedAt(doc);
+  const lang = sourceLanguageTag(doc.documentElement?.getAttribute("lang"));
 
   // Meta description / og:* / twitter:* (not shown on the page, but read by crawlers and models).
   for (const m of Array.from(doc.querySelectorAll("meta[content]"))) {
@@ -388,6 +405,7 @@ export function extractFromHtml(html: string, url?: string): ExtractedPage {
     rawText,
     cleanText,
     ...(title ? { title } : {}),
+    ...(lang && { lang }),
     ...(publishedAt ? { publishedAt } : {}),
     ...(displayedDate ? { displayedDate } : {}),
     hiddenSegments,

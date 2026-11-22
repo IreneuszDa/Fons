@@ -43,6 +43,7 @@ describe("extractHosts", () => {
 
   it("nie traktuje domeny z adresu e-mail jako URL-a", () => {
     expect(extractHosts("napisz do jan@zla-strona.pl")).toEqual([]);
+    expect(extractHosts("Zobacz dobra.pl/sprawdzenie/zla-strona.pl?zrodlo=https://inna.pl")).toEqual(["dobra.pl"]);
   });
 
   it("obsługuje IDN (punycode) i kropkę końcową", () => {
@@ -82,6 +83,19 @@ describe("matchIncidentDomains — dokładny host, tylko ostrzeżenia", () => {
   it("nie dopasowuje samej nazwy w tekście bez domeny", () => {
     expect(matchIncidentDomains("zla strona pl", db)).toEqual([]);
     expect(matchIncidentDomains("", db)).toEqual([]);
+  });
+
+  it("wiąże zgłoszenie z jawnie wskazanym profilem, bez ostrzeżeń dla reszty platformy", () => {
+    const db = createTestDb();
+    try {
+      db.prepare("UPDATE incidents SET domains_json = ? WHERE id = 'i01'")
+        .run(JSON.stringify(["tiktok.com", "www.tiktok.com", { channel: "https://www.tiktok.com/@redakcja" }]));
+      const check = (url: string) => matchIncidentDomains(url, db).map(i => i.incidentId);
+      expect(check("https://www.tiktok.com/@Redakcja/video/12345")).toEqual(["i01"]);
+      for (const url of ["https://tiktok.com/", "https://www.tiktok.com/@redakcja2/video/12345",
+        "https://www.tiktok.com/@inne/video/1?profile=@redakcja", "https://tiktok.com.example/@redakcja/video/1",
+        "https://tiktok.com@elsewhere.example/@redakcja/video/1"]) expect(check(url)).toEqual([]);
+    } finally { db.close(); }
   });
 
   it("deduplikuje incydenty i zwraca wszystkie pasujące", () => {

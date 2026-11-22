@@ -7,8 +7,9 @@
  * Wymaga załadowanego korpusu (corpus_meta.snapshot_id) — skrypt próbuje go załadować przez src/corpus/store.
  * Pierwsze uruchomienie pobiera model (~120 MB) do cache transformers.js.
  */
-import BetterSqlite3 from "better-sqlite3";
+import "dotenv/config";
 import type { Database } from "better-sqlite3";
+import { ensureCorpusLoaded, openDatabase } from "../../corpus/store";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createE5Embedder, type Embedder } from "./embedder";
@@ -97,28 +98,12 @@ function arg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
-async function openCorpusDb(dbPath: string): Promise<Database> {
-  // Moduł korpusu należy do innego agenta — ładujemy go dynamicznie, żeby ten skrypt nie zależał od niego przy kompilacji.
-  try {
-    const href = new URL("../../corpus/store.ts", import.meta.url).href;
-    const mod = (await import(/* @vite-ignore */ href)) as {
-      openDatabase: (p: string) => Database;
-      ensureCorpusLoaded: (db: Database) => { snapshotId: string; records: number };
-    };
-    const db = mod.openDatabase(dbPath);
-    const info = mod.ensureCorpusLoaded(db);
-    console.log(`corpus: ${info.records} records, snapshot ${info.snapshotId}`);
-    return db;
-  } catch (err) {
-    console.warn(`src/corpus/store unavailable (${(err as Error).message}); opening ${dbPath} as is`);
-    return new BetterSqlite3(dbPath);
-  }
-}
-
 async function main(): Promise<void> {
   const dbPath = arg("--db") ?? process.env.DB_PATH ?? "var/prawdowid.db";
   const outDir = arg("--out");
-  const db = await openCorpusDb(dbPath);
+  const db = openDatabase(dbPath);
+  const info = ensureCorpusLoaded(db);
+  console.log(`corpus: ${info.records} records, snapshot ${info.snapshotId}`);
   const embedder = createE5Embedder();
   const t0 = Date.now();
   const manifest = await embedCorpus(db, embedder, {

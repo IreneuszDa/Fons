@@ -8,6 +8,15 @@ Plan produktu i reguły: `PLAN.md` (sekcje 1, 3, 4 i 6 są normatywne). Zadanie 
 
 ## Zasady wspólne
 
+### Rozszerzenia instalowane przez operatora
+
+`FONS_EXTENSIONS_MODULE` wskazuje lokalny plik TypeScript lub ESM. Po restarcie serwer WWW, CLI, demonstrator SMS i MCP stdio wywołują jego eksport `createExtensions({ cfg, db })`. Funkcja zwraca obiekt zgodny z [FonsExtensions](../src/server/extensions.ts). Moduł jest kodem operatora i działa z uprawnieniami procesu serwera.
+
+- `channels` zawiera adaptery wiadomości. Każdy nowy kanał otrzymuje trasę `POST /api/channels/<id>/webhook`. Adapter weryfikuje podpis, nadaje nadawcom i sesjom identyfikatory we własnej przestrzeni nazw oraz dostarcza odpowiedź.
+- `models.main` i opcjonalny `models.verifier` implementują interfejs dostawcy. Pola `family` i `processingRegion` opisują niezależność modeli i miejsce przetwarzania. Bez osobnego weryfikatora Fons korzysta z tego samego dostawcy.
+- `branches` rozszerza wyszukiwanie o gałęzie zwracające identyfikatory zakwalifikowanych rekordów. Po pobraniu tekstu z korpusu obowiązują zwykłe reguły oceny i cytowania. Źródła korzystające z istniejącej ścieżki importu można dodać w katalogu danych. [Katalog i zasady źródeł](SOURCES.md)
+- `version` identyfikuje wydanie rozszerzenia w raportach i kluczach cache. Zmień ją przy zmianie modeli, logiki adaptera lub zakresu przeszukiwania.
+
 - Importy relatywne, ESM (`"type": "module"`), rozszerzenia `.js` w importach NIE są potrzebne (tsx/vite/Bundler resolution).
 - Nie uruchamiaj `npm install`. Wszystkie zależności są już zainstalowane: hono, @hono/node-server, better-sqlite3, zod (v4), @anthropic-ai/sdk, @mistralai/mistralai, yaml, linkedom, @mozilla/readability, ipaddr.js, undici, fastest-levenshtein, nanoid, dotenv, @huggingface/transformers, react, react-dom, @heroicons/react, @astryxdesign/core, @astryxdesign/theme-neutral, @stylexjs/stylex; dev: typescript, tsx, vite 7, @vitejs/plugin-react 5, vitest, concurrently. Jeśli naprawdę brakuje pakietu, napisz kod bez niego i zgłoś to.
 - Testy: vitest, pliki `*.test.ts` obok kodu. Testy jednostkowe nie mogą wymagać sieci ani klucza API (użyj `FakeLlmProvider`).

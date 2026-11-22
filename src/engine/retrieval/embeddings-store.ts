@@ -8,7 +8,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { dataDir } from "../../corpus/paths";
 import { z } from "zod";
 
 export const EmbeddingManifest = z.object({
@@ -42,7 +42,7 @@ export function modelSlug(modelId: string): string {
 
 /** Katalog data/embeddings w repozytorium (src/engine/retrieval → ../../../data/embeddings). */
 export function defaultEmbeddingsDir(): string {
-  return fileURLToPath(new URL("../../../data/embeddings/", import.meta.url));
+  return join(dataDir(), "embeddings");
 }
 
 export function manifestPathFor(modelId: string, dir: string = defaultEmbeddingsDir()): string {

@@ -21,13 +21,14 @@ async function main(): Promise<void> {
   const { loadConfig } = await import("../server/config");
   const { ensureCorpusLoaded, openDatabase } = await import("../corpus/store");
   const { createEngineDeps } = await import("../engine/verify");
+  const { loadExtensions } = await import("../server/extensions");
   const { warmUp } = await import("../engine/retrieval");
   const { createFonsMcpServer } = await import("./server");
 
   const cfg = loadConfig();
   const db = openDatabase(cfg.dbPath);
   ensureCorpusLoaded(db);
-  const deps = createEngineDeps(db, cfg);
+  const deps = createEngineDeps(db, cfg, { extensions: await loadExtensions(cfg, db) });
   // Rozgrzewka modelu wektorów (nigdy nie rzuca), żeby pierwsze zapytanie nie dostało adnotacji o niedostępnej gałęzi.
   // Czekamy najwyżej 10 s — klient MCP czeka na odpowiedź initialize.
   await Promise.race([warmUp(deps.branches), new Promise((r) => setTimeout(r, 10_000))]);

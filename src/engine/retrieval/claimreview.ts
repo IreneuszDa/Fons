@@ -19,6 +19,7 @@
  *  - limity: ≤ 5 recenzji ze strony, teza ≤ 600 znaków, ocena ≤ 120 znaków; tagi i encje HTML usuwane;
  *    uszkodzony JSON = blok pominięty; funkcje nigdy nie rzucają.
  */
+import { guessLang, sourceLanguageTag } from "../../shared/language";
 import { createHash } from "node:crypto";
 import { extractRatingLabel, mapRating } from "../../corpus/ratings";
 import { detectInjection } from "../../security/detector";
@@ -38,6 +39,9 @@ const MAX_NODES_PER_BLOCK = 5000;
 const MAX_DEPTH = 8;
 
 export interface ParsedClaimReview {
+  lang?: string;
+  /** Public materials identified by the publisher as appearances of this specific claim. */
+  appearances?: string[];
   /** Teza sprawdzana przez fact-checkera (bez HTML, ≤ 600 znaków). */
   claimReviewed: string;
   /** Etykieta oceny (reviewRating.alternateName → textualRating → name; długi opis → sama etykieta), ≤ 120 znaków. */
@@ -194,7 +198,14 @@ export function extractClaimReviews(rawHtml: string): ParsedClaimReview[] {
         const key = `${claimReviewed}\u0000${ratingRaw}`;
         if (seen.has(key)) continue;
         seen.add(key);
+        const appearance = firstObject(cr.itemReviewed)?.appearance;
+        const appearances = (Array.isArray(appearance) ? appearance : [appearance]).slice(0, 20)
+          .map(item => typeof item === "string" ? item : firstObject(item)?.url)
+          .filter((url): url is string => typeof url === "string" && /^https?:\/\//iu.test(url) && url.length < 2048);
+        const lang = sourceLanguageTag(cr.inLanguage);
         out.push({
+          ...(lang && { lang }),
+          ...(appearances.length && { appearances }),
           claimReviewed,
           ratingRaw,
           datePublished: cleanString(cr.datePublished, 40),
@@ -228,13 +239,6 @@ function resolveLabel(sourceId: string, raw: string, dataDir?: string): string |
   return raw.length <= LONG_LABEL_CHARS ? raw : null;
 }
 
-function guessLang(text: string): string {
-  const t = text.toLowerCase();
-  if (/[ąćęłńóśźż]/.test(t) || /\b(że|się|jest|nie|dla|oraz|przez)\b/.test(t)) return "pl";
-  if (/[äöüß]/.test(t) || /\b(und|der|die|das|nicht|ist|mit|ein)\b/.test(t)) return "de";
-  return "en";
-}
-
 /** Data publikacji recenzji: RRRR-MM-DD dla samej daty (jak w korpusie), inaczej ISO; spoza 1990…jutro → null. */
 function publishedDate(raw: string | null, now: Date): string | null {
   if (!raw) return null;
@@ -260,7 +264,7 @@ export function buildClaimReviewRecord(
   source: CatalogSource,
   finalUrl: string,
   fetchedAt: Date,
-  opts: { dataDir?: string } = {},
+  opts: { dataDir?: string; lang?: string } = {},
 ): CorpusRecord | null {
   if (!acceptsClaimReviews(source)) return null;
   const label = resolveLabel(source.id, review.ratingRaw, opts.dataDir);
@@ -274,7 +278,7 @@ export function buildClaimReviewRecord(
     publisher: source.publisher,
     publishedAt: publishedDate(review.datePublished, fetchedAt),
     fetchedAt: fetchedAt.toISOString(),
-    lang: guessLang(claim),
+    lang: guessLang(claim, review.lang ?? opts.lang),
     text: claim,
     role: "stala_rola",
     type: source.type,
@@ -289,6 +293,7 @@ export function buildClaimReviewRecord(
 }
 
 export interface ClaimReviewRecordsInput {
+  lang?: string;
   /** Surowy HTML strony (FetchedPage.rawHtml); brak = brak recenzji. */
   rawHtml: string | undefined;
   /** Wpis katalogu DOKŁADNEGO hosta końcowego. */
@@ -322,7 +327,7 @@ export function claimReviewRecords(input: ClaimReviewRecordsInput): CorpusRecord
         }
       }
       if (hits.some((h) => h.severity === "high")) continue;
-      const rec = buildClaimReviewRecord(review, input.source, input.finalUrl, input.fetchedAt, { dataDir: input.dataDir });
+      const rec = buildClaimReviewRecord(review, input.source, input.finalUrl, input.fetchedAt, { dataDir: input.dataDir, lang: input.lang });
       if (rec) out.push(rec);
     }
   } catch {

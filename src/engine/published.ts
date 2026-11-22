@@ -6,4 +6,6 @@ export interface PublishedAnswer {
   evidence: EvidenceItem[];
   claimPl?: string;
   verdict?: Verdict;
+  /** Record whose published rating refers to claimPl. */
+  reviewRecordId?: string;
 }

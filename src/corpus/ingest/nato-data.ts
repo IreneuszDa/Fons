@@ -7,6 +7,7 @@
  *     nie jest czytana (bez OCR); najnowsze liczby w tekście stron NATO trafiają do rekordów dosłownych.
  * Rekordy z tych parserów mają tag "generated-from-data" (zdanie złożone z pól listy/tabeli + cytat źródła).
  */
+import { memberRegister } from "./member-register";
 import { execFile } from "node:child_process";
 import type { CorpusRecord } from "../../shared/contracts";
 import { MONTHS_PL_GEN, parseEnglishDate } from "./officialpages";
@@ -261,7 +262,14 @@ export async function ingestNatoData(
   const base = baseFromCatalog(sourceFromCatalog(opts.catalog, "nato"));
   if (members) {
     const rows = parseMemberList(members.lines);
-    if (rows.length !== 32) result.skipped.push({ what: NATO_MEMBERS_URL, reason: `lista członków ma ${rows.length} pozycji (oczekiwano 32)` });
+    const start = members.lines.findIndex(l => /^Alphabetical list of NATO member countries/u.test(l));
+    const end = members.lines.findIndex((l, i) => i > start && /^How each country became a NATO member/u.test(l));
+    const declared = /At present, NATO has (\d+) member countries\./u.exec(members.pageText)?.[1];
+    const lines = members.lines.slice(start + 1, end).filter(line => line.trim());
+    const complete = start >= 0 && end > start && lines.length === rows.length && members.url === NATO_MEMBERS_URL &&
+      memberRegister("NATO", base, members.url, members.fetchedAt, members.publishedAt, Number(declared), rows.map(r => r.name));
+    if (complete) result.records.push(complete);
+    else result.skipped.push({ what: NATO_MEMBERS_URL, reason: "Nie potwierdzono kompletności wykazu NATO" });
     const recs = buildMemberRecords({ members: rows, pageText: members.pageText, url: members.url, fetchedAt: members.fetchedAt, publishedAt: members.publishedAt }, base);
     result.records.push(...recs);
     opts.log(`  NATO członkowie: ${rows.length} państw -> ${recs.length} zdań`);

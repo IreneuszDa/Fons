@@ -28,6 +28,7 @@
  *    definicja (a) obejmuje tylko pierwotne/urzędowe (poziom 1).
  */
 import type { CorpusRecord, EvidenceAssessment, Verdict } from "../../shared/contracts";
+import { reviewedVerdict } from "../reviewed-verdict";
 import type { EvidenceKind, Polarity } from "./types";
 
 /** Czy ocena w ogóle wchodzi do rachunku (niezależnie od progu rozstrzygalności). */
@@ -63,20 +64,7 @@ export function copiedPassageKey(record: CorpusRecord): string | undefined {
  * null = rekord nie rozstrzyga (brak oceny, ocena nieznana, `inna`, `niepewne`, negacja oceny niebinarnej).
  */
 export function effectiveFixedVerdict(a: EvidenceAssessment, r: CorpusRecord): Verdict | null {
-  if (r.role !== "stala_rola" || !r.rating) return null;
-  const mapped = r.rating.mapped;
-  if (mapped == null) return null;
-  switch (a.fixedRoleMatch) {
-    case "ta_sama":
-      return mapped;
-    case "zaprzeczona":
-      if (!r.rating.binary) return null;
-      if (mapped === "FALSZYWE") return "POTWIERDZONE";
-      if (mapped === "POTWIERDZONE") return "FALSZYWE";
-      return null; // „binarna”, ale nie fałsz/prawda — nie zgadujemy
-    default:
-      return null; // inna, niepewne, brak dopasowania
-  }
+  return r.role === "stala_rola" ? reviewedVerdict(a.fixedRoleMatch, r.rating, r.claimReviewed) : null;
 }
 
 /** Kierunek dowodu względem twierdzenia. */
@@ -107,6 +95,11 @@ export function polarityOf(a: EvidenceAssessment, r: CorpusRecord): Polarity {
   }
 }
 
+/** Background can veto a supported claim only after the verifier confirms an actual change of context. */
+function needsContextVote(a: EvidenceAssessment, r: CorpusRecord): boolean {
+  return r.role === "tresc" && a.relation === "INNY_KONTEKST" && !a.historicalSupport && a.verifier !== "zgoda";
+}
+
 /**
  * Czy dowód `a` (z rekordu `r`) jest rozstrzygający wg PLAN §4.
  * `all` — wszystkie oceny (do sprawdzenia drugiego, niezależnego źródła wtórnego), `records` — mapa rekordów.
@@ -116,9 +109,11 @@ export function isDecisive(
   r: CorpusRecord,
   all: EvidenceAssessment[],
   records: Map<string, CorpusRecord>,
+  beforeVerifier = false,
 ): boolean {
   if (!isCounted(a, r)) return false;
-  if (a.verifier === "sprzeciw") return false;
+  if (!beforeVerifier && (r.sourceId === "nbp-rates" || r.sourceId === "gus-cpi") && a.verifier !== "zgoda") return false;
+  if (a.verifier === "sprzeciw" || (!beforeVerifier && needsContextVote(a, r))) return false;
 
   const kind = evidenceKind(r);
   if (kind !== "fixed" && polarityOf(a, r) === "none") return false;
@@ -133,7 +128,7 @@ export function isDecisive(
     if (b === a || b.claimId !== a.claimId || b.recordId === a.recordId) return false;
     if (b.aspect !== a.aspect || b.verifier === "sprzeciw") return false;
     const rb = records.get(b.recordId);
-    if (!isCounted(b, rb)) return false;
+    if (!isCounted(b, rb) || (!beforeVerifier && needsContextVote(b, rb))) return false;
     if (evidenceKind(rb) !== "secondary") return false;
     if (rb.independenceGroup === r.independenceGroup) return false;
     const passage = copiedPassageKey(r);

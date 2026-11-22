@@ -44,6 +44,8 @@ export interface VerdictDecision {
    * Przydaje się do „co znaleziono poniżej progu” w BRAK_DOWODOW (PLAN §4, reguła 2).
    */
   belowThresholdRecordIds?: string[];
+  /** Materials that can only provide temporal context, e.g. an earlier announcement or an outdated fact-check. */
+  priorEventRecordIds?: string[];
 }
 
 /** Kierunek dowodu po sprowadzeniu relacji / oceny z tabeli do jednej osi. */

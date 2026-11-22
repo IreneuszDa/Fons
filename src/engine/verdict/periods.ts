@@ -11,6 +11,19 @@ export interface Range {
   end: number;
 }
 
+// Preserve Polish diacritics: "pojawia się" is present; "pojawią się" is future.
+const FUTURE_ACTION = /(?<!\p{L})(?:będ(?:ę|zie(?:my|cie|sz)?|ą)|zostan(?:ę|ą|ie(?:my|cie|sz)?)|wyśl(?:ę|ą|e(?:my|cie|sz)?)|pojawi(?:ę|ą|my|cie|sz)?\s+się|will|won['’]t|zamierz\p{L}*|planuj\p{L}*|plans? to|intends? to)(?!\p{L})/iu;
+const INTENTION = /(?<!\p{L})(?:stanowisk\p{L}*|zapow(?:ied\p{L}*|iad\p{L}*)|deklar\p{L}*|ogłosi\p{L}*|oświadcz\p{L}*|obiecu\p{L}*|planuj\p{L}*|zamierz\p{L}*|postanowi\p{L}*|plans?|intentions?|pledges?|announc\p{L}*)(?!\p{L})/iu;
+
+/** Detect a quote that describes only a future action or its announcement.
+ * A separately stated observation in the same quote remains available to the reader and verifier. */
+export function onlyAnnouncesFutureAction(claimText: string, quote: string): boolean {
+  if (INTENTION.test(claimText) || FUTURE_ACTION.test(claimText)) return false;
+  const parts = quote.normalize("NFC").split(/[.!?;:\n]+|,?\s+(?:ale|lecz|natomiast|but|and|i|oraz)\s+(?=nie\b|obecnie\b|aktualnie\b|wciąż\b|teraz\b|will\b|currently\b)/iu)
+    .map(part => part.trim()).filter(Boolean);
+  return parts.some(part => FUTURE_ACTION.test(part)) && parts.every(part => FUTURE_ACTION.test(part) || INTENTION.test(part));
+}
+
 const DAY_MS = 86_400_000;
 
 function dayRange(y: number, m: number, d: number): Range | undefined {
@@ -169,4 +182,13 @@ export function textCoversDate(text: string, event: Range): boolean {
   if (covered) return true;
   for (const m of rest.matchAll(/(?<!\d[.,])\b((?:19|20)\d{2})\b(?![.,]\d)/g)) if (Number(m[1]) > eventYear) return true;
   return false;
+}
+
+/** A dated, adopted measure can specify its future validity. An announcement alone cannot. */
+export function enactedPeriodCovers(text: string, event: Range): boolean {
+  const folded = foldDate(text).replace(/\br\.(?=\s+do\b)/gu, "r");
+  const dated = `(?:\\d{4}-\\d{2}(?:-\\d{2})?|\\d{1,2}[./]\\d{1,2}[./]\\d{4}|(?:\\d{1,2}\\s+)?${MONTH_WORD_RE}\\s+\\d{4})`;
+  const decision = "(?:przedluzono|przedluzon[eyao]|obowiazuj[eąa]|pozostaj\\w* w mocy|extended|in force|valid)";
+  const endDate = new RegExp(`\\b${decision}\\s+[^.!?;]{0,110}?\\b(?:do|until|through)\\s+(${dated})(?![\\d-])`, "gu");
+  return Array.from(folded.matchAll(endDate)).some(match => textCoversDate(match[1]!, event));
 }

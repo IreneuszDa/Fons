@@ -185,9 +185,9 @@ function sourcesFactor(groups: Group[]): StrengthFactor[] {
   const fixed = groups.filter((g) => g.best.kind === "fixed");
   const other = groups.filter((g) => g.best.kind === "secondary");
   if (primary.length >= 2) {
-    out.push({ effect: "plus", textPl: `${primary.length} niezależne źródła urzędowe mówią to samo: ${publishersList(primary)}.` });
+    out.push({ effect: "plus", textPl: `${primary.length} ${plural(primary.length, "niezależne źródło pierwotne", "niezależne źródła pierwotne", "niezależnych źródeł pierwotnych")}: ${publishersList(primary)}.` });
   } else if (primary.length === 1) {
-    out.push({ effect: "plus", textPl: `Źródło urzędowe lub pierwotne: ${publishersList(primary)}.` });
+    out.push({ effect: "plus", textPl: `Źródło pierwotne: ${publishersList(primary)}.` });
   }
   if (fixed.length > 0) {
     const ratings = [...new Set(fixed.map((g) => g.best.r.rating?.raw).filter((x): x is string => !!x))];

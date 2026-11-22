@@ -24,6 +24,7 @@ import { safeUrl } from "../lib/safeUrl";
 
 const GROUP_ICON = { wspierajace: CheckCircleIcon, obalajace: XCircleIcon, kontekst: InformationCircleIcon } as const;
 const GROUP_ICON_COLOR = { wspierajace: "success", obalajace: "error", kontekst: "secondary" } as const;
+const languageNames = new Intl.DisplayNames("pl", { type: "language", fallback: "none" });
 
 /** Title as an external link — only for http/https URLs; anything else is shown as plain text. */
 export function SourceTitle({ item }: { item: Pick<EvidenceItem, "title" | "url"> }) {
@@ -61,6 +62,8 @@ export function EvidenceEntry({ item }: { item: EvidenceItem }) {
         Opublikowano: {formatDate(item.publishedAt)} · Pobrano: {formatDate(item.fetchedAt)}
       </Text>
       <EvidencePassage item={item} />
+      {/^(eurostat|gus-bdl):/u.test(item.recordId) && safeUrl(item.url) &&
+        <Link href={"/zrodla#archiwum?" + new URLSearchParams({ url: item.url, record: item.recordId }).toString()}>Otwórz w moim archiwum</Link>}
       <Text type="supporting" color="secondary">
         {item.partialMeaning === "coverage" ? "Fragment potwierdza część tezy. Pozostałe elementy wykraczają poza jego zakres."
           : item.partialMeaning === "correction" ? "Fragment wskazuje, co wymaga korekty w sprawdzanej tezie."
@@ -73,8 +76,14 @@ export function EvidenceEntry({ item }: { item: EvidenceItem }) {
 
 export function EvidencePassage({ item }: { item: EvidenceItem }) {
   const text = passageText(item.quote, item.passageKind);
-  return item.passageKind === "excerpt"
+  const passage = item.passageKind === "excerpt"
     ? <Blockquote cite={item.publisher}>{text}</Blockquote> : <Text as="p">{text}</Text>;
+  const code = item.lang?.split("-")[0]?.toLowerCase();
+  const language = code && /^[a-z]{2,3}$/.test(code) && code !== "pl" && code !== "und" ? languageNames.of(code) : undefined;
+  return language ? <VStack gap={0.5}>
+    <Text type="supporting" color="secondary">Język źródła · {language}</Text>
+    {passage}
+  </VStack> : passage;
 }
 
 export function EvidenceGroups({ evidence, headingLevel = 5 }: { evidence: EvidenceItem[]; headingLevel?: 4 | 5 | 6 }) {
@@ -89,7 +98,7 @@ export function EvidenceGroups({ evidence, headingLevel = 5 }: { evidence: Evide
             <Badge label={groups[g].length} variant="neutral" />
           </HStack>
           {groups[g].map((item, i) => (
-            <VStack key={item.recordId} gap={3}>
+            <VStack key={`${item.recordId}-${i}`} gap={3}>
               {i > 0 ? <Divider /> : null}
               <EvidenceEntry item={item} />
             </VStack>

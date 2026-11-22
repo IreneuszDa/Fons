@@ -3,16 +3,18 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { LlmUnavailableError } from "../../shared/contracts";
+import { LlmUnavailableError, type VideoAnalysis } from "../../shared/contracts";
 import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS } from "./social-source";
 
 const exec = promisify(execFile);
 const MAX_FRAMES = 32;
 const MAX_PIXELS = 4096 * 4096;
 const SAMPLE_RATE = 16_000;
+const QUIET_AMPLITUDE = 16;
 
 export interface DecodedVideo {
   durationSeconds: number;
+  file?: VideoAnalysis["file"];
   frames: { seconds: number; bytes: Buffer }[];
   wav?: Buffer;
   audio?: { seconds: number; durationSeconds: number; bytes: Buffer }[];
@@ -43,6 +45,8 @@ function timeline(probe: Buffer, audioOnly: boolean) {
   const ends = new Map<number, number>();
   let video: number | undefined;
   let audio: number | undefined;
+  let audioInfo: NonNullable<VideoAnalysis["file"]>["audio"];
+  let videoInfo: NonNullable<VideoAnalysis["file"]>["video"];
   let start = 0;
   let declaredDuration = 0;
   for (const line of probe.toString("utf8").split("\n")) {
@@ -62,8 +66,13 @@ function timeline(probe: Buffer, audioOnly: boolean) {
         const pixels = Number(fields.width) * Number(fields.height);
         if (!(pixels > 0 && pixels <= MAX_PIXELS)) throw failure();
         video = Number(fields.index);
+        videoInfo = { width: Number(fields.width), height: Number(fields.height) };
       } else if (fields.codec_type === "audio" && audio === undefined) {
         audio = Number(fields.index);
+        const sampleRateHz = Number(fields.sample_rate), channels = Number(fields.channels);
+        if (/^[a-z0-9_]+$/.test(fields.codec_name ?? "") && sampleRateHz > 0 && channels > 0) {
+          audioInfo = { codec: fields.codec_name!, sampleRateHz, channels };
+        }
       }
     }
   }
@@ -73,7 +82,7 @@ function timeline(probe: Buffer, audioOnly: boolean) {
   if (!Number.isFinite(duration) || duration <= 0) throw failure("video_duration_unknown");
   // Packet times are printed to microseconds. Adding two rounded numbers can overshoot the limit.
   if (duration > MAX_VIDEO_SECONDS + 0.000002) throw failure("video_too_long");
-  return { video, audio, duration: Math.min(duration, MAX_VIDEO_SECONDS) };
+  return { video, audio, audioInfo, videoInfo, duration: Math.min(duration, MAX_VIDEO_SECONDS) };
 }
 
 function wav(pcm: Buffer) {
@@ -105,7 +114,7 @@ function audioChunks(pcm: Buffer): NonNullable<DecodedVideo["audio"]> {
   }
   const chunks = [];
   // Preserve media time across pauses. Prefer a quiet boundary in the last 5s of each 25s window.
-  const quiet = 16 ** 2;
+  const quiet = QUIET_AMPLITUDE ** 2;
   let first = 0;
   while (first < levels.length) {
     while (first < levels.length && levels[first]! <= quiet) first++;
@@ -152,10 +161,13 @@ export async function decodeVideo(
       "-max_pixels", String(MAX_PIXELS), "-max_streams", "16", "-format_whitelist", format === "matroska" ? "matroska,webm" : format,
       "-f", format, ...(mov ? ["-enable_drefs", "0", "-use_absolute_path", "0"] : [])];
     const rows = await run("ffprobe", [...input, "-i", path, "-show_entries",
-      "packet=stream_index,pts_time,duration_time:stream=index,codec_type,width,height:stream_disposition=attached_pic:format=duration,start_time",
+      "packet=stream_index,pts_time,duration_time:stream=index,codec_name,codec_type,width,height,sample_rate,channels:stream_disposition=attached_pic:format=duration,start_time",
       "-of", "compact"], signal, 16 * 1024 ** 2);
     const info = timeline(rows, audioOnly);
-    const result: DecodedVideo = { frames: [], durationSeconds: info.duration };
+    const result: DecodedVideo = { frames: [], durationSeconds: info.duration, file: {
+      mime: media.mimeType, bytes: media.bytes.byteLength, durationSeconds: info.duration,
+      ...(info.audioInfo && { audio: info.audioInfo }), ...(info.videoInfo && { video: info.videoInfo }),
+    } };
     if (options.probeOnly) return result;
     const decode = ["-nostdin", "-copyts", "-start_at_zero", "-filter_threads", "1", "-threads", "1", ...input, "-i", path];
     if (!audioOnly) {
@@ -180,8 +192,13 @@ export async function decodeVideo(
       const pcm = await run("ffmpeg", [...decode, "-map", `0:${info.audio}`, "-vn", "-sn", "-dn",
         "-af", `aresample=${SAMPLE_RATE}:async=1:first_pts=0`, "-ac", "1", "-ar", String(SAMPLE_RATE),
         "-t", String(MAX_VIDEO_SECONDS), "-f", "s16le", "pipe:1"], signal, MAX_VIDEO_SECONDS * SAMPLE_RATE * 2 + 65_536);
-      if (options.continuousAudio) result.wav = wav(pcm);
-      else result.audio = audioChunks(pcm);
+      if (options.continuousAudio) {
+        // Skip silent uploads before a speech model has a chance to invent a transcript.
+        let audible = false;
+        for (let i = 0; i + 1 < pcm.length && !audible; i += 2) audible = Math.abs(pcm.readInt16LE(i)) > QUIET_AMPLITUDE;
+        if (!audible) throw failure("audio_no_speech");
+        result.wav = wav(pcm);
+      } else result.audio = audioChunks(pcm);
     }
     return result;
   } catch (error) {

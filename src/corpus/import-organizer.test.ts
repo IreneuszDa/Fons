@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -109,7 +109,14 @@ describe("importIncidentBase", () => {
     expect(eng.publishedAt).toBeNull(); // nieczytelna data => null, nie wymyślamy
 
     const inc = res.incidents.find((i) => i.recordId === first.id)!;
-    expect(inc.domains).toEqual(["fake-portal.example", "facebook.example", "inny-portal.example"]);
+    expect(inc.domains).toEqual(["www.fake-portal.example", "facebook.example", "www.inny-portal.example"]);
+  });
+
+  it("importuje udokumentowany profil oddzielnie od domeny platformy", () => {
+    const row = { claim: "Teza A", url: "https://pravda.org.pl/wpis/", domains: ["https://www.tiktok.com/@inny"],
+      channels: ["https://www.tiktok.com/@redakcja", "https://www.youtube.com/watch?v=1234"] };
+    const result = importIncidentBase([row], {}, { importedAt, catalog: catalog(), dataDir: dir });
+    expect(result.incidents[0]).toMatchObject({ domains: [], channels: ["https://tiktok.com/@redakcja"] });
   });
 
   it("host spoza katalogu trafia do źródła organizer-base; host z katalogu zachowuje poziom z katalogu", () => {
@@ -181,5 +188,17 @@ describe("runImport (CLI) end-to-end na próbce", () => {
     mkdirSync(resolve(dir, "corpus"), { recursive: true });
     runImport({ incidents: resolve(FIX, "organizer-incidents.sample.json"), dataDir: dir }, () => {});
     expect(existsSync(resolve(dir, "corpus", "organizer-organizer-base.jsonl")) || existsSync(resolve(dir, "corpus", "organizer-base.jsonl"))).toBe(true);
+  });
+
+  it("podmiana bazy incydentów wycofuje publikacje wydawców nieobecnych w nowym pakiecie", () => {
+    const incidents = resolve(dir, "packet.json");
+    const first = { claim: "Teza pierwsza", url: "https://pravda.org.pl/1", rating: "Fałsz" };
+    const second = { claim: "Teza druga", url: "https://inny.example/2", rating: "False" };
+    writeFileSync(incidents, JSON.stringify([first, second]));
+    runImport({ incidents, dataDir: dir }, () => {});
+    writeFileSync(incidents, JSON.stringify([second]));
+    runImport({ incidents, dataDir: dir }, () => {});
+    expect(readCorpus(dir).records.map(r => r.url)).toEqual([second.url]);
+    expect(readCorpus(dir).incidents.map(i => i.url)).toEqual([second.url]);
   });
 });

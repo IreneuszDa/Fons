@@ -49,7 +49,7 @@ export interface AdminMetrics {
     injectionEvents: number;
   };
   latency: { p50: number; p95: number; byStep?: Breakdown };
-  cost: { totalUsd: number; per100Usd: number; byModel?: Breakdown };
+  cost: { totalUsd: number; per100Usd: number; byModel?: Breakdown; googleVisionToday?: { requests: number; costUsd: null } };
   llm: { calls: number; tokensIn: number; tokensOut: number; byPurpose?: Breakdown };
   retrievalErrors: { byBranch?: Breakdown };
   window: { from: string | null; to: string | null };
@@ -173,13 +173,14 @@ export async function fetchMetrics(): Promise<AdminMetrics> {
   return data;
 }
 
-export type ExportFormat = "csv" | "json";
+export type ExportFormat = "csv" | "json" | "stix";
 
-export const EXPORT_PATH: Record<ExportFormat, string> = { csv: "/api/admin/export.csv", json: "/api/admin/export.json" };
+export const EXPORT_PATH: Record<ExportFormat, string> = { csv: "/api/admin/export.csv", json: "/api/admin/export.json", stix: "/api/admin/export.json?dataset=stix" };
 
 /** Downloads an export through fetch (so 401/403 show a message instead of a raw error page). */
-export async function fetchExport(format: ExportFormat): Promise<Blob> {
-  const { blob, data } = await call<unknown>("GET", EXPORT_PATH[format], undefined, "Nie udało się pobrać eksportu.", true);
+export async function fetchExport(format: ExportFormat, dataset: "cases" | "runs" = "cases"): Promise<Blob> {
+  const path = EXPORT_PATH[format] + (format !== "stix" && dataset === "runs" ? "?dataset=runs" : "");
+  const { blob, data } = await call<unknown>("GET", path, undefined, "Nie udało się pobrać eksportu.", true);
   if (blob) return blob;
   return new Blob([typeof data === "string" ? data : JSON.stringify(data ?? null, null, 2)]);
 }

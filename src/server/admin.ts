@@ -15,6 +15,7 @@ import { tokensUsedToday } from "./budget";
 import { invalidateCache } from "./cache";
 import type { ServerContext } from "./context";
 import { toCsv } from "./csv";
+import { incidentBundle } from "./stix";
 import { clientIp } from "./http";
 import {
   ADMIN_ENDPOINTS,
@@ -184,6 +185,7 @@ export function computeMetrics(ctx: ServerContext, win: MetricsWindow = {}) {
   const byStep = Object.fromEntries(Object.entries(stepValues).map(([k, v]) => [k, stat(v)]));
   const freshStat = stat(fresh);
   const day = dayKey(ctx.now());
+  const vision = ctx.db.prepare("SELECT requests FROM image_search_usage WHERE day = ?").get(day) as { requests: number } | undefined;
 
   const secByPattern = ctx.db.prepare("SELECT pattern, COUNT(*) AS n FROM security_events GROUP BY pattern ORDER BY n DESC").all() as { pattern: string; n: number }[];
   const alertRows = ctx.db.prepare("SELECT outcome, COUNT(*) AS n FROM alerts_log GROUP BY outcome").all() as { outcome: string; n: number }[];
@@ -209,6 +211,7 @@ export function computeMetrics(ctx: ServerContext, win: MetricsWindow = {}) {
       all: stat(all),
     },
     cost: {
+      googleVisionToday: { requests: vision?.requests ?? 0, costUsd: null },
       totalUsd: cost,
       per100Usd: fresh.length ? (cost / fresh.length) * 100 : 0,
       byModel,
@@ -413,18 +416,25 @@ export function createAdminRoutes(ctx: ServerContext): Hono<Env> {
   };
 
   register("get", "/export.json", (c) => {
-    const dataset = c.req.query("dataset") === "runs" ? "runs" : "cases";
+    const dataset = c.req.query("dataset") ?? "cases";
+    if (dataset === "stix") {
+      audit(c, "export.json", "stix");
+      c.header("Content-Disposition", 'attachment; filename="fons-stix-2.1.json"');
+      return c.json(incidentBundle(ctx.db));
+    }
+    if (dataset !== "runs" && dataset !== "cases") return fail(c, 400, "bad_request", "Wybierz zbiór cases, runs lub stix.");
     audit(c, "export.json", dataset);
     c.header("Content-Disposition", `attachment; filename="${dataset === "runs" ? "przebiegi" : "sprawy"}.json"`);
     if (dataset === "runs") {
       const d = runsDataset();
       return c.json({ exportedAt: ctx.now().toISOString(), runs: d.rows.map((r) => Object.fromEntries(d.headers.map((h, i) => [h, r[i]]))) });
     }
-    return c.json({ exportedAt: ctx.now().toISOString(), cases: listCases(ctx) });
+    return c.json({ exportedAt: ctx.now().toISOString(), cases: listCases(ctx, undefined, -1) });
   });
 
   register("get", "/export.csv", (c) => {
-    const dataset = c.req.query("dataset") === "runs" ? "runs" : "cases";
+    const dataset = c.req.query("dataset") ?? "cases";
+    if (dataset !== "runs" && dataset !== "cases") return fail(c, 400, "bad_request", "CSV obsługuje zbiory cases i runs.");
     audit(c, "export.csv", dataset);
     let body: string;
     if (dataset === "runs") {
@@ -433,7 +443,7 @@ export function createAdminRoutes(ctx: ServerContext): Hono<Env> {
     } else {
       body = toCsv(
         ["id", "tekst", "status", "unikalni_nadawcy", "kanaly", "alert", "utworzono", "zaktualizowano", "notatka"],
-        listCases(ctx).map((x) => [x.id, x.representativeText, x.status, x.senderCount, x.channels.join(";"), x.alertState, x.createdAt, x.updatedAt, x.note]),
+        listCases(ctx, undefined, -1).map((x) => [x.id, x.representativeText, x.status, x.senderCount, x.channels.join(";"), x.alertState, x.createdAt, x.updatedAt, x.note]),
       );
     }
     return new Response(body, {

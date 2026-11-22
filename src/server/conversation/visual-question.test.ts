@@ -4,7 +4,7 @@ import { FakeLlmProvider } from "../../engine/llm/fake";
 import type { FetchedPage } from "../../security/fetch";
 import type { ImageSearchResult } from "../../shared/image-search";
 import { makeEnv } from "../testkit";
-import { readMatchedCaptions } from "./image-captions";
+import { readMatchedPublications } from "./image-captions";
 import { answerVisualQuestion } from "./visual-question";
 
 const publication = "https://www.prezydent.pl/fotografie/spotkanie";
@@ -13,11 +13,14 @@ const picture = { mime: "image/jpeg", base64: "cleanPixels" };
 const google: ImageSearchResult = {
   status: "ok", messagePl: "ok", matches: [], factCheckStatus: "not_applicable", factChecks: [],
 };
+async function readMatchedCaptions(...args: Parameters<typeof readMatchedPublications>) {
+  return (await readMatchedPublications(...args)).flatMap(p => p.captions);
+}
 
-function environment(provider = new FakeLlmProvider(), html = "", finalUrl = publication) {
+function environment(provider = new FakeLlmProvider(), html = "", finalUrl = publication, publishedAt?: string) {
   const { ctx } = makeEnv();
   const fetcher = vi.fn(async (): Promise<FetchedPage> => ({
-    finalUrl, title: citation.title, rawHtml: html, rawText: "", cleanText: "", hiddenSegments: [], status: 200, contentType: "text/html",
+    finalUrl, publishedAt, title: citation.title, rawHtml: html, rawText: "", cleanText: "", hiddenSegments: [], status: 200, contentType: "text/html",
   }));
   ctx.engineDeps = {
     llm: provider, verifier: provider, singleKey: true, store: memoryStore([]), db: ctx.db,
@@ -28,6 +31,15 @@ function environment(provider = new FakeLlmProvider(), html = "", finalUrl = pub
 
 describe("captions of the actual matching photograph", () => {
   const pages = [{ url: publication, fullMatchingImages: [{ url: "https://www.prezydent.pl/media/exact.jpg" }] }];
+  it("adds a publication date only for a current exact resource match; an image does not need a caption", async () => {
+    const html = '<img src="/media/exact.jpg">';
+    const { ctx } = environment(undefined, html, publication, "2021-04-07T12:30:00Z");
+    expect(await readMatchedPublications(ctx, pages, [])).toEqual([{ url: publication, publishedAt: "2021-04-07", captions: [] }]);
+    const mismatched = environment(undefined, '<img src="other.jpg">', publication, "2020-01-01");
+    expect(await readMatchedPublications(mismatched.ctx, pages, [])).toEqual([]);
+    const scheduled = environment(undefined, html, publication, "2040-01-01");
+    expect((await readMatchedPublications(scheduled.ctx, pages, []))[0]?.publishedAt).toBeUndefined();
+  });
   it("binds a full match to its caption by resource URL and ignores the article title, unrelated figures, and alt text from other OG images", async () => {
     const { ctx } = environment(undefined, `<html><head>
       <meta property="og:image" content="/media/other.jpg"><meta property="og:image:alt" content="Inny polityk">

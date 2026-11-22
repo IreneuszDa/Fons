@@ -24,6 +24,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { Database } from "better-sqlite3";
 import { loadCatalog, normalizeHost } from "../../corpus/catalog";
 import { detectInjection, stripFlaggedSentences } from "../../security/detector";
+import { relativeWindowDay } from "../../security/dates";
 import { FetchBlockedError, fetchPage, type FetchedPage } from "../../security/fetch";
 import type { AppConfig } from "../../server/config";
 import {
@@ -43,13 +44,14 @@ import type {
   RetrievalBranch,
   RetrievalQuery,
 } from "../../shared/contracts";
+import { guessLang } from "../../shared/language";
 import { queryTexts } from "./bm25";
 import { claimReviewRecords, withClaimReviews } from "./claimreview";
 import { BranchUnavailableError, skipLookup, throwIfAborted } from "./errors";
 import { stripPiiPlaceholders } from "./fts";
 import { chunkText, foldToken, keywordQuery, queryStems, scorePassages } from "./live-score";
 import { ensureLiveSnapshotsTable, LIVE_ID_PREFIX, LIVE_TTL_MS, reserveLiveRequest, saveLiveSnapshots } from "./live-store";
-import { recordLiveUsage } from "./live-usage";
+import { currentLiveScope, recordLiveUsage } from "./live-usage";
 
 export { ensureLiveSnapshotsTable, getLiveSnapshot, purgeExpiredLiveSnapshots, saveLiveSnapshots, LIVE_TTL_MS } from "./live-store";
 export {
@@ -157,11 +159,6 @@ export function liveRecordId(finalUrl: string, text: string): string {
   return `${LIVE_ID_PREFIX}${sha(`${finalUrl}\n${text}`)}`;
 }
 
-function guessLang(text: string): string {
-  const pl = (text.slice(0, 3000).match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g) ?? []).length;
-  return pl >= 5 ? "pl" : "en";
-}
-
 function isoOrNull(s: string | undefined, now: Date): string | null {
   if (!s) return null;
   const t = Date.parse(s);
@@ -176,6 +173,7 @@ interface PageResult {
   title: string;
   publishedAt: string | null;
   passages: string[];
+  lang?: string;
   /** Rekordy ClaimReview z JSON-LD strony (claimreview.ts); puste dla stron bez recenzji i źródeł bez ocen. */
   reviews: CorpusRecord[];
 }
@@ -260,7 +258,12 @@ export function createLiveBranchFromConfig(
   // onUsage: koszt każdego wyszukiwania trafia do zakresu przebiegu (live-usage.ts) → report.models / costUsd.
   return createDbLiveBranch(db, { searchProvider: createOpenAiSearchProvider(cfg, {
     onUsage: recordLiveUsage,
-    reserveRequest: () => reserveLiveRequest(db, opts.now?.() ?? new Date(), cfg.webSearchDailyCap),
+    reserveRequest: () => {
+      const granted = reserveLiveRequest(db, opts.now?.() ?? new Date(), cfg.webSearchDailyCap);
+      const scope = currentLiveScope();
+      if (!granted && scope) scope.dailySearchLimitReached = true;
+      return granted;
+    },
   }), ...opts });
 }
 
@@ -332,9 +335,11 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
         // Reserve time to actually read the pages even if one of the search requests hangs.
         const searchSignal = AbortSignal.any([signal, AbortSignal.timeout(Math.ceil(limits.overallTimeoutMs * 0.75))]);
         const results: (SearchResultItem[] | undefined)[] = [];
+        const asOf = Date.parse(q.asOf ?? "");
+        const day = Number.isFinite(asOf) ? relativeWindowDay(texts[0]!, new Date(asOf)) : undefined;
         const searches = queries.map(async (text, index) => {
           const hosts = index === 1 && focusedHosts.length ? focusedHosts : allowedHosts;
-          results[index] = await provider.search(text, hosts, searchSignal);
+          results[index] = await provider.search(day ? `${text} (data pytania: ${day})` : text, hosts, searchSignal);
         });
         await Promise.race([Promise.allSettled(searches), new Promise<void>(resolve => {
           if (searchSignal.aborted) resolve();
@@ -440,8 +445,10 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
             title: (page.title ?? passages[0]!.split("\n")[0]!).slice(0, 300),
             publishedAt: isoOrNull(page.publishedAt, now()),
             passages,
+            lang: page.lang,
             reviews: claimReviewRecords({
               rawHtml: page.rawHtml,
+              lang: page.lang,
               source,
               finalUrl: page.finalUrl,
               fetchedAt: now(),
@@ -481,7 +488,7 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
               publisher: pg.source.publisher,
               publishedAt: pg.publishedAt,
               fetchedAt: fetchedAt.toISOString(),
-              lang: guessLang(text),
+              lang: guessLang(text, pg.lang),
               text,
               role: pg.source.role,
               type: pg.source.type,
@@ -494,10 +501,19 @@ function createDbLiveBranch(db: Database, opts: LiveBranchOptions): LiveBranch {
             inputs.push({ key: id, title: pg.title, text });
           }
         }
-        const stems = queryStems(texts);
         const reviews = pages.flatMap((pg) => pg.reviews);
         for (const rec of reviews) records.set(rec.id, rec);
-        const scored = withClaimReviews(scorePassages(inputs, stems), reviews, stems).slice(0, Math.min(q.limit ?? limits.maxResults, limits.maxResults));
+        // A translated query is an alternative expression of the same claim. Requiring a
+        // single passage to cover vocabulary from both languages discards relevant pages.
+        const ranked = new Map<string, ReturnType<typeof scorePassages>[number]>();
+        for (const query of new Set(texts)) {
+          const terms = queryStems([query]);
+          for (const match of withClaimReviews(scorePassages(inputs, terms), reviews, terms)) {
+            if (match.score > (ranked.get(match.key)?.score ?? -1)) ranked.set(match.key, match);
+          }
+        }
+        const scored = [...ranked.values()].sort((a, b) => Number(!!records.get(b.key)?.claimReviewed) - Number(!!records.get(a.key)?.claimReviewed) || b.score - a.score)
+          .slice(0, Math.min(q.limit ?? limits.maxResults, limits.maxResults));
         if (scored.length === 0) return [];
 
         // 5. Zapis migawek (tylko zwracanych rekordów) — bez tego CorpusStore nie znajdzie rekordu po id.

@@ -18,6 +18,8 @@ import { createRateLimiter } from "../security/ratelimit";
 import type { AppConfig } from "./config";
 import { createServerContext, type Db, type ServerContext } from "./context";
 import { migrate } from "./db";
+import { createChannelRegistry } from "./channels/registry";
+import { loadExtensions, type FonsExtensions } from "./extensions";
 import { loadHighRiskTopics } from "./moderator/topics";
 
 export interface ProductionContext {
@@ -43,9 +45,19 @@ export function openServerDatabase(cfg: AppConfig): Db {
   return db;
 }
 
-export function buildProductionContext(cfg: AppConfig, db: Db): ServerContext {
+export async function configuredProductionContext(cfg: AppConfig, db: Db): Promise<ServerContext> {
+  return buildProductionContext(cfg, db, await loadExtensions(cfg, db));
+}
+
+export function buildProductionContext(cfg: AppConfig, db: Db, extensions?: FonsExtensions): ServerContext {
+  const channels = createChannelRegistry();
+  for (const adapter of extensions?.channels ?? []) {
+    if (adapter.id === "chatloom" || channels.get(adapter.id)) throw new Error(`Identyfikator kanału jest już zajęty: ${adapter.id}`);
+    channels.register(adapter, { webhook: true });
+  }
   const store = createCorpusStore(db);
   const deps = createEngineDeps(db, cfg, {
+    extensions,
     liveOptions: {
       // Gałąź „live” jest tworzona raz na proces; identyfikator przebiegu przychodzi z zakresu runWithLiveScope
       // (engine.verify niżej). Poza zakresem (np. ewaluacja bez serwera) — sztuczny request_id „live:{host}”.
@@ -76,6 +88,7 @@ export function buildProductionContext(cfg: AppConfig, db: Db): ServerContext {
     cfg,
     db,
     embedClaims,
+    channels,
     conversationAgent: deps.llm.available ? createConversationAgent(deps.llm) : undefined,
     engine: {
       // Zakres przebiegu: koszt wyszukiwania na żywo (tokeny + opłata za web_search) trafia do report.models
@@ -86,7 +99,7 @@ export function buildProductionContext(cfg: AppConfig, db: Db): ServerContext {
       verify: ({ requestId, ...req }, articleRead) =>
         runWithLiveScope({ requestId }, async () => withLiveUsage(await verifyInput(req, deps, { articleRead }))),
       snapshotId: () => store.snapshotId(),
-      pipelineVersion: PIPELINE_VERSION,
+      pipelineVersion: deps.pipelineVersion ?? PIPELINE_VERSION,
       llm: { provider: deps.llm.name, available: deps.llm.available, singleKey: deps.singleKey },
     },
     corpus: {

@@ -5,7 +5,12 @@
  */
 import { createHash } from "node:crypto";
 import { VerdictReport, type NormalizedInput } from "../shared/contracts";
+import { publicationAddress, submittedAddresses } from "../shared/publication-url";
+import { outletChannel } from "../corpus/incident-outlets";
+import { modelNameFor } from "../engine/llm/types";
 import { relativeWindowDay } from "../security/dates";
+import { MEMBERSHIP_FRESH_READ_MS } from "../engine/membership";
+import { imageCatalogVersion } from "../engine/image/reference-search";
 import { publicPostUrl, socialVideoPlatform } from "../engine/video/platforms";
 import { selectedVideoProvider } from "./config";
 import type { Db, EngineRequest, ServerContext } from "./context";
@@ -61,13 +66,13 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest, article?
   const receivedAt = new Date(req.receivedAt);
   let normalized: string;
   if (req.kind === "url" && req.url) {
-    normalized = canonicalUrl(req.url);
+    normalized = publicationAddress(req.url) ?? canonicalUrl(req.url);
     if (socialVideoPlatform(req.url)) {
       const provider = selectedVideoProvider(ctx.cfg);
       const model = provider === "openai" ? ctx.cfg.openaiVideoModel : ctx.cfg.geminiVideoModel;
       const enabled = provider === "openai" ? !!ctx.cfg.openaiApiKey : provider === "gemini" && !!ctx.cfg.geminiApiKey;
       normalized = JSON.stringify([publicPostUrl(req.url), provider, model ?? "default", enabled,
-        provider === "openai" ? ctx.cfg.openaiDataResidency : undefined, !!ctx.cfg.socialKitApiKey]);
+        provider === "openai" ? ctx.cfg.openaiDataResidency : undefined, !!ctx.cfg.socialKitApiKey, outletChannel(req.url)]);
     }
     // The same article can be submitted for different claims.
     if (req.text?.trim()) {
@@ -81,22 +86,27 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest, article?
   } else if (req.kind === "recording" && req.recording) {
     const mediaHash = createHash("sha256").update(req.recording.base64, "base64").digest("hex");
     const note = normalizeText(ctx.security.maskPii(req.text ?? "").text);
-    normalized = JSON.stringify([mediaHash, req.recording.mime, note, selectedVideoProvider(ctx.cfg),
+    normalized = JSON.stringify(["recording-v2", mediaHash, req.recording.mime, note, selectedVideoProvider(ctx.cfg),
       ctx.cfg.openaiVideoModel, ctx.cfg.geminiVideoModel, ctx.cfg.openaiDataResidency]);
   } else if (req.kind === "image") {
     const h = createHash("sha256");
     for (const img of req.images ?? []) h.update(img.mime).update(img.base64);
     const caption = ctx.security.maskPii(req.text ?? "").text;
-    normalized = JSON.stringify(["image-analysis-v4", h.digest("hex"), normalizeText(ctx.security.resolveRelativeDates(caption, receivedAt)), req.imageOptions?.searchWeb, req.imageFocus]);
+    normalized = JSON.stringify(["image-analysis-v7", imageCatalogVersion, h.digest("hex"), normalizeText(ctx.security.resolveRelativeDates(caption, receivedAt)), req.imageOptions?.searchWeb, req.imageFocus,
+      ctx.cfg.reverseImageProvider, !!ctx.cfg.googleVisionApiKey, !!ctx.cfg.factCheckApiKey]);
   } else {
     const masked = ctx.security.maskPii(req.text ?? "").text;
     normalized = normalizeText(ctx.security.resolveRelativeDates(masked, receivedAt));
+    const addresses = submittedAddresses(masked);
+    if (addresses.length) normalized = JSON.stringify([normalized, addresses.map(url => publicationAddress(url.href))]);
   }
   const asOf = relativeWindowDay(req.text ?? "", receivedAt);
   if (asOf) normalized = JSON.stringify([normalized, asOf]);
+  const models = ctx.engineDeps ? [ctx.engineDeps.llm, ctx.engineDeps.verifier].map(provider =>
+    [provider.name, modelNameFor(provider, "main"), modelNameFor(provider, "fast"), provider.available]) : ctx.engine.llm;
   return sha256Hex(
     // Źródła na żywo zmieniają wynik, więc wynik z zamkniętego korpusu nie może być podany po ich włączeniu (i odwrotnie).
-    [req.kind, normalized, ctx.engine.snapshotId(), ctx.engine.pipelineVersion, ctx.cfg.verdictMode, ctx.cfg.liveSearch ? "live" : "closed"].join(
+    [req.kind, normalized, ctx.engine.snapshotId(), ctx.engine.pipelineVersion, JSON.stringify(models), ctx.cfg.verdictMode, ctx.cfg.liveSearch ? "live" : "closed"].join(
       "\u0001",
     ),
   );
@@ -129,10 +139,10 @@ export function putCached(
   opts: { liveSearch?: boolean } = {},
 ): boolean {
   if (report.status !== "OK") return false;
-  if (report.videoAnalysis && report.videoAnalysis.status !== "analyzed" &&
+  if (report.videoAnalysis && report.videoAnalysis.status !== "analyzed" && report.videoAnalysis.status !== "metadata_only" &&
     !(report.videoAnalysis.platform === "upload_audio" && report.videoAnalysis.status === "transcript_only")) return false;
-  if (report.imageAnalysis?.images.some(({ provenance, search }) =>
-    provenance.credential === "unavailable" || (search && (search.status !== "ok" || search.factCheckStatus === "unavailable")))) return false;
+  if (report.imageAnalysis?.images.some(({ provenance, search, localSearch }) =>
+    provenance.credential === "unavailable" || localSearch?.status === "unavailable" || (search && (search.status !== "ok" || search.factCheckStatus === "unavailable")))) return false;
   // Klucz skasowany przez „usuń moje dane” (SEC-02): wynik trafia tylko do pytającego, nie do cache.
   try {
     const tomb = db.prepare("SELECT until FROM cache_tombstones WHERE cache_key = ?").get(key) as { until: string } | undefined;
@@ -142,6 +152,13 @@ export function putCached(
   }
   const ttl =
     report.unavailableBranches.length > 0 ? CACHE_TTL_DEGRADED_MS : (opts.liveSearch || report.videoAnalysis || report.imageAnalysis?.images.some(image => image.search)) ? CACHE_TTL_LIVE_MS : CACHE_TTL_MS;
+  let expiresAt = now.getTime() + ttl;
+  if (report.sourceActivity?.branches.some(b => b.id === "official_membership")) {
+    for (const e of report.verdicts.flatMap(v => v.evidence)) {
+      expiresAt = Math.min(expiresAt, Date.parse(e.fetchedAt) + MEMBERSHIP_FRESH_READ_MS);
+    }
+    if (!Number.isFinite(expiresAt) || expiresAt <= now.getTime()) return false;
+  }
   // Wynik współdzielony: bez identyfikatorów śledzących pierwszego zgłaszającego w adresie wejścia.
   const stored: VerdictReport = {
     ...report,
@@ -157,7 +174,7 @@ export function putCached(
     key,
     JSON.stringify(stored),
     now.toISOString(),
-    new Date(now.getTime() + ttl).toISOString(),
+    new Date(expiresAt).toISOString(),
     owner.senderId ?? null,
     owner.sessionId ?? null,
   );

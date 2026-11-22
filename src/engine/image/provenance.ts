@@ -121,22 +121,24 @@ export async function inspectImageProvenance(image: { mime: string; base64: stri
     const buffer = Buffer.from(image.base64, "base64");
     if (!buffer.length || buffer.length > MAX_ATTACHMENT_BYTES) return inconclusive("unavailable");
     const info = await sharp(buffer, { limitInputPixels: 32_000_000 }).metadata();
-    if (image.mime !== `image/${info.format}` || (info.pages ?? 1) > 1) return inconclusive("unavailable");
+    if ((info.format !== "jpeg" && info.format !== "png" && info.format !== "webp")
+      || image.mime !== `image/${info.format}` || (info.pages ?? 1) > 1) return inconclusive("unavailable");
+    const file = { format: info.format, ...info.autoOrient, bytes: buffer.length };
     let credential: "absent" | "unavailable" = "absent";
     try {
       const { Context, isActionsAssertion, Reader } = await import("@contentauth/c2pa-node");
       const reader = await Reader.fromAsset({ buffer, mimeType: image.mime }, verificationContext(Context));
-      if (reader) return signedResult(reader, isActionsAssertion);
+      if (reader) return { ...signedResult(reader, isActionsAssertion), file };
     } catch {
       // Unsupported host, inaccessible trust store, or unreadable manifest. Unsigned XMP can still be inspected.
       credential = "unavailable";
     }
 
     const declaration = metadataDeclaration(info.xmpAsString);
-    if (declaration === "none") return inconclusive(credential);
+    if (declaration === "none") return { ...inconclusive(credential), file };
     const action = declaration === "generated" ? "wygenerowanie obrazu przez AI" : "użycie generatywnej AI do edycji obrazu lub stworzenia jego części";
     const caveat = credential === "absent" ? "W pliku nie znaleziono podpisu C2PA." : "Weryfikacja podpisu C2PA była niedostępna.";
-    return { credential, basis: "metadata", declaration,
+    return { credential, basis: "metadata", declaration, file,
       textPl: `Edytowalne pole IPTC w metadanych wskazuje na ${action}. ${caveat} Pochodzenie pozostaje niepotwierdzone.` };
   } catch {
     return inconclusive("unavailable");

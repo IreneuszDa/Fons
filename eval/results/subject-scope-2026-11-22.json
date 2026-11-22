@@ -1,0 +1,298 @@
+{
+  "testedOn": "2026-11-22",
+  "methodPl": "Dwa angielskie twierdzenia wybrane przed próbą. Bezpośrednie wywołanie verifyInput, rzeczywisty ekstraktor, czytnik dowodów i weryfikator, osobna baza SQLite w pamięci. Wyszukiwanie hybrydowe w korpusie z lokalnym E5, pobieranie stron na żywo wyłączone. Osobny przebieg akceptacyjny sprawdza HTTP. Każdy wykazany cytat sprawdzono dosłownie w dołączonym rekordzie korpusu. Pole passageKind rozróżnia oryginalne fragmenty i odczyty danych strukturalnych.",
+  "limitsPl": "Dwie celowo dobrane próby diagnostyczne. Serie precedingRuns przedstawiają chronologicznie v24, v25 po zmianach wyszukiwania oraz powtórny odczyt v25 przed zmianą obsługi składowych. Powtórzenia dotyczą tych samych twierdzeń. Każdy przykład opiera się na jednym niezależnym wydawcy. Oba modele pochodzą od jednego dostawcy.",
+  "cases": [
+    {
+      "input": "Croatia and Slovenia joined the European Union in 2013.",
+      "expected": "WPROWADZAJACE",
+      "observed": "WPROWADZAJACE",
+      "status": "OK",
+      "checkedAt": "2026-11-22T05:09:45.982Z",
+      "pipeline": "engine-2026.11.22-25-multilingual-subjects",
+      "corpusSnapshot": "69ea00d5d845a29b6dc4a052a034e7524bfd4eaf2789f2507df7f036b470cf9a",
+      "costUsd": 0.018639,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna"
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol"
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol"
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "reasonPl": "Twierdzenie jest prawdziwe tylko częściowo: „Slovenia joined the European Union in 2013” to nieprawda, a „Croatia joined the European Union in 2013” — prawda. „Croatia joined the European Union in 2013” — Potwierdzone. Potwierdza to źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „Państwo członkowskie UE: od 1 lipca 2013 r.” „Slovenia joined the European Union in 2013” — Fałszywe. Przeczy temu źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „W UE: od 1 maja 2004 r.”",
+      "parts": [
+        {
+          "text": "Croatia joined the European Union in 2013.",
+          "expected": "POTWIERDZONE",
+          "observed": "POTWIERDZONE",
+          "matches": true,
+          "evidence": [
+            {
+              "recordId": "eu-portal:8d6c14f3d2c0",
+              "title": "Unia Europejska: Chorwacja — informacje o kraju UE",
+              "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+              "url": "https://european-union.europa.eu/principles-countries-history/eu-countries/croatia_pl",
+              "lang": "pl",
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "quote": "Państwo członkowskie UE: od 1 lipca 2013 r.",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "e2785858cbb38292bdb7a4d3c0b60b806aba79477b25ce66d088264776ea5770"
+            },
+            {
+              "recordId": "eu-portal:a63c9ead75aa",
+              "title": "Unia Europejska: historia rozszerzeń UE — Siódme rozszerzenie UE (1.07.2013 r.)",
+              "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+              "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "WSPIERA",
+              "quote": "1.07.2013 r.: Siódme rozszerzenie UE. Chorwacja przystępuje do UE i zostaje jej najmłodszym członkiem.",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "a60b490c8caf64d3a15840c154a94dc1f67cb6d18b04624a4720d4648cd53483"
+            }
+          ]
+        },
+        {
+          "text": "Slovenia joined the European Union in 2013.",
+          "expected": "FALSZYWE",
+          "observed": "FALSZYWE",
+          "matches": true,
+          "evidence": [
+            {
+              "recordId": "eu-portal:8d03e346e765",
+              "title": "Unia Europejska: Słowenia — informacje o kraju UE",
+              "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+              "url": "https://european-union.europa.eu/principles-countries-history/eu-countries/slovenia_pl",
+              "lang": "pl",
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "quote": "W UE: od 1 maja 2004 r.",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "06c8b409407642735b02ef958588203455d34136476f26b5cbaceafcdbbba299"
+            },
+            {
+              "recordId": "eu-portal:102673732ae5",
+              "title": "Unia Europejska: historia rozszerzeń UE — Piąte rozszerzenie UE (1.05.2004 r.)",
+              "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+              "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "OBALA",
+              "quote": "Oś czasu rozszerzeń UE (portal UE), 1.05.2004 r.: Piąte rozszerzenie UE. Do UE wchodzi dziesięć kolejnych państw: Cypr, Czechy, Estonia, Litwa, Łotwa, Malta, Polska, Słowacja, Słowenia i Węgry.",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "620babe2435a6b630c357f5a338febeea98bf69d43ed6bf0a6bad9cab3dce038"
+            }
+          ]
+        }
+      ],
+      "precedingRuns": [
+        {
+          "pipeline": "engine-2026.11.22-24-subject-scope",
+          "status": "OK",
+          "verdict": "BRAK_DOWODOW",
+          "reasonPl": "Twierdzenie dotyczy kilku podmiotów, a nie dla każdego mamy wystarczające dowody: brakuje ich dla „Croatia joined the European Union in 2013” i „Slovenia joined the European Union in 2013”. „Croatia joined the European Union in 2013” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. „Slovenia joined the European Union in 2013” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "costUsd": 0.019239
+        },
+        {
+          "pipeline": "engine-2026.11.22-25-multilingual-subjects",
+          "status": "OK",
+          "verdict": "WPROWADZAJACE",
+          "reasonPl": "Twierdzenie jest prawdziwe tylko częściowo: „Slovenia joined the European Union in 2013” to nieprawda, a „Croatia joined the European Union in 2013” — prawda. „Croatia joined the European Union in 2013” — Potwierdzone. Potwierdza to źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „Państwo członkowskie UE od 2013 r., należy do strefy euro i do strefy Schengen od 2023 r. Dowiedz się więcej o członkostwie Chorwacji w UE.” „Slovenia joined the European Union in 2013” — Fałszywe. Przeczy temu źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „W UE: od 1 maja 2004 r.”",
+          "costUsd": 0.017135
+        },
+        {
+          "pipeline": "engine-2026.11.22-25-multilingual-subjects",
+          "status": "OK",
+          "verdict": "WPROWADZAJACE",
+          "reasonPl": "Twierdzenie dotyczy kilku podmiotów, a „Slovenia joined the European Union in 2013” wprowadza w błąd. „Croatia joined the European Union in 2013” — Potwierdzone. Potwierdza to źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „Państwo członkowskie UE od 2013 r., należy do strefy euro i do strefy Schengen od 2023 r. Dowiedz się więcej o członkostwie Chorwacji w UE.” „Slovenia joined the European Union in 2013” — Wprowadzające w błąd. Część twierdzenia się zgadza, ale brakuje ważnego kontekstu. Brakujący kontekst: Nie zgadza się: czas (data). Źródła nie potwierdzają samej głównej treści. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „W UE: od 1 maja 2004 r.”",
+          "costUsd": 0.024937
+        }
+      ]
+    },
+    {
+      "input": "Finland, Sweden and Estonia joined NATO in 2024.",
+      "expected": "WPROWADZAJACE",
+      "observed": "WPROWADZAJACE",
+      "status": "OK",
+      "checkedAt": "2026-11-22T05:09:49.005Z",
+      "pipeline": "engine-2026.11.22-25-multilingual-subjects",
+      "corpusSnapshot": "69ea00d5d845a29b6dc4a052a034e7524bfd4eaf2789f2507df7f036b470cf9a",
+      "costUsd": 0.03756,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna"
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol"
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol"
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol"
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "reasonPl": "Twierdzenie jest prawdziwe tylko częściowo: „Finland joined NATO in 2024” i „Estonia joined NATO in 2024” to nieprawda, a „Sweden joined NATO in 2024” — prawda. „Finland joined NATO in 2024” — Fałszywe. Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Finlandia przystąpiła do NATO: 4 kwietnia 2023 r. (2023-04-04). „Sweden joined NATO in 2024” — Potwierdzone. Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Sweden deposited its Instrument of Accession to the North Atlantic Treaty on 7 March 2024, becoming NATO's 32nd member country. „Estonia joined NATO in 2024” — Fałszywe. Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia przystąpiły do NATO: 29 marca 2004 r. (2004-03-29).",
+      "parts": [
+        {
+          "text": "Finland joined NATO in 2024.",
+          "expected": "FALSZYWE",
+          "observed": "FALSZYWE",
+          "matches": true,
+          "evidence": [
+            {
+              "recordId": "nato:9f175c6af977",
+              "title": "NATO: członkowie przyjęci w 2023 r. — Finlandia",
+              "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+              "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "OBALA",
+              "quote": "Finlandia przystąpiła do NATO: 4 kwietnia 2023 r. (2023-04-04).",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "d82f41fdcf2f1525669abf7c52aa55f3a349213aa2dc2cb68ea2a3aec9c29ad4"
+            },
+            {
+              "recordId": "nato:bf9775d132ea",
+              "title": "NATO: Finlandia — członkostwo w NATO od 2023 r.",
+              "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+              "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "OBALA",
+              "quote": "Finlandia — członkostwo w NATO od 4 kwietnia 2023 r. (2023-04-04).",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "96b302a9b774c7872ae284fcdc66decee4af329e5dd3962be0bbe6e2ae84ed52"
+            }
+          ]
+        },
+        {
+          "text": "Sweden joined NATO in 2024.",
+          "expected": "POTWIERDZONE",
+          "observed": "POTWIERDZONE",
+          "matches": true,
+          "evidence": [
+            {
+              "recordId": "nato:c636e07e3362",
+              "title": "NATO: członkowie przyjęci w 2024 r. — Szwecja",
+              "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+              "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "WSPIERA",
+              "quote": "Sweden deposited its Instrument of Accession to the North Atlantic Treaty on 7 March 2024, becoming NATO's 32nd member country.",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "af674052d909d1656e863bd8ebf69eb483e7758197986fef610507dde02fe05b"
+            },
+            {
+              "recordId": "nato:67d8c689b833",
+              "title": "NATO: Szwecja — członkostwo w NATO od 2024 r.",
+              "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+              "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "WSPIERA",
+              "quote": "Sweden deposited its Instrument of Accession to the North Atlantic Treaty on 7 March 2024, becoming NATO's 32nd member country.",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "50490f7be0675affa88c7c333651bb08396351792945a0cbae9c7fa89fe5ac12"
+            }
+          ]
+        },
+        {
+          "text": "Estonia joined NATO in 2024.",
+          "expected": "FALSZYWE",
+          "observed": "FALSZYWE",
+          "matches": true,
+          "evidence": [
+            {
+              "recordId": "nato:c9907d0339b4",
+              "title": "NATO: członkowie przyjęci w 2004 r. — Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia",
+              "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+              "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "OBALA",
+              "quote": "Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia przystąpiły do NATO: 29 marca 2004 r. (2004-03-29).",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "90f1ef196ea0b1c01eb4bc17a7bcef6aceb1df687b7ff8b5eff02b16559ad39f"
+            },
+            {
+              "recordId": "nato:53c649c83bad",
+              "title": "NATO: Estonia — członkostwo w NATO od 2004 r.",
+              "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+              "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+              "lang": "pl",
+              "passageKind": "structured_data",
+              "relation": "OBALA",
+              "quote": "Estonia — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+              "verifier": "zgoda",
+              "quoteInCorpus": true,
+              "recordTextSha256": "7eab574646c8dfca3d5afe77f26e24fe0d2b48d57455f50d1cc1a7d1410da151"
+            }
+          ]
+        }
+      ],
+      "precedingRuns": [
+        {
+          "pipeline": "engine-2026.11.22-24-subject-scope",
+          "status": "OK",
+          "verdict": "BRAK_DOWODOW",
+          "reasonPl": "Twierdzenie dotyczy kilku podmiotów, a nie dla każdego mamy wystarczające dowody: brakuje ich dla „Finland joined NATO in 2024” i „Estonia joined NATO in 2024”. „Finland joined NATO in 2024” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. „Sweden joined NATO in 2024” — Potwierdzone. Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Szwecja — członkostwo w NATO od 7 marca 2024 r. (2024-03-07). „Estonia joined NATO in 2024” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "costUsd": 0.030792
+        },
+        {
+          "pipeline": "engine-2026.11.22-25-multilingual-subjects",
+          "status": "OK",
+          "verdict": "WPROWADZAJACE",
+          "reasonPl": "Twierdzenie jest prawdziwe tylko częściowo: „Finland joined NATO in 2024” i „Estonia joined NATO in 2024” to nieprawda, a „Sweden joined NATO in 2024” — prawda. „Finland joined NATO in 2024” — Fałszywe. Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Finlandia przystąpiła do NATO: 4 kwietnia 2023 r. (2023-04-04). „Sweden joined NATO in 2024” — Potwierdzone. Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Sweden deposited its Instrument of Accession to the North Atlantic Treaty on 7 March 2024, becoming NATO's 32nd member country. „Estonia joined NATO in 2024” — Fałszywe. Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Estonia — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+          "costUsd": 0.030817
+        },
+        {
+          "pipeline": "engine-2026.11.22-25-multilingual-subjects",
+          "status": "OK",
+          "verdict": "WPROWADZAJACE",
+          "reasonPl": "Twierdzenie dotyczy kilku podmiotów, a „Finland joined NATO in 2024” i „Estonia joined NATO in 2024” wprowadza w błąd. „Finland joined NATO in 2024” — Wprowadzające w błąd. Część twierdzenia się zgadza, ale brakuje ważnego kontekstu. Brakujący kontekst: Nie zgadza się: czas (data). Źródła nie potwierdzają samej głównej treści. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Finlandia — członkostwo w NATO od 4 kwietnia 2023 r. (2023-04-04). „Sweden joined NATO in 2024” — Potwierdzone. Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Sweden deposited its Instrument of Accession to the North Atlantic Treaty on 7 March 2024, becoming NATO's 32nd member country. „Estonia joined NATO in 2024” — Wprowadzające w błąd. Część twierdzenia się zgadza, ale brakuje ważnego kontekstu. Brakujący kontekst: Nie zgadza się: czas (data). Źródła nie potwierdzają samej głównej treści. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Estonia — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+          "costUsd": 0.034616
+        }
+      ]
+    }
+  ]
+}

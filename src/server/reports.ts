@@ -4,6 +4,17 @@ import type { Db } from "./context";
 export const REPORT_RETENTION_MS = 30 * 86_400_000;
 export const TOKEN_RE = /^[A-Za-z0-9_-]{16,64}$/;
 
+function readStoredReport(json: string): VerdictReport | undefined {
+  try {
+    const report = VerdictReport.parse(JSON.parse(json));
+    // Older successful image searches recorded only model costs. The exact Vision charge is unavailable.
+    if (!report.cacheHit && report.imageAnalysis?.images.some(image => image.search?.status === "ok")) report.costStatus = "partial";
+    return report;
+  } catch {
+    return undefined;
+  }
+}
+
 export function saveReport(
   db: Db,
   report: VerdictReport,
@@ -30,11 +41,7 @@ export function getReportByToken(db: Db, token: string, now: Date): VerdictRepor
     | { report_json: string; expires_at: string }
     | undefined;
   if (!row || row.expires_at <= now.toISOString()) return undefined;
-  try {
-    return VerdictReport.parse(JSON.parse(row.report_json));
-  } catch {
-    return undefined;
-  }
+  return readStoredReport(row.report_json);
 }
 
 /** Raport tylko jeśli należy do danego nadawcy (do „źródła”/„dlaczego”/„zgłoś”). */
@@ -43,9 +50,5 @@ export function getReportForSender(db: Db, token: string, senderId: string, now:
     | { report_json: string; expires_at: string }
     | undefined;
   if (!row || row.expires_at <= now.toISOString()) return undefined;
-  try {
-    return VerdictReport.parse(JSON.parse(row.report_json));
-  } catch {
-    return undefined;
-  }
+  return readStoredReport(row.report_json);
 }

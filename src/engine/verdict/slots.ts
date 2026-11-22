@@ -14,6 +14,7 @@
  */
 import type { Aspect } from "../../shared/contracts";
 import { namePhraseCount } from "./literal";
+import { stemToken } from "../retrieval/stem";
 
 /** Aspekty, które kod potrafi porównać w cytacie (liczbowo). */
 export type NumericAspect = Extract<Aspect, "czas" | "liczba">;
@@ -104,6 +105,51 @@ export function extractSlots(text: string): Slots {
 
 function sameValue(a: number, b: number): boolean {
   return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
+}
+
+/** Exact, unqualified Polish assertions about a single quantity. All words in the subject
+ * and in the unit must match; the user's number is deliberately excluded from retrieval. */
+export interface InstitutionalMeasure {
+  subject: string;
+  unit: string;
+  value: number;
+  kind: "term" | "count";
+  negated?: true;
+}
+
+const yearsWritten: Record<string, number> = {
+  jedno: 1, dwu: 2, trzy: 3, cztero: 4, piecio: 5, szescio: 6, siedmio: 7, osmio: 8, dziewiecio: 9, dziesiecio: 10,
+};
+
+export function institutionalMeasure(text: string): InstitutionalMeasure | undefined {
+  const line = fold(text).trim().replace(/^czy /, "").replace(/[.?!]+$/, "");
+  const duration = /^kadencja ([a-z ]{3,65}?) trwa (\d{1,2}) (?:rok|lata|lat)$/.exec(line);
+  if (duration) return { kind: "term", subject: duration[1]!, value: Number(duration[2]), unit: "kadencja" };
+  const count = /^([a-z ]{3,65}?) (nie )?(?:liczy|sklada sie (?:ze|z)) (\d{1,6}) ([a-z]+)$/.exec(line);
+  if (count) return { kind: "count", subject: count[1]!, unit: count[4]!, value: Number(count[3]), ...(count[2] && { negated: true }) };
+}
+
+function subjectKey(subject: string, polishLaw: boolean): string {
+  // In a Polish statute an unqualified chamber can be compared to an explicit "RP".
+  const name = polishLaw ? subject.replace(/ (?:rp|rzeczypospolitej polskiej)$/, "") : subject;
+  return name.split(/ +/).map(word => stemToken(word, "pl") ?? word).join(" ");
+}
+
+export function sourceMeasureValues(claim: InstitutionalMeasure, quote: string, polishLaw: boolean): number[] {
+  const subject = subjectKey(claim.subject, polishLaw);
+  const values = new Set<number>();
+  for (const sentence of fold(quote).matchAll(/([^.!?;\n]+)([.!?;\n]+|$)/g)) {
+    const line = sentence[1]!.trim();
+    if (sentence[2]?.includes("?") || /^czy\b/.test(line)) continue;
+    const other = institutionalMeasure(line);
+    if (other?.kind === claim.kind && !other.negated && other.unit === claim.unit && subjectKey(other.subject, polishLaw) === subject) values.add(other.value);
+    if (claim.kind !== "term") continue;
+    const adjective = /^([a-z ]{3,80}?) (?:sa wybieran[ei]|jest wybieran[ay]) na ([a-z]+)letni[a-z]* kadencj[a-z]*$/.exec(line);
+    if (!adjective || !Object.hasOwn(yearsWritten, adjective[2]!)) continue;
+    if (/\b(?:dawniej|wczesniej|przedtem|jesli|jezeli|gdy|gdyby|kiedys|dotychczas|historycznie|wowczas|wedlug|w|przed|po)\b/.test(adjective[1]!)) continue;
+    if (adjective[1]!.split(/ (?:i|oraz) /).some(s => subjectKey(s, polishLaw) === subject)) values.add(yearsWritten[adjective[2]!]!);
+  }
+  return [...values];
 }
 
 /** Spójniki i zaimki względne łączące kolejne stwierdzenia (po złożeniu, bez diakrytyków). */

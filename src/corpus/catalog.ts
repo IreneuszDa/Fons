@@ -10,13 +10,18 @@ import { CatalogEntry } from "./types";
 
 const cache = new Map<string, CatalogEntry[]>();
 
-function parseCatalog(text: string): CatalogEntry[] {
+function catalogEntries(text: string): CatalogEntry[] {
   const doc = parseYaml(text) as unknown;
-  const list = Array.isArray(doc) ? doc : (doc as { sources?: unknown } | null)?.sources;
-  const sources = z.array(CatalogEntry).parse(list);
+  const wrapper = doc as { sources?: unknown; catalog?: unknown } | null;
+  const list = Array.isArray(doc) ? doc : wrapper?.sources ?? wrapper?.catalog;
+  return z.array(CatalogEntry).parse(list);
+}
+
+function validateCatalog(sources: CatalogEntry[]): CatalogEntry[] {
   const ids = new Set<string>();
   const hosts = new Map<string, string>();
   for (const s of sources) {
+    if (!/^[a-z0-9][a-z0-9._-]*$/i.test(s.id)) throw new Error(`sources.yaml: nieprawidłowy identyfikator źródła "${s.id}"`);
     if (ids.has(s.id)) throw new Error(`sources.yaml: zduplikowany id "${s.id}"`);
     ids.add(s.id);
     for (const p of s.pathPrefixes ?? []) {
@@ -26,7 +31,8 @@ function parseCatalog(text: string): CatalogEntry[] {
     }
     for (const h of s.hosts) {
       const host = normalizeHost(h);
-      if (host !== h) throw new Error(`sources.yaml: host "${h}" musi być zapisany małymi literami, bez portu i schematu`);
+      if (host !== h || !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]+$/.test(host))
+        throw new Error(`sources.yaml: host "${h}" musi być zapisany małymi literami, bez portu i schematu`);
       const other = hosts.get(host);
       if (other) throw new Error(`sources.yaml: host "${host}" przypisany do dwóch źródeł: ${other}, ${s.id}`);
       hosts.set(host, s.id);
@@ -45,12 +51,9 @@ export function loadCatalog(dataDir?: string): CatalogEntry[] {
   const key = `${file}|${existsSync(organizerFile) ? organizerFile : ""}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  let text = readFileSync(file, "utf8");
-  if (existsSync(organizerFile)) {
-    // Łączymy listy YAML (oba pliki to listy na najwyższym poziomie).
-    text = `${text.trimEnd()}\n\n${readFileSync(organizerFile, "utf8")}`;
-  }
-  const sources = parseCatalog(text);
+  const entries = catalogEntries(readFileSync(file, "utf8"));
+  if (existsSync(organizerFile)) entries.push(...catalogEntries(readFileSync(organizerFile, "utf8")));
+  const sources = validateCatalog(entries);
   cache.set(key, sources);
   return sources;
 }
@@ -96,15 +99,21 @@ export function pathMatchesPrefixes(entry: Pick<CatalogEntry, "pathPrefixes">, p
  * Zwraca undefined także dla adresu, którego nie da się sparsować.
  */
 export function catalogSourceForUrl(url: string, dataDir?: string): CatalogEntry | undefined {
+  return sourceAtUrl(loadCatalog(dataDir), url);
+}
+
+/** Lookup against the catalogue selected by the caller (also used for external data packs). */
+export function sourceAtUrl(catalog: CatalogEntry[], url: string): CatalogEntry | undefined {
   let u: URL;
   try {
     u = new URL(url);
   } catch {
     return undefined;
   }
+  if (!["https:", "http:"].includes(u.protocol) || u.port || u.username || u.password) return undefined;
   const wanted = normalizeHost(u.hostname);
   if (!wanted) return undefined;
-  const entry = loadCatalog(dataDir).find((s) => s.hosts.includes(wanted));
+  const entry = catalog.find((s) => s.hosts.includes(wanted));
   if (!entry) return undefined;
   return pathMatchesPrefixes(entry, u.pathname) ? entry : undefined;
 }
@@ -115,5 +124,5 @@ export function catalogSourceById(id: string, dataDir?: string): CatalogEntry | 
 
 /** Do testów: parsowanie katalogu z tekstu YAML (bez dotykania dysku). */
 export function parseCatalogForTest(text: string): CatalogEntry[] {
-  return parseCatalog(text);
+  return validateCatalog(catalogEntries(text));
 }

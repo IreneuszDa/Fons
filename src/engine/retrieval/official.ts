@@ -18,7 +18,7 @@
  */
 import { randomUUID } from "node:crypto";
 import type { Database } from "better-sqlite3";
-import { loadCatalog, normalizeHost } from "../../corpus/catalog";
+import { loadCatalog, sourceAtUrl } from "../../corpus/catalog";
 import { detectInjection, stripFlaggedSentences } from "../../security/detector";
 import { fetchPage, type FetchedPage, type FetchOptions } from "../../security/fetch";
 import type { CatalogSource, CorpusRecord, DetectorHit, EvidenceCandidate, RetrievalBranch, RetrievalQuery } from "../../shared/contracts";
@@ -94,10 +94,10 @@ export interface OfficialBranch extends RetrievalBranch {
   readonly timeoutMs: number;
 }
 
-function sourceForHost(catalog: CatalogSource[], host: string): CatalogSource | undefined {
-  const wanted = normalizeHost(host);
+function officialSource(catalog: CatalogSource[], url: string): CatalogSource | undefined {
+  const source = sourceAtUrl(catalog, url);
   // liveSearch=false w katalogu = źródła nie wolno pobierać na żywo (polityka właściciela) — także tą gałęzią.
-  return wanted ? catalog.find((s) => s.type === "pierwotne" && s.liveSearch === true && s.hosts.includes(wanted)) : undefined;
+  return source?.type === "pierwotne" && source.liveSearch ? source : undefined;
 }
 
 function draftsFor(lookup: OfficialLookup, page: FetchedPage, fetchedAt: Date): RecordDraft[] {
@@ -148,10 +148,7 @@ export function createOfficialBranch(db: Database, opts: OfficialBranchOptions =
       const texts = queryTexts(q);
       const catalog = getCatalog();
       // Adres spoza katalogu (albo o typie innym niż „pierwotne”) nie jest pobierany.
-      const lookups = planOfficialLookups(texts.join(" \n "), getRegistry()).filter((l) => {
-        const host = exactHostOf(l.fetchUrl);
-        return !!host && !!sourceForHost(catalog, host);
-      });
+      const lookups = planOfficialLookups(texts.join(" \n "), getRegistry()).filter(l => officialSource(catalog, l.fetchUrl));
       if (lookups.length === 0) return skipLookup(q);
 
       let failures = 0;
@@ -166,7 +163,7 @@ export function createOfficialBranch(db: Database, opts: OfficialBranchOptions =
           }
           // Host PO przekierowaniach — ta sama zasada co przed pobraniem.
           const finalHost = exactHostOf(page.finalUrl);
-          const source = finalHost ? sourceForHost(catalog, finalHost) : undefined;
+          const source = officialSource(catalog, page.finalUrl);
           if (!finalHost || !source) {
             failures++;
             return [];
@@ -176,6 +173,7 @@ export function createOfficialBranch(db: Database, opts: OfficialBranchOptions =
           // Ostrzeżenia RSO są pojedynczymi komunikatami, więc o ich kolejności decyduje dopasowanie do pytania.
           let first = lookup.kind !== "rso";
           for (const draft of draftsFor(lookup, page, fetchedAt)) {
+            if (officialSource(catalog, draft.url)?.id !== source.id) continue;
             const lead = first;
             first = false;
             const hits = detectInjection(draft.text, "fetched_page");

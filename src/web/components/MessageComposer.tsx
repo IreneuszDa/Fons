@@ -8,7 +8,7 @@ import { HStack, StackItem, VStack } from "@astryxdesign/core/Layout";
 import { Text } from "@astryxdesign/core/Text";
 import { Thumbnail } from "@astryxdesign/core/Thumbnail";
 import { DocumentTextIcon, MicrophoneIcon, PlusIcon, StopIcon, VideoCameraIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { MAX_CHAT_TEXT_CHARS } from "../../shared/attachments";
+import { IMAGE_MIMES, MAX_CHAT_TEXT_CHARS } from "../../shared/attachments";
 import type { ChatInput } from "../api";
 import { AUDIO_ACCEPT, DOCUMENT_ACCEPT, FILE_ACCEPT, VIDEO_ACCEPT, imagePreviewSrc, prepareAttachment, type DraftAttachment } from "../lib/attachment";
 import { useVoiceNote } from "../lib/useVoiceNote";
@@ -23,7 +23,9 @@ interface MessageComposerProps {
 
 export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: MessageComposerProps) {
   const [text, setText] = useState("");
-  const [attachment, setAttachment] = useState<DraftAttachment | null>(null);
+  const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
+  const [attachment, comparison] = attachments;
+  const appendImage = useRef(false);
   const [reading, setReading] = useState(false);
   const [fileError, setFileError] = useState("");
   const picker = useRef<HTMLInputElement>(null);
@@ -41,26 +43,33 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
     void voice.start();
   }
 
-  function pick(accept: string) {
+  function pick(accept: string, mode?: "pair" | "append") {
     if (!picker.current) return;
     picker.current.accept = accept;
+    picker.current.multiple = mode === "pair";
+    appendImage.current = mode === "append";
     picker.current.click();
   }
 
-  async function selectFiles(files: File[]) {
+  async function selectFiles(files: File[], append = false) {
     if (isDisabled || !files.length) return;
     const version = ++selection.current;
     setFileError("");
-    if (files.length > 1) {
+    if (files.length > (append ? 1 : 2)) {
       setReading(false);
-      setFileError("Do jednej wiadomości możesz dołączyć jeden plik.");
+      setFileError("Wybierz jeden plik lub dwa obrazy do porównania.");
       return;
     }
     setReading(true);
     try {
-      const next = await prepareAttachment(files[0]!);
+      const picked = await Promise.all(files.map(prepareAttachment));
       if (version !== selection.current) return;
-      setAttachment(next);
+      const next = append && attachment ? [attachment, ...picked] : picked;
+      if (next.length > 1 && !next.every(file => file.kind === "image")) {
+        setFileError("Do porównania wybierz dwa pliki JPG, PNG lub WebP.");
+        return;
+      }
+      setAttachments(next);
     } catch (err) {
       if (version === selection.current) setFileError(err instanceof Error ? err.message : "Nie udało się odczytać pliku.");
     } finally {
@@ -68,10 +77,10 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
     }
   }
 
-  function removeAttachment() {
+  function removeAttachment(index: number) {
     selection.current++;
     setReading(false);
-    setAttachment(null);
+    setAttachments(files => files.filter((_, i) => i !== index));
     setFileError("");
     editor.current?.focus();
   }
@@ -82,14 +91,15 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
     const input: ChatInput = caption ? { text: caption } : {};
     if (attachment?.kind === "image") {
       input.image = attachment.content;
+      if (comparison?.kind === "image") input.comparisonImage = comparison.content;
     } else if (attachment?.kind === "document") {
       input.document = attachment.content;
     } else if (attachment?.kind === "recording") {
       input.recording = attachment.content;
     }
-    onSubmit(input, attachment?.name);
+    onSubmit(input, attachment && attachments.map(file => file.name).join(" · ").slice(0, 512));
     setText("");
-    setAttachment(null);
+    setAttachments([]);
     setFileError("");
   }
 
@@ -103,7 +113,7 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
         onChange={event => {
           const files = Array.from(event.currentTarget.files ?? []);
           event.currentTarget.value = "";
-          void selectFiles(files);
+          void selectFiles(files, appendImage.current);
         }}
       />
       <ChatComposer
@@ -117,27 +127,30 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
         density="compact"
         placeholder="Napisz wiadomość lub wklej link…"
         drawer={attachment && (
-          <ChatComposerDrawer label="Załącznik">
+          <ChatComposerDrawer label={comparison ? "Obrazy do porównania" : "Załącznik"}>
             <VStack gap={2} width="100%">
-              <HStack gap={2} vAlign="center">
-                {attachment.kind === "image"
-                  ? <Thumbnail src={imagePreviewSrc(attachment.content)} alt="" />
-                  : <Icon icon={attachment.kind === "document" ? DocumentTextIcon : attachment.content.mime.startsWith("audio/") ? MicrophoneIcon : VideoCameraIcon} size="md" color="secondary" />}
+              {attachments.map((file, index) => <HStack key={index} gap={2} vAlign="center">
+                {file.kind === "image"
+                  ? <Thumbnail src={imagePreviewSrc(file.content)} alt="" />
+                  : <Icon icon={file.kind === "document" ? DocumentTextIcon : file.content.mime.startsWith("audio/") ? MicrophoneIcon : VideoCameraIcon} size="md" color="secondary" />}
                 <StackItem size="fill">
-                  <Text size="sm" maxLines={1}>{attachment.name}</Text>
+                  <Text size="sm" maxLines={1}>{file.name}</Text>
                 </StackItem>
                 <IconButton
-                  label="Usuń załącznik"
+                  label={comparison ? `Usuń obraz ${index + 1}` : "Usuń załącznik"}
                   icon={<Icon icon={XMarkIcon} />}
                   variant="ghost"
                   size="sm"
                   isDisabled={isDisabled}
-                  onClick={removeAttachment}
+                  onClick={() => removeAttachment(index)}
                 />
-              </HStack>
-              {attachment.kind === "image" && (
-                <Text type="supporting" color="secondary">Fons może wysłać obraz do Google, żeby znaleźć jego źródło.</Text>
-              )}
+              </HStack>)}
+              {comparison ? <Text type="supporting">Po wysłaniu Fons porówna oba obrazy lokalnie.</Text> :
+                attachment.kind === "image" && <>
+                  <Button label="Dodaj drugi obraz do porównania" variant="ghost" size="sm" isDisabled={isDisabled || reading}
+                    onClick={() => pick(IMAGE_MIMES.join(","), "append")} />
+                  <Text type="supporting" color="secondary">Fons może wysłać obraz do Google, żeby znaleźć jego źródło.</Text>
+                </>}
             </VStack>
           </ChatComposerDrawer>
         )}
@@ -164,6 +177,7 @@ export function MessageComposer({ onSubmit, isDisabled = false, editorRef }: Mes
                 variant="ghost" icon={<Icon icon={PlusIcon} />} isDisabled={isDisabled} isLoading={reading} />}
               items={[
                 { label: "Dokument lub zdjęcie", onClick: () => pick(DOCUMENT_ACCEPT) },
+                { label: "Porównaj dwa obrazy", onClick: () => pick(IMAGE_MIMES.join(","), "pair") },
                 { label: "Film", onClick: () => pick(VIDEO_ACCEPT) },
                 { label: "Plik audio", onClick: () => pick(AUDIO_ACCEPT) },
               ]} />

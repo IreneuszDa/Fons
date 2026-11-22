@@ -1,0 +1,52 @@
+[
+  {
+    "width": 390,
+    "contentWidth": 390,
+    "question": "Czy Senat RP liczy 150 senatorów?",
+    "answer": "Nie. „Senat składa się ze 100 senatorów.”",
+    "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+    "reportStatus": "OK",
+    "verdict": "FALSZYWE",
+    "evidenceUrls": [
+      "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf"
+    ],
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "contentWidth": 1280,
+    "question": "Czy Polska jest członkiem NATO?",
+    "answer": "Tak. Polska należy do NATO.",
+    "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+    "reportStatus": "OK",
+    "verdict": "POTWIERDZONE",
+    "evidenceUrls": [
+      "https://www.nato.int/en/about-us/organization/nato-member-countries"
+    ],
+    "errors": []
+  },
+  {
+    "width": 430,
+    "contentWidth": 430,
+    "question": "Czy Szwecja nie jest członkiem NATO?",
+    "answer": "Nie. Szwecja należy do NATO.",
+    "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+    "reportStatus": "OK",
+    "verdict": "FALSZYWE",
+    "evidenceUrls": [
+      "https://www.nato.int/en/about-us/organization/nato-member-countries"
+    ],
+    "errors": []
+  },
+  {
+    "width": 412,
+    "contentWidth": 412,
+    "question": "Burmistrz Suwałk ogłosił wczoraj zamknięcie szkół z powodu ćwiczeń wojsk białoruskich.",
+    "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+    "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+    "reportStatus": "OK",
+    "verdict": "BRAK_DOWODOW",
+    "evidenceUrls": [],
+    "errors": []
+  }
+]

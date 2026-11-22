@@ -7,6 +7,9 @@ type ImageFocus = NonNullable<EngineRequest["imageFocus"]>;
 export function obviousImageFocus(req: EngineRequest): ImageFocus | undefined {
   const caption = foldWords(req.text ?? "");
   if (!caption) return req.imageOptions?.searchWeb ? "copies" : "claims";
+  if (/^(?:(?:pokaz|podaj|odczytaj|sprawdz|przeanalizuj) )?(?:metadane|parametry techniczne)(?: (?:tego |tej )?(?:obrazu|zdjecia|fotografii|pliku))?$/.test(caption)) return "origin";
+  if (/^(?:gdzie (?:wczesniej |jeszcze )?(?:opublikowano|publikowano) (?:to zdjecie|ten obraz)|znajdz (?:wczesniejsze )?kopie (?:tego zdjecia|tego obrazu))\b/.test(caption)) return "copies";
+  if (/^(?:(?:kiedy|gdzie|gdzie i kiedy|kiedy i gdzie) (?:wykonano|zrobiono) (?:to zdjecie|te fotografie)|(?:co to za|jakie to) wydarzenie)\b/.test(caption)) return "context";
   if (/\bdemagog\w*\b/.test(caption) && /\b(?:sprawdz\w*|weryfik\w*|zweryfik\w*|oceni\w*)\b/.test(caption)) return "claims";
   if (/^(czy (to|to jest) ai|czy to ai generated|is this ai generated|sprawdz pochodzenie (obrazu|zdjecia))$/.test(caption)
     || /^czy (ten obraz|to zdjecie|ta grafika) (jest |zostal[oa]? )?(wygenerowan[yae]|stworzon[yae]) przez (ai|sztuczna inteligencje)$/.test(caption)) return "origin";

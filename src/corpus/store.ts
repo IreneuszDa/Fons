@@ -12,10 +12,12 @@ import { dirname } from "node:path";
 import Database from "better-sqlite3";
 import { CorpusRecord, type CorpusStore, type FixedRating } from "../shared/contracts";
 import { corpusFiles, incidentFiles, readCorpus } from "./files";
+import { clearCatalogCache, loadCatalog, sourceAtUrl } from "./catalog";
 import type { IncidentRecord } from "./types";
 import { publicationLinks } from "./publication-links";
 
 type Db = Database.Database;
+const activeCatalogs = new WeakMap<Db, ReturnType<typeof loadCatalog>>();
 
 const FTS_TOKENIZE = "unicode61 remove_diacritics 2";
 
@@ -59,6 +61,7 @@ export function initCorpusSchema(db: Db): void {
       rating_json TEXT,
       topics_json TEXT NOT NULL DEFAULT '[]',
       period TEXT,
+      superseded_at TEXT,
       origin TEXT NOT NULL DEFAULT 'corpus'
     );
     CREATE INDEX IF NOT EXISTS idx_records_source ON records(source_id);
@@ -89,14 +92,21 @@ export function initCorpusSchema(db: Db): void {
     CREATE TABLE IF NOT EXISTS corpus_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS record_embeddings (record_id TEXT PRIMARY KEY, vector BLOB NOT NULL);
   `);
+  db.transaction(() => {
+    if (!db.prepare("SELECT 1 FROM pragma_table_info('records') WHERE name = 'superseded_at'").get()) {
+      db.exec("ALTER TABLE records ADD COLUMN superseded_at TEXT");
+      db.prepare("DELETE FROM corpus_meta WHERE key = 'snapshot_id'").run();
+    }
+  }).immediate();
 }
 
 // ───────────────────────────── Migawka ─────────────────────────────
 
-/** snapshot_id = sha256 po posortowanych liniach plików jsonl (kolejność plików i linii nie ma znaczenia). */
-export function computeSnapshotId(dataDir?: string): string {
+/** A catalogue policy change also invalidates cached verification results. */
+export function computeSnapshotId(dataDir?: string, catalog = loadCatalog(dataDir)): string {
   const h = createHash("sha256");
   const parts: { name: string; lines: string[] }[] = [
+    { name: "sources", lines: catalog.map(s => JSON.stringify(s)) },
     ...corpusFiles(dataDir).map((f) => ({ name: `corpus/${f.name}`, lines: f.lines })),
     ...incidentFiles(dataDir).map((f) => ({ name: `incidents/${f.name}`, lines: f.lines })),
   ];
@@ -138,8 +148,10 @@ export interface LoadOptions {
  */
 export function ensureCorpusLoaded(db: Db, opts: LoadOptions = {}): { snapshotId: string; records: number } {
   initCorpusSchema(db);
-  const snapshotId = computeSnapshotId(opts.dataDir);
-  const loaded = readCorpus(opts.dataDir);
+  clearCatalogCache();
+  const catalog = loadCatalog(opts.dataDir);
+  const snapshotId = computeSnapshotId(opts.dataDir, catalog);
+  const loaded = readCorpus(opts.dataDir, catalog);
   if (loaded.errors.length) {
     (opts.onWarning ?? ((m) => console.warn(m)))(`corpus: pominięto ${loaded.errors.length} nieprawidłowych linii (np. ${loaded.errors[0]})`);
   }
@@ -154,6 +166,7 @@ export function ensureCorpusLoaded(db: Db, opts: LoadOptions = {}): { snapshotId
     incidentsCount === loaded.incidents.length &&
     ftsCount === loaded.records.length
   ) {
+    activeCatalogs.set(db, catalog);
     return { snapshotId, records: recordsCount };
   }
 
@@ -172,9 +185,9 @@ export function ensureCorpusLoaded(db: Db, opts: LoadOptions = {}): { snapshotId
 
     const insRec = db.prepare(
       `INSERT INTO records(id, source_id, url, title, publisher, published_at, fetched_at, lang, text, role, type, level,
-         independence_group, licence, claim_reviewed, rating_json, topics_json, period, origin)
+         independence_group, licence, claim_reviewed, rating_json, topics_json, period, superseded_at, origin)
        VALUES(@id, @source_id, @url, @title, @publisher, @published_at, @fetched_at, @lang, @text, @role, @type, @level,
-         @independence_group, @licence, @claim_reviewed, @rating_json, @topics_json, @period, @origin)`,
+         @independence_group, @licence, @claim_reviewed, @rating_json, @topics_json, @period, @superseded_at, @origin)`,
     );
     const insFold = db.prepare("INSERT INTO records_fold(rowid, title, text, claim_reviewed) VALUES(?, ?, ?, ?)");
     const rowidOf = db.prepare("SELECT rowid FROM records WHERE id = ?");
@@ -198,6 +211,7 @@ export function ensureCorpusLoaded(db: Db, opts: LoadOptions = {}): { snapshotId
         rating_json: r.rating ? JSON.stringify(r.rating) : null,
         topics_json: JSON.stringify(r.topics),
         period: r.period ?? null,
+        superseded_at: r.supersededAt ?? null,
         origin: r.origin,
       });
       const rowid = (rowidOf.get(r.id) as { rowid: number }).rowid;
@@ -208,7 +222,8 @@ export function ensureCorpusLoaded(db: Db, opts: LoadOptions = {}): { snapshotId
       "INSERT INTO incidents(id, title, summary, url, domains_json, published_at, record_id) VALUES(?, ?, ?, ?, ?, ?, ?)",
     );
     for (const i of loaded.incidents as IncidentRecord[]) {
-      insInc.run(i.id, i.title, i.summary, i.url, JSON.stringify(i.domains), i.publishedAt, i.recordId);
+      const outlets = [...i.domains, ...(i.channels ?? []).map(channel => ({ channel }))];
+      insInc.run(i.id, i.title, i.summary, i.url, JSON.stringify(outlets), i.publishedAt, i.recordId);
     }
 
     db.exec("INSERT INTO records_fts(records_fts) VALUES('rebuild'); INSERT INTO incidents_fts(incidents_fts) VALUES('rebuild');");
@@ -229,6 +244,7 @@ export function ensureCorpusLoaded(db: Db, opts: LoadOptions = {}): { snapshotId
     setMeta(db, "corpus_loaded_at", new Date().toISOString());
   });
   tx();
+  activeCatalogs.set(db, catalog);
   return { snapshotId, records: loaded.records.length };
 }
 
@@ -253,6 +269,7 @@ interface RecordRow {
   rating_json: string | null;
   topics_json: string;
   period: string | null;
+  superseded_at: string | null;
   origin: string;
 }
 
@@ -278,6 +295,7 @@ export function rowToRecord(row: RecordRow): CorpusRecord {
   if (row.claim_reviewed !== null) rec.claimReviewed = row.claim_reviewed;
   if (row.rating_json) rec.rating = JSON.parse(row.rating_json) as FixedRating;
   if (row.period !== null) rec.period = row.period;
+  if (row.superseded_at) rec.supersededAt = row.superseded_at;
   return CorpusRecord.parse(rec);
 }
 
@@ -325,7 +343,12 @@ function readLiveSnapshot(db: Db, recordId: string, nowMs: number): CorpusRecord
   if (expiry !== null && !(expiry > nowMs)) return undefined; // wygasły albo nieczytelny termin
   try {
     const parsed = CorpusRecord.safeParse({ ...(JSON.parse(row.record_json) as Record<string, unknown>), id: recordId, origin: "live_snapshot" });
-    return parsed.success ? parsed.data : undefined;
+    if (!parsed.success) return undefined;
+    const policy = activeCatalogs.get(db);
+    if (!policy) return parsed.data;
+    const source = sourceAtUrl(policy, parsed.data.url);
+    if (source?.id !== parsed.data.sourceId || source.role !== parsed.data.role) return undefined;
+    return { ...parsed.data, type: source.type, level: source.level, independenceGroup: source.independenceGroup, licence: source.licence };
   } catch {
     return undefined;
   }
@@ -333,6 +356,7 @@ function readLiveSnapshot(db: Db, recordId: string, nowMs: number): CorpusRecord
 
 export function createCorpusStore(db: Db, opts: { now?: () => Date } = {}): CorpusStore {
   const getStmt = db.prepare("SELECT * FROM records WHERE id = ?");
+  const pageStmt = db.prepare("SELECT * FROM records WHERE url = ? AND origin IN ('corpus', 'organizer') ORDER BY id LIMIT 64");
   const countStmt = db.prepare("SELECT COUNT(*) AS n FROM records");
   const snapStmt = db.prepare("SELECT value FROM corpus_meta WHERE key = 'snapshot_id'");
   const now = opts.now ?? (() => new Date());
@@ -342,6 +366,9 @@ export function createCorpusStore(db: Db, opts: { now?: () => Date } = {}): Corp
     return readLiveSnapshot(db, recordId, now().getTime());
   };
   return {
+    catalogPage(url) {
+      return (pageStmt.all(url) as RecordRow[]).map(rowToRecord);
+    },
     get(recordId: string): CorpusRecord | undefined {
       return lookup(recordId);
     },

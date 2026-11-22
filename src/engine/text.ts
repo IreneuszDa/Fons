@@ -104,7 +104,7 @@ export function isoDateOrUndefined(v: string | null | undefined): string | undef
   return m[0];
 }
 
-const MONTHS_PL = [
+export const MONTHS_PL = [
   "stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca",
   "lipca", "sierpnia", "września", "października", "listopada", "grudnia",
 ];

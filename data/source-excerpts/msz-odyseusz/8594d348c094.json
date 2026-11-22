@@ -1,0 +1,23 @@
+{
+  "recordId": "msz-odyseusz:8594d348c094",
+  "pageUrl": "https://odyseusz.gov.pl/IT",
+  "apiUrl": "https://odyseusz.gov.pl/api/v1/informacje/profile-panstw/IT",
+  "publisher": "Ministerstwo Spraw Zagranicznych - serwis Odyseusz (informacje dla podróżujących)",
+  "iso": "IT",
+  "publishedAt": "2026-11-19",
+  "fetchedAt": "2026-11-22T05:14:42.013Z",
+  "version": 30,
+  "versionId": 1439,
+  "field": "trescPowiadomieniaDluga",
+  "responseSha256": "7ed9813074d2ef80b34e825a2e2760c6b5bf6b548b6bc454adeb9a67b67c2161",
+  "slices": [
+    {
+      "offset": 0,
+      "text": "W dniu 20 listopada na terenie całego kraju zapowiedziano strajk generalny w sektorze publicznym i prywatnym. Mogą występować utrudnienia w transporcie drogowym, lotniczym,"
+    },
+    {
+      "offset": 848,
+      "text": "protesty mają odbyć się w ponad 100 miastach. Lista jest aktualizowana, szczegóły mogą się zmienić"
+    }
+  ]
+}

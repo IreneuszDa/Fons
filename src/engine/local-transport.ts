@@ -8,6 +8,7 @@ export interface LocalTransportQuestion {
   policy: TransportPolicy;
   place: string;
   placeStem: string;
+  neededEvidencePl: string;
   claim: Claim;
   searchTerms: string[];
   mayAddress(record: CorpusRecord): boolean;
@@ -45,6 +46,9 @@ export function localTransportQuestion(text: string): LocalTransportQuestion | u
   const placeInText = (s: string) => fold(s).split(/[^\p{L}]+/u).some(word => word.startsWith(placeStem));
   return {
     policy, place, placeStem,
+    neededEvidencePl: policy === "ticket_sales"
+      ? "aktualny regulamin sprzedaży biletów lub komunikat organizatora transportu wskazujący dostępne sposoby zakupu i datę zmiany"
+      : "uchwała rady gminy z opisem lub mapą granic strefy, wskazaniem pojazdów objętych ograniczeniem i datą jego wejścia w życie",
     claim: { id: "c1", text, type: "fakt", isMain: true, temporal: { kind: "stan" }, inputOverlap: 1 },
     searchTerms: policy === "ticket_sales" ? [place, place + " regulamin sprzedaży biletów"] : [place, place + " strefa czystego transportu"],
     mayAddress(record) {

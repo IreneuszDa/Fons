@@ -45,14 +45,19 @@ export function evidenceView(e: EvidenceItem) {
     sourceType: e.sourceType,
     level: e.level,
     role: e.role,
+    ...(e.lang && { lang: e.lang }),
+    ...(e.passageKind && { passageKind: e.passageKind }),
+    ...(e.usedForVerdict !== undefined && { usedForVerdict: e.usedForVerdict }),
+    ...(e.partialMeaning && { partialMeaning: e.partialMeaning }),
     ...(e.ratingRaw ? { ratingRaw: e.ratingRaw } : {}),
   };
 }
 
 /** Raport → kształt zwracany klientowi MCP (bez modeli, kosztów i szczegółów wewnętrznych). */
 export function reportView(report: VerdictReport, resultUrl: string | undefined) {
-  const passages = new Map([...report.verdicts.flatMap(v => v.evidence), ...(report.answer?.evidence ?? [])]
-    .map(e => [JSON.stringify([e.recordId, e.quote]), evidenceView(e)]));
+  const passages = new Map([...report.verdicts.flatMap(v => [...v.evidence, ...(v.parts?.flatMap(p => p.evidence ?? []) ?? [])]),
+    ...(report.answer?.evidence ?? []), ...(report.questionParts?.flatMap(p => p.evidence) ?? [])]
+    .map(e => [JSON.stringify([e.recordId, e.quote, e.relation, e.aspect, e.usedForVerdict, e.partialMeaning]), evidenceView(e)]));
   return {
     reportId: report.id,
     ...(resultUrl ? { resultUrl } : {}),
@@ -77,6 +82,9 @@ export function reportView(report: VerdictReport, resultUrl: string | undefined)
         strengthScore: v?.strength.score ?? null,
         strengthFactors: v?.strength.factors ?? [],
         reasonPl: v?.reasonPl ?? null,
+        evidence: v?.evidence.map(evidenceView) ?? [],
+        ...(v?.parts && { parts: v.parts.map(p => ({ ...p, evidence: p.evidence?.map(evidenceView) })) }),
+        ...(v?.conflicting && { conflicting: v.conflicting }),
         ...(v?.missingContext ? { missingContext: v.missingContext } : {}),
         ...(v?.triedPl ? { triedPl: v.triedPl } : {}),
       };
@@ -85,6 +93,8 @@ export function reportView(report: VerdictReport, resultUrl: string | undefined)
       ? { answer: { questionPl: report.answer.questionPl, answerPl: report.answer.answerPl, evidence: report.answer.evidence.map(evidenceView) } }
       : {}),
     evidence: [...passages.values()],
+    ...(report.questionParts && { questionParts: report.questionParts.map(p => ({ ...p, evidence: p.evidence.map(evidenceView) })) }),
+    ...(report.imageAnalysis && { imageAnalysis: report.imageAnalysis }),
     warnings: report.warnings,
     unavailableBranches: report.unavailableBranches,
     securityEventCount: report.securityEvents.length,

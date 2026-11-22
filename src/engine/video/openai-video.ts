@@ -129,7 +129,7 @@ export function createOpenAiVideoAnalyzer(options: {
     let fullTranscript: SubtitleSegment[] | undefined;
     try {
       deadline.throwIfAborted();
-      const { frames, audio, durationSeconds } = await decode(video, { includeAudio: !cues.data.length, signal: deadline });
+      const { frames, audio, durationSeconds, file } = await decode(video, { includeAudio: !cues.data.length, signal: deadline });
       if (cues.data.some(c => c.seconds > durationSeconds)) throw new LlmUnavailableError("provider_error", "video_subtitles_invalid");
       const audioOnly = video.mimeType.startsWith("audio/");
       if (!frames.length && !audioOnly) throw new LlmUnavailableError("provider_error", "video_decode_failed");
@@ -150,7 +150,7 @@ export function createOpenAiVideoAnalyzer(options: {
       if (audioOnly) {
         const [usage, ...additionalUsage] = transcriptions;
         if (!usage || !transcript.length) throw new LlmUnavailableError("provider_error", "audio_no_speech");
-        return { data: { transcript, claims: [], observations: [] }, usage, additionalUsage };
+        return { data: { transcript, claims: [], observations: [] }, usage, additionalUsage, file };
       }
       const safeTranscript = transcript.map(cue => ({ seconds: cue.seconds, text: sanitizeVideoText(cue.text, "ocr") })).filter(cue => cue.text);
       const caption = sanitizeVideoText(video.caption?.slice(0, 8000) ?? "", "fetched_page");
@@ -169,7 +169,7 @@ export function createOpenAiVideoAnalyzer(options: {
         maxTokens: 8192, signal: deadline, timeoutMs: 120_000,
       });
       const grounded = groundResult(response.data, frames, safeTranscript, caption);
-      return { data: { ...grounded, transcript }, usage: response.usage, additionalUsage: transcriptions };
+      return { data: { ...grounded, transcript }, usage: response.usage, additionalUsage: transcriptions, file };
     } catch (error) {
       const fault = deadline.aborted ? new LlmUnavailableError("timeout")
         : error instanceof LlmUnavailableError ? error : new LlmUnavailableError("provider_error", "connection");

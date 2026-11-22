@@ -1,0 +1,217 @@
+{
+  "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+  "acceptanceFile": "acceptance-2026-11-22T06-19-55-568Z.json",
+  "broadSelectionSha256": "17fda7673b7516d2e5eb2fbf745cce549c9300f9c22b14c56f0eefac2b426928",
+  "identicalInputsAcrossSamples": 18,
+  "web30": {
+    "correct": 24,
+    "macroF1": 0.76582995951417,
+    "statuses": {
+      "OK": 30
+    },
+    "lengthChars": {
+      "median": 49.0,
+      "max": 105
+    },
+    "facts": {
+      "factualVerdictRows": 25,
+      "withAnyExcerpt": 17,
+      "withDecisiveExcerpt": 15,
+      "decidedFacts": 14,
+      "decidedWithDecisiveExcerpt": 14
+    },
+    "failureIds": [
+      "A08",
+      "A22",
+      "B01",
+      "B02",
+      "B04",
+      "C01"
+    ],
+    "coverage": {
+      "n": 14,
+      "ok": 14,
+      "rate": 1,
+      "missing": []
+    },
+    "quoteLiteral": {
+      "n": 28,
+      "ok": 28,
+      "rate": 1,
+      "failures": []
+    },
+    "abstention": {
+      "scenarioD": {
+        "n": 4,
+        "ok": 4,
+        "rate": 1
+      },
+      "allExpectedAbstain": {
+        "n": 8,
+        "ok": 7,
+        "rate": 0.875
+      },
+      "overAbstention": {
+        "n": 17,
+        "ok": 4,
+        "rate": 0.23529411764705882
+      }
+    },
+    "latency": {
+      "n": 30,
+      "p50Ms": 15620.5,
+      "p95Ms": 20415.799999999996,
+      "maxMs": 22078
+    },
+    "cost": {
+      "runs": 30,
+      "totalUsd": 0.9931589999999999,
+      "meanUsd": 0.0331053,
+      "per100Usd": 3.3105299999999995
+    },
+    "sourceReportsAndLogs": 30,
+    "chain": {
+      "ok": true,
+      "checked": 34
+    },
+    "channelMatching": 4,
+    "caseMerge": true
+  },
+  "broad100": {
+    "correct": 70,
+    "combinedMacroF1": 0.6721855921855922,
+    "individual": {
+      "dev": {
+        "cases": 38,
+        "macroF1": 0.7357575757575758,
+        "correct": 29,
+        "open": {
+          "n": 4,
+          "ok": 4,
+          "rate": 1,
+          "runs": {
+            "n": 4,
+            "ok": 4,
+            "rate": 1
+          },
+          "failures": []
+        },
+        "abstention": {
+          "scenarioD": {
+            "n": 0,
+            "ok": 0,
+            "rate": 0
+          },
+          "allExpectedAbstain": {
+            "n": 3,
+            "ok": 2,
+            "rate": 0.6666666666666666
+          },
+          "overAbstention": {
+            "n": 27,
+            "ok": 7,
+            "rate": 0.25925925925925924
+          }
+        },
+        "sourceCoverage": {
+          "n": 21,
+          "ok": 21,
+          "rate": 1,
+          "missing": []
+        }
+      },
+      "heldout": {
+        "cases": 21,
+        "macroF1": 0.5338383838383838,
+        "correct": 11,
+        "open": {
+          "n": 2,
+          "ok": 2,
+          "rate": 1,
+          "runs": {
+            "n": 2,
+            "ok": 2,
+            "rate": 1
+          },
+          "failures": []
+        },
+        "abstention": {
+          "scenarioD": {
+            "n": 0,
+            "ok": 0,
+            "rate": 0
+          },
+          "allExpectedAbstain": {
+            "n": 1,
+            "ok": 1,
+            "rate": 1
+          },
+          "overAbstention": {
+            "n": 16,
+            "ok": 7,
+            "rate": 0.4375
+          }
+        },
+        "sourceCoverage": {
+          "n": 9,
+          "ok": 9,
+          "rate": 1,
+          "missing": []
+        }
+      },
+      "heldout-v2": {
+        "cases": 41,
+        "macroF1": 0.6752183489025594,
+        "correct": 30,
+        "open": {
+          "n": 5,
+          "ok": 5,
+          "rate": 1,
+          "runs": {
+            "n": 5,
+            "ok": 5,
+            "rate": 1
+          },
+          "failures": []
+        },
+        "abstention": {
+          "scenarioD": {
+            "n": 0,
+            "ok": 0,
+            "rate": 0
+          },
+          "allExpectedAbstain": {
+            "n": 3,
+            "ok": 2,
+            "rate": 0.6666666666666666
+          },
+          "overAbstention": {
+            "n": 29,
+            "ok": 9,
+            "rate": 0.3103448275862069
+          }
+        },
+        "sourceCoverage": {
+          "n": 21,
+          "ok": 21,
+          "rate": 1,
+          "missing": []
+        }
+      }
+    },
+    "facts": {
+      "factualVerdictRows": 83,
+      "withAnyExcerpt": 66,
+      "withDecisiveExcerpt": 51,
+      "decidedFacts": 51,
+      "decidedWithDecisiveExcerpt": 51
+    },
+    "totalCostUsd": 3.903976,
+    "medianSeconds": 15.708326270500038,
+    "p95SecondsNearestRank": 23.328355499999976,
+    "opened": 11,
+    "statuses": {
+      "OK": 100
+    }
+  }
+}

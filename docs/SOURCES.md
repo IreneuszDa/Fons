@@ -8,8 +8,8 @@ Sekcja „Liczby” jest generowana przez `npm run corpus:build` (nie edytuj jej
 
 | Wymaganie | Wymóg zadania | Nasz cel | Stan |
 |---|---|---|---|
-| liczba rekordów | ≥ 100 | ≥ 300 | zob. „Liczby” (ponad 2000) |
-| domeny (hosty) | ≥ 10 | ≥ 12 | 18 hostów rekordów |
+| liczba rekordów | ≥ 100 | ≥ 300 | aktualna liczba poniżej |
+| domeny (hosty) | ≥ 10 | ≥ 12 | aktualna liczba poniżej |
 | typy źródeł | ≥ 2 (pierwotne + wiarygodne wtórne) | 3: `pierwotne`, `factcheck`, `analiza` | 3 |
 | pola rekordu | tytuł, wydawca, data publikacji, data pobrania, link, użyty fragment | + licencja, poziom, grupa niezależności, rola | wszystkie w każdym rekordzie (test `corpus-data.test.ts`) |
 | reguły | licencje, kwalifikacja, aktualizacja, wykluczenia | — | sekcje 4–8 |
@@ -17,22 +17,26 @@ Sekcja „Liczby” jest generowana przez `npm run corpus:build` (nie edytuj jej
 
 <!-- COUNTS:START -->
 
-Stan na dzień 2026-11-22: **3637 rekordów**, **604 incydentów**, **31 hostów** (domen źródłowych), **3 typy źródeł**.
+Stan na dzień 2026-11-22: **3957 rekordów**, **604 incydentów**, **45 hostów** (domen źródłowych), **3 typy źródeł**.
 
 Rekordy według źródła z katalogu:
 
 | Źródło (id) | Hosty | Typ | Poziom | Rekordy |
 |---|---|---|---|---|
-| sejm-eli | `api.sejm.gov.pl` | pierwotne | 1 | 946 |
-| eur-lex | `eur-lex.europa.eu` | pierwotne | 1 | 98 |
-| eurostat | `ec.europa.eu` | pierwotne | 1 | 382 |
-| nato | `www.nato.int` | pierwotne | 1 | 314 |
-| eu-portal | `european-union.europa.eu` | pierwotne | 1 | 69 |
-| gov-pl | `www.gov.pl` | pierwotne | 1 | 180 |
+| ecb | `www.ecb.europa.eu` | pierwotne | 1 | 1 |
+| gus-cpi | `publikacje.new.stat.gov.pl` | pierwotne | 1 | 46 |
+| nbp-rates | `static.nbp.pl` | pierwotne | 1 | 94 |
+| gus-publications | `stat.gov.pl` | pierwotne | 1 | 3 |
+| sejm-eli | `api.sejm.gov.pl` | pierwotne | 1 | 1025 |
+| eur-lex | `eur-lex.europa.eu` | pierwotne | 1 | 99 |
+| eurostat | `ec.europa.eu` | pierwotne | 1 | 383 |
+| nato | `www.nato.int` | pierwotne | 1 | 329 |
+| eu-portal | `european-union.europa.eu` | pierwotne | 1 | 70 |
+| gov-pl | `www.gov.pl` | pierwotne | 1 | 194 |
 | rpo | `bip.brpo.gov.pl` | pierwotne | 1 | 1 |
 | pap-depesze | `www.pap.pl` | pierwotne | 1 | 1 |
 | wroclaw-transport | `www.wroclaw.pl` | pierwotne | 1 | 1 |
-| sky-tg24 | `tg24.sky.it` | analiza | 3 | 1 |
+| sky-tg24 | `tg24.sky.it` | analiza | 3 | 2 |
 | msz-odyseusz | `odyseusz.gov.pl` | pierwotne | 1 | 1 |
 | eeas | `www.eeas.europa.eu` | analiza | 2 | 6 |
 | euvsdisinfo | `euvsdisinfo.eu` | analiza | 2 | 455 |
@@ -45,9 +49,12 @@ Rekordy według źródła z katalogu:
 | afp-sprawdzam | `sprawdzam.afp.com` | factcheck | 2 | 0 |
 | konkret24 | `konkret24.tvn24.pl` | factcheck | 3 | 0 |
 | fakehunter | `fakehunter.pap.pl` | factcheck | 3 | 0 |
-| prezydent-pl | `www.prezydent.pl` | pierwotne | 1 | 1 |
-| senat-pl | `www.senat.gov.pl` | pierwotne | 1 | 6 |
-| ec-commission | `commission.europa.eu` | pierwotne | 1 | 27 |
+| prezydent-pl | `www.prezydent.pl` | pierwotne | 1 | 2 |
+| zus-swiadczenia | `www.zus.pl` | pierwotne | 1 | 2 |
+| zus-wskazniki | `psz.zus.pl` | pierwotne | 1 | 26 |
+| senat-pl | `www.senat.gov.pl` | pierwotne | 1 | 7 |
+| ec-commission | `commission.europa.eu` | pierwotne | 1 | 28 |
+| hungarian-government | `kormany.hu` | pierwotne | 1 | 1 |
 | ep-open-data | `data.europarl.europa.eu` | pierwotne | 1 | 53 |
 | ec-finance | `finance.ec.europa.eu` | pierwotne | 1 | 44 |
 | ec-home-affairs | `home-affairs.ec.europa.eu` | pierwotne | 1 | 4 |
@@ -60,50 +67,71 @@ Rekordy według źródła z katalogu:
 | ohchr | `www.ohchr.org` | pierwotne | 1 | 0 |
 | un-press | `press.un.org` | pierwotne | 1 | 0 |
 | eu-enlargement | `neighbourhood-enlargement.ec.europa.eu` | pierwotne | 1 | 0 |
+| sg-pl | `www.strazgraniczna.pl` | pierwotne | 1 | 1 |
+| cbos | `www.cbos.pl` | pierwotne | 1 | 1 |
+| unhcr-data | `data.unhcr.org` | pierwotne | 1 | 1 |
+| sipri | `www.sipri.org` | pierwotne | 1 | 25 |
+| iiss | `www.iiss.org` | pierwotne | 1 | 1 |
+| kse-institute | `institute.kse.ua` | pierwotne | 1 | 1 |
+| marsz-organizator | `marszniepodleglosci.pl` | analiza | 3 | 2 |
 
 Rekordy według typu:
 
 | Typ | Rekordy |
 |---|---|
 | factcheck | 934 |
-| pierwotne | 2241 |
-| analiza | 462 |
+| pierwotne | 2558 |
+| analiza | 465 |
 
 Rekordy według hosta (adres rekordu):
 
 | Host | Rekordy |
 |---|---|
-| `api.sejm.gov.pl` | 946 |
+| `api.sejm.gov.pl` | 1025 |
 | `demagog.org.pl` | 745 |
 | `euvsdisinfo.eu` | 455 |
-| `ec.europa.eu` | 382 |
-| `www.nato.int` | 314 |
-| `www.gov.pl` | 180 |
-| `eur-lex.europa.eu` | 98 |
+| `ec.europa.eu` | 383 |
+| `www.nato.int` | 329 |
+| `www.gov.pl` | 194 |
+| `eur-lex.europa.eu` | 99 |
+| `static.nbp.pl` | 94 |
+| `european-union.europa.eu` | 70 |
 | `bdl.stat.gov.pl` | 70 |
 | `pravda.org.pl` | 70 |
-| `european-union.europa.eu` | 69 |
 | `data.europarl.europa.eu` | 53 |
+| `publikacje.new.stat.gov.pl` | 46 |
 | `finance.ec.europa.eu` | 44 |
 | `dpa-factchecking.com` | 35 |
 | `www.dw.com` | 34 |
-| `commission.europa.eu` | 27 |
+| `commission.europa.eu` | 28 |
+| `psz.zus.pl` | 26 |
 | `www.factcheck.org` | 25 |
 | `www.politifact.com` | 25 |
+| `www.sipri.org` | 25 |
 | `news.un.org` | 20 |
 | `onderzoeksraad.nl` | 9 |
 | `www.prosecutionservice.nl` | 8 |
+| `www.senat.gov.pl` | 7 |
 | `www.eeas.europa.eu` | 6 |
-| `www.senat.gov.pl` | 6 |
 | `home-affairs.ec.europa.eu` | 4 |
 | `ukraine.un.org` | 4 |
+| `stat.gov.pl` | 3 |
 | `www.government.nl` | 2 |
-| `www.prezydent.pl` | 1 |
+| `www.zus.pl` | 2 |
+| `www.prezydent.pl` | 2 |
+| `tg24.sky.it` | 2 |
+| `marszniepodleglosci.pl` | 2 |
+| `kormany.hu` | 1 |
+| `www.ecb.europa.eu` | 1 |
 | `www.pap.pl` | 1 |
 | `www.wroclaw.pl` | 1 |
 | `odyseusz.gov.pl` | 1 |
-| `tg24.sky.it` | 1 |
 | `bip.brpo.gov.pl` | 1 |
+| `www.cbos.pl` | 1 |
+| `www.iiss.org` | 1 |
+| `institute.kse.ua` | 1 |
+| `www.strazgraniczna.pl` | 1 |
+| `data.unhcr.org` | 1 |
 
 <!-- COUNTS:END -->
 
@@ -138,7 +166,8 @@ oczekiwanych w pakiecie organizatora. Poziom dowodu w każdym przypadku wynika z
 | `konkret24` | `konkret24.tvn24.pl` | factcheck | 3 | stała rola | **nie** | pakiet organizatora | **0 rekordów** — poza listami IFCN/EFCSN, więc poziom 3 |
 | `fakehunter` | `fakehunter.pap.pl` | factcheck | 3 | stała rola | **nie** | pakiet organizatora | **0 rekordów** — blokada Incapsula; poza listami IFCN/EFCSN, więc poziom 3 |
 | `prezydent-pl` | `www.prezydent.pl` | pierwotne | 1 | treść | — | HTML | krótki cytat ≤ 300 zn. + link (sekcja 13) |
-| `senat-pl` | `www.senat.gov.pl` | pierwotne | 1 | treść | — | HTML | imię i nazwisko + funkcja z listy Prezydium Senatu (sekcja 13) |
+| `senat-pl` | `www.senat.gov.pl` | pierwotne | 1 | treść | — | HTML | informacje o składzie Prezydium (sekcja 13) i krótki cytat o uchwaleniu Konstytucji |
+| `zus-wskazniki` | `psz.zus.pl` | pierwotne | 1 | treść | — | HTML | stawki minimalnego wynagrodzenia za pracę, ich daty obowiązywania i podstawa prawna |
 | `ec-commission` | `commission.europa.eu` | pierwotne | 1 | treść | — | HTML | CC BY 4.0 (informacja prawna Komisji); krótkie fragmenty (sekcja 13) |
 | `ep-open-data` | `data.europarl.europa.eu` | pierwotne | 1 | treść | — | API PE | zdania generowane z pól danych (sekcja 13) |
 
@@ -151,6 +180,16 @@ za niedostępną. Pole jest w kontrakcie `CatalogSource` (`src/shared/contracts.
 
 Pełne uzasadnienia (kwalifikacja, wykluczenia, częstotliwość aktualizacji, strona główna, flaga `nonEea`) są przy każdym
 wpisie w `data/sources.yaml`; `GET /api/sources` serwera i strona `/zrodla` pokazują ten sam katalog.
+
+### Wymiana katalogu i wycofanie źródła
+
+Publiczny `GET /api/sources` zwraca JSON obejmujący wydawców, zasady kwalifikacji, wykluczenia, harmonogram aktualizacji, licencje i liczby rekordów. Katalog z tego eksportu można zapisać jako `sources.yaml` w osobnym pakiecie. Serwer przyjmuje również listę YAML lub JSON. W pakiecie złożonym z eksportu obejmującego już wydawców organizatora każdy wpis powinien wystąpić jeden raz.
+
+Ustaw `PRAWDOWID_DATA_DIR` na katalog wybranego pakietu. Jego publikacje umieść w `corpus/*.jsonl`, a incydenty w `incidents/*.jsonl`. Uruchom `npm run corpus:load`. Dla wyszukiwania semantycznego zbuduj indeks tego samego pakietu przez `npm run embed` z tym samym `DB_PATH` i katalogiem danych. Uruchom ponownie serwer i używane procesy MCP, żeby wszystkie kanały korzystały z nowego katalogu.
+
+Przy ładowaniu Fons sprawdza identyfikator źródła, dokładny host, dozwolone ścieżki i rolę materiału. Poziom, typ, licencję i grupę niezależności bierze z aktualnego wpisu. Aby wycofać źródło, usuń wpis z katalogu. Aby zawęzić zakres, zmień `pathPrefixes`. Przy kolejnym ładowaniu dawne fragmenty i powiązane incydenty wypadają z indeksu. Zmiana polityki zmienia identyfikator migawki, którego aplikacja używa również do buforowania wyników sprawdzeń.
+
+Wyszukiwanie łączy zapytanie oryginalne z wariantami polskimi i angielskimi oraz lokalnym modelem wielojęzycznym. Odpowiedź dla czytelnika jest po polsku. Raport zachowuje cytat w języku źródła. Przy odpowiedzi opartej na jednym obcojęzycznym cytacie weryfikator sprawdza także jego polski przekład.
 
 ### 2.1. Weryfikacja statusu IFCN / EFCSN (stan na 2026-11-21)
 
@@ -318,6 +357,10 @@ jeśli baza organizatora jawnie wskazuje serwisy rozpowszechniające narrację; 
 
 ### Dopasowanie narracji EUvsDisinfo
 
+Przy imporcie rozróżniamy dwa rodzaje wskazań wydawcy. Pole `domains` oznacza dokładny host, łącznie z ewentualnym `www.`. Pole `channels` zawiera udokumentowane adresy profili. Obsługiwane są profile TikToka z `/@nazwa` i YouTube z `/@nazwa` lub `/channel/UC…`. Fons rozpoznaje profil w adresie filmu TikToka lub zakładki kanału YouTube. Sam adres oglądania filmu na YouTube nie identyfikuje kanału. Importer pomija domeny znanych platform społecznościowych w polu `domains`.
+
+Ostrzeżenie zawiera odnośnik do opisu incydentu. Pojawia się wyłącznie po dopasowaniu adresu podanego przez użytkownika do takiego wskazania. Silnik wyznacza werdykt na podstawie twierdzenia i ocenionych fragmentów publikacji. Dokładny adres publikacji obecnej w korpusie może też dać informację bibliograficzną, nawet gdy bieżący odczyt się nie uda.
+
 Fons szuka kandydatów w lokalnym indeksie incydentów i korpusie, wykorzystując m.in. angielską wersję zapytania. Gdy porównanie
 wykaże zgodność sedna i czasu twierdzenia, raport pokazuje do trzech odnośników do przypadków. Ustalenie pochodzenia sprawdzanej
 wiadomości wymaga osobnych dowodów. [Baza przypadków EUvsDisinfo](https://euvsdisinfo.eu/disinformation-cases/)
@@ -434,7 +477,7 @@ jako dowód i nigdy do korpusu. AFP Sprawdzam: HTTP 403 także dla robots.txt, b
 pozostaje pakiet organizatora. Sonda `factcheck-probe` zapisuje w `corpus-report.json` bieżący stan dostępu i liczbę wpisów
 hostów w feedzie ClaimReview.
 
-Przy przebudowie korpusu aplikacja odświeża również cztery wskazane publikacje o depeszy PAP, ulgach i wydatkach na transport we Wrocławiu oraz nagraniu Michała Wosia. Wyszukuje je w Google bez ograniczenia wieku i sprawdza adres każdej recenzji. W pliku `data/publication-links.json` redakcja może wskazać dokładne adresy omawianych postów (`appearances`), dokumenty będące przedmiotem weryfikacji (`documents`), odnośniki samego wydawcy (`references`) oraz niezależne materiały uzupełniające (`context`). Opcjonalne `excerpts` zawierają dosłowne, krótkie cytaty z uzasadnienia o wskazanym adresie. Przy wczytywaniu danych te cytaty trafiają do oddzielnych wierszy indeksowanego fragmentu. Pole `claimReviewed` nadal pochodzi w całości z API. Cytaty zachowują wskazanie wydawcy, adres i opis ich pochodzenia w polu `licence`. Migawka zawiera też dokumenty towarzyszące w `data/corpus/published-documents.jsonl`. Obejmują one nagłówek pierwotnej depeszy, dane miejskiego Wydziału Transportu, wystąpienie RPO o proteście oraz listopadową zapowiedź MSZ wraz z zestawieniem manifestacji Sky TG24.
+Przy przebudowie korpusu aplikacja odświeża również cztery wskazane publikacje o depeszy PAP, ulgach i wydatkach na transport we Wrocławiu oraz nagraniu Michała Wosia. Wyszukuje je w Google bez ograniczenia wieku i sprawdza adres każdej recenzji. W pliku `data/publication-links.json` redakcja może wskazać dokładne adresy omawianych postów (`appearances`), dokumenty będące przedmiotem weryfikacji (`documents`), odnośniki samego wydawcy (`references`) oraz niezależne materiały uzupełniające (`context`). Opcjonalne `excerpts` zawierają dosłowne, krótkie cytaty z uzasadnienia o wskazanym adresie. Przy wczytywaniu danych te cytaty trafiają do oddzielnych wierszy indeksowanego fragmentu. Pole `claimReviewed` nadal pochodzi w całości z API. Cytaty zachowują wskazanie wydawcy, adres i opis ich pochodzenia w polu `licence`. Migawka zawiera też dokumenty towarzyszące w `data/corpus/published-documents.jsonl`. Obejmują one nagłówek pierwotnej depeszy, dane miejskiego Wydziału Transportu, wystąpienie RPO o proteście oraz listopadową zapowiedź MSZ wraz z zestawieniem manifestacji Sky TG24. W polu `context` komunikatu zapisano także relację Sky TG24 z 20 listopada 2026 r. opisującą przebieg strajku. Obie publikacje Sky należą do jednej grupy wydawniczej.
 
 Podczas weryfikacji lokalny indeks wektorowy wyszukuje metadane Demagoga na podstawie treści twierdzenia i wariantów zapytania.
 Do dwóch mocnych trafień może przejść do oceny mimo małego pokrycia słów. Silnik sprawdza wtedy zgodność twierdzeń, w tym podmiot,
@@ -448,8 +491,18 @@ komunikaty i raport dobowy RCB, ostrzeżenia RSO i GIS oraz aktualności KG PSP,
 PAA i KPRM. Dobór kanału zależy od instytucji, tematu lub regionu wskazanych w pytaniu. Rekordy z datą, odnośnikiem i fragmentem
 trafiają do `live_snapshots`. [Oficjalne ostrzeżenia RSO](https://www.gov.pl/web/gov/ostrzezenia), [Raport dobowy RCB](https://www.gov.pl/web/rcb/raport-dobowy3), [Zasady doboru kanałów](TOOLS.md#1a-oficjalne-kanały-instytucji-gałąź-official--weryfikacja-u-źródła-i-triangulacja)
 
+Historyczny komunikat Odyseusza o Włoszech ma osobny, datowany wyciąg do audytu. Dnia 22 listopada 2026 r. publiczne API MSZ zwróciło profil IT z 19 listopada w wersji 30, o identyfikatorze 1439. Obie części cytatu znaleziono w polu `trescPowiadomieniaDluga`. Zapis obejmuje wydawcę, oba adresy, daty, skrót SHA-256 odpowiedzi oraz 275 znaków wyciągu z oznaczeniem pominięcia. `npm run corpus:verify` porównuje rekord z tym materiałem bez dostępu do sieci. Polecenie `node --import tsx src/corpus/odyseusz-evidence.ts msz-odyseusz:8594d348c094` ponawia porównanie z publicznym API i sygnalizuje zmianę wersji. [Zapisany wyciąg](../data/source-excerpts/msz-odyseusz/8594d348c094.json) · [Publiczne API profilu Włoch](https://odyseusz.gov.pl/api/v1/informacje/profile-panstw/IT)
+
 **Migawki wyszukiwania na żywo (`live_snapshots`).** `createCorpusStore(db).get/getMany` dla identyfikatorów zaczynających się od
 `live:` czyta awaryjnie tabelę `live_snapshots(id, run_id, record_json, created_at, expires_at)` (poza migawką korpusu): wiersze po
 `expires_at` są ignorowane (ISO-8601, `RRRR-MM-DD GG:MM:SS` jako UTC lub epoka), brak tabeli, uszkodzony JSON albo rekord niezgodny
 ze schematem to „brak rekordu”, a zwrócony rekord ma `id` wiersza i `origin: "live_snapshot"`. `count()` i `snapshotId()` dotyczą
 wyłącznie korpusu.
+
+## 14. Oszacowania, sondaże i kolejne wydania danych
+
+Kolekcję buduje `npm run corpus:build -- --only research-estimates`. Zawiera fragmenty komunikatów i raportów Straży Granicznej, CBOS, UNHCR, Eurostatu, KSE Institute, IISS, SIPRI, MON i KRRiT oraz deklaracje organizatora Marszu Niepodległości. Każdy rekord odsyła do materiału, z którego pochodzi. W rekordzie KRRiT szacunek policji jest wyraźnie przypisany w cytacie. Stowarzyszenie ma poziom 3, a oba jego komunikaty należą do jednej grupy niezależności. Datę wydarzenia i datę publikacji zapisujemy oddzielnie.
+
+Dla Polski i wszystkich jej lądowych sąsiadów importer odczytuje trzy ostatnie dostępne kolumny roczne z arkusza `Share of GDP` wydania SIPRI 1949–2025 v1.2. Wybiera wiersz po nazwie państwa i kolumnę po roku. Mnoży zapisany ułamek przez 100 i prezentuje wynik z dokładnością do pięciu miejsc po przecinku. Tag `generated-from-data` oznacza zdanie utworzone z pól arkusza. Komunikat z 2025 r. i późniejszy odczyt za ten sam rok zachowują oddzielne daty publikacji oraz tę samą grupę niezależności. Przy komunikacie oznaczono datę udokumentowanej rewizji. Użycie danych SIPRI do celów komercyjnych wymaga licencji wydawcy. [Metodologia i warunki SIPRI](https://www.sipri.org/databases/milex)
+
+`npm run corpus:verify -- --only research-estimates` porównuje cytaty z zachowanymi odpowiedziami HTML/PDF i odtwarza wartości liczbowe z zachowanego pliku XLSX. Do ekstrakcji służą `pdftotext` i biblioteka standardowa Pythona 3. Jeśli podczas przebudowy nie można już odczytać wymaganego ustępu lub zmieni się edycja opisana na stronie organizatora, proces zapisze błąd kolekcji w `data/corpus-report.json` i zachowa poprzedni plik wynikowy.

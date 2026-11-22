@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CorpusRecord, EvidenceCandidate } from "../../shared/contracts";
 import { lexicalRerank, queryStems, scoreCandidates } from "./rerank";
+import { readCorpus } from "../../corpus/files";
+import { asksForElectionWinner, electionResultStage } from "../election-result";
 import { mobileEVariant } from "./stem";
 
 function rec(id: string, title: string, text: string, extra: Partial<CorpusRecord> = {}): CorpusRecord {
@@ -44,9 +46,28 @@ describe("lexical rerank", () => {
     expect(ranked[0]!.recordId).toBe("gold");
   });
 
+  it("dla pytania o zwycięzcę przedkłada rozstrzygnięcie PKW nad listę kandydatów do ponownego głosowania", () => {
+    const bulletins = readCorpus().records.filter(r => r.sourceId === "sejm-eli" && r.publishedAt?.startsWith("2025"));
+    const first = bulletins.find(r => electionResultStage(r) === "runoff_pending")!;
+    const final = bulletins.find(r => electionResultStage(r) === "elected")!;
+    const query = "Kto wygrał wybory prezydenckie w Polsce w 2025 roku?";
+    expect(asksForElectionWinner("Kto wygrał pierwszą turę wyborów?")).toBe(false);
+    const ranked = lexicalRerank(cands([first.id, final.id]), new Map([[first.id, first], [final.id, final]]), { queryTexts: [query] });
+    expect(ranked[0]?.recordId).toBe(final.id);
+  });
+
   it("without must-have terms the fusion order mostly stays", () => {
     const ranked = lexicalRerank(cands(["eu", "noise", "gold"]), records, { queryTexts: ["zupełnie inny temat"] });
     expect(ranked.map((c) => c.recordId)).toEqual(["eu", "noise", "gold"]);
+  });
+
+  it.each([24, 60])("wybiera definicję liczebności dla tej samej jednostki zarówno przy liczbie zgodnej, jak i innej (%s)", value => {
+    const gold = rec("statut", "Statut", "Komitet składa się z 24 delegatów.");
+    const noise = rec("inne", "Komitet i 60 delegatów", "Okręg liczy 60 delegatów. Komitet zbiera dokumenty.");
+    const ranked = lexicalRerank(cands([noise.id, gold.id]), new Map([[noise.id, noise], [gold.id, gold]]), {
+      queryTexts: [`Komitet liczy ${value} delegatów.`], mustHave: ["Komitet", String(value)],
+    });
+    expect(ranked[0]?.recordId).toBe(gold.id);
   });
 
   it("gives privacy placeholders no weight in the score", () => {

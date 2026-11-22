@@ -1,0 +1,22 @@
+[
+  {
+    "id": "apollo17-blue-marble",
+    "title": "Ziemia widziana z Apollo 17",
+    "publisher": "NASA",
+    "publishedAt": "2007-11-30",
+    "url": "https://www.nasa.gov/image-article/blue-marble-image-of-earth-from-apollo-17/",
+    "originalUrl": "https://www.nasa.gov/wp-content/uploads/2023/03/135918main_bm1_high.jpg",
+    "sha256": "ed620504dbb0cdf17185abed9a97afd7dbfaf816fb77bada0302cffbe39a007a",
+    "referenceSha256": "2004673988e42f9c09c386aa5da5fbd0ca344394fe3a03fe2f7f1da31b20be40"
+  },
+  {
+    "id": "apollo8-earthrise",
+    "title": "Wschód Ziemi widziany z Apollo 8",
+    "publisher": "NASA",
+    "publishedAt": "2020-12-23",
+    "url": "https://www.nasa.gov/image-article/apollo-8-earthrise/",
+    "originalUrl": "https://www.nasa.gov/wp-content/uploads/2023/03/apollo08_earthrise.jpg",
+    "sha256": "1e48784b764f26c5e0755875d86efe088cb5cf9d183b7814956131652cb770c7",
+    "referenceSha256": "e0af60ede5d72a5a8e584be0c56d5d43abb2d32b76518576502797f039620a73"
+  }
+]

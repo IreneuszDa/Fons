@@ -20,6 +20,7 @@ import { Agent, request, type Dispatcher } from "undici";
 import { extractFromHtml, extractFromPlainText } from "./extract";
 
 export interface FetchedPage {
+  lang?: string;
   finalUrl: string;
   status: number;
   contentType: string;
@@ -75,6 +76,8 @@ export type Resolver = (hostname: string) => Promise<ResolvedAddress[]>;
 
 export interface FetchOptions {
   timeoutMs?: number;
+  /** Checked before the initial request and every redirect, in addition to the public IP policy. */
+  allowUrl?: (url: URL) => boolean;
   maxBytes?: number;
   signal?: AbortSignal;
   /**
@@ -255,8 +258,6 @@ interface ResourceOptions extends FetchOptions {
   referer?: "https://www.instagram.com/" | "https://www.tiktok.com/";
   /** A fixed provider API may receive JSON with a credential. Never redirect that request. */
   postJson?: { body: object; headers: Record<string, string> };
-  /** Checked before the initial request and every redirect, in addition to the public IP policy. */
-  allowUrl?: (url: URL) => boolean;
 }
 
 /** Bounded bytes from a public URL. All consumers share the socket-pinned address policy. */

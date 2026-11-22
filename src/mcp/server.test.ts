@@ -55,6 +55,7 @@ describe("verify_claim", () => {
     expect(s.notice).toMatch(/niezaufane/);
     expect(s.status).toBe("OK");
     expect(s.mainVerdict).toBe("POTWIERDZONE");
+    expect(s.claims[0].evidence[0]).toMatchObject({ recordId: "r05", relation: "WSPIERA", url: "https://example.org/r05" });
     expect(s.mainVerdictLabelPl).toBe("Potwierdzone");
     expect(s.evidence[0]).toMatchObject({ publisher: "GUS", url: "https://example.org/r05", relation: "WSPIERA" });
     expect(s.evidence[0].quote).toContain("2,9 proc.");

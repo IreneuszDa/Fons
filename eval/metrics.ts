@@ -82,7 +82,7 @@ export interface RunRecord {
   error?: string;
   judge?: JudgeResult[];
   /** Input mode the system detected (VerdictReport.inputMode). */
-  inputMode?: InputMode;
+  inputMode?: VerdictReport["inputMode"];
   /** Strength card of the main claim (level + 0–100 score, when the report has them). */
   mainStrength?: Strength;
   mainScore?: number | null;

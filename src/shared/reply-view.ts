@@ -1,4 +1,26 @@
 import type { ConversationReply, TechStatus, Verdict, VerdictReport } from "./contracts";
+import type { ImageComparison, ImageSearchResult, LocalImageSearch } from "./image-search";
+import type { ImageProvenance } from "./image-provenance";
+
+export const imageComparisonPl: Record<ImageComparison, string> = {
+  identical_file: "Oba pliki są identyczne bajt po bajcie.",
+  same_pixels: "Pliki różnią się zapisem, ale mają te same wymiary i identyczne piksele po odczycie w sRGB.",
+  similar: "Obrazy mają zbliżone proporcje i podobny rozkład kolorów. Taki wynik może dać zmiana rozmiaru lub kompresji. Drobne zmiany treści mogą pozostać niewidoczne dla tej metody.",
+  no_match: "Obrazy nie spełniają kryteriów podobieństwa całego kadru. Inne kadrowanie, obrót lub duża zmiana kolorów mogą utrudniać wykrycie wspólnego pochodzenia.",
+};
+
+export function imageFileLabel(file: NonNullable<ImageProvenance["file"]>): string {
+  return `${file.format.toUpperCase()} · ${file.width} × ${file.height} pikseli · ${file.bytes.toLocaleString("pl-PL")} B`;
+}
+
+export function imageMatchLabel(match: ImageSearchResult["matches"][number]): string {
+  if (match.kind === "full") return "Cały obraz";
+  if (match.kind === "partial") return "Fragment obrazu";
+  if (match.publishedAt) return `Strona z obrazem · publikacja z ${match.publishedAt}`;
+  if (match.pageMatch === "full") return "Strona z całym obrazem";
+  if (match.pageMatch === "partial") return "Strona z fragmentem obrazu";
+  return "Strona z obrazem";
+}
 
 /** Copy of VERDICT_LABEL_PL from contracts (value import would pull zod into the bundle). Kept in sync by a unit test. */
 export const VERDICT_LABEL_PL: Record<Verdict, string> = {
@@ -50,3 +72,14 @@ export const STATUS_KEY_TITLE_PL: Record<StatusKey, string> = {
   RATE_LIMITED: "Za dużo wiadomości w krótkim czasie",
   GENERIC: "Nie mogę teraz tego sprawdzić",
 };
+
+export function localImageScope(search: LocalImageSearch): string {
+  if (search.status === "unavailable") return "Nie udało się porównać obrazu z lokalnym katalogiem.";
+  return `Liczba zdjęć porównanych w lokalnym katalogu: ${search.checked}.` + (search.matches.length
+    ? " Data publikacji dotyczy wskazanej strony. Samo dopasowanie nie potwierdza opisu przesłanego zdjęcia."
+    : " Nie znaleziono dopasowania w tym zbiorze.");
+}
+
+export function localImageMatchLabel(match: LocalImageSearch["matches"][number]): string {
+  return `${match.kind === "identical" ? "Identyczny plik" : "Podobny obraz"} · ${match.publisher} · publikacja z ${match.publishedAt}`;
+}

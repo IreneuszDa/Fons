@@ -69,6 +69,9 @@ describe("pytania obywatela przez publiczne kanały", () => {
   it("to samo nowe pytanie po zmianie źródła zwraca aktualny cytat, a po usunięciu go już nie cytuje", async () => {
     const dir = mkdtempSync(join(tmpdir(), "fons-query-change-"));
     mkdirSync(join(dir, "corpus"));
+    writeFileSync(join(dir, "sources.yaml"), JSON.stringify([{ id: "planetarium", hosts: ["planetarium.example"], publisher: "Planetarium",
+      type: "pierwotne", role: "tresc", level: 1, independenceGroup: "planetarium", licence: "test", fetchMethod: "dump",
+      updateFrequency: "test", qualification: "test", homepage: "https://planetarium.example" }]));
     const question = "Ile miejsc oferuje planetarium w Brzozowej Dolinie?";
     quoteRetrieved(/Planetarium w Brzozowej Dolinie/);
     env.ctx.engine.snapshotId = () => deps.store.snapshotId();
@@ -117,7 +120,7 @@ describe("pytania obywatela przez publiczne kanały", () => {
       "Czy od przyszłego tygodnia diesle nie będą mogły wjechać do centrum Pcimia?",
       "Czy Pcim wprowadza zakaz wjazdu diesli do centrum?"]) {
       const reply = (await chat(env, { text })).json.reply;
-      expect(reply).toMatchObject({ report: { mainVerdict: "BRAK_DOWODOW" }, shortAnswer: { bodyPl: expect.stringMatching(/^Nie udało mi się/), caseNotePl: expect.any(String) } });
+      expect(reply).toMatchObject({ report: { mainVerdict: "BRAK_DOWODOW" }, shortAnswer: { bodyPl: expect.stringMatching(/^Nie wiem\./), caseNotePl: expect.any(String) } });
       results.push(reply);
     }
     for (const reply of results) expect(reply.report.sourceActivity.branches).toContainEqual(expect.objectContaining({ id: "bm25" }));

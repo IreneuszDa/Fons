@@ -6,7 +6,7 @@
 
 > Fons pomaga ocenić informację. Nie jest automatycznym sędzią prawdy.
 
-**Materiały konkursowe:** opis rozwiązania (nazwa zespołu, tytuł, do 4000 znaków): [docs/OPIS.md](OPIS.md) · prezentacja PDF (do 12 slajdów): _do dodania_ · film (do 3 min): _link do dodania_ · licencja kodu: [ISC](../LICENSE).
+Materiały konkursowe obejmują opis zespołu i rozwiązania, prezentację oraz film z działania czatu. [Opis](OPIS.md) · [Prezentacja PDF](konkurs/prezentacja.pdf) · [Film demonstracyjny](konkurs/demo.mp4) · [Wyniki pomiarów](konkurs/WYNIKI.md) · [Licencja kodu](../LICENSE)
 
 ---
 
@@ -237,6 +237,22 @@ npm run user -- list | remove <login> | passwd <login>
 
 Tokeny API (dla `/metrics`, eksportów i MCP) tworzy analityk albo administrator w panelu. Token jest pokazywany tylko raz.
 
+### Archiwum materiałów obywatela
+
+W WWW otwórz **Źródła i metoda → Moje archiwum materiałów**. Wklej dokładny adres API z publikacji lub raportu, obejrzyj rekordy i wybierz jeden opis statystyczny. Przycisk **Zapisz fragment na 7 dni** zapisuje prywatną kopię. Każda pozycja podaje wydawcę, adres, datę pobrania, datę aktualizacji źródła, zasady wykorzystania i datę wygaśnięcia.
+
+Serwer porównuje URL z opublikowanym korpusem lokalnym. Kwalifikuje wyłącznie zagregowane dane krajowe GUS BDL i wybrane serie Eurostatu dla Polski, Niemiec i UE. Wymaga zgodności adresu API, identyfikatora źródła, aktualnej polityki w `data/sources.yaml`, warunków zapisanych z rekordem, lokalnego pochodzenia oraz tagu `generated-from-data`. Opis może mieć maksymalnie 300 znaków i przechodzi kontrolę rozpoznawanych danych osobowych. Inne materiały dają pusty podgląd. Zespół aktualizujący katalog może wyłączyć nowe zapisy przez usunięcie pola `archivePolicy`. Podstawą doboru są [warunki Eurostatu](https://ec.europa.eu/eurostat/help/copyright-notice) oraz [warunki GUS](https://bip.stat.gov.pl/kontakt/ponowne-wykorzystywanie-informacji-sektora-publicznego/).
+
+Po otwarciu archiwum serwer ustawia podpisane ciasteczko właściciela. Podgląd przez `POST /api/archives/preview` zwraca SHA-256 treści, metadanych i warunków wykorzystania. Zapis przez `POST /api/archives` przyjmuje URL, identyfikator rekordu i ten sam SHA-256. W chwili zapisu serwer ponownie sprawdza politykę i wersję. Ponowienie tej samej operacji zwraca istniejącą kopię z pierwotnym terminem. Jedna przeglądarka może mieć 24 takie zapisy. Właściciel może wyświetlić je przez `GET /api/archives`, skasować pojedynczo przez `DELETE /api/archives/:id` albo usunąć wszystkie komendą „usuń moje dane”. Dostęp wygasa po 7 dniach. Wycofanie uprawnienia do archiwizacji, zmiana warunków w katalogu lub zawężenie dopuszczonej ścieżki usuwa objęte zmianą kopie przy odczycie właściciela. Serwer czyści zapisy wygasłe i wycofane dla wszystkich właścicieli przy uruchomieniu i w cyklu godzinowym.
+
+### Eksport dla analityka
+
+Zakładka **Eksport** udostępnia dane spraw moderatorów lub dane techniczne przebiegów w CSV i JSON. Opcja **Pobierz STIX 2.1** korzysta z `GET /api/admin/export.json?dataset=stix` i pobiera pakiet JSON z publicznymi adresami analiz z katalogu incydentów. Import pliku w OpenCTI wymaga skonfigurowanego konektora importu STIX. [Dokumentacja OpenCTI](https://docs.opencti.io/latest/usage/import-files/) · [Specyfikacja STIX 2.1](https://docs.oasis-open.org/cti/stix/v2.1/os/stix-v2.1-os.html)
+
+Adres analizy jest obiektem `url`. Sprawdzone przypisania technik w `data/disarm-mappings.json` tworzą obiekty `note` po dopasowaniu identyfikatora i pełnego adresu incydentu. Notatka zawiera uzasadnienie Fons, link do publikacji i zewnętrzny identyfikator techniki DISARM. Pierwszy opis dotyczy podszycia się pod konto redakcji w przypadku sprawdzonym przez Stowarzyszenie Pravda. Przypisanie jest interpretacją udokumentowanego zachowania na potrzeby analityka. [Publikacja Stowarzyszenia Pravda](https://pravda.org.pl/dezinformacja-na-twitterze-uwaga-na-falszywe-konta/) · [Technika DISARM T0143.003](https://github.com/DISARMFoundation/DISARMframeworks/blob/main/generated_pages/techniques/T0143.003.md)
+
+**Wysyłka do OpenCTI.** Włącz kolekcję TAXII Push w docelowej instancji. Nadaj jej użytkownikowi dostęp do kolekcji i uprawnienie „Access data sharing”. W środowisku procesu ustaw `FONS_BASE_URL`, `FONS_API_TOKEN` z dostępem do eksportu analityka, `OPENCTI_TAXII_URL` z pełnym adresem kończącym się na `/taxii2/root/collections/<id>/objects/` oraz `OPENCTI_TOKEN` tego użytkownika. Uruchom `npm run export:opencti`. Polecenie pobiera pakiet z Fons, wysyła go raz i wypisuje adres statusu przyjętej operacji. Sprawdza liczbę przetworzonych obiektów, błędy i zakończenie importu. Po pięciu minutach oczekiwania dalszy stan można odczytać pod wypisanym adresem, używając tokena OpenCTI. [Konfiguracja TAXII Push w OpenCTI](https://docs.opencti.io/latest/usage/import/taxii-push/)
+
 **MCP.** Lokalnie (Claude Desktop, IDE) przez stdio:
 
 ```json
@@ -272,13 +288,15 @@ Pytanie „Czy ten obraz wygenerowała AI?” uruchamia lokalne sprawdzenie oryg
 
 Wysłane zdjęcie pojawia się przy wiadomości w czacie. Przy pytaniach o widoczne przedmioty, napisy lub kolory Fons analizuje obraz. Gdy pytanie dotyczy osoby lub wcześniejszej publikacji, sam dobiera wyszukiwanie obrazem. Przy ustalaniu tożsamości szuka podpisu powiązanego z tą samą fotografią w wiarygodnym źródle. Sprawdza również, czy Kancelaria Prezydenta opublikowała dokładnie tę fotografię jako portret w oficjalnym biogramie.
 
+Każdy plik jest także porównywany na serwerze z lokalnym katalogiem dwóch fotografii NASA. Identyczność wymaga zgodności SHA-256 oryginalnego pliku. Podobieństwo wymaga zgodnych proporcji i kolorystyki kadru. Raport wskazuje publikację, jej datę i liczbę porównanych wzorców. Pytania o miejsce, czas i okoliczności zdjęcia korzystają z dopasowanych publikacji lub podpisów powiązanych z obrazem. [Katalog i sposób aktualizacji](../data/image-references/README.md)
+
 Cloud Vision Web Detection otrzymuje zmniejszoną kopię bez metadanych. Dla publicznego adresu pełnego dopasowania Fons odpytuje także Google Fact Check Tools o powiązane publikacje. Aby korzystać z tych usług, włącz ich API i ustaw na serwerze `GOOGLE_VISION_API_KEY` oraz `FACTCHECK_API_KEY`. Dzienny limit wyszukiwań określa `REVERSE_IMAGE_DAILY_CAP`. Administrator może wyłączyć wyszukiwanie obrazem przez `REVERSE_IMAGE_PROVIDER=off`. [Cloud Vision Web Detection](https://docs.cloud.google.com/vision/docs/detecting-web) · [Fact Check Tools](https://developers.google.com/fact-check/tools/api/reference/rest/v1alpha1/claims/imageSearch)
 
 Google oferuje także probabilistyczny klasyfikator obrazów pod nazwą **AI Content Detection API**. Usługa wymaga przyjęcia projektu do programu Private Preview. Według oficjalnego formularza Google nabór nowych uczestników jest obecnie wstrzymany (sprawdzono 21.11.2026). [Dokumentacja](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/ai-content-detection) · [Stan naboru](https://docs.google.com/forms/d/e/1FAIpQLScj_8Im1G0A1DsJBfqT7mVN4ZaSKbP58D1PNrx3lnKr4Zt6jg/viewform)
 
 ## Następne kroki
 
-1. **Kanały wiadomości.** Konektor ChatLoom przekazuje tekst i linki do silnika Fons oraz zwraca odpowiedź i reakcję na wiadomość. Uruchomienie na numerze wymaga podłączenia konta i wybranych rozmów po stronie ChatLoom. Zapisy na WhatsAppie prowadzi osobna strona (fons.siuda.dev; `/telefon` w Fons tylko do niej kieruje). Serwer udostępnia `POST /api/signup/whatsapp` oraz podpisaną skrzynkę powitań dla przekaźnika operatora. [Konfiguracja konektora i skrzynki](../integrations/chatloom/README.md)
+1. **Kanały wiadomości.** Konektor ChatLoom przekazuje tekst i linki do silnika Fons oraz zwraca odpowiedź i reakcję na wiadomość. Uruchomienie na numerze wymaga podłączenia konta i wybranych rozmów po stronie ChatLoom. Formularz na `/telefon` wysyła numer i zgodę do `POST /api/signup/whatsapp`. Serwer przekazuje zgłoszenie do usługi operatora, która obsługuje kolejkę powitań. [Konfiguracja konektora i zapisów](../integrations/chatloom/README.md)
 2. **Wiadomości głosowe:** zamiana mowy na tekst, potem ten sam potok. Transkrypcja jest przedmiotem sprawdzenia, nie dowodem.
 3. **Dokumenty:** obsługa DOCX i wielostronicowych skanów PDF.
 4. **Zdjęcia i zrzuty ekranu:** OCR modelem wizyjnym (ścieżka już istnieje) i wyszukiwanie wcześniejszych wystąpień treści w bazie incydentów.
@@ -295,7 +313,7 @@ Google oferuje także probabilistyczny klasyfikator obrazów pod nazwą **AI Con
 - **Dane o osobach publicznych** się dezaktualizują. Przed pokazem trzeba przebudować `corpus:officials`, a potem `corpus:load` i `embed` (ok. 5 min).
 - **Oficjalne kanały instytucji** (`LIVE_SEARCH=on`): gdy twierdzenie dotyczy MSZ albo RCB, kod pobiera ich kanał bezpośrednio (MSZ Odyseusz, komunikaty na gov.pl) — „najpierw źródło, potem triangulacja”, opis w [TOOLS](TOOLS.md) §1a. Rejestr obejmuje na razie tylko MSZ i RCB. Ewaluacja działa bez źródeł na żywo.
 - **Wyszukiwanie na żywo** (ta sama flaga, wymaga klucza OpenAI) dodaje 4–7 s, w ok. 12% przypadków przekracza limit czasu, a strony EUR-Lex wracają puste z ekstraktora.
-- **Obrazy.** Scenariusz depeszy PAP sprawdzono na przygotowanym zrzucie z widoczną datą. Jakość odczytu na reprezentatywnej próbie zrzutów wymaga osobnego pomiaru. Wyszukiwanie obrazem obejmuje indeks Google Cloud Vision. Nazwiska widoczne na obrazie mogą trafić do dostawcy.
+- **Obrazy.** Scenariusz depeszy PAP sprawdzono na przygotowanym zrzucie z widoczną datą. Jakość odczytu na reprezentatywnej próbie zrzutów wymaga osobnego pomiaru. Wyszukiwanie obrazem obejmuje lokalne wzorce oraz, zależnie od konfiguracji, indeks Google Cloud Vision. Nazwiska widoczne na obrazie mogą trafić do dostawcy.
 - **Tryb jednego klucza:** weryfikator to model tego samego dostawcy. To jawny czynnik obniżający punktację siły (raport to zaznacza); bez niezależnej kontroli (kontroli dosłownej nazw i liczb w kodzie) jedno źródło kończy się na „średniej”, a jedno źródło urzędowe z kontrolą dosłowną może dostać „mocną” ([VERDICT-RULES §5](VERDICT-RULES.md)).
 - **Deduplikacja spraw moderatora** (scenariusz H) zadziałała w pomiarze w 1 z 2 grup podobnych zgłoszeń: dla „H-elblag” powstały 2 sprawy zamiast jednej. Poprawka jest w kodzie (parafrazy łączone podobieństwem wektorów e5 ze strażnikiem nazw własnych, skrótów i liczb, bo same wektory nie odróżniają innego miasta); progi sprawdzono na prawdziwym modelu wektorowym w teście opcjonalnym (`RUN_E5_TESTS=1`), ale pełnego `npm run consistency` po poprawce nie powtórzyliśmy.
 - **Ostrzeżenia o domenie i statusie źródła** (scenariusz I): domeny incydentów w `data/incidents` są puste, więc ostrzeżenie o znanym incydencie nie pojawia się (0/3 dev, 0/2 held-out), a ostrzeżenia o statusie źródła (np. media objęte sankcjami UE) system jeszcze nie wydaje. Werdykt i tak opiera się wyłącznie na treści.

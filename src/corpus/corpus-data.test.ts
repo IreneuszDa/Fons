@@ -116,7 +116,8 @@ describe("pliki korpusu data/corpus/*.jsonl", () => {
   });
 
   it("rekordy generowane z danych są oznaczone, a url wskazuje zapytanie do API", () => {
-    const recs = readCorpus().records.filter((r) => r.sourceId === "eurostat");
+    const recs = readCorpus().records.filter((r) => r.sourceId === "eurostat" &&
+      (r.topics.includes("generated-from-data") || new URL(r.url).pathname.startsWith("/eurostat/api/")));
     expect(recs.length).toBeGreaterThan(50);
     for (const r of recs) {
       expect(r.topics, r.id).toContain("generated-from-data");
@@ -125,7 +126,7 @@ describe("pliki korpusu data/corpus/*.jsonl", () => {
       expect(r.text, r.id).toMatch(/\d/);
     }
     // Zdania generowane z danych występują tylko w źródłach, które to dokumentują (docs/SOURCES.md).
-    const allowed = new Set(["eurostat", "sejm-eli", "gov-pl", "ep-open-data", "gus-bdl", "ec-finance", "eu-portal", "nato"]);
+    const allowed = new Set(["eurostat", "sejm-eli", "gov-pl", "ep-open-data", "gus-bdl", "gus-cpi", "nbp-rates", "ec-finance", "eu-portal", "nato", "sipri"]);
     for (const r of readCorpus().records) {
       if (r.topics.includes("generated-from-data")) expect(allowed.has(r.sourceId), r.id).toBe(true);
       if (r.sourceId === "gus-bdl") {

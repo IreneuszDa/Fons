@@ -4,6 +4,7 @@
  */
 import { reportEvidence, VerdictReport, type ConversationReply, type InboundMessage } from "../../shared/contracts";
 import { socialVideoPlatform } from "../../engine/video/platforms";
+import { asksForMediaMetadata } from "../../engine/video/intake";
 import { asksAboutDemagogReview } from "../../engine/retrieval/google-claimreview";
 import { appendRun } from "../audit";
 import { addTokens, budgetExceeded } from "../budget";
@@ -61,7 +62,8 @@ export function buildEngineRequest(msg: InboundMessage, ctx: ServerContext): Bui
       return { reject: statusReply(TOO_LONG_TEXT(ctx.options.maxInputChars)), logInput: "[obraz]", mediaRefs };
     }
     return {
-      req: { kind: "image", images, imageOptions: msg.imageOptions, ...(text ? { text } : {}), channel: msg.channel, receivedAt: msg.receivedAt },
+      req: { kind: "image", images, imageOptions: msg.imageOptions, ...(text ? { text } : {}),
+        ...(msg.compareImages && images.length === 2 && { imageFocus: "comparison" }), channel: msg.channel, receivedAt: msg.receivedAt },
       logInput: "[obraz]",
       mediaRefs,
     };
@@ -136,7 +138,10 @@ export async function runVerification(
       sessionId: session.id,
       status: p.status,
       verdict: p.verdict,
-      recordIds: p.report ? reportEvidence(p.report).map(e => e.recordId) : [],
+      recordIds: p.report ? [...new Set([
+        ...reportEvidence(p.report).map(e => e.recordId),
+        ...(p.report.imageAnalysis?.images.flatMap(image => image.localSearch?.matches.flatMap(match => match.recordId ? [match.recordId] : []) ?? []) ?? []),
+      ])] : [],
       models: p.cacheHit || !p.report ? [] : p.report.models,
       timingsMs: p.cacheHit || !p.report ? {} : p.report.timingsMs,
       costUsd: p.cacheHit || !p.report ? 0 : p.report.costUsd,
@@ -176,7 +181,8 @@ export async function runVerification(
     cacheHit = true;
   } else {
     // Rozmowa mogła właśnie wyczerpać budżet. Trafienia w cache pozostają bezpłatne.
-    const needsModel = req.kind !== "image" || (req.imageFocus !== "origin" && req.imageFocus !== "copies");
+    const localMetadata = req.kind === "recording" && asksForMediaMetadata(req.text ?? "");
+    const needsModel = !localMetadata && (req.kind !== "image" || !["origin", "copies", "context", "comparison"].includes(req.imageFocus ?? ""));
     if (needsModel && (opts.clientOverBudget?.() || budgetExceeded(ctx.db, ctx.cfg, now))) {
       logRun({ status: "NIEPELNE", verdict: null, cacheHit: false, input: built.logInput });
       return statusReply(BUDGET_TEXT);
@@ -206,6 +212,7 @@ export async function runVerification(
     cacheHit,
     moderatorCase: undefined,
     costUsd: cacheHit ? 0 : base.costUsd,
+    ...(cacheHit && base.costStatus && { costStatus: undefined }),
     // druga linia obrony: wejście w raporcie i w logu jest zawsze zamaskowane
     inputEchoMasked: ctx.security.maskPii(base.inputEchoMasked).text,
   };
@@ -249,14 +256,20 @@ export async function runVerification(
   if (report.status !== "OK") {
     return { kind: "status", report, textPl: statusTextFor(report), quickReplies: [QR.help], resultUrl };
   }
+  if (report.inputMode === "transcription") {
+    const textPl = "Automatyczna transkrypcja\n\n" + report.summaryPl;
+    return { kind: "transcription", report, textPl, shortAnswer: { bodyPl: textPl, sources: [] }, quickReplies: [QR.why], resultUrl };
+  }
+  if (report.videoAnalysis?.status === "metadata_only") {
+    return { kind: "answer", report, textPl: report.summaryPl, shortAnswer: { bodyPl: report.summaryPl, sources: [] }, quickReplies: [QR.why], resultUrl };
+  }
   const quick = [QR.sources, QR.why, ...(report.moderatorCase || !report.verdicts.length ? [] : [QR.report])];
-  if (report.answer || report.inputMode !== "claim") {
+  if (report.answer || report.inputMode !== "claim" || (!report.videoAnalysis && !report.imageAnalysis)) {
     const shortAnswer = shortAnswerFor(report, note);
     return { kind: report.answer || report.questionParts ? "answer" : "verdict", report, shortAnswer,
       textPl: shortAnswerText(shortAnswer, report), quickReplies: report.answer ? [QR.sources, QR.why] : quick, resultUrl };
   }
   return {
     kind: "verdict", report, textPl: verdictText(report, note), quickReplies: quick, resultUrl,
-    ...(!report.imageAnalysis && !report.videoAnalysis && { shortAnswer: shortAnswerFor(report, note) }),
   };
 }

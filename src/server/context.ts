@@ -29,7 +29,7 @@ export interface EngineRequest {
   images?: { mime: string; base64: string }[];
   recording?: { mime: string; base64: string };
   imageOptions?: { searchWeb?: boolean };
-  imageFocus?: "origin" | "copies" | "identity" | "visual" | "context" | "claims";
+  imageFocus?: "origin" | "copies" | "identity" | "visual" | "context" | "claims" | "comparison";
   onActivity?: (stage: VerificationStage) => void;
   channel: ChannelId;
   receivedAt: string;

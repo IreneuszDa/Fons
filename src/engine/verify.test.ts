@@ -121,6 +121,32 @@ describe("article bodies and independent questions", () => {
     expect(r.answer).toMatchObject({ questionPl: focus, answerPl: WAGE_RECORD.text, evidence: [{ url: WAGE_RECORD.url }] });
   });
 
+  it("checks the sender's statement and reads a pre-qualified primary source they cited", async () => {
+    const claim = WAGE_CLAIM.replace(/\.$/u, "");
+    const note = claim + ", zobacz sam:";
+    const record = { ...WAGE_RECORD, url };
+    const deps = makeDeps({ records: [record], fetchPage: async () => page("Na stronie zamieszczono też odrębną informację o liczbie etatów.") });
+    const report = await verifyInput(textReq(note, { kind: "url", url }), deps);
+    const extraction = deps.llm.calls.find(call => call.purpose === "claims")!;
+    expect(parseFences(extraction.user)).toContainEqual(expect.objectContaining({ label: "WEJSCIE", content: claim }));
+    expect(report.inputEchoMasked).toContain(note);
+    expect(report.mainVerdict).toBe("POTWIERDZONE");
+    expect(evidenceUrls(report)).toContain(url);
+  });
+
+  it("reads the relevant part of a cited publication even when its identifier sorts last", async () => {
+    const title = "Wynagrodzenie w Polsce w 2026 roku";
+    const otherParts = Array.from({ length: 7 }, (_, i) => rec({
+      id: "A" + i, title, url,
+      text: "W rozdziale opisano sposób przygotowania corocznego zestawienia oraz tryb ogłaszania danych.",
+    }));
+    const relevant = { ...WAGE_RECORD, id: "Z", url, title };
+    const deps = makeDeps({ records: [...otherParts, relevant], fetchPage: async () => page(title) });
+    const result = await verifyInput(textReq(WAGE_CLAIM + " Zobacz sam:", { kind: "url", url }), deps);
+    expect(deps.llm.calls.find(call => call.purpose === "assess")?.user).toContain(relevant.text);
+    expect(result.verdicts.flatMap(v => v.evidence).map(e => e.recordId)).toContain(relevant.id);
+  });
+
   it.each(["", "Sam nagłówek"])("does not check a headline as if it were an article", async body => {
     const deps = makeDeps({ fetchPage: async () => page(body, "Sam nagłówek") });
     const r = await verifyInput(textReq("Sprawdź ten artykuł", { kind: "url", url }), deps);
@@ -627,7 +653,8 @@ describe("verifyInput — quote check and verifier", () => {
     expect(r.mainVerdict).toBe("FALSZYWE");
     const e = r.verdicts[0]!.evidence[0]!;
     expect(e.ratingRaw).toBe("Fałsz");
-    expect(e.group).toBe("obalajace");
+    expect(e).toMatchObject({ passageKind: "reviewed_claim", group: "kontekst", relation: "INNY_KONTEKST" });
+    expect(e.quote).toBe(fc.claimReviewed);
     expect(fc.text.includes(e.quote)).toBe(true);
     // The model was asked only about the thesis match (TEZA block), not for a quote.
     const assess = deps.llm.calls.find((c) => c.purpose === "assess")!;
@@ -774,6 +801,21 @@ describe("verifyInput — privacy", () => {
 });
 
 describe("verifyInput — warnings and modes", () => {
+  it("does not describe an unavailable verifier as having checked a citation", async () => {
+    const deps = makeDeps({ verifier: new FakeLlmProvider({ failWith: { verifier: "timeout" } }) });
+    const r = await verifyInput(textReq(WAGE_CLAIM), deps);
+    expect(r.transparencyPl).toContain("Drugi model był niedostępny");
+    expect(r.warnings.map(w => w.kind)).not.toContain("single_key_verifier");
+    expect(r.models.some(m => m.purpose === "verifier")).toBe(false);
+  });
+
+  it("leaves the strength unscored when the assessor abstains in proposal mode", async () => {
+    const llm = new FakeLlmProvider({ override: (q, heuristic) => {
+      if (q.schemaName === "assessment_proposal") return { ...heuristic() as object, proposedVerdict: "BRAK_DOWODOW" };
+    } });
+    const r = await verifyInput(textReq(WAGE_CLAIM), makeDeps({ llm, verdictMode: "model_proposed" }));
+    expect(r.verdicts[0]).toMatchObject({ verdict: "BRAK_DOWODOW", strength: { level: "slaba", score: null, independentPublishers: 0 } });
+  });
   it("adds an incident_domain warning for a URL listed in the incident catalogue", async () => {
     const pageUrl = "https://zle-wiesci.example.net/x";
     const deps = makeDeps({
@@ -783,6 +825,20 @@ describe("verifyInput — warnings and modes", () => {
     const r = await verifyInput({ kind: "url", url: pageUrl, channel: "web", receivedAt: "2026-11-21T11:00:00Z" }, deps);
     expect(r.warnings.find((w) => w.kind === "incident_domain")?.textPl).toContain("Kampania testowa");
     expect(r.mainVerdict).toBe("POTWIERDZONE");
+    const down = await verifyInput({ kind: "url", url: pageUrl, channel: "web", receivedAt: r.createdAt, fault: "llm_down" }, deps);
+    expect(down.mainVerdict).toBeNull();
+    expect(down.warnings.find(w => w.kind === "incident_domain")?.links?.[0]?.url).toBe("https://incydenty.example/i1");
+  });
+
+  it("rozpoznaje dokładny URL znanego materiału bez oceniania nieodczytanej strony", async () => {
+    const known = rec({ id: "komunikat", text: "Opublikowany tekst.", url: "https://przyklad.example/komunikat?id=1" });
+    const deps = makeDeps({});
+    deps.store.catalogPage = url => url === known.url ? [known] : [];
+    const check = (url: string) => verifyInput({ kind: "url", url, channel: "web", receivedAt: "2026-11-21T11:00:00Z", fault: "llm_down" }, deps);
+    const match = await check(known.url + "&utm_medium=chat");
+    expect(match.warnings.find(w => w.kind === "source_status")?.links).toEqual([{ url: known.url, title: known.title }]);
+    expect(match.mainVerdict).toBeNull();
+    expect((await check("https://przyklad.example/komunikat?id=2")).warnings.some(w => w.kind === "source_status")).toBe(false);
   });
 
   it("model_proposed mode: proposal is gated by code and the transparency text says so", async () => {
@@ -869,6 +925,9 @@ describe("verifyInput — twierdzenia złożone i długie teksty", () => {
     expect(v.ruleApplied).toBe(9);
     expect(v.reasonPl).toMatch(/^Twierdzenie jest prawdziwe tylko częściowo: „Litwa wstąpiła do NATO w 1999 roku” to nieprawda/);
     expect(v.evidence.map((e) => e.recordId).sort()).toEqual(["LT", "PL"]);
+    expect(v.parts?.map(p => p.evidence?.map(e => [e.recordId, e.relation]))).toEqual([
+      [["PL", "WSPIERA"]], [["LT", "OBALA"]],
+    ]);
     expect(deps.llm.calls.filter((c) => c.purpose === "assess")).toHaveLength(2);
   });
 
@@ -883,6 +942,19 @@ describe("verifyInput — twierdzenia złożone i długie teksty", () => {
     const r = await verifyInput(textReq(text), makeDeps({ llm, records: [PL, LT], branches: [memoryBranch("bm25", [PL, LT], true)] }));
     expect(r.mainVerdict).toBe("POTWIERDZONE");
     expect(r.verdicts[0]!.reasonPl).toContain("źródła potwierdzają wszystkie części");
+  });
+
+  it("nie potwierdza całej listy cytatem o jednym podmiocie, nawet gdy model zgubił drugi podmiot", async () => {
+    const claim = "Alfa i Beta otrzymały certyfikat w 2020 roku.";
+    const first = "Alfa otrzymała certyfikat w 2020 roku.";
+    const llm = new FakeLlmProvider({ override: q => {
+      if (q.schemaName === "claims") return claimOut([rawClaim(first, { isMain: true })]);
+      if (q.schemaName === "assessment") return { content: [{ ref: "F1", relation: "WSPIERA", aspect: "sedno", period: "2020", quote: first }], fixedRole: [] };
+    } });
+    const report = await verifyInput(textReq(claim), makeDeps({ llm, records: [rec({ id: "cert", text: first })] }));
+    expect(report.claims.map(c => c.text)).toEqual([claim]);
+    expect(report.mainVerdict).toBe("BRAK_DOWODOW");
+    expect(report.verdicts[0]?.evidence).toHaveLength(0);
   });
 
   it("długi tekst: wyszukiwanie na żywo tylko dla pierwszych jednostek, nie dla surowego tekstu; zestawienie w podsumowaniu", async () => {

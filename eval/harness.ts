@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import type BetterSqlite3 from "better-sqlite3";
 import type { ConversationReply, InboundMessage, LlmProvider, VerdictReport } from "../src/shared/contracts";
+import { reportEvidence } from "../src/shared/contracts";
 import type { AppConfig } from "../src/server/config";
 import type { FetchedPage, fetchPage as FetchPageFn } from "../src/security/fetch";
 import { extractFromHtml } from "../src/security/extract";
@@ -269,7 +270,7 @@ export function falseForwardingClaims(db: Db, text: string): string[] {
 
 export function reportRecordIds(r: VerdictReport | undefined): string[] {
   if (!r) return [];
-  return [...new Set(r.verdicts.flatMap((v) => v.evidence.map((e) => e.recordId)))].sort();
+  return reportEvidence(r).map(e => e.recordId).sort();
 }
 
 // ───────────────────────────── LLM judge (--judge) ─────────────────────────────

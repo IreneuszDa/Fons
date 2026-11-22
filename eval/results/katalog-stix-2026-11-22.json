@@ -1,0 +1,3602 @@
+{
+  "type": "bundle",
+  "id": "bundle--2164afb8-ef49-4134-9cac-c524813b26ab",
+  "objects": [
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7332d2ca-4558-5cc1-a29f-a1c6f28917b1",
+      "value": "https://www.politifact.com/factchecks/2022/mar/04/mike-gibbons/fact-checking-whether-bidens-russia-sanctions-over/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--61464cc4-ed69-50d9-97cc-398a05bb3410",
+      "value": "https://dpa-factchecking.com/germany/230222-99-696427"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d19f1656-ace4-50f3-a826-763f73ee4a13",
+      "value": "https://pravda.org.pl/ilu-polakow-zaszczepi-sie-do-marca-falszywy-cytat-dworczyka/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--35af7c22-4c85-52cb-b22e-21653a72e660",
+      "value": "https://www.factcheck.org/2024/06/factchecking-rfk-jr-s-rival-debate/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--61d95cb7-05ac-5660-af95-1c4c785c6384",
+      "value": "https://dpa-factchecking.com/austria/230209-99-537587"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--109efce9-c5a2-53b2-8f4e-2bea52587567",
+      "value": "https://dpa-factchecking.com/germany/221024-99-244033/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9a06f988-ecb8-5278-9725-f480037a7384",
+      "value": "https://www.factcheck.org/2024/02/trumps-distorted-nato-delinquent-comments/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--430dac4d-d506-5e30-b1dc-fb44e47747c8",
+      "value": "https://pravda.org.pl/lotnisko-chopina/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fca21d09-dc1e-517f-bbed-c039f4ae6e18",
+      "value": "https://www.dw.com/en/zelenskyy-alive-russian-disinformation-campaign-death-rumors-targeting-politicians-bot-networks/a-77704409"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e07032ad-acb6-577c-87c6-6c809cea4a93",
+      "value": "https://www.factcheck.org/2024/06/factchecking-trumps-immigration-related-claims-in-phoenix-and-las-vegas/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d379725c-8be4-5aa1-b203-27fbdf644ec2",
+      "value": "https://www.factcheck.org/2024/02/unraveling-misinformation-about-bipartisan-immigration-bill/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--28a8b6ce-4ec1-507b-9652-1ec6926c7fd9",
+      "value": "https://pravda.org.pl/czy-branza-futrzarska-ma-istotne-znaczenie-dla-polskiego-eksportu-weryfikujemy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6c16e453-3f9d-5368-8905-b34eda2d0a32",
+      "value": "https://www.factcheck.org/2025/12/trumps-native-born-job-creation-claim-based-on-questionable-figures/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--262d44db-e984-5d2b-b214-c274d26eff99",
+      "value": "https://www.factcheck.org/2024/02/breaking-down-the-immigration-figures/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c361b036-14c8-5d66-ae00-8cad22edcf3a",
+      "value": "https://www.politifact.com/factchecks/2024/nov/13/threads-posts/no-nato-secretary-general-mark-rutte-didnt-say-hed/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8ffd90f5-9345-5c4e-943d-7aa3d3e8406e",
+      "value": "https://dpa-factchecking.com/germany/240415-99-680570/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c31cb750-f0aa-54ac-aa13-5bd5a702ced6",
+      "value": "https://www.dw.com/en/russian-drone-downing-poland-airspace-disinformation-fake-news-nato/a-73952818"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--53460617-284e-5a34-9b0a-35bb6731ad81",
+      "value": "https://pravda.org.pl/czesc-pkb-dla-ukrainy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--042566ff-e4b9-539e-9a75-213c0e109e1f",
+      "value": "https://pravda.org.pl/czy-amerykanska-partia-demokratyczna-sfinansowala-swoja-kampanie-wyborcza-z-pieniedzy-zebranych-na-pomoc-ukrainie/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bacfa3ca-f092-5e2f-a245-7021f0ca280d",
+      "value": "https://www.dw.com/en/fact-check-how-to-spot-fabricated-news-reports/a-71992819"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--dc115e7d-13f1-5953-b554-e0751878c5b2",
+      "value": "https://pravda.org.pl/orzeczenie-trybunalu-konstytucyjnego-czy-zdelegalizowano-prawo-do-aborcji/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--52539f51-06ec-5f6a-b365-d75b137a2226",
+      "value": "https://www.politifact.com/factchecks/2023/oct/20/instagram-posts/north-koreas-kim-jong-un-delivered-this-speech-in/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3797dc03-f5bf-593d-a5d2-c5d6f840f09f",
+      "value": "https://pravda.org.pl/manipulacja-wypowiedzi-premiera-morawieckiego/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6ca26b20-2774-5aec-b71d-dbbc7e009638",
+      "value": "https://pravda.org.pl/ile-firm-kazdego-dnia-upada-w-polsce-czym-jest-postepowanie-restrukturyzacyjne/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--671772a7-fdf6-5508-a7fc-35c4a6b9610a",
+      "value": "https://pravda.org.pl/szwedzcy-strazacy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e22de60e-2426-5d22-97f6-dc4ccb283030",
+      "value": "https://dpa-factchecking.com/germany/240327-99-480987"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1415f9ee-3267-5df8-81fb-f4bb8787c5e9",
+      "value": "https://dpa-factchecking.com/germany/240402-99-537486/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--39a76784-6235-5bdc-8fc7-bd136aef2755",
+      "value": "https://pravda.org.pl/czy-za-3-miesiace-uchodzcy-z-ukrainy-beda-musieli-obowiazkowo-sie-zaszczepic/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--14ea481f-10b0-5aa7-b785-0d874407c6ca",
+      "value": "https://dpa-factchecking.com/germany/240422-99-765714"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7862483f-66a4-5195-ba2c-ce400383547f",
+      "value": "https://dpa-factchecking.com/germany/220202-99-947622"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--dfa4c468-09e7-5f9a-a0fe-353c0cb9a48c",
+      "value": "https://www.dw.com/en/fact-check-trumps-false-claims-about-tariffs/a-72137021"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--014c4667-9db6-5bf2-8b85-014a3733986a",
+      "value": "https://www.factcheck.org/2024/10/factchecking-harris-and-trumps-fox-news-appearances/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--65b2584f-412f-5d34-944c-93e14d1f8960",
+      "value": "https://www.factcheck.org/2024/07/night-3-of-the-republican-national-convention/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2d716762-77c7-541e-844f-ffa75fa7f524",
+      "value": "https://dpa-factchecking.com/germany/240116-99-629941"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--394df355-5fad-59a4-9661-2e84f8938c17",
+      "value": "https://dpa-factchecking.com/germany/220328-99-701728"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--25645605-fa4d-5f82-b7c5-0d06bdc05fdc",
+      "value": "https://www.factcheck.org/2024/10/factchecking-the-vice-presidential-debate-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--aabf9331-886f-5e45-bb53-d1660b6bcb4c",
+      "value": "https://www.politifact.com/factchecks/2023/apr/21/facebook-posts/george-soros-is-not-banned-in-six-countries/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0f6f294c-cf76-58c5-8257-e76f46cba38b",
+      "value": "https://www.dw.com/en/fact-check-posts-dont-show-recent-drone-attacks-in-russia-ukraine-war/a-72764181"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e82b7fee-d02a-54cc-b82f-238627566240",
+      "value": "https://www.politifact.com/factchecks/2024/feb/09/instagram-posts/tucker-carlson-vladimir-putin-interview-exchange-o/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--51ff19c3-e3da-57b5-85a8-cfaf4cd634ea",
+      "value": "https://www.politifact.com/factchecks/2022/mar/07/evan-mcmullin/evan-mcmullin-ad-portraying-gop-utah-sen-mike-lee-/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--52333808-ae1d-5fe6-8b32-a55d3241146d",
+      "value": "https://pravda.org.pl/pomnik-romana-szuchewycza/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--57c99a15-cfd5-5698-9fa9-eefc02863a50",
+      "value": "https://dpa-factchecking.com/germany/221031-99-330402"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b98ff339-fd96-591d-9e71-638bc9989b05",
+      "value": "https://dpa-factchecking.com/germany/210805-99-728751"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--dfc362f9-6357-52c6-8d90-24dcfaf55683",
+      "value": "https://dpa-factchecking.com/netherlands/230320-99-20083"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--974d7f0e-26aa-5391-9d79-2e6dc262b313",
+      "value": "https://pravda.org.pl/grzywna-za-nieobecnosc/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--070127c1-41af-52ad-a0f2-434dfa915d95",
+      "value": "https://pravda.org.pl/fake-newsy-o-zelenskiej/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--073be42f-4306-5b26-9dd3-062f257923c5",
+      "value": "https://www.politifact.com/factchecks/2022/mar/11/viral-image/footage-marines-training-arizona-mischaracterized-/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6ecb270a-1608-5e49-974e-13ba32120ad6",
+      "value": "https://pravda.org.pl/czy-protesty-spowoduja-przyrost-o-5-tysiecy-zakazen-dziennie/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--900ae8c8-6229-5591-92be-a887c7a26142",
+      "value": "https://www.dw.com/en/fact-check-trumps-speech-at-the-world-economic-forum/a-75601073"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c8a7ed9e-1164-5b0f-b5c9-0dad787c68f5",
+      "value": "https://pravda.org.pl/czy-pierwsza-dama-otrzyma-pensje-18-tys-zlotych-miesiecznie/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5ecdfeab-d2ed-5182-a4b5-1653f845133e",
+      "value": "https://pravda.org.pl/ukrainscy-nazisci-w-polskich-szpital/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--264cf7a9-83fe-5c56-951f-bb3279426473",
+      "value": "https://www.dw.com/de/faktencheck-fu%C3%9Fballfans-statt-gewaltbereite-migranten/a-69681558"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5423b38c-7d1d-5537-8ae1-c15f9eb66968",
+      "value": "https://dpa-factchecking.com/germany/210726-99-536855"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--db31ee6d-1029-51dc-bdf1-5e56cc3f0231",
+      "value": "https://www.dw.com/de/putins-kriegsgr%C3%BCnde-im-faktencheck/a-60901735"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7b9e0593-d5df-589d-bdca-354c56e08e08",
+      "value": "https://pravda.org.pl/czy-dzisiaj-o-1400-zawyja-syreny-alarmowe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--053b3afc-6763-523d-a2b0-7bb8872e1a96",
+      "value": "https://pravda.org.pl/konwencja-stambulska-dyskryminuje-dzieci-plci-meskiej-bledna-interpretacja-bosaka/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7038681b-e07f-5f59-adeb-ae6938b10ba9",
+      "value": "https://www.dw.com/en/fact-check-fakes-spread-online-amid-syrias-power-shift/a-75618514"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--425a1811-0754-5b3c-a36b-81f0b29e159b",
+      "value": "https://www.factcheck.org/2025/12/factchecking-trumps-rapid-fire-prime-time-address/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bfba7ee1-cffb-5ec1-8a0d-4b1974d30077",
+      "value": "https://pravda.org.pl/nie-poland-the-royal-tour-nie-wyprodukowano-w-czasach-covid-19/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4ea4aff0-6aeb-53fe-9af1-1eb70f1eef6a",
+      "value": "https://www.politifact.com/factchecks/2023/sep/21/facebook-posts/no-poland-hasnt-declared-war-on-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--498e0d07-2e88-5570-a56d-210f513a1993",
+      "value": "https://pravda.org.pl/dezinformacja-na-twitterze-uwaga-na-falszywe-konta/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--95a39d32-fc21-5ca9-afc5-f8163bdc7ee3",
+      "value": "https://www.dw.com/en/fact-check-kashmir-conflict-out-of-context-old-videos-computer-game-footage-disinformation/a-72465246"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--aba3024f-5980-51e6-826b-82b9181116cb",
+      "value": "https://dpa-factchecking.com/germany/240131-99-823720"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c7824b6b-2a42-522e-8b3c-6cf0b63be4e3",
+      "value": "https://www.factcheck.org/2024/09/trump-vance-wrong-about-illegal-immigrant-murderers/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--03696bb6-0e2f-526d-975d-883194d7d537",
+      "value": "https://www.dw.com/en/fact-check-are-tariffs-a-tax-hike-on-foreign-countries/a-71910881"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8ae103f0-26ca-5f32-bfa9-202bc4017a91",
+      "value": "https://www.dw.com/en/fact-check-posts-dont-show-recent-attacks-in-russia-ukraine-war/a-72764181"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--29e58b00-452d-5288-83f4-25c10c0a55c4",
+      "value": "https://pravda.org.pl/decyzja-o-srodkach-wlasnych-ue-i-fundusz-odbudowy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--23566934-71aa-5c88-a45c-c35e047b6b69",
+      "value": "https://dpa-factchecking.com/germany/210803-99-680770/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2f54d861-0658-50e1-87da-a192fe5b72df",
+      "value": "https://www.dw.com/en/fact-check-false-reports-claim-poland-sent-troops-to-ukraine/a-74043279"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--24578dc8-ad89-58cb-bebd-63de8a5cefa6",
+      "value": "https://pravda.org.pl/ukrainski-rzad-w-polsce/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--396bd3ab-8446-5fb5-a517-b99c9f9a1721",
+      "value": "https://www.dw.com/de/faktencheck-drei-fakes-rund-um-f-16-jets-in-der-ukraine/a-69890105"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6e76831c-924f-51f0-a6bd-cd4d36d2f8b7",
+      "value": "https://www.factcheck.org/2025/02/trumps-false-and-misleading-ukraine-claims/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--39c28557-43a6-540d-aa75-90fa3f43e4c9",
+      "value": "https://www.dw.com/de/faktencheck-verst%C3%B6%C3%9Ft-nato-pr%C3%A4senz-in-rostock-gegen-zwei-plus-vier-vertrag/a-70512246"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--eb508cf7-c90b-59ad-a307-2a6fc99c1895",
+      "value": "https://pravda.org.pl/jezyk-ukrainski-w-polskich-szkolach/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7a681851-8d7b-5d65-98a1-8cabb97b7b30",
+      "value": "https://www.dw.com/de/faktencheck-wirken-z%C3%B6lle-im-ausland-wie-steuern/a-71916396"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bed3d4db-baa4-52ba-b6d6-afd8c3789649",
+      "value": "https://www.politifact.com/factchecks/2022/may/24/tim-ryan/does-jd-vance-profit-russia-propaganda/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--55ba4f56-3d7e-5487-aaf2-b50b9c265077",
+      "value": "https://www.politifact.com/factchecks/2022/apr/28/facebook-posts/no-nato-jets-didnt-destroy-russian-aircraft/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d93b864d-3794-5967-b13c-a6193d2a9028",
+      "value": "https://dpa-factchecking.com/germany/220927-99-920836"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a676d27f-ed6b-5a72-8905-4071f1bccf18",
+      "value": "https://www.dw.com/en/russia-lab-worker-death-fact-check/a-79560752"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0c9105c1-1792-5314-8b3a-e0a9f6d47a23",
+      "value": "https://pravda.org.pl/czy-kary-nalozone-na-polske-w-zwiazku-z-kopalnia-turow-sa-rownowartoscia-134-wyposazonych-karetek/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e5d60092-2eb4-5204-9609-5d24fd9cba50",
+      "value": "https://dpa-factchecking.com/belgium/240809-99-56749"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ea66c0e5-201b-53af-b159-41959d428276",
+      "value": "https://www.dw.com/en/fact-check-did-misleading-claims-about-spains-migration-law-trigger-the-ceuta-crisis/a-78233161"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--cad5bf34-9e41-53d3-8acc-3e6645700cc3",
+      "value": "https://www.dw.com/en/fact-check-does-the-eu-want-to-steal-private-savings/a-72067901"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7af12c0a-ce5f-5b77-a007-070fdadcc5bd",
+      "value": "https://pravda.org.pl/czy-rosnace-place-polakow-uzasadniaja-wysokosc-podwyzek-dla-politykow/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--cc8b4d2f-cfe5-52c5-8d63-b703a2deecdd",
+      "value": "https://pravda.org.pl/polskie-lotniska-dla-ukrainy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--94541bcd-f716-5917-8f22-70bfb8f0af25",
+      "value": "https://dpa-factchecking.com/germany/220414-99-919357"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--dae0481e-27ff-52a9-9c69-6b54d4662ee9",
+      "value": "https://pravda.org.pl/czy-w-wielkiej-brytanii-po-brexicie-odnotowano-najwiekszy-wzrost-gospodarczy-od-80-lat/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fec4a3d7-f1d9-58a5-bc4f-bd7b15d1d615",
+      "value": "https://pravda.org.pl/czy-szkolna-podstawa-programowa-uwzglednia-edukacje-seksualna/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e5d68710-50c3-5bba-b5fd-4f9b0fd76794",
+      "value": "https://pravda.org.pl/zakaz-naprawy-starych-samochodow/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9af7626b-e41f-5259-8882-ab917beaf577",
+      "value": "https://www.dw.com/en/fact-check-fake-claim-of-uk-officers-captured-in-ukraine/a-73550133"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7bd6475d-931e-537d-b836-079bb5f6e57c",
+      "value": "https://www.politifact.com/factchecks/2023/oct/13/instagram-posts/no-a-cnn-reporter-didnt-fake-being-near-the-israel/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--08f0f2ce-ad99-5f32-8b13-ad4741d64c2c",
+      "value": "https://dpa-factchecking.com/germany/221012-99-97869"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--16cd4dc1-731a-524e-9533-f4aab7630461",
+      "value": "https://pravda.org.pl/czy-komisja-europejska-w-zaden-sposob-nie-pomogla-polsce-z-uchodzcami/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1e25bef7-8faf-54af-99df-497e2628edf7",
+      "value": "https://www.politifact.com/factchecks/2023/oct/03/facebook-posts/no-nato-troops-in-ukraine-nato-says/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--19671816-d168-5675-9d09-616e8b58b504",
+      "value": "https://www.politifact.com/factchecks/2023/oct/25/viral-image/this-video-shows-lebanese-protesters-supporting-pa/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a5a71f1e-fbb4-5d57-af38-6bc2c642b3fb",
+      "value": "https://pravda.org.pl/czy-prezydent-andrzej-duda-jest-wnukiem-banderowca/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f8252b64-1bfa-5106-9fe6-24129483f6bb",
+      "value": "https://www.politifact.com/article/2023/nov/06/tv-ad-praises-desantis-on-israel-evacuations-borde/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2bf58736-c61c-5be5-8e1a-73325b83607b",
+      "value": "https://dpa-factchecking.com/germany/220317-99-562862"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--00c742a7-9973-5eba-a746-704f76275a6f",
+      "value": "https://dpa-factchecking.com/germany/230724-99-515134/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--32376523-bb85-52f0-9642-8f77ef703b5e",
+      "value": "https://dpa-factchecking.com/germany/231019-99-626503"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--687645e8-94f6-5668-a144-139394ba9e1a",
+      "value": "https://pravda.org.pl/czy-polska-wyplacila-500-az-700-tysiacom-dzieci-z-ukrainy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7b32e8c4-5c06-5eec-a872-ef1ffc8186ba",
+      "value": "https://pravda.org.pl/czy-polski-rzad-doplaca-do-lekow-dla-ukraincow/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--989d966d-df5f-57ed-8779-e10e64d40151",
+      "value": "https://dpa-factchecking.com/germany/220719-99-75976"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8878122d-f694-5970-ac7f-06fac892dd0c",
+      "value": "https://www.politifact.com/factchecks/2023/nov/17/viral-image/video-doesnt-show-president-joe-biden-falling-down/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fcbcdc6b-c5a0-5e18-b0c3-0395d882f72f",
+      "value": "https://pravda.org.pl/czy-donald-tusk-jechal-170-km-h-w-terenie-zabudowanym/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--44d43eb2-08ee-53f8-bf6a-8997a192e7c9",
+      "value": "https://dpa-factchecking.com/germany/220224-99-269441"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e0933116-e0ef-5562-814d-f584223510fc",
+      "value": "https://pravda.org.pl/czy-w-polsce-brakuje-obecnie-ponad-2-milionow-mieszkan-wyjasniamy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a8d01d4d-3911-5a1b-a1ac-025ab94ba833",
+      "value": "https://www.factcheck.org/2026/01/trumps-claims-about-greenland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--12c63b6c-ba70-58af-b88e-f953aa7f2578",
+      "value": "https://pravda.org.pl/autobusy-do-melitopola/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a1568ee3-0f04-56d6-bc14-26900dcf2c57",
+      "value": "https://pravda.org.pl/karol-nawrocki-nie-moze-startowac-na-prezydenta/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9fdb61d8-a09a-5a3d-895d-ebb092a69ed7",
+      "value": "https://www.politifact.com/factchecks/2022/jul/11/facebook-posts/no-belarus-hasnt-declared-war-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a56968c4-879a-5545-8c59-5c462bf6e259",
+      "value": "https://pravda.org.pl/zanieczyszczenia-powietrza/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--361ff5a2-580c-5c8f-b309-5eefc3d7f9fa",
+      "value": "https://www.factcheck.org/2022/03/hunter-biden-left-ukrainian-company-in-2019-contrary-to-ted-nugent-post/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a25f0706-0ba4-5482-bd78-e68a387a1d8c",
+      "value": "https://pravda.org.pl/taylor-swift/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--67e2d3d8-68a5-5598-bdcd-6577efb89eae",
+      "value": "https://www.dw.com/en/fact-check-fake-news-surrounding-los-angeles-protests/a-72857568"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1d9c52ff-fb0d-5b31-a19c-ed25ed35333b",
+      "value": "https://pravda.org.pl/fala-ukrainskich-wyborcow/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7e1bdcea-2a58-58d3-9d68-162f2964296b",
+      "value": "https://dpa-factchecking.com/netherlands/220927-99-918204"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fc66ddc9-f051-5bbd-beac-2fe9ed83e800",
+      "value": "https://www.factcheck.org/2024/08/opening-night-of-the-democratic-national-convention/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--41dd9a10-3130-54d8-8801-0540a3ea8b81",
+      "value": "https://dpa-factchecking.com/germany/220325-99-673339"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1deb5031-d585-552d-9004-744a2056edec",
+      "value": "https://www.politifact.com/factchecks/2024/jan/30/instagram-posts/this-video-doesnt-show-people-headed-to-texas-it-s/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bf8428b9-aea5-5d6d-92f1-9ec4034c3d3a",
+      "value": "https://www.dw.com/en/israel-hamas-ceasefire-gaza-disinformation-hostages-fact-check-social-media-v2/a-74338311"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0b913399-ae22-5aa9-96d0-967782e64d87",
+      "value": "https://www.dw.com/de/faktencheck-nein-die-eu-will-keine-privaten-ersparnisse-stehlen/a-72054858"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--71cb68d5-b889-5b7d-b3ed-7aa0b5526f59",
+      "value": "https://www.politifact.com/factchecks/2022/feb/01/tweets/old-video-mischaracterized-showing-troops-ukraine-/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1cd2defd-2fa3-5db4-8993-c8969f0e7970",
+      "value": "https://dpa-factchecking.com/netherlands/240821-99-170476"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--05434b53-2df9-555f-a938-134924976ca6",
+      "value": "https://pravda.org.pl/obywatelstwo-z-automatu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a23c1356-b6f2-5f1e-b37f-8323f404fbb3",
+      "value": "https://pravda.org.pl/czy-przed-rzadami-pis-co-4-dziecko-bylo-ubogie/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--af9ff930-d779-5fad-8182-94d1faf6684e",
+      "value": "https://dpa-factchecking.com/germany/231205-99-189940"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--cbba41f2-1c2e-5c03-86f7-dc97b67226e0",
+      "value": "https://dpa-factchecking.com/germany/221025-99-254332"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4fa69bb5-dc4c-5c43-ad3d-999b74d84c0c",
+      "value": "https://dpa-factchecking.com/netherlands/220523-99-396778/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a3e0bb58-3b11-552b-9246-c6abf84ee81d",
+      "value": "https://pravda.org.pl/zatrudnienie-ukraincow-w-intelu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c943063b-c652-560e-8649-eaae465c7ad0",
+      "value": "https://www.politifact.com/factchecks/2023/oct/20/never-back-down-pac/no-nikki-haley-didnt-say-she-wants-the-us-to-take/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6e89dfeb-318e-5d1b-bcaf-e0406465e250",
+      "value": "https://pravda.org.pl/czy-52-francuzow-popiera-rosje-w-konflikcie-z-ukraina/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--57fc2e54-744c-5748-bd24-fd47cd0dbc1a",
+      "value": "https://pravda.org.pl/co-dziesiaty-gruzin-w-polsce-zatrzymany-przez-policje/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5a6d8492-c8fb-5fcf-981b-ed368ddc09ae",
+      "value": "https://pravda.org.pl/inflacja-w-polsce-i-europie/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bd62c4e7-71a0-5061-a18e-2a83268fe5aa",
+      "value": "https://dpa-factchecking.com/germany/241002-99-591674"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c054015a-4779-5696-8a84-9ac81f46b913",
+      "value": "https://www.politifact.com/factchecks/2024/jul/02/tom-cotton/what-sen-tom-cotton-omits-in-claim-about-weapons-s/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--346302a3-d3e8-57a0-957a-7412f9f81293",
+      "value": "https://www.factcheck.org/2023/03/military-equipment-traveling-back-to-u-s-contrary-to-social-media-posts/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4ccf5a49-fbbb-5702-bb75-de5b24f51847",
+      "value": "https://www.dw.com/en/fact-check-trumps-post-national-guard-shooting-remarks-whats-true-and-whats-not/a-74924280"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b994eaf0-db18-5ad7-9e9d-ab70e4e4338c",
+      "value": "https://pravda.org.pl/czy-szczepionki-ktorymi-sie-szczepimy-nie-sa-wlasnoscia-polski/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a2a36a2e-43e4-5bf4-b3ca-a123c01d0a56",
+      "value": "https://www.politifact.com/factchecks/2023/oct/13/instagram-posts/the-un-isnt-paying-military-service-members-to-inv/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9a8c6a9b-f95e-56e0-9c12-6a640750861c",
+      "value": "https://euvsdisinfo.eu/report/a-clash-between-the-us-eu-uk-is-behind-the-poland-ukraine-dispute/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--67f0abc0-05dd-5eab-b7ac-19f28dcd82fa",
+      "value": "https://euvsdisinfo.eu/report/white-house-admits-there-is-no-evidence-of-russian-interference-in-us-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b290c2a5-5736-529e-93ac-7c7ffe068c8d",
+      "value": "https://euvsdisinfo.eu/report/poland-continues-its-gradual-seizure-of-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d688200c-c576-5adc-9e2b-913562ddd7c9",
+      "value": "https://euvsdisinfo.eu/report/attack-drones-are-flying-from-norway-to-murmansk/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5e7665e4-205b-5571-8101-e4a32ed2b32f",
+      "value": "https://euvsdisinfo.eu/report/evidences-provided-could-be-fabricated/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--72630e5d-29a1-5219-9c5a-a887c126dda8",
+      "value": "https://euvsdisinfo.eu/report/mh17-investigation-is-falling-apart/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5a079b24-0a88-5a86-b87c-739c0f1b80da",
+      "value": "https://euvsdisinfo.eu/report/ukraine-launches-drones-against-baltic-countries-to-drag-them-into-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c52e1d5d-334b-5c55-a3a1-2be263af7261",
+      "value": "https://euvsdisinfo.eu/report/eu-and-nato-are-backing-neo-nazi-values-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--419a4669-581e-5a2d-9917-8f2e6ffc89a7",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-develop-toxins-that-target-slavic-genotypes/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f2810041-014e-5d13-951d-f4ea1e21bf23",
+      "value": "https://euvsdisinfo.eu/report/poland-has-plans-to-annex-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fa7bfb14-c211-5af1-9432-e80055248662",
+      "value": "https://euvsdisinfo.eu/report/europe-is-planning-war-on-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--94922c4c-85db-5c1e-8fde-770aeabdbb7d",
+      "value": "https://euvsdisinfo.eu/report/russia-not-involved-in-bucha-provocations-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--571ad001-a4e2-5ce5-9aef-737b9dd7c503",
+      "value": "https://euvsdisinfo.eu/report/ukraine-shot-down-flight-mh17/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--37a5e582-db6a-50b8-9795-9f1441371d20",
+      "value": "https://euvsdisinfo.eu/report/nato-expansion-to-increase-tension-in-the-region/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a8fb2291-96cc-5863-95ce-5b5024267466",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-have-been-developing-new-biological-weapons-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3fbc2808-6487-53c0-bc19-572ed0d93908",
+      "value": "https://euvsdisinfo.eu/report/the-eu-plotted-a-coup-in-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fca14e4f-1af5-5cc7-bb06-d41f4c8f6de4",
+      "value": "https://euvsdisinfo.eu/report/nord-stream-destruction-was-american-terrorist-attack/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--be3e12b2-b75a-552b-874e-a5741422451a",
+      "value": "https://euvsdisinfo.eu/report/sl-bucha-massacre-is-ukrainian-provocation-western-journalists-hide-truth/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2e8487c6-942b-53cd-99b6-779e50056a86",
+      "value": "https://euvsdisinfo.eu/report/poland-uses-unverified-claim-of-russian-drones-attack-to-fuel-russophobia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d4f721fa-cea7-5741-822c-6aa8f2ac14bf",
+      "value": "https://euvsdisinfo.eu/report/lithuania-applies-double-standards-to-refugees/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fa515795-184e-5813-8a6b-02632b4e6e9f",
+      "value": "https://euvsdisinfo.eu/report/lithuania-dooms-itself-to-energy-poverty/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fb4f08b9-ae01-5605-9469-aa861c0aa618",
+      "value": "https://euvsdisinfo.eu/report/poland-is-concerned-over-its-second-tier-status-in-nato/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e6425164-fa97-5c0a-a0c2-a4f464a53219",
+      "value": "https://euvsdisinfo.eu/report/polish-soldiers-carried-out-mass-executions-of-migrants-at-the-belarusian-border/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ac526923-0b81-5e37-8d37-a99aed5477bc",
+      "value": "https://euvsdisinfo.eu/report/roman-protasevich-is-a-neo-nazi/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6403f455-52ab-5c0b-a679-13df5d073a8b",
+      "value": "https://euvsdisinfo.eu/report/poland-wants-to-occupy-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5ec3afe7-8937-5b04-9c09-72f734aa52aa",
+      "value": "https://euvsdisinfo.eu/report/lithuanian-gays-interfered-in-polish-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5ab68aea-8a80-5e25-9c38-f502eb16599a",
+      "value": "https://euvsdisinfo.eu/report/terrorists-in-syria-are-supplied-with-drones-by-ukrainian-government/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7f276913-d576-5481-a76f-619a2fd566b9",
+      "value": "https://euvsdisinfo.eu/report/the-nato-warsaw-summit-has-established-a-supranational-intelligence-agency/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--41e06a62-be36-50bf-ac38-9d932dde9946",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-arms-flood-into-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fa6a5c67-d9a5-5d0c-967f-e7264b1f850c",
+      "value": "https://euvsdisinfo.eu/report/the-maidan-revolution-was-a-us-led-coup-that-installed-a/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9a61979b-8dfd-5882-9e2b-4c8ec92e4b4a",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-develop-biological-agents-targeting-slavic-populations/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--146333bc-de79-5ec3-908c-bef19055f394",
+      "value": "https://euvsdisinfo.eu/report/donbass-known-war-zone-mh17-downing-responsibility-of-air-controller/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a5685a37-5892-54f3-8184-b68ea913536f",
+      "value": "https://euvsdisinfo.eu/report/american-media-questioned-with-hesitation-the-legitimacy-of-the-neo-nazi-regime-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d785cfac-255e-5518-a092-7790c11a4030",
+      "value": "https://euvsdisinfo.eu/report/the-maidan-revolution-was-a-us-led-coup-that-installed-us-controlled/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--91de0544-aa80-515c-8847-1bc1f20ba87a",
+      "value": "https://euvsdisinfo.eu/report/europe-is-in-danger-because-of-ukraines-gas-transit/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f5c5e47b-4f2d-5f04-9b54-4091335f39e2",
+      "value": "https://euvsdisinfo.eu/report/us-benefits-from-nord-stream-sabotage/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--70a0e1ee-4483-58e4-9294-dc1308c52b7f",
+      "value": "https://euvsdisinfo.eu/report/syrian-refugees-trapped-in-us-occupied-rukban-camp/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--eb9b7b26-b46c-5e47-932f-d4c493fab64e",
+      "value": "https://euvsdisinfo.eu/report/nato-sprays-poland-with-chemtrails/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d0146e17-a0c4-5794-b62d-9564ee5a8762",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-a-western-colony-belonging-to-poland-hungary-romania-and-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bcaba92a-cc36-54d8-92e4-bff49507544b",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-frightened-by-the-single-european-army/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c4d8fdd3-31bd-578f-8039-88704693bcd1",
+      "value": "https://euvsdisinfo.eu/report/american-and-norwegian-divers-blew-up-nord-stream/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--af429efd-a75e-5a47-a120-ec90195ded2d",
+      "value": "https://euvsdisinfo.eu/report/the-polish-president-andrzej-duda-said-that-ukrainians-must-return/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c8aa266e-785c-526b-a427-2f11dcb7d4b9",
+      "value": "https://euvsdisinfo.eu/report/spiegels-document-confirms-russian-grievances-about-nato-expansion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--339877ce-adaa-5164-b3a2-4a532e39dc68",
+      "value": "https://euvsdisinfo.eu/report/polish-border-guards-shot-about-20-migrants-per-day-on-belarus-border/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ddb095ee-3459-533e-b4eb-ed873d7f2904",
+      "value": "https://euvsdisinfo.eu/report/london-wants-to-destroy-the-eu-from-the-inside-using-poland-and-lithuania/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--96f1b380-ba4b-5ccd-b831-75e705c7412a",
+      "value": "https://euvsdisinfo.eu/report/kyiv-is-falsifying-the-list-of-bucha-victims/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--25b20664-de77-51d4-a846-e91d849154d9",
+      "value": "https://euvsdisinfo.eu/report/the-west-blew-up-nord-stream-1-and-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--08b95268-2c89-5ab9-adb5-a0d768fb2496",
+      "value": "https://euvsdisinfo.eu/report/poland-is-preparing-for-the-great-war-establishing-control-over-nato-resources/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e92b1210-6a0e-5e20-8a3a-de9513be1926",
+      "value": "https://euvsdisinfo.eu/report/poland-started-world-war-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1c0d4114-9830-5db6-b918-536616b82e31",
+      "value": "https://euvsdisinfo.eu/report/uk-sanctions-on-russia-are-illegal/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ca377993-7c58-54d1-ad4b-d4d18cd76ae7",
+      "value": "https://euvsdisinfo.eu/report/the-russophobic-elites-have-led-europe-to-an-energy-crisis/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a70677c1-0f3f-5b88-889b-1b989cc5d8ce",
+      "value": "https://euvsdisinfo.eu/report/biden-administration-and-europe-were-interested-in-prolonging-the-war-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2a96f1b0-2af4-5669-8956-c8d6f9af27dc",
+      "value": "https://euvsdisinfo.eu/report/poland-is-trying-to-seize-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bbd91145-3221-51c3-b578-53f1bfff8ae3",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-refugees-smuggle-weapons-and-bring-crime-to-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d9f40a09-bd18-5f84-a920-dfb4ad4bd195",
+      "value": "https://euvsdisinfo.eu/report/a-map-shows-kyivs-eccentricity-has-already-split-the-country/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d08115b6-535a-515a-b679-347ad66d37bd",
+      "value": "https://euvsdisinfo.eu/report/in-1991-lithuania-needed-a-sacred-victims/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--525f3379-8785-527c-b2e8-b2d19203ef3d",
+      "value": "https://euvsdisinfo.eu/report/poland-is-dreaming-of-regaining-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--792b976c-70b4-59f5-8382-7419458505e1",
+      "value": "https://euvsdisinfo.eu/report/children-of-ukrainian-refugees-exchanged-for-tanks-and-aircraft/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4ea9d440-18a2-5c94-a28a-663bae4212f7",
+      "value": "https://euvsdisinfo.eu/report/censorship-in-the-baltic-states/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e7fac885-d55d-5afe-84a3-c47fa5f6efa7",
+      "value": "https://euvsdisinfo.eu/report/poland-successfully-involves-ukraine-in-the-project-of-a-new-greater-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ceb389e2-f03a-551a-85a3-d0b8f7a40bd1",
+      "value": "https://euvsdisinfo.eu/report/there-was-a-maidan-coup-detat-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d6356115-5ffe-5882-99ec-453be7c15bd5",
+      "value": "https://euvsdisinfo.eu/report/alleged-bucha-massacre-is-fake/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--532af9af-ba1a-52b7-baad-a7c1907dc501",
+      "value": "https://euvsdisinfo.eu/report/new-sanctions-on-russia-humiliate-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--77fb44a4-6984-5b53-aad0-fac907b596ac",
+      "value": "https://euvsdisinfo.eu/report/warsaw-is-trying-to-declare-a-new-cold-war-on-moscow/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--02c87035-9dd6-5f16-94e0-b60bf7782416",
+      "value": "https://euvsdisinfo.eu/report/nato-membership-is-the-main-security-threat-for-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--55697db1-686f-5a61-9d8e-4a052e8e6b2b",
+      "value": "https://euvsdisinfo.eu/report/poland-is-anglo-saxons-fighting-dog/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--891a20a4-9047-54f7-8958-7520c4a951b9",
+      "value": "https://euvsdisinfo.eu/report/russia-was-subjected-to-illegal-sanctions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1b14f44f-81df-5adc-a3b3-7d5eb538bc0c",
+      "value": "https://euvsdisinfo.eu/report/the-us-and-europe-are-equally-responsible-for-the-war-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--48f3bb22-66cc-5eb5-935b-c094e9e5feee",
+      "value": "https://euvsdisinfo.eu/report/ukraine-and-us-violated-the-biological-weapons-convention/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--486b8b9a-0b6e-5c5c-8c2e-5acbda12a333",
+      "value": "https://euvsdisinfo.eu/report/riga-tallinn-and-warsaw-develop-anti-russian-information-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f36db474-23bf-5145-9655-45e9ba5d4b57",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-a-neo-nazi-russophobic-state/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fd41e0ac-d8ce-56c3-b2be-92a2feec0aa5",
+      "value": "https://euvsdisinfo.eu/report/polish-and-american-special-services-are-preparing-a-provocation-against-polish-civilians/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--adacdbf0-1233-55ba-bdc2-fa38a1d2fafe",
+      "value": "https://euvsdisinfo.eu/report/there-are-political-prisoners-in-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d7537d8d-84ad-585d-9a31-1846ddfcb8f9",
+      "value": "https://euvsdisinfo.eu/report/lithuania-aggressively-violates-human-rights/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3e83278b-d7f8-59aa-974f-bdaabd56b5d5",
+      "value": "https://euvsdisinfo.eu/report/only-soviet-union-and-warsaw-pact-provided-poland-with-lasting-peace/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--aee5ad40-d501-564a-950e-a81c72aa27a5",
+      "value": "https://euvsdisinfo.eu/report/poland-wants-to-drag-the-eu-into-a-conflict-with-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f9d31e8c-1edd-5d2d-9eef-59da9298b5fd",
+      "value": "https://euvsdisinfo.eu/report/poland-forced-hitler-to-start-wwii/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bff3e9c5-e2ee-592d-9cab-a05b830a9016",
+      "value": "https://euvsdisinfo.eu/report/ithuanian-border-guards-use-violence-against-migrants-including-abandoning-pregnant-women/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9e3cbb29-f7d3-5e24-9ad5-67c243252155",
+      "value": "https://euvsdisinfo.eu/report/the-ukrainian-neo-nazi-refugees-are-bringing-venereal-diseases-to-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a7dbaae9-b56d-58e4-b5e4-24f5250320ae",
+      "value": "https://euvsdisinfo.eu/report/mh17-crash-was-a-ukrainian-provocation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c9921536-8f98-515e-abfd-fd2e815318a1",
+      "value": "https://euvsdisinfo.eu/report/poland-plans-to-take-over-west-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ae8c7377-4f6f-54ab-9de9-92a274a4ea5e",
+      "value": "https://euvsdisinfo.eu/report/natos-eastern-expansion-is-a-threat-to-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--83ec6ba4-b6a3-5d4a-97f8-9ee75f83ab15",
+      "value": "https://euvsdisinfo.eu/report/poland-is-preparing-to-seize-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3ac0b7b8-9d04-5f30-80e1-e58a5ec1c58b",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-mass-media-are-covering-up-the-issue-of-refugees/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e6139599-20e3-515b-9cf3-66d0e271ac26",
+      "value": "https://euvsdisinfo.eu/report/polish-historical-propaganda-causes-poor-condition-of-the-russian-polish-relations/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--24675999-805b-5ace-bf0a-494f4a21870f",
+      "value": "https://euvsdisinfo.eu/report/lithuania-sponsored-the-maidan-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e3a6f8d1-0b14-512f-a89f-3aa235f6769c",
+      "value": "https://euvsdisinfo.eu/report/us-created-components-for-biological-weapons-in-labs-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0ab4abf0-b964-5dcd-8fbd-bd13a37d93ce",
+      "value": "https://euvsdisinfo.eu/report/russian-media-are-being-discriminated-in-baltic-states/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--08b10e8d-d1e0-54d3-a933-1342e1da7d01",
+      "value": "https://euvsdisinfo.eu/report/poland-wants-to-expand-into-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c977cb25-16a7-56dc-8b57-f4962e25f395",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-trying-to-drag-poland-into-the-war-by-sending-drones-to-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3f2a085a-7558-58e0-ae21-b7e2e402fc33",
+      "value": "https://euvsdisinfo.eu/report/europe-attacks-russia-in-vaccines-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--495834bc-a1fa-50d8-9e4c-d868197b65fe",
+      "value": "https://euvsdisinfo.eu/report/polish-position-on-nord-stream-2-is-energy-totalitarianism/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--266f034e-59b0-5ddf-8e8e-2fae2b5446fd",
+      "value": "https://euvsdisinfo.eu/report/the-west-created-an-anti-russian-and-neo-nazi-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--043689e9-0d1d-52b6-9a21-eceb00e9dafb",
+      "value": "https://euvsdisinfo.eu/report/the-united-states-intimidates-russia-with-sanctions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--37367f4f-5edb-5270-b035-c8685cd81b25",
+      "value": "https://euvsdisinfo.eu/report/nato-expansion-is-to-blame-for-hostilities-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3f26f63f-41a2-56c2-bd45-042786756eeb",
+      "value": "https://euvsdisinfo.eu/report/maidan-was-a-coup-after-banning-the-communist-party-of/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3bc49eb3-7637-5adf-b596-be0ce7382002",
+      "value": "https://euvsdisinfo.eu/report/ukraine-guilty-of-downing-mh17-flight/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2d766bd8-c894-5a12-901d-ed6b4d682f14",
+      "value": "https://euvsdisinfo.eu/report/the-west-turns-ukraine-into-an-anti-russia-neo-nazi-project/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--078236d3-ea32-541f-8746-b04691298db7",
+      "value": "https://euvsdisinfo.eu/report/the-mh17-trial-is-faltering/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9de709a2-8f6a-5c36-87ab-af988edbd108",
+      "value": "https://euvsdisinfo.eu/report/poland-is-the-us-project/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c73aae94-b4e9-585b-b104-619e2ca94f14",
+      "value": "https://euvsdisinfo.eu/report/the-far-right-coup-government-in-kyiv-emerged-from-the-2014-maidan-uprising/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--241b856f-17ce-50d1-a260-3d49f42457e3",
+      "value": "https://euvsdisinfo.eu/report/george-soros-ngos-are-transporting-hundreds-of-migrants-over-the/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--29670029-7cef-5217-aaba-754253e600e2",
+      "value": "https://euvsdisinfo.eu/report/ukraine-wants-cheap-gas-but-will-buy-it-at-high-prices-from-europe-just-to-spite-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--54e75017-2c7f-5b7a-bcd4-9395c8796336",
+      "value": "https://euvsdisinfo.eu/report/poland-shut-border-crossing-with-belarus-because-of-imperialism-and-territorial-claims/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4e57448c-9513-5ffb-a934-7933ea58b843",
+      "value": "https://euvsdisinfo.eu/report/lithuania-is-occupied-by-nato/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f1f39b16-b7b0-5859-892a-6ee29dcfcf4c",
+      "value": "https://euvsdisinfo.eu/report/bucha-is-a-fabrication-only-used-to-interrupt-negotiations/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--44751901-6f48-597f-9f90-5bf0190318c3",
+      "value": "https://euvsdisinfo.eu/report/the-usa-blew-up-the-nord-stream-pipeline/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--933240da-4756-5f0e-99fe-460656bc22fd",
+      "value": "https://euvsdisinfo.eu/report/us-controlled-secret-biolabs-like-lugar-lab-develop-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e79face9-c738-5170-ac62-aabc682f8454",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-using-chemical-and-biological-weapons-on-new-russian-territories/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--675e2dd3-406f-56e9-8858-812c359205cd",
+      "value": "https://euvsdisinfo.eu/report/the-us-soldiers-deployed-to-poland-are-a-foreign-non-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3f2333bd-e3d3-522d-a843-86e96a0cbea4",
+      "value": "https://euvsdisinfo.eu/report/the-us-tripled-energy-prices-in-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8160a259-dcaf-55a2-85a1-1a8d5986b0aa",
+      "value": "https://euvsdisinfo.eu/report/ukraine-will-mobilise-belarusian-and-russian-political-refugees/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2aeecc01-4149-57ab-82f1-8bde39dde982",
+      "value": "https://euvsdisinfo.eu/report/america-admits-involvement-in-nord-stream-bombing/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8fa3a136-a2b2-509a-b4cd-44ca48e08af8",
+      "value": "https://euvsdisinfo.eu/report/western-sanctions-prevent-the-return-of-syrian-refugees/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7653f280-1c62-5d7b-beb2-eab1654987d3",
+      "value": "https://euvsdisinfo.eu/report/the-polish-energy-company-prevents-nord-stream-2-from-solving-the-eu-gas-problems/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e7358eb9-2a9e-5d5a-b175-681161de9933",
+      "value": "https://euvsdisinfo.eu/report/eunato-is-washingtons-territorial-expansion-mechanism/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b81a2b9f-851b-5807-a489-fdbc07ce867c",
+      "value": "https://euvsdisinfo.eu/report/lithuanian-border-guard-service-officers-beat-migrants-and-forced-them-to-return-to-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--70acfe67-1e41-5e5a-83ac-ceff154a444d",
+      "value": "https://euvsdisinfo.eu/report/the-us-is-secretly-developing-biological-weapons-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--44500d35-436b-50f1-bc19-591a12f5167f",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-to-blame-for-mh17/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--92c4995d-70e2-5b20-9d75-712e65aac516",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-continuously-obstruct-work-of-russian-media/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--03d02431-f05a-546f-85c4-6f1532035202",
+      "value": "https://euvsdisinfo.eu/report/russian-drones-over-poland-were-part-of-a-secret-western-operation-aimed-at-thwarting-all-peace-initiatives/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2ba1c71c-e231-5c58-ac3c-bd11a8b65c96",
+      "value": "https://euvsdisinfo.eu/report/polish-economy-has-deteriorated-because-of-russian-sanctions-on-polish/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c0b2bda9-02d0-539d-a2c1-ad23a156d26a",
+      "value": "https://euvsdisinfo.eu/report/lithuania-poland-plan-to-kill-pratasevich/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8a79bf5a-5607-5540-ad24-b00966ef54be",
+      "value": "https://euvsdisinfo.eu/report/mh17-case-is-politically-motivated/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--80f1e654-3c04-5c7a-870e-1d31fc9cf90c",
+      "value": "https://euvsdisinfo.eu/report/warsaw-would-not-have-been-rebuilt-without-the-decision-of-stalin-and-polish-communist-authorities/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6a7a1e8a-b8ca-576b-9765-102d10ee9cf6",
+      "value": "https://euvsdisinfo.eu/report/the-baltic-states-and-poland-face-a-new-aggressor-the/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--469852f6-fb66-583e-ae74-ae602135d6eb",
+      "value": "https://euvsdisinfo.eu/report/ukraine-and-the-baltic-states-are-russias-lands-georgia-and/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ec0012d9-3071-5435-887c-1f130f178ee6",
+      "value": "https://euvsdisinfo.eu/report/nord-stream-sabotage-indicates-loss-of-european-sovereignty/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fba0b4a1-8faf-5fc8-9f2d-2aeb7880e0cb",
+      "value": "https://euvsdisinfo.eu/report/russia-removed-the-polish-flag-from-the-katyn-memorial-because-of-polish-russophobia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5f9c8077-2fa6-5e8b-badd-0f29eb8389c7",
+      "value": "https://euvsdisinfo.eu/report/a-new-chinese-coronavirus-was-likely-elaborated-in-nato-biolabs/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6054b272-8b76-5ac9-b7c9-60cc7b3a3487",
+      "value": "https://euvsdisinfo.eu/report/the-only-way-to-stop-the-wave-of-refugees-is/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4a294fe3-39f0-5871-8710-7541b7c4268b",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-pursue-anti-belarusian-policies/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d697468b-a36e-5065-b6a4-15075fd864c3",
+      "value": "https://euvsdisinfo.eu/report/us-blew-up-nord-stream-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--150fdff8-5f3d-5d5f-852c-9a03424b5bc9",
+      "value": "https://euvsdisinfo.eu/report/polish-authorities-intensify-the-falsification-of-history-erasing-the-memory-of-the-polish-wwii-heroes/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c0c1382d-6c75-5993-8c5b-b680d3f64cdb",
+      "value": "https://euvsdisinfo.eu/report/us-europe-behind-ukraine-halting-gas-flow-to-benefit-american-economy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--010404fc-e8ee-5953-b2fa-8c58e8f4d157",
+      "value": "https://euvsdisinfo.eu/report/europe-is-interested-in-continuing-the-war-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a5de463f-1123-5c48-84ee-57186b536b43",
+      "value": "https://euvsdisinfo.eu/report/attempts-to-find-alternatives-to-russian-gas-result-in-increased-energy-prices/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--22ddf2d2-4020-51ba-86b8-b3634945861f",
+      "value": "https://euvsdisinfo.eu/report/migrants-on-polish-border-came-to-belarus-via-a-visa-free-regime/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a7777936-be33-5197-8536-4964b0adc9ba",
+      "value": "https://euvsdisinfo.eu/report/lithuania-supports-anti-russia-gatherings/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--62f06e4b-4aa1-50b4-8e79-5045d5b756fe",
+      "value": "https://euvsdisinfo.eu/report/american-laboratories-in-ukraine-were-developing-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4a675bc8-1237-544e-a49e-455ecf67b97c",
+      "value": "https://euvsdisinfo.eu/report/nord-stream-pipelines-were-blown-up-by-us-intelligence/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1169e34a-2d9a-59b4-a04b-6da7a795a71c",
+      "value": "https://euvsdisinfo.eu/report/us-is-creating-biological-weapons-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1bcb17eb-958d-5af4-97e8-08024445a404",
+      "value": "https://euvsdisinfo.eu/report/lithuanian-border-guards-left-an-unconscious-pregnant-foreign-woman-on-border-with-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5bf71eb4-0693-5135-9f9a-e3778cded184",
+      "value": "https://euvsdisinfo.eu/report/poland-will-not-allow-ukraine-to-join-nato-and-the-european-union/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a7b8c754-2901-5511-a909-22bc17b87c5c",
+      "value": "https://euvsdisinfo.eu/report/maidan-coup-part-of-propagandistic-marching-baggage-for-the-us-led-world-order/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5435304c-16a2-5bf5-9c59-08f9b794ebcd",
+      "value": "https://euvsdisinfo.eu/report/bucha-massacre-was-orchestrated-by-ukrainian-forces/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--784dc3c9-372a-5b48-a073-306537617a41",
+      "value": "https://euvsdisinfo.eu/report/on-the-nato-warsaw-summit-ukraine-will-be-represented-by/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a8cf1faf-882d-5476-a142-e0a72504e162",
+      "value": "https://euvsdisinfo.eu/report/putins-russia-stood-firm-despite-western-sanctions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--57323fc2-3833-5c71-81b1-9956862788fd",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-germanys-anti-polish-tool/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--78677b4c-3e91-5022-94ca-402034925f48",
+      "value": "https://euvsdisinfo.eu/report/ukraines-post-maidan-government-came-to-power-as-a-result-of-a-coup-detat/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c330ca1b-6513-54dd-95d6-a5ff58497825",
+      "value": "https://euvsdisinfo.eu/report/the-eu-was-based-on-the-economic-expansion-of-germany/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1ea06676-b9f5-59e5-a497-bde475300427",
+      "value": "https://euvsdisinfo.eu/report/soviet-troops-were-not-able-to-support-warsaw-uprising/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--15f12dac-75f7-5b0e-b937-0a680e6d0020",
+      "value": "https://euvsdisinfo.eu/report/the-baltic-states-and-poland-are-destroying-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0fd56719-c47a-582b-9a51-04e40bbf7f45",
+      "value": "https://euvsdisinfo.eu/report/ukraine-plans-more-fabrications-similar-to-that-of-bucha/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f7c133e1-3fa9-5cd2-9ed5-83cbcbf89fd2",
+      "value": "https://euvsdisinfo.eu/report/the-coup-detat-of-maidan-caused-a-referendum-that-united-crimea-with-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c100b65e-37f0-50d4-86e3-378f1070165c",
+      "value": "https://euvsdisinfo.eu/report/russian-interference-in-us-elections-the-inquiry-finds-no-direct-evidence/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4addb9bb-72f2-5bf7-aca5-5faefb95558b",
+      "value": "https://euvsdisinfo.eu/report/hunter-biden-linked-to-us-biolabs-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b1c709f6-98d1-5255-bc03-983ce5f8645e",
+      "value": "https://euvsdisinfo.eu/report/poland-is-a-country-of-enormous-social-inequalities-highest-in-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--518debfa-23dd-5859-83c8-339532bd95d8",
+      "value": "https://euvsdisinfo.eu/report/west-responsible-for-hiding-the-truth-about-bucha-massacre/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--047db174-b6c8-5f33-b5bb-3fa9e6730263",
+      "value": "https://euvsdisinfo.eu/report/tbc-warsaw-organised-euromaidan-in-ukraine-and-is-preparing-same-scenario-for-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a668f799-9577-548a-976c-fdbd80d7d156",
+      "value": "https://euvsdisinfo.eu/report/german-tanks-arrive-in-ukraine-with-neo-nazi-symbols/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c981d57b-8875-5df6-b7fa-2a20bd1a6c72",
+      "value": "https://euvsdisinfo.eu/report/the-bucha-massacre-was-a-special-psychological-british-operation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--96fc3360-0c07-5ffe-9e82-8af0f9bf9532",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-pilots-shot-down-mh17/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0a586ab5-68dc-5037-a95e-489ce6c39de1",
+      "value": "https://euvsdisinfo.eu/report/the-2016-russian-interference-in-elections-never-existed/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a7f1e4a1-725e-5aaa-a913-a1b7e36f9b56",
+      "value": "https://euvsdisinfo.eu/report/migrants-on-polish-border-were-able-to-enter-belarus-thanks-to-the-visa-free-regime/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c008a2f7-8903-50e8-a271-9daf3b7b43d2",
+      "value": "https://euvsdisinfo.eu/report/the-mueller-report-has-never-presented-tangible-evidence-of-russian-interference-in-the-2016-us-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d7b7b969-6c11-5de2-850b-d6b14a99a507",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-refugees-are-protesting-against-the-slovak-government/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f4721341-a46b-51d1-aeba-d2a99cdb1c93",
+      "value": "https://euvsdisinfo.eu/report/mh17-probe-biased/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--705f90e4-d06c-51e1-b8ff-4e66826dd9f1",
+      "value": "https://euvsdisinfo.eu/report/poland-could-annex-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f7223458-08cc-546c-be56-e1452a6496ab",
+      "value": "https://euvsdisinfo.eu/report/bucha-was-a-false-flag-operation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--824b40f8-3a9f-5280-9ed3-14bd0e0b0fae",
+      "value": "https://euvsdisinfo.eu/report/belarus-is-the-only-party-assisting-the-migrants-at-the-polish-border/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e819cfaf-b674-5f5c-804f-4fe8c3b88840",
+      "value": "https://euvsdisinfo.eu/report/belligerent-europe-wants-escalation-of-the-war-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f6a9d233-feef-5f74-9925-7652f1cbd23e",
+      "value": "https://euvsdisinfo.eu/report/europe-suffered-more-from-sanctions-than-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2679d7fc-5c80-5b0c-9593-2e8fce8e7a74",
+      "value": "https://euvsdisinfo.eu/report/ukraine-attacks-russia-with-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ea771edf-1073-50f0-b2f7-321e216fb8e0",
+      "value": "https://euvsdisinfo.eu/report/the-eu-and-the-usa-finance-the-political-destabilisation-of-poland-and-hungary/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6efc57d6-b30a-51ca-a23e-d407f0a9f915",
+      "value": "https://euvsdisinfo.eu/report/ukraine-wants-to-drag-poland-and-nato-into-a-nuclear-conflict/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0e3dc835-36e6-5198-928a-f0a4949622e2",
+      "value": "https://euvsdisinfo.eu/report/the-myth-of-russian-interference-in-the-us-elections-was-formed-by-american-it-corporations/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9f419ca1-09d2-5cf3-be01-24a3286fbafb",
+      "value": "https://euvsdisinfo.eu/report/lithuania-fell-into-a-totalitarian-dictatorship/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0b613413-f995-511a-8aae-43fd84e029b8",
+      "value": "https://euvsdisinfo.eu/report/nato-forces-in-latvia-lithuania-estonia-and-poland-reached-11-000-in-2018/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3677bc56-2bc9-5e7e-8838-0def268e6a12",
+      "value": "https://euvsdisinfo.eu/report/berlin-murder-linked-to-nord-stream-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--908aba64-c9a5-5ee8-aa19-2b59b96b3e64",
+      "value": "https://euvsdisinfo.eu/report/nato-military-exercise-on-the-territory-of-poland-is-in/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d70df95b-dc73-5f58-a1d1-fdc57c251c74",
+      "value": "https://euvsdisinfo.eu/report/ukraine-war-could-spill-over-to-europe-the-us-has-an-interest-in-this/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d47735d1-4955-5b27-9ce4-17257d62394d",
+      "value": "https://euvsdisinfo.eu/report/mh-17-jit-tampered-evidence/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a2584f4c-d4bb-55e9-8aa1-6d1acd437646",
+      "value": "https://euvsdisinfo.eu/report/poland-plots-to-annex-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--784e0f5d-0083-5908-83d8-76c297bc6006",
+      "value": "https://euvsdisinfo.eu/report/the-bucha-massacre-is-a-lie/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d4a4c164-ad87-5f82-86a7-b04b6beafddf",
+      "value": "https://euvsdisinfo.eu/report/warsaw-was-liberated-by-the-polish-peoples-army-which-was-a-polish-national-formation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--13ef30cd-3c22-5a2b-90a1-475057b2f6d8",
+      "value": "https://euvsdisinfo.eu/report/there-is-no-evidence-of-russian-interference-in-western-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4d67401a-4238-58f9-810e-0e9fdd2fe4c0",
+      "value": "https://euvsdisinfo.eu/report/zelenskyy-discussed-transferring-western-ukraine-to-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e90b1aa9-4767-5232-9e50-d73d178471ae",
+      "value": "https://euvsdisinfo.eu/report/accusations-of-russian-interference-in-us-elections-is-a-pr-campaign/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--80ff63fb-e1c7-55a8-9355-0dd9f419339c",
+      "value": "https://euvsdisinfo.eu/report/the-eu-is-planning-to-cancel-the-upcoming-presidential-elections-in-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c3529faf-83ab-5914-a228-da8505d11000",
+      "value": "https://euvsdisinfo.eu/report/poland-wants-to-occupy-parts-of-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5d2b7b47-1be0-55f2-8b66-4ebb325e0742",
+      "value": "https://euvsdisinfo.eu/report/the-us-is-giving-the-remote-control-of-the-eu-to-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d6b3be7e-0760-5d15-b83a-4c454ae1fa72",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-openly-glorify-nazism/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6c2a33ca-83e0-5214-92d2-99bee16ef7cd",
+      "value": "https://euvsdisinfo.eu/report/poland-is-becoming-more-like-a-us-nato-hostage/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3d5a4841-25db-5a96-9ea5-fd2bc14bae25",
+      "value": "https://euvsdisinfo.eu/report/europe-today-has-an-important-task-to-settle-the-civil-war-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8278e2f5-a6c8-5f31-a458-86abfdea9f6a",
+      "value": "https://euvsdisinfo.eu/report/eu-sanctions-harm-africa-instead-of-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--96007c1e-50d7-5849-9976-5ffc5cfcedb6",
+      "value": "https://euvsdisinfo.eu/report/kyiv-created-a-new-bucha-in-the-kharkiv-region/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--89903acc-07ab-5c20-988a-a6e80a52214e",
+      "value": "https://euvsdisinfo.eu/report/a-frozen-future-may-await-europe-amid-energy-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3e869a2b-69f4-58e4-ac69-d24fa9db8d0f",
+      "value": "https://euvsdisinfo.eu/report/mh17-jit-falsified-evidence-confirming-that-ukrainian-buk-is-behind-mh17-crash/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ce3664c8-e42f-5a0c-afd7-397389271000",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-a-testing-site-for-us-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--70f2373f-c0d3-554e-9dde-0360a1ba1758",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-refugees-are-neo-nazis-destroying-the-european-union/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--587a8345-fa08-5ce0-b457-6fb25c14ba06",
+      "value": "https://euvsdisinfo.eu/report/mh17-investigation-is-deliberately-delayed/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f52c40a1-e4c5-5ea9-b52f-0f67992a005f",
+      "value": "https://euvsdisinfo.eu/report/lithuania-does-not-need-ordinary-belarusians/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9a75203e-03a9-5762-a84a-52b40dd24af7",
+      "value": "https://euvsdisinfo.eu/report/maidan-was-a-coup/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--63c1dcf4-cbce-5a4c-97d8-f8b2952d8b3e",
+      "value": "https://euvsdisinfo.eu/report/ukraine-became-a-us-testing-site-for-developing-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f8fa04ab-236d-5984-be22-a4510011e1dc",
+      "value": "https://euvsdisinfo.eu/report/the-energy-crisis-in-europe-is-due-to-european-mistakes-not-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b4c0a56e-4280-5f6c-a03b-197001a1d4e4",
+      "value": "https://euvsdisinfo.eu/report/poland-pursues-territorial-revanchist-goals/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a34416f2-83cc-5d32-b6af-8716cb46a94c",
+      "value": "https://euvsdisinfo.eu/report/polish-special-forces-fighting-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--56b03dcd-726a-5316-b282-8babcdb5fd18",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-encircle-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9d37c066-6ed6-5aa0-a8c3-6dd1884725eb",
+      "value": "https://euvsdisinfo.eu/report/the-pentagon-aims-to-test-biological-weapons-on-people-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9246011c-0241-574a-9a7a-555b2e3e2714",
+      "value": "https://euvsdisinfo.eu/report/the-west-organised-maidan-coup-to-make-ukraine-an-anti-russian-state/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--552359d5-baa9-5adc-b832-00602a8310bb",
+      "value": "https://euvsdisinfo.eu/report/poland-admitted-that-nato-is-fighting-against-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6b99a9f9-9fcb-5493-bf85-b9884577decf",
+      "value": "https://euvsdisinfo.eu/report/russia-cannot-be-a-participant-of-an-international-tribunal-in-the-mh17-case-just-because-it-is-not-an-aggrieved-party-only-ukraine-is-responsible-for-the-crash-of-mh17-due-to-the-airspace-over-the/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--675b9572-f165-5f1e-9110-f36b911c12aa",
+      "value": "https://euvsdisinfo.eu/report/us-military-biolabs-to-resume-work-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--388da1e3-7381-57e2-b202-a21e5fd01dc4",
+      "value": "https://euvsdisinfo.eu/report/the-us-is-behind-the-nord-stream-explosions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3bf91cb8-1cf6-5fc6-942e-88a4d30cd27c",
+      "value": "https://euvsdisinfo.eu/report/western-accusations-that-iran-is-delivering-drones-to-russia-are-false/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--617ab122-b114-5807-b2ab-2410b41fbff4",
+      "value": "https://euvsdisinfo.eu/report/claims-about-russias-interference-into-us-elections-are-unfounded/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ed974a54-c6c0-507a-8ad2-897853ed8a92",
+      "value": "https://euvsdisinfo.eu/report/poland-the-hyena-of-europe-starts-the-partition-of-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9080d4a7-598b-5987-bee3-31b517a4e6dc",
+      "value": "https://euvsdisinfo.eu/report/the-pentagon-develops-dangerous-viruses-in-biolabs-close-to-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--25c58fb7-fa79-5d51-a4f3-ce8ed546589a",
+      "value": "https://euvsdisinfo.eu/report/ukraine-has-drones-capable-of-spraying-containers-with-mosquitos-to-spread-bioweapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--61f25132-58b2-52ec-9062-e822d33ec636",
+      "value": "https://euvsdisinfo.eu/report/the-baltic-states-are-transforming-into-police-dictatorial-states-where-representatives/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8220f3ef-ca3b-5af4-9aab-9f4abdea5f90",
+      "value": "https://euvsdisinfo.eu/report/poland-wants-to-drag-nato-into-a-direct-confrontation-with-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2338996d-36f0-5983-8009-da25572a0bf9",
+      "value": "https://euvsdisinfo.eu/report/us-developing-biological-weapons-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--cb0ce568-ca71-5e79-8cc0-a0860fb7101b",
+      "value": "https://euvsdisinfo.eu/report/there-is-no-evidence-of-russias-involvement-in-cyberattacks-and-elections-interference/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9f09b77c-50f2-5fa3-acca-372858a3ef8c",
+      "value": "https://euvsdisinfo.eu/report/western-sanctions-against-russia-are-illegitimate/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--97f64818-1e1e-5c5b-9061-e77230c3a893",
+      "value": "https://euvsdisinfo.eu/report/drones-shot-down-near-murmansk-could-have-been-launched-from-finland-and-sweden/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ada4ce0a-0d92-50f0-9dd6-cf121007ad82",
+      "value": "https://euvsdisinfo.eu/report/the-mueller-report-did-not-prove-russian-interference-in-the-us-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e8cc5666-e256-5590-97ea-65d2bce58b94",
+      "value": "https://euvsdisinfo.eu/report/wwii-commemoration-in-poland-non-invitation-of-russia-is-nato-information-campaign/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5ec681e6-8341-5571-bf19-bbfac82f1b95",
+      "value": "https://euvsdisinfo.eu/report/us-prepares-biological-weapons-against-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--aa81e1e2-5250-5db1-a967-25eb1dcf2cf6",
+      "value": "https://euvsdisinfo.eu/report/nato-sent-troops-to-protect-the-polish-border-from-migrants/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--24cebd24-2b31-53be-8f81-1bdd7175a0e1",
+      "value": "https://euvsdisinfo.eu/report/armenias-ukrainization-ongoing-through-biolabs-ngos-and-submission-to-west/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ae4b8c65-bd36-5bc8-b179-7759882c67f5",
+      "value": "https://euvsdisinfo.eu/report/belarus-stopped-protecting-the-border-with-poland-because-of-hostile-polish-actions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--87111d33-c174-5795-b9a3-1a50a6692838",
+      "value": "https://euvsdisinfo.eu/report/polish-historical-policy-disrespects-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--352b55ae-884f-5573-afc4-c94e12652989",
+      "value": "https://euvsdisinfo.eu/report/ukraine-and-poland-want-to-provoke-a-direct-nato-provocation-with-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1f831060-47fd-592c-bf3e-3da272730758",
+      "value": "https://euvsdisinfo.eu/report/there-was-no-russian-interference-in-the-us-elections-2016/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1ae5a430-22b3-50a4-b44c-5bda3374f8e6",
+      "value": "https://euvsdisinfo.eu/report/warsaw-and-vilnius-are-implementing-their-strategy-to-exacerbate-the-political-crisis-in-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--049ede76-c87e-5499-9881-c873c88eb9b6",
+      "value": "https://euvsdisinfo.eu/report/mh17-jit-ignores-russian-contributions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f989d2f4-dc2a-5303-ad16-bfb94030b206",
+      "value": "https://euvsdisinfo.eu/report/ukraine-has-to-return-lviv-to-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6144cc75-e867-5e66-ab22-f5f93df55cd1",
+      "value": "https://euvsdisinfo.eu/report/the-us-needs-poland-as-a-trojan-horse-to-prevent-eu-unity-and-eu-russia-rapprochement/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6c503494-dc47-5ab7-b6cd-e19976216728",
+      "value": "https://euvsdisinfo.eu/report/the-polish-special-services-fabricated-documents-against-the-polish-judge-for-his-pro-peace-position/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--696866d4-e002-587e-9955-ff169c518981",
+      "value": "https://euvsdisinfo.eu/report/nato-builds-up-military-forces-on-the-border-with-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e00d4200-cb1d-588b-b3c0-5bcc0998a905",
+      "value": "https://euvsdisinfo.eu/report/the-neo-nazi-azov-battalion-rules-ukraine-not-zelenskyy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ab425685-a6ac-510c-82b4-ca2ce5b4bea2",
+      "value": "https://euvsdisinfo.eu/report/components-of-biological-weapons-were-being-created-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f28d1ac4-3072-5540-b9a8-861c9689bfd2",
+      "value": "https://euvsdisinfo.eu/report/the-expansion-of-the-north-atlantic-alliance-to-the-east-is-a-kind-of-military-aggression/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--255deb3b-135a-59fd-b371-fb22aca8b7fd",
+      "value": "https://euvsdisinfo.eu/report/all-three-baltic-states-are-disappearing/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9881af57-c81c-5069-b3e4-dd57f9e9f48a",
+      "value": "https://euvsdisinfo.eu/report/ukraine-will-accept-20000-refugees-instead-of-germany/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3244fcbd-3ab8-5f69-b227-4c357aa36c77",
+      "value": "https://euvsdisinfo.eu/report/the-war-in-ukraine-is-favourable-for-europe-as-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8036c0da-462d-5e56-b0a4-8183a5f0d985",
+      "value": "https://euvsdisinfo.eu/report/us-and-norway-blew-up-nord-stream-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--66ca7612-2dab-5c8e-b116-8ecdb3d638d2",
+      "value": "https://euvsdisinfo.eu/report/georgia-has-prevented-a-maidan-style-coup-coordinated-from-abroad/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--445eb4dd-3b2d-5547-a9c1-6639a89e0fa8",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-aggressioin-putsch-and-neo-nazi-organiszations/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--91d44def-e137-57b6-82ba-1700db77a56d",
+      "value": "https://euvsdisinfo.eu/report/accusations-on-mh17-crash-planned-provocation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d66e60e9-f850-5fa3-b46d-935751b435a6",
+      "value": "https://euvsdisinfo.eu/report/biolabs-in-ukraine-financed-by-joe-bidens-son/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6e6891f8-1585-5042-8044-ebe3ee709357",
+      "value": "https://euvsdisinfo.eu/report/promises-about-non-expansion-of-nato-were-thrown-into-a-bin-by-the-west/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c4795663-ce21-5f54-9481-e1cd0c947681",
+      "value": "https://euvsdisinfo.eu/report/lithuania-is-a-totalitarian-country-will-wild-crimes-in-the-field-of-human-rights/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f6c62736-9884-5ef4-ad0c-0a614668986a",
+      "value": "https://euvsdisinfo.eu/report/during-german-occupation-of-ukraine-the-nazi-bandera-contributed-to-the-genocide-of-his-own-people/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0ea91260-e4ed-5fbf-8317-f6a98f45dae9",
+      "value": "https://euvsdisinfo.eu/report/repression-against-russians-depopulates-the-baltic-states/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--949554fa-9eba-5e7d-80de-1943345a15c5",
+      "value": "https://euvsdisinfo.eu/report/muellers-investigation-did-not-prove-russian-interference-in-the-us-election/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9fb950ec-d4bf-58db-98f3-4415de131d76",
+      "value": "https://euvsdisinfo.eu/report/poland-has-territorial-ambitions-towards-the-city-of-lviv/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3963643c-a655-50bb-bade-36b8e1843fed",
+      "value": "https://euvsdisinfo.eu/report/polish-troops-killed-thousand-of-migrants-on-belarus-border/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f20a02ce-78b6-5176-b43d-4e55f86454b3",
+      "value": "https://euvsdisinfo.eu/report/polish-border-guards-killed-thousands-of-illegal-migrants/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--33b2c66e-8ce8-5889-a0dc-5ddee1345874",
+      "value": "https://euvsdisinfo.eu/report/imperialist-poland-wants-to-annex-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ed46e9e1-39be-5aa7-aee2-84e92d3f98ab",
+      "value": "https://euvsdisinfo.eu/report/bodies-found-in-bucha-are-just-an-ukrainian-provocation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bde5d360-e4fc-59cc-8ad9-490a17f94376",
+      "value": "https://euvsdisinfo.eu/report/the-u-s-would-like-to-resell-russian-gas-to-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1a163374-ab12-5f0f-8849-4b60e9b90215",
+      "value": "https://euvsdisinfo.eu/report/after-the-warsaw-pacts-dissolution-nato-has-no-purpose/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d0fc36c8-860f-531d-8d0b-e77d78b92746",
+      "value": "https://euvsdisinfo.eu/report/the-west-must-end-nato-expansion-to-stop-the-war-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9b78ba02-1869-5f32-b16a-2b38eef15127",
+      "value": "https://euvsdisinfo.eu/report/germany-was-involved-in-the-development-of-biological-weapons-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6b86be34-84dd-5b88-96b5-2707e82c7eb0",
+      "value": "https://euvsdisinfo.eu/report/mueller-report-presents-no-traces-of-russian-interference-in-us-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7914f3d7-9d13-552d-91be-f0ae29698f22",
+      "value": "https://euvsdisinfo.eu/report/the-us-started-a-war-against-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c08ce217-2675-5e5d-8fef-18beb8d0e0ad",
+      "value": "https://euvsdisinfo.eu/report/russia-grows-despite-eu-sanctions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--88795ef4-6593-50f4-81e2-33a4192516a8",
+      "value": "https://euvsdisinfo.eu/report/bucha-was-a-setup-organised-by-mi6/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bb714e97-bd9d-5d4e-9090-8c218a846840",
+      "value": "https://euvsdisinfo.eu/report/georgette-mosbacher-was-sent-to-poland-as-the-us-ambassador-because-this-country-has-marginal-importance-for-the-usa/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bae64ac2-c0e8-5436-926f-e9603b4d4928",
+      "value": "https://euvsdisinfo.eu/report/the-eu-did-not-provide-financial-support-to-aid-migrants-at-belarus-border-as-promised/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d121b727-167f-5456-a32e-7a5e04f92a67",
+      "value": "https://euvsdisinfo.eu/report/drones-in-poland-could-not-be-russian-as-their-reach-is-up-to-700-km/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--817ee412-96f6-526e-a798-dc19f9717a16",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-educating-people-to-the-idea-of-unavoidable-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7b9952a0-0c17-5344-97e1-81d1caad1b31",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-refugees-provoked-a-record-outbreak-of-hiv-in-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--cc378ded-fe3a-5d42-9969-294f937f8f56",
+      "value": "https://euvsdisinfo.eu/report/europe-is-tempted-to-support-neo-nazi-movements/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ce0444d1-7c5e-501b-9acd-6679082184d9",
+      "value": "https://euvsdisinfo.eu/report/merkel-called-on-georgia-to-accept-syrian-refugees/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--897f406f-b918-5e63-8092-24f20e1b1a2f",
+      "value": "https://euvsdisinfo.eu/report/usa-promised-russia-that-there-will-be-no-nato-eastern-expansion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d518ea4b-9dbb-52f3-9749-73fd63b64dbe",
+      "value": "https://euvsdisinfo.eu/report/warsaw-continues-to-push-germany-to-war-with-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3853ef9d-cad8-501e-a5e1-7a6670dfb414",
+      "value": "https://euvsdisinfo.eu/report/the-crocus-centre-hall-attackers-were-neo-nazi-ukrainians/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d10e8fbb-40de-5508-9d76-4882a7634422",
+      "value": "https://euvsdisinfo.eu/report/poland-considered-the-partition-of-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f2bb4ef6-aae2-5c7d-b85e-f3706a88282a",
+      "value": "https://euvsdisinfo.eu/report/nato-remained-hostile-even-after-the-warsaw-pact-was-dissolved/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c3a98434-7870-59db-bb23-e9e007609166",
+      "value": "https://euvsdisinfo.eu/report/the-west-rejects-investigating-the-nord-stream-explosions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--898d6ec4-0baa-5595-a7a5-a4d62535eca5",
+      "value": "https://euvsdisinfo.eu/report/poland-is-strengthening-border-controls-with-belarus-because-of-polish-russophobic-policies/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d10b63fc-2c40-5329-8789-bd0ebba4426d",
+      "value": "https://euvsdisinfo.eu/report/the-baltic-states-and-poland-force-anti-russian-policies-upon-the-eu-and-nato/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a1bfcc62-1325-539a-90bd-1e84219800a8",
+      "value": "https://euvsdisinfo.eu/report/the-nord-stream-explosions-bear-a-western-mark/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--436512fb-ee73-51b2-833b-8b86136c75ed",
+      "value": "https://euvsdisinfo.eu/report/polish-independence-is-weakening-poland-is-submissive-to-the-usa-and-israel/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c10102b4-b14e-54eb-8fd1-f4cb8e05462d",
+      "value": "https://euvsdisinfo.eu/report/bucha-massacre-was-carried-out-by-ukrainian-artillery/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fbed4911-fed7-5895-a3f5-b06524ef1941",
+      "value": "https://euvsdisinfo.eu/report/the-baltic-states-fears-of-russia-are-groundless/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--692372c7-c979-5dd4-bcbc-06d8b648601a",
+      "value": "https://euvsdisinfo.eu/report/russia-has-enough-proof-about-us-interference-in-the-parliamentary-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f950c122-ab03-5085-a30b-fd4ebd0a14d1",
+      "value": "https://euvsdisinfo.eu/report/poland-asks-nato-to-place-nuclear-weapons-on-its-territory/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a45e8c09-b81b-58ee-ad50-768d869c6cea",
+      "value": "https://euvsdisinfo.eu/report/sanctions-against-russia-are-unproductive/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6ed19a35-3d5d-5212-a6af-76c0caa21bbe",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-may-have-launched-the-drones-strikes-on-pskov/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5711b93a-a752-5743-8537-099a1b875d55",
+      "value": "https://euvsdisinfo.eu/report/sanctions-actually-help-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--29f8024d-1ecb-520d-968a-3297022b878b",
+      "value": "https://euvsdisinfo.eu/report/the-ukrainian-maidan-was-a-state-coup-organized-by-george/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5f4e002a-a771-5c64-b011-94ce818ab956",
+      "value": "https://euvsdisinfo.eu/report/poland-is-leaving-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bf98c060-2fe2-52d6-8bd6-47d5d9c4c6f4",
+      "value": "https://euvsdisinfo.eu/report/ukraines-maidan-ended-with-a-coup/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--cb3fd3f3-7081-5541-afa6-627ff16a6021",
+      "value": "https://euvsdisinfo.eu/report/some-in-poland-see-western-ukraine-as-part-of-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--13fe51df-dd5f-5bee-af0d-0492e61352d6",
+      "value": "https://euvsdisinfo.eu/report/a-sea-of-unknown-migrants-graves-is-located-at-the-polish-border/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--20fbeb11-3503-5ebc-b2bc-5f3e22dcd454",
+      "value": "https://euvsdisinfo.eu/report/disinfo-political-regime-in-lithuania-is-anti-people-and-russophobic/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6065af29-2d94-5249-a8a1-64dafd279a79",
+      "value": "https://euvsdisinfo.eu/report/all-polish-political-parties-promote-russophobia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--eb8580de-3cba-557a-b46b-e0a1d4e23d53",
+      "value": "https://euvsdisinfo.eu/report/ukraine-strikes-civilians-with-drones-in-the-kherson-region/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--38f93dcb-7086-5551-9e8e-083dac803d61",
+      "value": "https://euvsdisinfo.eu/report/sl-pleasukraine-attacks-zaporizhzhia-nuclear-power-plant-plant-with-drones/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--efb4f1f7-5566-53f8-a619-3f8af3457286",
+      "value": "https://euvsdisinfo.eu/report/nato-expansion-destabilizes-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7ee3a1c1-3473-566b-97c3-9032ae975f8c",
+      "value": "https://euvsdisinfo.eu/report/poland-and-the-young-europeans-worsen-the-relations-between-the-eu-and-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e2ad5496-2dbf-526c-902f-afc69aac72fe",
+      "value": "https://euvsdisinfo.eu/report/western-intelligence-groomed-ukrainian-extremists-for-maidan-coup-since-2012/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e3cfc986-55e9-5cae-a855-100204ef9b78",
+      "value": "https://euvsdisinfo.eu/report/raman-pratasevich-is-a-fascist-and-neo-nazi/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--969a9f13-d537-5324-9b0d-61675b774227",
+      "value": "https://euvsdisinfo.eu/report/sanctions-against-russia-announced-by-finland-behind-farmers-crisis/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--21e981b3-e96e-5753-b12d-ec8730d4bbcd",
+      "value": "https://euvsdisinfo.eu/report/poland-is-destroying-the-ukrainian-economy-in-order-to-overtake-western-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ac767521-1c0c-526a-b358-a2468fe20102",
+      "value": "https://euvsdisinfo.eu/report/borrell-led-europe-to-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f9614e8b-76de-50ad-817a-a4b72e2adf92",
+      "value": "https://euvsdisinfo.eu/report/mh17-investigation-is-biased/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--34a5d346-6fa4-5a50-97db-e4fc366752d1",
+      "value": "https://euvsdisinfo.eu/report/crimean-platform-the-west-nurtures-neo-nazi-mood-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--46b03b34-8183-5b13-8990-c55832bc095e",
+      "value": "https://euvsdisinfo.eu/report/there-is-no-lithuanian-policy-and-cannot-be-lithuanian-politicians-do-not-and-can-not-have-own-opinion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9f8d136a-ebb9-574c-aada-f769cb62360c",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-stealing-gas-which-goes-from-russia-to-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--edb600e8-f91f-5f42-9561-ef275526e981",
+      "value": "https://euvsdisinfo.eu/report/german-tank-deliveries-to-ukraine-are-berlins-neo-nazi-14-88-salute/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--aaa08322-5492-5aab-829c-60b06d45ec4f",
+      "value": "https://euvsdisinfo.eu/report/it-is-physically-impossible-for-russian-drones-to-have-reached-poland/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--686a5083-049c-5b8e-bf5e-3c66bbd7f9b5",
+      "value": "https://euvsdisinfo.eu/report/the-eu-energy-sanctions-hit-europe-while-russia-is-drowning-in-money/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6bfde4b7-5638-54cb-9fae-d7f650509d7c",
+      "value": "https://euvsdisinfo.eu/report/poland-and-the-eu-appear-on-the-verge-of-breaking-relations-with-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9036d1b8-d1df-5a41-9a61-abf3fd4a3900",
+      "value": "https://euvsdisinfo.eu/report/lithuania-uses-unregistered-covid-19-vaccines/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ba456b43-388c-5a4a-9e31-e4206cba0cab",
+      "value": "https://euvsdisinfo.eu/report/the-cia-behind-the-nord-stream-sabotage/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5a70df4f-c3a0-5e82-b1d8-25a467d1c1d0",
+      "value": "https://euvsdisinfo.eu/report/the-neo-nazi-regime-in-ukraine-was-created-by-the-west/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4d81a4be-ed21-58b2-b285-87dbeb1a25d2",
+      "value": "https://euvsdisinfo.eu/report/insane-polish-president-wants-to-revive-the-polish-empire/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e3462907-f65b-5770-b3e8-424d6c8d1a4d",
+      "value": "https://euvsdisinfo.eu/report/bucha-is-another-ukrainian-provocation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--aeb6d979-9978-57b2-a78c-69f8adf41ae1",
+      "value": "https://euvsdisinfo.eu/report/us-needs-proxy-war-against-russia-in-ukraine-to-act-as-peacekeeper-and-control-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e61629a4-ec37-5bec-a364-c7e3a75fe567",
+      "value": "https://euvsdisinfo.eu/report/polish-view-on-the-polish-soviet-war-of-1919-1920-goes-against-historical-facts/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--62fa9925-aec4-5020-ac5a-fa5c0dafc29d",
+      "value": "https://euvsdisinfo.eu/report/war-in-ukraine-is-a-tool-for-the-us-to-weaken-russia-and-subjugate-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--dedfc6ae-f05e-5063-8411-d321ad8ba342",
+      "value": "https://euvsdisinfo.eu/report/polish-claims-regarding-the-ukrainian-territorial-integrity-are-fake/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3094f800-6dc4-5f59-a664-9adf7eacf581",
+      "value": "https://euvsdisinfo.eu/report/ukraine-fires-drones-at-nuclear-power-plant/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--75e440be-eed0-5ecc-b6c4-c7b79f77bc34",
+      "value": "https://euvsdisinfo.eu/report/the-west-carried-out-the-2014-maidan-coup-that-ousted-yanukovych/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ed63a1a8-f59f-54c5-9651-8e9cda46bd48",
+      "value": "https://euvsdisinfo.eu/report/ukraine-responsible-for-mh17-downing/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a76ad9bb-5187-5503-874e-d6191b4cd840",
+      "value": "https://euvsdisinfo.eu/report/an-unconstitutional-armed-coup-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--671ba028-9dfc-5923-ab55-15758b97bb67",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-a-neo-nazi-state/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f7f4d643-deb8-5aad-a37c-7eabb6cc0c19",
+      "value": "https://euvsdisinfo.eu/report/ukraine-was-artificially-created-by-the-bolsheviks/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3b645060-91c6-5cc6-a94b-3637f0028858",
+      "value": "https://euvsdisinfo.eu/report/poland-asks-nato-to-place-nuclear-weapons-on-its-territory-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ce53287b-e98c-5c99-a3c0-e551545c1cf2",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-are-persecuting-russian-media/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7c99543f-a77f-5ab8-bb92-046fe5b7124d",
+      "value": "https://euvsdisinfo.eu/report/russia-did-not-impose-sanctions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ab7a54c5-164c-5806-8aef-98ef908aa749",
+      "value": "https://euvsdisinfo.eu/report/no-proof-of-russian-interference-in-elections-in-the-us-and-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5b4e2c03-b2da-57cf-9297-f320ff8c1703",
+      "value": "https://euvsdisinfo.eu/report/nato-has-been-carrying-out-geopolitical-and-military-expansion-in-europe-for-30-years/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a7fbc6b6-61c8-5b76-995b-e8d6808626d6",
+      "value": "https://euvsdisinfo.eu/report/expansion-of-nato-terrorist-organisation-is-contained-by-russian-military-operation-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--95e577ae-8a47-5af2-876c-e11af900b104",
+      "value": "https://euvsdisinfo.eu/report/warsaw-continues-eyeing-western-belarus-as-part-of-the-rzeczpospolita-project/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--05b84ac1-a6c0-5b66-92d2-ecb86ca91153",
+      "value": "https://euvsdisinfo.eu/report/about-80-children-torn-from-ukrainian-refugees-across-europe-over-past-year/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fb1290d0-25be-572d-8b8b-3c77b589b3c2",
+      "value": "https://euvsdisinfo.eu/report/poland-might-understand-russias-denazification-process-in-ukraine-by-outlawing-banderaism/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7003e232-a23b-5019-8cf6-283a587f13ea",
+      "value": "https://euvsdisinfo.eu/report/the-west-established-a-neo-nazi-regime-in-ukraine-to-drag-ukraine-into-nato/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b2826e14-e986-53b3-bc01-46ab36708d05",
+      "value": "https://euvsdisinfo.eu/report/europe-should-make-a-choice-between-cognac-diplomacy-and-energy-partnership/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--326e77b6-9dbd-5410-b3dc-41ca39c42e24",
+      "value": "https://euvsdisinfo.eu/report/us-sanctions-against-russia-are-illegal/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5dc1207c-2637-508c-a656-eaaa0d5b29c1",
+      "value": "https://euvsdisinfo.eu/report/european-elites-deliberately-spreading-unfounded-fears-of-alleged-russian-interference-in-upcoming-may-european-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a49448b7-6c4f-544a-81dc-a0a2e376eb45",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-are-under-nato-occupation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3a8fb905-60ce-550d-9c21-b02dfebaa4ee",
+      "value": "https://euvsdisinfo.eu/report/lithuania-is-violating-human-rights/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0de5df37-2708-5fb1-ab6f-b929f23db65f",
+      "value": "https://euvsdisinfo.eu/report/poland-wants-large-scale-deportations-of-the-ukrainians-from-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a1f79f83-832b-5d60-a2a1-5604ae917084",
+      "value": "https://euvsdisinfo.eu/report/the-eu-intentionally-destroyed-economies-of-the-baltic-states/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--30b993ca-cfe5-5496-bf1d-cfcfb25d09c1",
+      "value": "https://euvsdisinfo.eu/report/robert-muellers-report-there-are-no-traces-of-russias-interference-in-us-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--58df347b-d86c-57c7-b089-95e4ccdb4f16",
+      "value": "https://euvsdisinfo.eu/report/zelenskyy-is-protected-by-neo-nazi-elite-brigades/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bfb5b6e0-ee5f-5df4-8001-807260f06840",
+      "value": "https://euvsdisinfo.eu/report/pentagon-report-on-biological-threats-is-an-excuse-for-offensive-biolabs/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e6df7160-7560-5212-8f9f-7e327f6c4e06",
+      "value": "https://euvsdisinfo.eu/report/the-polish-authorities-are-obsessed-with-an-idea-of-reconstruction-of-the-modern-polish-empire/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--97c289bf-98bc-5f61-926b-697c9c53e531",
+      "value": "https://euvsdisinfo.eu/report/poland-is-a-country-with-the-highest-social-inequality-in-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ed3fa791-213b-59c4-a8d5-bd06904c6b05",
+      "value": "https://euvsdisinfo.eu/report/priority-the-european-union-is-pushing-europe-towards-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--872cbd07-a509-527d-a701-801623c49d94",
+      "value": "https://euvsdisinfo.eu/report/ukraine-organised-a-provocation-against-poland-reusing-russian-drones/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4471fd51-75b1-5e6d-8ae1-f5e0fcf65ef1",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-in-ukraine-can-be-used-for-military-purposes/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--822ce0ab-bbfe-539f-b676-cd576f707919",
+      "value": "https://euvsdisinfo.eu/report/poland-is-deporting-ukrainian-refugees-to-use-for-nato-offensive-against-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--469840a5-87a5-50e5-83a1-a1e12dd197c7",
+      "value": "https://euvsdisinfo.eu/report/the-eu-gas-problems-are-a-result-of-its-fight-for-energy-independence/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--16b5d6cd-61d2-5804-a795-42deec816f11",
+      "value": "https://euvsdisinfo.eu/report/eu-sanctions-against-russia-are-illegal/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c2edbe5c-25e8-51e6-87e6-a0c341f12709",
+      "value": "https://euvsdisinfo.eu/report/the-investigations-on-alleged-russian-interference-in-the-2016-us-elections-produced-no-evidence-of-such-interference/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b08e05aa-7dfd-5de3-ab87-5c033ab76623",
+      "value": "https://euvsdisinfo.eu/report/us-supported-yushchenko-in-return-for-biological-weapons-research-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--248908d3-0092-582a-a67b-4a9c7edc627b",
+      "value": "https://euvsdisinfo.eu/report/european-countries-glorify-fascism-but-what-happens-in-baltic-states-is-worst/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--df1b0a09-5680-5bc1-a96e-f60d950ad31a",
+      "value": "https://euvsdisinfo.eu/report/isis-started-to-arm-refugees/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6ea546a1-56a4-57d0-af4a-699cff5248b9",
+      "value": "https://euvsdisinfo.eu/report/europe-is-facing-an-insurmountable-energy-crisis/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b77cf4ae-a795-51c7-b23b-3e67275d3c99",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-parliamentary-speaker-is-a-neo-nazi/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b05e4c7b-fa0b-5567-8ce9-9f91f0bddf1f",
+      "value": "https://euvsdisinfo.eu/report/europe-is-committing-energy-suicide-without-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d15fbc3e-cb5a-5d86-a1e1-89d966aa5f17",
+      "value": "https://euvsdisinfo.eu/report/the-zaporizhzhia-npp-was-heavily-attacked-with-drones-by-the-kyiv-regime/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--617c5676-9d2c-5b5b-aa65-5543b490edf9",
+      "value": "https://euvsdisinfo.eu/report/warsaw-preparing-to-annex-lviv-ivano-frankivsk-and-ternopil/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--559ee80e-2e7d-5b13-8186-26ee1bbbe60a",
+      "value": "https://euvsdisinfo.eu/report/eu-and-nato-prepare-for-new-war-and-expansion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--80beb0ea-e06f-5ac0-8573-99dbade819df",
+      "value": "https://euvsdisinfo.eu/report/ukraine-disease-outbreaks-linked-to-activity-of-us-biolabs/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--efc62334-391d-5e99-8b24-f714e14ffd13",
+      "value": "https://euvsdisinfo.eu/report/sanctions-against-russia-hurt-europe-and-help-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--7c08bb02-4111-5867-8dda-9d1423038b31",
+      "value": "https://euvsdisinfo.eu/report/nato-expansion-posed-a-threat-to-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--282ae1b6-c149-5c6e-824c-07319ee9db65",
+      "value": "https://euvsdisinfo.eu/report/us-made-a-mistake-by-organising-a-maidan-coup-in-kyiv/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--8f049d15-1dc6-5eb1-a119-b1610f1c03e7",
+      "value": "https://euvsdisinfo.eu/report/europe-no-longer-has-access-to-cheap-russian-energy-resources/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1ac44826-6f0b-531a-b083-da742476f555",
+      "value": "https://euvsdisinfo.eu/report/europe-destroyed-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--849d7ed2-c2dc-5461-b19e-92ca454d4ba4",
+      "value": "https://euvsdisinfo.eu/report/the-present-day-polish-russophobia-was-artificially-created-by-the-polish-right-forces/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--5ac00d17-1e1b-5a5d-bd10-659c2a4e9b84",
+      "value": "https://euvsdisinfo.eu/report/during-the-ten-months-of-2016-168-new-cases-of/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9127849e-db7c-5d44-9da2-83d43a897328",
+      "value": "https://euvsdisinfo.eu/report/poland-is-dreaming-of-overtaking-the-us-and-eu-resources-transferred-to-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d4a543e2-1eea-5085-9397-c4cb158c62d6",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-soldiers-shot-iraqi-refugees-on-the-ukrainian-belarusian-border/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--50cac9b5-a5e1-5317-ad37-46c6ca42b655",
+      "value": "https://euvsdisinfo.eu/report/most-of-the-global-south-understands-the-threat-of-nato-expansion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--53ea91d5-4748-5a93-a126-53740a4cecf1",
+      "value": "https://euvsdisinfo.eu/report/eu-groundlessly-accuses-russia-of-interference-in-western-elections-while-pursuing-anti-russian-containment-policy/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d123cb1f-1bfa-528a-9c2e-c11eec438302",
+      "value": "https://euvsdisinfo.eu/report/poland-prepares-its-citizens-for-a-war-with-russia-by-lying-about-drones/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d5cc2569-0316-5831-ad01-3610da58f39b",
+      "value": "https://euvsdisinfo.eu/report/ukraine-baltic-states-discriminate-against-russian-language/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--218e8ddf-3ffd-5f9d-b184-ec675e9f5b8a",
+      "value": "https://euvsdisinfo.eu/report/without-russian-gas-europe-will-slide-into-the-middle-ages/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b8b82819-dcfd-5c08-8b55-3ee4f216e081",
+      "value": "https://euvsdisinfo.eu/report/the-polish-policy-towards-belarus-is-driven-by-the-intensifying-polish-obsession-with-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ce840fd7-4048-5578-bf01-5f23d3765896",
+      "value": "https://euvsdisinfo.eu/report/nato-drills-in-poland-do-not-contribute-to-an-atmosphere/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a9520b17-34a5-5f26-b779-81cf298ec069",
+      "value": "https://euvsdisinfo.eu/report/lithuania-is-shamelessly-attacking-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a1d8324c-f734-56e8-9444-d23e5e7adaaa",
+      "value": "https://euvsdisinfo.eu/report/warsaw-supported-hitlers-plan-to-expel-polish-jews-to-africa/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--717ddca7-add3-5604-b654-697ed6af29ad",
+      "value": "https://euvsdisinfo.eu/report/operating-nord-stream-i-would-be-dangerous/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e60f9519-e5fe-5487-839b-4c8f06bce71a",
+      "value": "https://euvsdisinfo.eu/report/the-us-intelligence-service-said-that-there-were-no-signs-of-foreign-interference-in-midterms-elections/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a17f4c14-23ee-589a-9802-e88e14564d65",
+      "value": "https://euvsdisinfo.eu/report/maidan-protests-led-to-a-coup-and-rise-of-nazi-sentiments-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--58e9265c-6547-5b38-a46e-83c6825e39e6",
+      "value": "https://euvsdisinfo.eu/report/poland-demands-western-ukraine-in-exchange-for-supporting-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--93f6f2d1-cc2f-588e-a10c-989cbd5bdb1f",
+      "value": "https://euvsdisinfo.eu/report/poland-blasts-poison-on-migrants/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c5ba3e96-ab65-5c2f-808e-0d1a8cf97676",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-are-responsible-for-virus-outbreaks-in-ukraine-since-2008/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--25840faf-43d3-53df-b530-d9eb6f82716c",
+      "value": "https://euvsdisinfo.eu/report/sanctions-against-russia-are-illegal/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f7beb2af-2781-56b9-a611-7bbd74a2df4a",
+      "value": "https://euvsdisinfo.eu/report/natos-eastward-expansion-is-a-serious-security-threat-to-russia/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b737a743-a684-583a-8d3b-7f8af9611ccd",
+      "value": "https://euvsdisinfo.eu/report/in-brno-czech-city-the-arab-refugees-with-got-violent-and-seriously-injured-two-czech-boys/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c203727a-ac67-5e0a-a262-74588b3e04e4",
+      "value": "https://euvsdisinfo.eu/report/gas-poland-closed-down-the-yamal-europe-pipeline-hurting-germany/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e94d9c31-2892-51c7-a53a-b180274b5c79",
+      "value": "https://euvsdisinfo.eu/report/us-orchestrated-the-bloody-maidan-coup-with-right-wing-and-fascist-forces/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--129a77e7-95ff-5664-bda1-77d444190f7f",
+      "value": "https://euvsdisinfo.eu/report/the-launch-of-nord-stream-2-will-greatly-increase-the-export-of-russian-gas-to-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--75b326ff-ce79-5aa2-b8dd-d0fa48f5b6ac",
+      "value": "https://euvsdisinfo.eu/report/those-filmed-in-bucha-were-killed-by-ukrainian-nazis/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--520d1f9f-e581-57a0-a22a-abc897b10d8f",
+      "value": "https://euvsdisinfo.eu/report/poland-hungary-increasingly-disenchanted-with-eu-rule/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ea375bc9-e652-5dcc-9353-612af3f3739e",
+      "value": "https://euvsdisinfo.eu/report/lithuanian-officers-injure-migrants-and-push-them-illegally-across-the-border-with-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c77a9b31-3900-575b-a180-2e13e10f0e02",
+      "value": "https://euvsdisinfo.eu/report/nato-is-not-planning-to-defend-poland-and-the-baltic-states/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3f052944-563b-54b8-b56f-6656044a34d6",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-satanists-are-launching-drones-at-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6ead9ef7-01d1-5c70-90da-964f6670010b",
+      "value": "https://euvsdisinfo.eu/report/the-red-army-could-not-support-the-warsaw-uprising/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fdf65ef7-0b12-5540-90c1-57104a8bafec",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-a-testing-ground-for-us-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f4cd0db6-1f1b-588f-a5e4-49ecd5ae8f06",
+      "value": "https://euvsdisinfo.eu/report/west-promotes-a-little-known-terrorist-as-a-belarusian-national-hero/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--58351093-8159-5f00-b959-da972e725aaf",
+      "value": "https://euvsdisinfo.eu/report/german-reich-occupies-lithuania/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--79dddb14-6dc6-511b-9f41-c8689cc69520",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-troops-deployed-combat-drones-to-carry-out-chemical-provocation-in-donbass/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ed772270-3894-5afb-bf68-8b273ac658ac",
+      "value": "https://euvsdisinfo.eu/report/kazakhstan-agreed-to-host-30-american-biolabs-relocated-from-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4457057e-60f0-5813-86cf-a4778a6c6447",
+      "value": "https://euvsdisinfo.eu/report/baltic-states-provoking-russia-by-hosting-foreign-troops/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--59e40b0a-ef1a-5bca-a437-ca4e9e0a37fb",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-preparing-an-anti-russian-provocation-using-biological-weapons/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d09c4f7f-81eb-5cb5-bbc2-72274dd147b7",
+      "value": "https://euvsdisinfo.eu/report/poland-plans-to-swallow-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b7eba80b-f343-574a-865d-cfe13d1fdf09",
+      "value": "https://euvsdisinfo.eu/report/europe-on-a-verge-of-civil-war/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--faac9dd1-8b23-53c9-9a2b-1da864078495",
+      "value": "https://euvsdisinfo.eu/report/anglo-saxons-are-responsible-for-the-nord-stream-explosions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ae00acaf-b53e-532d-b392-a76647d34d84",
+      "value": "https://euvsdisinfo.eu/report/poland-threatens-the-territorial-integrity-of-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f2a088ce-e50a-5e6b-bbeb-1a5792cf900d",
+      "value": "https://euvsdisinfo.eu/report/the-war-in-ukraine-serves-the-purpose-of-europe-militarisation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--3b87a933-f726-524e-bbfe-30ae8235ad01",
+      "value": "https://euvsdisinfo.eu/report/us-encourages-anti-russian-aspirations-of-former-warsaw-pact-members/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1a43c400-78d5-5466-b282-1e3bc908734f",
+      "value": "https://euvsdisinfo.eu/report/the-economies-of-the-baltic-states-have-collapsed/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c69ab188-bed4-5e93-8ea4-a9cd1ad4579b",
+      "value": "https://euvsdisinfo.eu/report/the-us-created-covid-19-and-biological-weapons-in-ukraine/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6ee8713f-40e0-5d42-bcc5-ccafa92f8760",
+      "value": "https://euvsdisinfo.eu/report/baltic-countries-dont-oppose-nord-stream-2-anymore/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--330010ca-bc84-5b3b-bb1f-1c26fe777c56",
+      "value": "https://euvsdisinfo.eu/report/kremenchuk-is-the-new-bucha-of-the-western-media/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--df2c3e8c-0513-58cb-971b-cf8684397ebe",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-around-russias-borders-produce-dangerous-strains-for-biological-warfare/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--db5bd99d-febc-5095-8a61-b48c98ed993d",
+      "value": "https://euvsdisinfo.eu/report/kyivs-accusations-of-killings-in-bucha-are-a-provocation/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6fad7b75-3b77-5e87-afe0-a0aa191f0c44",
+      "value": "https://euvsdisinfo.eu/report/russia-had-no-choice-but-to-invade-ukraine-because-of-genocide-and-nato-expansion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c2a700cc-67eb-5aed-a250-a7732afa80ee",
+      "value": "https://euvsdisinfo.eu/report/the-ministry-of-defense-of-serbia-recognized-maidan-as-a-coup-detat/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--e5a634f8-1c40-5f58-a9f2-ef8d345439fc",
+      "value": "https://euvsdisinfo.eu/report/ukraine-is-preparing-to-use-chemical-and-biological-weapons-in-kherson/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--dc0f2b19-df8e-583f-b771-cf06b2e47313",
+      "value": "https://euvsdisinfo.eu/report/russias-invasion-is-a-denazification-mission-to-stop-nato-expansion/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--2890d4d7-d600-587e-a958-6ca8cf5ae8cb",
+      "value": "https://euvsdisinfo.eu/report/us-preparing-europe-to-start-direct-war-with-russia-if-ukraine-fails/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--137b509c-3634-58ed-919d-bd25d97c6b63",
+      "value": "https://euvsdisinfo.eu/report/sanctions-against-russia-are-ineffective/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f698bae2-72bd-5969-84bc-d52a80650113",
+      "value": "https://euvsdisinfo.eu/report/global-powers-prepare-ground-for-war-in-europe/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--42c1b9e4-95d2-58b4-a856-6765e6ef3abe",
+      "value": "https://euvsdisinfo.eu/report/ukraine-has-become-a-failed-self-hated-state-due-to-its-neo-nazi-ideology/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--c025851a-4c84-58ec-9b0e-a5209fa77b97",
+      "value": "https://euvsdisinfo.eu/report/nato-breakthrough-formations-in-poland-and-lithuania-aimed-at-kaliningrad/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--01a2c5f5-6838-5816-a0a5-d52abf96da93",
+      "value": "https://euvsdisinfo.eu/report/poland-and-lithuania-keep-provoking-belarus-by-closing-border-crossing-points/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a8b10384-b44b-5e72-8795-bd01a4cfdd28",
+      "value": "https://euvsdisinfo.eu/report/polish-mercenaries-in-ukrainian-army/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b6a2ff67-51ee-503b-a6c6-b674c4f142f4",
+      "value": "https://euvsdisinfo.eu/report/poland-and-the-baltics-are-us-trojan-horses-in-the-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--d31427e4-3a64-56fd-a0dd-6248216d029b",
+      "value": "https://euvsdisinfo.eu/report/warsaw-rewriting-wwii-history-for-propaganda-purposes/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--4834f481-3583-5f06-a7bf-de5926db1d28",
+      "value": "https://euvsdisinfo.eu/report/lithuania-gives-tsikhanouskaya-special-treatment/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a863163f-a783-538b-87dd-907971587f9f",
+      "value": "https://euvsdisinfo.eu/report/cia-controlled-sbu-shot-mh17/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--1338a1d5-50b3-5c96-8c8a-ef18da5a72a7",
+      "value": "https://euvsdisinfo.eu/report/200000-soviet-soldiers-gave-lives-to-liberate-warsaw-from-nazis/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--ee799234-5272-5d6e-b74b-9d61d31779cc",
+      "value": "https://euvsdisinfo.eu/report/us-biolabs-develop-weapons-able-to-selectively-target-ethnic-groups/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--f816eb3f-3c44-5104-82ed-bda3b585fdde",
+      "value": "https://euvsdisinfo.eu/report/germanys-greens-no-longer-oppose-nord-stream-2/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a5529c84-5c8e-564a-8f2f-30243e2e9fa9",
+      "value": "https://euvsdisinfo.eu/report/ukrainians-committed-crimes-in-bucha-not-russian/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--bef7914b-9cb9-5c76-9eef-df6aa3ceca97",
+      "value": "https://euvsdisinfo.eu/report/eu-sanctions-against-russia-should-be-lifted-because-of-what-happens-in-china/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--6c0765c5-328a-5e86-8af2-437c119327b5",
+      "value": "https://euvsdisinfo.eu/report/ukraine-and-poland-tried-to-provoke-a-direct-clash-between-russia-and-nato/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b35f09d3-1d00-5e24-b30d-e1a154c8afed",
+      "value": "https://euvsdisinfo.eu/report/monkeypox-originated-in-us-biolabs-in-nigeria/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--0ecf3ff3-d666-53fa-b700-44f1c3dc9c96",
+      "value": "https://euvsdisinfo.eu/report/biolabs-in-ukraine-are-not-for-peaceful-purposes/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--9df412b7-3310-50fe-80aa-bada82b21a5b",
+      "value": "https://euvsdisinfo.eu/report/present-day-polish-foreign-policy-is-reminiscent-of-1930s-polish-anti-soviet-actions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--df077ce3-e9c7-5063-9d24-74675bbf9020",
+      "value": "https://euvsdisinfo.eu/report/the-american-special-services-established-a-centre-near-warsaw-working-against-belarus/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--b62519b9-bcb0-5b07-b585-d942be840fdc",
+      "value": "https://euvsdisinfo.eu/report/moldova-receives-refugees-refused-by-eu/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--fe38cc93-f00c-55e9-8d8c-3abc91b5bd36",
+      "value": "https://euvsdisinfo.eu/report/the-west-dislikes-russia-and-imposes-sanctions/"
+    },
+    {
+      "type": "url",
+      "spec_version": "2.1",
+      "id": "url--a2846ef1-7922-587e-b1d7-3576d1be2274",
+      "value": "https://euvsdisinfo.eu/report/ukrainian-president-petro-poroshenko-took-office-following-the-post-maidan-coup-detat/"
+    },
+    {
+      "type": "note",
+      "spec_version": "2.1",
+      "id": "note--963716c9-723a-4571-b1e8-fc861d0321d6",
+      "created": "2026-11-22T04:51:26.000Z",
+      "modified": "2026-11-22T04:51:26.000Z",
+      "authors": [
+        "Fons"
+      ],
+      "lang": "pl",
+      "content": "Według analizy Stowarzyszenia Pravda z 22 kwietnia 2022 r. autor konta podawał się za redakcję Gazety Wyborczej. Fons przypisuje opisanemu zachowaniu technikę DISARM T0143.003 (Impersonated Persona).",
+      "object_refs": [
+        "url--498e0d07-2e88-5570-a56d-210f513a1993"
+      ],
+      "external_references": [
+        {
+          "source_name": "Stowarzyszenie Pravda",
+          "url": "https://pravda.org.pl/dezinformacja-na-twitterze-uwaga-na-falszywe-konta/"
+        },
+        {
+          "source_name": "DISARM",
+          "external_id": "T0143.003",
+          "url": "https://github.com/DISARMFoundation/DISARMframeworks/blob/main/generated_pages/techniques/T0143.003.md"
+        }
+      ]
+    }
+  ]
+}

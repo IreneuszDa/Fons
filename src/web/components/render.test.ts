@@ -12,6 +12,7 @@ import { announcementFor, replyView, VERDICT_LABEL_PL, WARNING_TITLE_PL } from "
 import ChatConversation, { type PendingPhase } from "../../app/ai-chat/page";
 import ChatLanding from "../../app/ai-chat-landing/page";
 import { AnswerCard } from "./AnswerCard";
+import { ConflictingSources } from "./Evidence";
 import { ImageFindings } from "./ImageFindings";
 import { ReplyContent } from "./ReplyContent";
 import { SiteFooter } from "./SiteFooter";
@@ -64,10 +65,22 @@ describe("VerdictCard", () => {
   });
 
   it("shows conflicting sources side by side", () => {
-    const out = fullVerdict(FIXTURE_REPLIES.brak!.report!);
+    const report = FIXTURE_REPLIES.brak!.report!;
+    const out = fullVerdict(report);
     expect(out).toContain("Źródła są sprzeczne");
     expect(out).toContain("Według tych źródeł — prawda");
     expect(out).toContain("Według tych źródeł — nieprawda");
+    const verdict = report.verdicts[0]!;
+    const panel = renderToStaticMarkup(createElement(ConflictingSources, { verdict }));
+    const columns = panel.split("Według tych źródeł — nieprawda");
+    expect(columns).toHaveLength(2);
+    for (const [index, id] of [verdict.conflicting!.supporting[0], verdict.conflicting!.refuting[0]].entries()) {
+      const evidence = verdict.evidence.find(e => e.recordId === id)!;
+      expect(columns[index]).toContain(evidence.publisher);
+      expect(columns[index]).toContain(evidence.quote);
+      expect(columns[index]).toContain(`href="${evidence.url}"`);
+      expect(columns[1 - index]).not.toContain(evidence.quote);
+    }
   });
 
   it("never puts a non-http(s) URL into an href", () => {
@@ -99,16 +112,18 @@ describe("text checks in chat", () => {
     }];
 
     const out = html(reply);
-    expect(out).toContain(report.summaryPl);
+    expect(out).toContain("Tak.");
     expect(out.split(`href="${first.url}"`)).toHaveLength(2);
     expect(out).toContain(first.title);
-    expect(out.indexOf(first.url)).toBeLessThan(out.indexOf(second.url));
+    expect(out).not.toContain(`href="${second.url}"`);
+    expect(fullVerdict(report)).toContain(second.url);
     expect(out).not.toContain("javascript:");
     expect(out).toContain("Sprawa #23");
     expect(out).toContain(report.warnings[0]!.textPl);
     expect(out).toContain('href="https://example.org/analiza"');
     expect(out).toContain(`href="/w/${report.token}"`);
-    for (const detail of ["Wynik sprawdzenia", "Siła dowodów", "<blockquote", "Jak sprawdziłem"]) {
+    expect(out).toContain("Siła dowodów");
+    for (const detail of ["Wynik sprawdzenia", "<blockquote", "Jak sprawdziłem"]) {
       expect(out).not.toContain(detail);
     }
   });

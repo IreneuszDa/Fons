@@ -25,6 +25,7 @@ export interface WebInboundParts {
   text?: string;
   action?: string;
   image?: { mime: string; base64: string };
+  comparisonImage?: { mime: string; base64: string };
   document?: ChatDocument;
   recording?: ChatRecording;
   imageOptions?: ImageOptions;
@@ -33,10 +34,11 @@ export interface WebInboundParts {
 /** Buduje InboundMessage dla kanału WWW; obraz trafia do tymczasowego magazynu mediów (usuwany po przetworzeniu). */
 export function buildWebInbound(ctx: ServerContext, p: WebInboundParts): InboundMessage {
   const images: InboundMessage["images"] = [];
-  if (p.image) {
+  for (const image of [p.image, p.comparisonImage]) {
+    if (!image) continue;
     const dataRef = `media_${randomBytes(8).toString("hex")}`;
-    ctx.media.set(dataRef, { mime: p.image.mime, base64: p.image.base64 });
-    images.push({ mime: p.image.mime, dataRef });
+    ctx.media.set(dataRef, image);
+    images.push({ mime: image.mime, dataRef });
   }
   const document = p.document ? { dataRef: `media_${randomBytes(8).toString("hex")}` } : undefined;
   if (document && p.document) ctx.media.set(document.dataRef, p.document);
@@ -44,6 +46,7 @@ export function buildWebInbound(ctx: ServerContext, p: WebInboundParts): Inbound
   if (recording && p.recording) ctx.media.set(recording.dataRef, p.recording);
   return {
     channel: "web",
+    ...(p.comparisonImage && { compareImages: true }),
     ...(document ? { document } : {}),
     ...(recording ? { recording } : {}),
     ...(p.image && p.imageOptions ? { imageOptions: p.imageOptions } : {}),

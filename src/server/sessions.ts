@@ -70,6 +70,7 @@ export async function inTurnOrder<T>(ctx: ServerContext, senderId: string, run: 
 }
 
 export interface EraseResult {
+  archives: number;
   reports: number;
   runs: number;
   cache: number;
@@ -89,6 +90,8 @@ export function eraseSender(ctx: ServerContext, senderId: string, sessionId?: st
   const params = sessionId ? [senderId, sessionId] : [senderId];
   const sessionIds = db.prepare(`SELECT id FROM sessions WHERE ${sessionsScope}`).all(...params) as { id: string }[];
   const tx = db.transaction((): EraseResult => {
+    // Archives belong to the browser owner, independently of any individual chat.
+    const archives = sessionId ? 0 : db.prepare("DELETE FROM material_archives WHERE sender_id = ?").run(senderId).changes;
     // Keep anonymous delivery receipts so a bridge retry cannot recreate a deleted conversation.
     db.prepare(`UPDATE chatloom_replies SET reply = '', emoji = NULL, sender_id = NULL, session_id = NULL WHERE ${scope}`).run(...params);
     db.prepare(`UPDATE chatloom_reactions SET emoji = NULL, target_key = NULL, sender_id = NULL, session_id = NULL WHERE ${scope}`).run(...params);
@@ -112,7 +115,7 @@ export function eraseSender(ctx: ServerContext, senderId: string, sessionId?: st
       else db.prepare("UPDATE moderator_cases SET sender_count = ? WHERE id = ?").run(left, id);
     }
     const sessions = db.prepare(`DELETE FROM sessions WHERE ${sessionsScope}`).run(...params).changes;
-    return { reports, runs, cache, caseSenders, sessions };
+    return { reports, runs, cache, caseSenders, sessions, archives };
   });
   const result = tx();
   for (const { id } of sessionIds) ctx.conversationLinks.forget(id);

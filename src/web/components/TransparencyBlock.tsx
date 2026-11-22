@@ -10,7 +10,7 @@ import { countLabel, formatDate, formatDateTime, formatDuration, paragraphs } fr
 import { SOURCE_TYPE_PL } from "../lib/report";
 import { safeUrl } from "../lib/safeUrl";
 import { SourceTitle } from "./Evidence";
-import { GoogleFindings } from "./ImageFindings";
+import { GoogleFindings, LocalImageFindings } from "./ImageFindings";
 
 const PURPOSE_PL: Record<string, string> = {
   claims: "wydzielenie twierdzeń",
@@ -91,10 +91,11 @@ function CitedPassages({ report }: { report: VerdictReport }) {
 function ImageActivity({ analysis }: { analysis: NonNullable<VerdictReport["imageAnalysis"]> }) {
   return (
     <VStack gap={2}>
-      {analysis.images.map(({ provenance, search }, index) => (
+      {analysis.images.map(({ provenance, search, localSearch }, index) => (
         <VStack key={index} gap={1}>
           {analysis.images.length > 1 && <Text weight="semibold">Obraz {index + 1}</Text>}
           <Text as="p">{provenance.textPl}</Text>
+          {localSearch && analysis.focus !== "copies" && <LocalImageFindings search={localSearch} />}
           {search && (analysis.visual || !analysis.only
             ? <GoogleFindings search={search} expanded />
             : <Text as="p">{search.messagePl}</Text>)}

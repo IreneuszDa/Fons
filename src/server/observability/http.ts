@@ -104,6 +104,8 @@ export function observeVerification(ctx: ServerContext, v: VerificationLog): voi
     tokensIn: models.reduce((s, m) => s + m.inputTokens, 0),
     tokensOut: models.reduce((s, m) => s + m.outputTokens, 0),
     costUsd: Math.round((fresh ? r.costUsd : 0) * 1e6) / 1e6,
+    ...(fresh && r.costStatus === "partial" && { costStatus: r.costStatus, googleVisionRequests:
+      r.imageAnalysis?.images.reduce((n, image) => n + (image.search?.usage?.requests ?? 0), 0), googleVisionCostUsd: null }),
     latencyMs: Math.round(v.latencyMs),
     timingsMs: timings,
     unavailableBranches: unavailable,

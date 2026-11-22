@@ -48,6 +48,7 @@ export function localConversationKind(text: string): DialogueKind | undefined {
   if (MISSION.test(question)) return "mission";
   if (SOURCES.test(question)) return "sources";
   if (ABOUT.test(subject)) return "about";
+  if (/^jak (?:wyglada|wkleic|dodac) (?:przykladowy )?(?:link|adres url)$/.test(subject)) return "about";
   if (THANKS.test(subject)) return "thanks";
   if (CLARIFY.test(subject)) return "clarify";
   if (CONVERSATION.test(subject)) return "conversation";

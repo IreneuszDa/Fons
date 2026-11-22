@@ -1,0 +1,18 @@
+{
+  "readbackHttp": 200,
+  "sameId": true,
+  "auditMatches": true,
+  "checkedAt": "2026-11-22T05:20:37.283Z",
+  "pipeline": "engine-2026.11.22-27-evidence-time",
+  "input": "Wojsko Polskie oficjalnie walczy na froncie w Ukrainie.",
+  "http": 200,
+  "latencyMs": 16321,
+  "status": "OK",
+  "verdict": "BRAK_DOWODOW",
+  "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+  "evidence": [],
+  "persisted": true,
+  "method": "Świeża baza, POST /api/chat i GET /api/report/{token}, publiczna próba A22.",
+  "regressionCommand": "npx vitest run src/engine/core.test.ts -t 'ocenia czas czynności'",
+  "integrationCase": "publiczne A22 w npm run eval:acceptance"
+}

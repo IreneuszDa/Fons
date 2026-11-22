@@ -7,13 +7,13 @@ import { createInterface } from "node:readline/promises";
 import { cliAdapter, buildCliInbound } from "../src/server/channels/cli";
 import { loadConfig } from "../src/server/config";
 import { handleInbound } from "../src/server/conversation";
-import { buildProductionContext, openServerDatabase } from "../src/server/wiring";
+import { configuredProductionContext, openServerDatabase } from "../src/server/wiring";
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const cfg = loadConfig();
   const db = openServerDatabase(cfg);
-  const ctx = buildProductionContext(cfg, db);
+  const ctx = await configuredProductionContext(cfg, db);
   const senderId = ctx.security.pseudonymize("cli:local");
 
   const ask = async (text: string, action?: string) => {

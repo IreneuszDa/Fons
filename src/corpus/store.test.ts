@@ -29,6 +29,8 @@ function rec(id: string, over: Partial<CorpusRecord> = {}): CorpusRecord {
 }
 
 let dir: string;
+const catalogSource = { id: "test-src", hosts: ["example.org"], publisher: "Wydawca testowy", role: "tresc", type: "pierwotne",
+  level: 1, independenceGroup: "g1", licence: "test", fetchMethod: "dump", updateFrequency: "test", qualification: "test", homepage: "https://example.org/" };
 function writeCorpus(file: string, records: CorpusRecord[]): void {
   mkdirSync(resolve(dir, "corpus"), { recursive: true });
   writeFileSync(resolve(dir, "corpus", file), records.map((r) => JSON.stringify(r)).join("\n") + "\n");
@@ -40,6 +42,8 @@ function writeIncidents(file: string, incidents: IncidentRecord[]): void {
 
 beforeEach(() => {
   dir = mkdtempSync(resolve(tmpdir(), "prawdowid-corpus-"));
+  writeFileSync(resolve(dir, "sources.yaml"), JSON.stringify([catalogSource,
+    { ...catalogSource, id: "review", hosts: ["review.example"], role: "stala_rola", type: "factcheck", level: 2 }]));
 });
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
@@ -50,6 +54,7 @@ describe("ensureCorpusLoaded", () => {
     writeCorpus("a.jsonl", [
       rec("a:1", { title: "Sankcje UE wobec Rosji", text: "Unia Europejska przyjęła kolejny pakiet sankcji." }),
       rec("a:2", {
+        sourceId: "review", url: "https://review.example/article",
         role: "stala_rola",
         type: "factcheck",
         level: 2,
@@ -57,6 +62,7 @@ describe("ensureCorpusLoaded", () => {
         rating: { raw: "Fałsz", mapped: "FALSZYWE", binary: true },
         topics: ["nato"],
         period: "2025-03",
+        supersededAt: "2026-04-01",
         text: "Polska wychodzi z NATO",
       }),
     ]);
@@ -75,6 +81,7 @@ describe("ensureCorpusLoaded", () => {
     expect(fc.rating).toEqual({ raw: "Fałsz", mapped: "FALSZYWE", binary: true });
     expect(fc.claimReviewed).toBe("Polska wychodzi z NATO");
     expect(fc.period).toBe("2025-03");
+    expect(fc.supersededAt).toBe("2026-04-01");
     expect(fc.topics).toEqual(["nato"]);
     expect(store.get("a:1")!.rating).toBeUndefined();
     expect(store.get("brak")).toBeUndefined();
@@ -97,6 +104,37 @@ describe("ensureCorpusLoaded", () => {
     expect((db.prepare("SELECT value FROM corpus_meta WHERE key='corpus_loaded_at'").get() as { value: string }).value).toBe(loadedAt);
     expect((db.prepare("SELECT COUNT(*) AS n FROM record_embeddings").get() as { n: number }).n).toBe(1);
     expect((db.prepare("SELECT COUNT(*) AS n FROM records").get() as { n: number }).n).toBe(2);
+    db.close();
+  });
+
+  it("odświeża ocenę źródła i wycofuje rekordy, indeks oraz ostrzeżenia po zmianie samego katalogu", () => {
+    const record = rec("a:1", { url: "https://example.org/research/1", text: "Badanie heliosfery" });
+    writeCorpus("a.jsonl", [record]);
+    writeIncidents("i.jsonl", [{ id: "i", url: record.url, title: "Badanie", summary: "Opis", domains: ["example.net"], publishedAt: null, recordId: record.id }]);
+    const db = openDatabase(":memory:");
+    const first = ensureCorpusLoaded(db, { dataDir: dir });
+    const revised = { ...catalogSource, level: 3, type: "analiza", independenceGroup: "new-group" };
+    writeFileSync(resolve(dir, "sources.yaml"), JSON.stringify({ catalog: [revised] }));
+    const second = ensureCorpusLoaded(db, { dataDir: dir });
+    expect(second.snapshotId).not.toBe(first.snapshotId);
+    expect(createCorpusStore(db).get(record.id)).toMatchObject({ level: 3, type: "analiza", independenceGroup: "new-group" });
+    writeFileSync(resolve(dir, "sources.yaml"), JSON.stringify([{ ...revised, pathPrefixes: ["/legal/"] }]));
+    const third = ensureCorpusLoaded(db, { dataDir: dir, onWarning: () => {} });
+    expect(third).toMatchObject({ records: 0 });
+    expect(third.snapshotId).not.toBe(second.snapshotId);
+    expect(db.prepare("SELECT 1 FROM records_fts WHERE records_fts MATCH 'heliosfery'").get()).toBeUndefined();
+    expect(db.prepare("SELECT 1 FROM incidents").get()).toBeUndefined();
+    db.close();
+  });
+
+  it("stary wpis importera bez roli recenzji pozostaje nierozstrzygający także po podmianie pakietu", () => {
+    const r = rec("review:old", { sourceId: "review", role: "tresc", url: "https://review.example/old", origin: "organizer",
+      rating: { raw: "Prawda", mapped: "POTWIERDZONE", binary: true } });
+    writeCorpus("organizer-old.jsonl", [r]);
+    const db = openDatabase(":memory:");
+    ensureCorpusLoaded(db, { dataDir: dir });
+    expect(createCorpusStore(db).get(r.id)).toMatchObject({ role: "stala_rola", type: "factcheck" });
+    expect(createCorpusStore(db).get(r.id)?.rating).toBeUndefined();
     db.close();
   });
 
@@ -171,7 +209,7 @@ describe("CorpusStore: awaryjny odczyt z live_snapshots", () => {
     "CREATE TABLE live_snapshots(id TEXT PRIMARY KEY, run_id TEXT, record_json TEXT, created_at TEXT, expires_at TEXT)";
 
   function liveRecord(id: string, over: Partial<CorpusRecord> = {}): CorpusRecord {
-    return rec(id, { origin: "live_snapshot", url: "https://www.gov.pl/web/premier/sklad-rady-ministrow", ...over });
+    return rec(id, { origin: "live_snapshot", url: "https://example.org/news/article", ...over });
   }
   function insertLive(db: ReturnType<typeof openDatabase>, id: string, json: string, expiresAt: string | null) {
     db.prepare("INSERT INTO live_snapshots(id, run_id, record_json, created_at, expires_at) VALUES(?, ?, ?, ?, ?)").run(

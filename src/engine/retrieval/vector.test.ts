@@ -99,9 +99,10 @@ describe("gałąź wektorowa (fałszywy embedder)", () => {
     expect(await loose.search({ claim: claim("sankcje"), limit: 3 })).toHaveLength(3);
   });
 
-  it("zachowuje do dwóch bliskich dopasowań semantycznych Demagoga przy pełnej puli", async () => {
+  it("zachowuje bliskie dopasowania semantyczne od różnych kwalifikowanych wydawców przy pełnej puli", async () => {
     const db = createTestDb();
-    db.prepare("UPDATE records SET source_id = 'demagog', role = 'stala_rola' WHERE id IN ('r07', 'r08')").run();
+    db.prepare("UPDATE records SET role = 'stala_rola', level = 2 WHERE id IN ('r07', 'r08')").run();
+    db.prepare("UPDATE records SET source_id = 'demagog' WHERE id = 'r07'").run();
     const paraphrase = "Elektroniczne moduły są w zastrzykach";
     const weakerParaphrase = "Do iniekcji dodano układy scalone";
     const embedder = fakeEmbedder();

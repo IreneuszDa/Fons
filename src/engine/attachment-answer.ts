@@ -7,6 +7,8 @@ import { contentWords, foldForMatch, formatDatePl, truncateWords } from "./text"
 import { socialPostId } from "./video/social-source";
 import { publicPostUrl, socialVideoPlatform } from "./video/platforms";
 import { stemToken } from "./retrieval/stem";
+import { extractClaimReviews } from "./retrieval/claimreview";
+import type { fetchPage } from "../security/fetch";
 
 export function documentUrl(raw: string): string | undefined {
   const url = URL.parse(raw);
@@ -57,7 +59,7 @@ export function reviewedMediaRecords(raw: string, store: CorpusStore, links = pu
 
 const DOCUMENT_WORD = String.raw`(?:depesz|artykul|material|komunikat|dokument|raport|tekst|wpis|publikacj|opracowan)\w*`;
 
-function asksForIdentity(question: string) {
+export function asksForIdentity(question: string) {
   const folded = foldForMatch(question);
   return new RegExp("\\b" + DOCUMENT_WORD).test(folded)
     && /\b(?:t(?:a|e|ej|en|ego|ym|o) sam\w*|inn[ayąe]\w*|identyczn\w*|zgodn\w*|dopas\w*)\b/.test(folded);
@@ -78,6 +80,59 @@ function subjectTerms(record: CorpusRecord, article: string): { covered: boolean
 }
 
 interface DocumentPair { review: CorpusRecord; document: CorpusRecord }
+
+function namedReviewers(question: string, store: CorpusStore, links: PublicationLink[]): CorpusRecord[] {
+  const words = contentWords(question);
+  return store.getMany(links.filter(l => l.documents?.length).map(l => l.publicationId)).filter(record =>
+    contentWords(record.publisher).some(w => w.length > 3 && !["stowarzyszenie", "agencja", "fundacja", "portal"].includes(w)
+      && words.some(word => word === w || word === w + "a" || word === w + "owi")));
+}
+
+function referenceEvidence(review: CorpusRecord, document: CorpusRecord): PublishedAnswer["evidence"] {
+  return [review, document].map(r => ({
+    ...answerEvidenceItem(r, truncateWords(r.claimReviewed ?? r.text, 295)), relation: "INNY_KONTEKST", group: "kontekst",
+  }));
+}
+
+/** Verify a cross-publisher post against the fact-checker's current, claim-specific source metadata. */
+export async function compareReviewedAppearance(question: string, raw: string, store: CorpusStore, fetch: typeof fetchPage, signal?: AbortSignal): Promise<PublishedAnswer | undefined> {
+  if (!asksForIdentity(question)) return;
+  const target = documentUrl(raw);
+  if (!target) return;
+  const links = publicationLinks();
+  const named = namedReviewers(question, store, links);
+  const targetHost = new URL(target).host;
+  const pairs = candidateDocuments(named, store, links).filter(({ document, review }) =>
+    [document.url, review.url].every(url => URL.parse(documentUrl(url) ?? "")?.host !== targetHost));
+  if (!pairs.length || pairs.length > 2) return;
+  const matches = await Promise.all(pairs.map(async pair => {
+    try {
+      const page = await fetch(pair.review.url, { timeoutMs: 5000, maxBytes: 3 * 1024 * 1024, signal });
+      if (!page.rawHtml || documentUrl(page.finalUrl) !== documentUrl(pair.review.url) || !pair.review.claimReviewed) return;
+      const sameClaim = extractClaimReviews(page.rawHtml).find(r =>
+        foldForMatch(r.claimReviewed) === foldForMatch(pair.review.claimReviewed!)
+        && r.appearances?.some(u => documentUrl(u) === target));
+      if (sameClaim) return pair;
+    } catch { /* The ordinary document comparison can still proceed when a publisher is unavailable. */ }
+  }));
+  const found = matches.filter((p): p is DocumentPair => !!p);
+  if (found.length !== 1) return;
+  const { document, review } = found[0]!;
+  const evidence = referenceEvidence(review, document);
+  return { answerPl: `Tak. W publikacji wydawcy ${review.publisher} podany adres jest źródłem sprawdzanej wypowiedzi. Dotyczy ona materiału „${document.title}” z ${formatDatePl(document.publishedAt)} r.`, evidence };
+}
+
+/** A direct publisher link can identify an archived document even during an outage. */
+export function archivedDocumentIdentity(question: string, raw: string, store: CorpusStore, links = publicationLinks()): PublishedAnswer | undefined {
+  if (!asksForIdentity(question)) return;
+  const url = documentUrl(raw);
+  if (!url) return;
+  const pairs = candidateDocuments(namedReviewers(question, store, links), store, links).filter(({ document }) => documentUrl(document.url) === url);
+  if (pairs.length !== 1) return;
+  const { document, review } = pairs[0]!;
+  const evidence = referenceEvidence(review, document);
+  return { answerPl: `Tak. Podany adres prowadzi do materiału „${document.title}” z ${formatDatePl(document.publishedAt!)} r., wskazanego w publikacji ${review.publisher}. Porównano adres i metadane archiwalne. Bieżącego tekstu strony nie udało się odczytać.`, evidence };
+}
 
 function candidateDocuments(records: CorpusRecord[], store: CorpusStore, links: PublicationLink[]): DocumentPair[] {
   const pairs: DocumentPair[] = [];
@@ -152,7 +207,8 @@ function comparePair(input: NormalizedInput, pair: DocumentPair) {
 
 export function compareReviewedDocument(input: NormalizedInput, records: CorpusRecord[], store: CorpusStore, links = publicationLinks()): PublishedAnswer | undefined {
   if (input.kind !== "url" || !asksForIdentity(input.userNote ?? "")) return;
-  const ranked = candidateDocuments(records, store, links).map(pair => ({ pair, ...comparePair(input, pair) }))
+  const named = namedReviewers(input.userNote ?? "", store, links);
+  const ranked = candidateDocuments([...records, ...named], store, links).map(pair => ({ pair, ...comparePair(input, pair) }))
     .filter(r => r.relevance > 0).sort((a, b) => b.relevance - a.relevance);
   const top = ranked[0];
   if (!top) return { answerPl: "Nie udało mi się ustalić, z którym sprawdzonym dokumentem porównać wpis. Podaj tytuł dokumentu lub odnośnik do weryfikacji.", evidence: [] };
@@ -160,16 +216,18 @@ export function compareReviewedDocument(input: NormalizedInput, records: CorpusR
     return { answerPl: "Znalazłem kilka możliwych materiałów. Wskaż tytuł dokumentu, który mam porównać.", evidence: [] };
   }
   const { review, document } = top.pair;
-  const evidence = [review, document].map(r => ({ ...answerEvidenceItem(r, truncateWords(r.claimReviewed ?? r.text, 295)), relation: "INNY_KONTEKST" as const, group: "kontekst" as const }));
+  const evidence = referenceEvidence(review, document);
   const day = formatDatePl(top.expectedDate) + " r.";
   const reference = `Materiał wskazany w weryfikacji nosi tytuł „${document.title}”. Data publikacji to ${day}`;
   if (top.headlineMatch && top.subject.covered && top.dayMatch && !top.differentDay) {
     return { answerPl: `Tak. Zgadzają się nagłówek „${document.title}”, data ${day} i temat (${top.subject.labels.join(", ")}).`, evidence };
   }
   if (top.differentTitle || (!top.dayMatch && top.differentDay)) {
-    const reason = top.differentTitle ? `Materiał ma inny nagłówek („${truncateWords(top.differentTitle, 150)}”).`
+    const reason = top.differentTitle ? `Materiał ma inny nagłówek („${truncateWords(top.differentTitle.split(" | ")[0]!, 150)}”).`
       : `We wpisie podano inną datę dokumentu (${top.dates.join(", ")}).`;
-    return { answerPl: `Nie. ${reason} ${reference}`, evidence };
+    const observedDate = top.differentTitle && top.differentDay && input.pagePublishedAt
+      ? ` Opublikowano go ${formatDatePl(input.pagePublishedAt)} r.` : "";
+    return { answerPl: `Nie. ${reason}${observedDate} ${reference}`, evidence };
   }
   const missing = [!top.headlineMatch && "tytułu", !top.subject.covered && "tematu", (!top.dayMatch || top.differentDay) && "daty dokumentu"].filter(Boolean);
   return { answerPl: `Nie udało mi się potwierdzić, że chodzi o ten sam materiał. Brakuje jednoznacznego dopasowania ${missing.join(", ")}. ${reference}`, evidence };

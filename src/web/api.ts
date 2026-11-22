@@ -3,12 +3,14 @@
  */
 import type { ChatImage, ChatDocument, ChatRecording, ImageOptions } from "../shared/attachments";
 import type { CatalogSource, ConversationReply, VerdictReport } from "../shared/contracts";
+import type { ArchiveMaterial, SavedMaterial } from "../shared/archive";
 import { CHAT_STREAM_CONTENT_TYPE, VERIFICATION_STAGES, type ChatDetail, type ChatResponse, type ChatStreamEvent, type ChatSummary, type VerificationStage } from "../shared/chat";
 
 export interface ChatInput {
   text?: string;
   action?: string;
   image?: ChatImage;
+  comparisonImage?: ChatImage;
   document?: ChatDocument;
   recording?: ChatRecording;
   imageOptions?: ImageOptions;
@@ -75,6 +77,15 @@ export async function listChats(): Promise<ChatSummary[]> {
   const { chats } = await chatResource<{ chats: ChatSummary[] }>("/api/chats", "Nie udało się wczytać historii czatów.");
   return chats;
 }
+
+export const readArchives = () => chatResource<{ items: SavedMaterial[] }>("/api/archives", "Nie udało się otworzyć archiwum.");
+export const previewArchive = (url: string) => chatResource<{ items: ArchiveMaterial[] }>("/api/archives/preview", "Nie udało się odczytać materiału.", {
+  method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }),
+});
+export const saveArchive = ({ url, recordId, sha256 }: ArchiveMaterial) => chatResource<{ item: SavedMaterial }>("/api/archives", "Nie udało się zapisać materiału.", {
+  method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, recordId, sha256 }),
+});
+export const removeArchive = (id: string) => chatResource("/api/archives/" + encodeURIComponent(id), "Nie udało się usunąć materiału.", { method: "DELETE" });
 
 export async function createChat(): Promise<ChatSummary> {
   const { chat } = await chatResource<{ chat: ChatSummary }>("/api/chats", "Nie udało się rozpocząć czatu.", {

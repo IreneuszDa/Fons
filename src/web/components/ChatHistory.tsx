@@ -159,7 +159,7 @@ export default function ChatHistory({
             <IconButton {...trigger} label="Menu czatu" variant="ghost"
               icon={<Icon icon={EllipsisHorizontalIcon} size="lg" />} />
           )}
-          items={[{ label: "Fons na telefonie", href: "/telefon" }, { label: "Źródła i metoda", href: "/zrodla" }]}
+          items={[{ label: "Fons na WhatsAppie", href: "/telefon" }, { label: "Źródła i metoda", href: "/zrodla" }]}
         />
       </HStack>
     </LayoutHeader>

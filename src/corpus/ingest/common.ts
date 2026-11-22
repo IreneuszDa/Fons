@@ -25,6 +25,7 @@ export interface Incident {
   url: string;
   /** Domeny serwisów, które rozpowszechniały narrację (tylko jeśli źródło je podaje; bez platform społecznościowych). */
   domains: string[];
+  channels?: string[];
   publishedAt: string | null;
   /** Rekord korpusu powiązany z incydentem (gdy istnieje). */
   recordId: string | null;
@@ -250,7 +251,9 @@ export class PoliteClient {
     let rules = this.robots.get(origin);
     if (rules === undefined) {
       try {
-        const res = await this.rawFetch(origin + "/robots.txt", "text/plain");
+        // A site may serve its HTML application shell for a missing robots.txt. Allow
+        // the response format already handled below instead of triggering HTTP 406.
+        const res = await this.rawFetch(origin + "/robots.txt", "text/plain,text/html;q=0.5,*/*;q=0.1");
         if (res.status === 200 && !/<html/i.test(res.body.slice(0, 500))) {
           rules = parseRobots(res.body);
           const delay = parseCrawlDelay(res.body);
@@ -279,11 +282,13 @@ export class PoliteClient {
       /** Nagłówki uwierzytelnienia (np. klucz API): wysyłane, ale NIE wchodzą do klucza ani treści cache'u (rotacja klucza nie unieważnia cache'u). */
       secretHeaders?: Record<string, string>;
       skipRobots?: boolean;
+      /** Odczytaj publiczne dane tylko w pamięci, gdy katalog dopuszcza utrwalenie wyłącznie wyciągu. */
+      cache?: false;
     } = {},
   ): Promise<HttpResult> {
     const accept = opts.accept ?? "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.5";
     const file = this.cacheFile(url, accept + JSON.stringify(opts.headers ?? {}));
-    if (!this.opts.refresh && existsSync(file)) {
+    if (opts.cache !== false && !this.opts.refresh && existsSync(file)) {
       try {
         const cached = JSON.parse(readFileSync(file, "utf8")) as HttpResult;
         if (cached.status === 200) return { ...cached, fromCache: true };
@@ -301,7 +306,7 @@ export class PoliteClient {
     if (res.status === 202 && res.body.length === 0) {
       throw new BlockedError(url, "challenge", `HTTP 202 bez treści dla ${url} (wyzwanie antybotowe — nie obchodzimy)`);
     }
-    if (res.status === 200) {
+    if (res.status === 200 && opts.cache !== false) {
       mkdirSync(dirname(file), { recursive: true });
       writeFileSync(file, JSON.stringify(res));
     }
@@ -509,16 +514,7 @@ export function blockText(el: Element): string {
 
 // ───────────────────────────── Język ─────────────────────────────
 
-export function guessLang(text: string, hint?: string): string {
-  if (hint) return hint;
-  const t = text.toLowerCase();
-  if (/[ąćęłńóśźż]/.test(t) || /\b(że|się|jest|nie|dla|oraz|przez)\b/.test(t)) return "pl";
-  if (/[äöüß]/.test(t) || /\b(und|der|die|das|nicht|ist|mit|ein)\b/.test(t)) return "de";
-  if (/[àâçéèêëîïôùûœ]/.test(t) || /\b(les|des|est|une|dans|pour)\b/.test(t)) return "fr";
-  if (/[ñ¿¡]/.test(t) || /\b(los|las|que|una|para|con)\b/.test(t)) return "es";
-  if (/[Ѐ-ӿ]/.test(t)) return /[іїєґ]/.test(t) ? "uk" : "ru";
-  return "en";
-}
+export { guessLang } from "../../shared/language";
 
 // ───────────────────────────── Zapis ─────────────────────────────
 

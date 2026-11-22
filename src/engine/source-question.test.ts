@@ -97,7 +97,7 @@ describe("odpowiedź na podstawie materiałów z wyszukiwania", () => {
     const ai = models({ ...empty, answerPl: "Tezę o zamknięciu magazynu oceniono jako fałsz.",
       evidence: [{ ref: "F1", quote: claim }], claimPl: claim, reviewRef: "F1" });
     const result = await answerSourceQuestion({ question: "Czy muzeum zamknęło magazyn?", receivedAt: at, ...ai, records: [review] });
-    expect(result.publication).toMatchObject({ claimPl: claim, verdict: "FALSZYWE", evidence: [{ ratingRaw: "Fałsz", relation: "OBALA" }] });
+    expect(result.publication).toMatchObject({ claimPl: claim, verdict: "FALSZYWE", evidence: [{ ratingRaw: "Fałsz", relation: "INNY_KONTEKST", passageKind: "reviewed_claim" }] });
     expect(parseFences(ai.verifier.calls[0]!.user).map(f => f.label)).toContain("OCENIANA_TEZA");
     expect((await answerSourceQuestion({ question, receivedAt: at, ...ai, records: [{ ...sample, text: claim }] })).publication).toBeUndefined();
   });
@@ -109,7 +109,9 @@ describe("odpowiedź na podstawie materiałów z wyszukiwania", () => {
     const ai = models({ ...empty, answerPl: "Taką samą ulgę miały też inne miasta.", claimPl: review.claimReviewed, reviewRef: "F1",
       evidence: [{ ref: "F1", quote: statement + "\n" + finding }] });
     const result = await answerSourceQuestion({ question: "Czy miasto było jedyne?", receivedAt: at, records: [review], ...ai });
-    expect(result.publication?.evidence.map(e => e.quote)).toEqual([statement, finding]);
+    expect(result.publication?.evidence.map(({ quote, relation }) => [quote, relation])).toEqual([
+      [finding, "OBALA"], [statement, "INNY_KONTEKST"],
+    ]);
     const citations = parseFences(ai.verifier.calls[0]!.user).filter(f => f.label === "CYTAT_F1").map(f => JSON.parse(f.content));
     expect(citations.map(c => c.quoteOrigin)).toEqual(["claimant", "publisher"]);
   });

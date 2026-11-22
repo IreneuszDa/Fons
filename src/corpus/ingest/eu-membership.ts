@@ -9,6 +9,8 @@
  *
  * Daty z portalu mają dokładność do dnia (przystąpienie) albo miesiąca (status kandydata) — dokładnie tak, jak na stronie.
  */
+import { memberRegister } from "./member-register";
+import { countryIdentity } from "../../engine/retrieval/subject";
 import type { CorpusRecord } from "../../shared/contracts";
 import { PoliteClient, type IngestResult, type IngestOptions, baseFromCatalog, parseHtmlPage, recordId, sourceFromCatalog, squash } from "./common";
 
@@ -44,7 +46,7 @@ export interface CountryLine {
 export function parseCountryList(html: string): CountryLine[] {
   const { document } = parseHtmlPage(html);
   const out: CountryLine[] = [];
-  for (const art of Array.from(document.querySelectorAll("article"))) {
+  for (const art of Array.from(document.querySelectorAll("article.ecl-content-item"))) {
     const a = art.querySelector("a[href*='/eu-countries/']");
     const p = art.querySelector("p");
     const href = a?.getAttribute("href") ?? "";
@@ -146,25 +148,52 @@ export async function ingestEuMembership(client: PoliteClient, opts: IngestOptio
   const push = (r: Omit<CorpusRecord, keyof ReturnType<typeof baseFromCatalog> | "origin" | "lang"> & { lang?: string }) =>
     result.records.push({ ...base, lang: "pl", origin: "corpus", ...r } as CorpusRecord);
 
-  // 1. Lista krajów UE
+  // Follow the publisher's pagination. Individual entries survive a later page outage,
+  // but only a complete traversal can support a finding of non-membership.
+  let completeDirectory = false;
   try {
-    const res = await client.get(EU_COUNTRIES_URL);
-    const { text } = parseHtmlPage(res.body, "main");
-    const updated = parseLastUpdate(text);
-    const rows = parseCountryList(res.body);
-    if (rows.length < 27) result.skipped.push({ what: EU_COUNTRIES_URL, reason: `znaleziono ${rows.length} z 27 krajów` });
-    for (const r of rows) {
-      push({
-        id: recordId("eu-portal", `${EU_COUNTRIES_URL}|${r.slug}`),
-        url: res.finalUrl,
-        title: `Unia Europejska: ${r.name} — członkostwo w UE, strefie euro i strefie Schengen`,
-        publishedAt: updated,
-        fetchedAt: res.fetchedAt,
-        text: r.sentence,
-        topics: ["ue", "czlonkostwo-w-ue", "data-przystapienia", "strefa-euro", "schengen", "profil-panstwa", r.slug === "poland" ? "polska" : r.slug],
-      });
+    const rows = new Map<string, CountryLine>();
+    let address = EU_COUNTRIES_URL;
+    let declared: number | undefined;
+    let fetchedAt: string | undefined;
+    let lastFetch = "";
+    let updated: string | null = null;
+    const visited = new Set<string>();
+    let valid = true;
+    while (address && !visited.has(address) && visited.size < 100) {
+      visited.add(address);
+      const res = await client.get(address);
+      if (res.status !== 200 || res.finalUrl !== address) throw new Error("Nie można odczytać strony wykazu: HTTP " + res.status);
+      if (!fetchedAt || res.fetchedAt < fetchedAt) fetchedAt = res.fetchedAt;
+      if (res.fetchedAt > lastFetch) lastFetch = res.fetchedAt;
+      const parsed = parseHtmlPage(res.body, "main");
+      updated ??= parseLastUpdate(parsed.text);
+      const main = parsed.document.querySelector("main");
+      const header = Array.from(main?.querySelectorAll("h2") ?? []).map(h => squash(h.textContent ?? "")).find(h => /^Strony \(\d+\)$/u.test(h));
+      const count = header ? Number(header.match(/\d+/u)![0]) : undefined;
+      if (count === undefined || (declared !== undefined && declared !== count)) valid = false;
+      declared ??= count;
+      const cards = Array.from(main?.querySelectorAll("article.ecl-content-item") ?? []);
+      const pageRows = parseCountryList(res.body);
+      if (cards.length !== pageRows.length || !pageRows.length) valid = false;
+      for (const r of pageRows) {
+        if (rows.has(r.slug)) { valid = false; continue; }
+        rows.set(r.slug, r);
+        push({ id: recordId("eu-portal", EU_COUNTRIES_URL + "|" + r.slug), url: address,
+          title: `Unia Europejska: ${r.name} — członkostwo w UE, strefie euro i strefie Schengen`,
+          publishedAt: updated, fetchedAt: res.fetchedAt, text: r.sentence,
+          topics: ["ue", "czlonkostwo-w-ue", "data-przystapienia", "strefa-euro", "schengen", "profil-panstwa", r.slug === "poland" ? "polska" : r.slug] });
+      }
+      const next = main?.querySelector("a[aria-label='Przejdź do następnej strony']")?.getAttribute("href");
+      if (next && !/^\?page=\d+$/u.test(next)) throw new Error("Nieznany adres kolejnej strony wykazu UE");
+      address = next ? EU_COUNTRIES_URL + next : "";
     }
-    opts.log(`  portal UE, lista krajów: ${rows.length} zdań`);
+    const complete = valid && !address && fetchedAt && Date.parse(lastFetch) - Date.parse(fetchedAt) <= 86_400_000 &&
+      memberRegister("UE", base, EU_COUNTRIES_URL, fetchedAt, updated, declared ?? 0,
+        [...rows.values()].map(r => countryIdentity(r.name) ? r.name : r.slug.replace(/-/gu, " ")));
+    if (complete) { result.records.push(complete); completeDirectory = true; }
+    else throw new Error("Nie potwierdzono kompletności spisu na wszystkich stronach UE");
+    opts.log(`  portal UE, pełny wykaz: ${rows.size} różnych państw`);
   } catch (e) {
     result.skipped.push({ what: EU_COUNTRIES_URL, reason: (e as Error).message });
   }
@@ -194,7 +223,17 @@ export async function ingestEuMembership(client: PoliteClient, opts: IngestOptio
       text: [lists.outsideLead, ...lists.outside, lists.denmarkLead, lists.denmark].filter(Boolean).join("\n"),
       topics: [...topics, "polska"],
     });
-    opts.log(`  portal UE, strefa euro: ${lists.inside.length} państw w strefie, ${lists.outside.length + (lists.denmark ? 1 : 0)} poza`);
+    if (!completeDirectory && res.status === 200 && res.finalUrl === EURO_AREA_URL) {
+      const count = /oficjalną walutą w (\d+) spośród (\d+) państw UE/u.exec(lists.insideLead);
+      // The list follows a second explanatory paragraph. Every subsequent line must be a country.
+      const [explanation, ...euro] = lists.inside;
+      const optOut = lists.denmark && lists.denmarkLead?.includes(lists.denmark) ? [lists.denmark] : [];
+      if (count && euro.length === Number(count[1]) && /^Wszystkie kraje UE należą do unii gospodarczej i walutowej/u.test(explanation ?? "") && optOut.length) {
+        const register = memberRegister("UE", base, res.finalUrl, res.fetchedAt, updated, Number(count[2]), [...euro, ...lists.outside, ...optOut]);
+        if (register) result.records.push(register);
+      }
+    }
+    opts.log(`  portal UE, strefa euro: ${lists.inside.filter(name => countryIdentity(name)).length} rozpoznanych państw w strefie, ${lists.outside.length + (lists.denmark ? 1 : 0)} poza`);
   } catch (e) {
     result.skipped.push({ what: EURO_AREA_URL, reason: (e as Error).message });
   }

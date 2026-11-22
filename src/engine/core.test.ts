@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Claim, CorpusRecord, DetectorHit } from "../shared/contracts";
+import { readCorpus } from "../corpus/files";
+import { detectInjection, stripFlaggedSentences } from "./ports";
+import { decideVerdict } from "./verdict/rules";
 import { fixedRoleRelation, isCompoundClaim, prepareEvidence, toAssessments } from "./assess";
-import { CLAIM_OVERLAP_THRESHOLD, claimStatesDate, postProcessClaims } from "./claims";
+import { CLAIM_OVERLAP_THRESHOLD, asksAboutStandingFact, claimStatesDate, postProcessClaims } from "./claims";
 import { buildJustification, buildTriedPl, validateSmoothed, type JustifyInput } from "./justify";
 import { findQuote, normalizeQuoteText } from "./quotes";
 import { formatDatePl, ngramContainment } from "./text";
@@ -54,12 +57,52 @@ describe("quotes", () => {
     expect(bad.found).toBe(false);
   });
 
+  it("shows the original qualification even when a model omits it and rejects reordered or repeated spans", () => {
+    const source = "Komisja podała, że rada nigdy nie przyjęła projektu ustawy.";
+    const first = "Komisja podała, że rada";
+    const last = "przyjęła projektu ustawy.";
+    expect(findQuote(first + " … " + last, source).matched).toBe(source);
+    expect(findQuote(last + " … " + first, source).found).toBe(false);
+    expect(findQuote(first + " … " + first, source).found).toBe(false);
+    expect(findQuote(first + " … jutro … " + last, source).found).toBe(false);
+    expect(findQuote(first + " … " + last, first + " uwaga ".repeat(48) + last).found).toBe(false);
+  });
+
+  it("does not accept a truncated or substituted figure or a dropped negation as a near-verbatim quote", () => {
+    const quote = "W komunikacie urząd podał, że wartość wskaźnika wynosi 10";
+    for (const ending of ["0", ",5", ".5"]) expect(findQuote(quote, quote + ending).found).toBe(false);
+    expect(findQuote(quote, quote.replace("10", "19")).found).toBe(false);
+    expect(findQuote("Rada przyjęła wniosek o zwołanie wspólnego posiedzenia komisji.", "Rada nie przyjęła wniosku o zwołanie wspólnego posiedzenia komisji.").found).toBe(false);
+  });
+
   it("normalises zero-width characters and dashes", () => {
     expect(normalizeQuoteText("a​b — c")).toBe("ab - c");
   });
 });
 
+it("sama zapowiedź ponownego głosowania w obwieszczeniu PKW nie daje oceny wyniku końcowego", () => {
+  const record = readCorpus().records.find(r => r.url.includes("/2025/652/") && r.text.includes("przeprowadzone zostanie ponowne głosowanie"))!;
+  const quote = "w dniu 1 czerwca 2025 r. przeprowadzone zostanie ponowne głosowanie.";
+  const claim: Claim = { id: "c1", text: "Rafał Trzaskowski wygrał wybory prezydenckie w 2025 roku.", type: "fakt",
+    isMain: true, temporal: { kind: "jednorazowe", date: "2025" }, inputOverlap: 1 };
+  const prepared = prepareEvidence([record], detectInjection, stripFlaggedSentences);
+  const result = toAssessments(claim, prepared, {
+    fixedRole: [], content: [{ ref: "F1", relation: "INNY_KONTEKST", aspect: "zakres", period: "2025-05", quote }],
+  }, detectInjection);
+  expect(result.assessments[0]).toMatchObject({ quote, quoteVerified: true, relation: "CZESCIOWO", partialMeaning: "coverage" });
+  expect(decideVerdict({ claim, assessments: result.assessments, records: new Map([[record.id, record]]),
+    now: new Date("2026-11-22"), singleKeyVerifier: true }).verdict).toBe("BRAK_DOWODOW");
+});
+
 describe("claims post-processing", () => {
+  it("keeps an explanation of a discrepancy out of the single-fact route", () => {
+    expect(asksAboutStandingFact("Czy Wrocław wydaje na komunikację około 700 mln zł. Dlaczego w analizie Demagoga jest 650 mln zł?")).toBe(false);
+    expect(asksAboutStandingFact("Czy udział w referendum wynosił połowę. Skąd ta różnica w protokole?")).toBe(false);
+    expect(asksAboutStandingFact("Czy Polska należy do Rady Europy?")).toBe(true);
+    expect(asksAboutStandingFact("Czy Elżbieta Witek to marszałek Sejmu?")).toBe(true);
+    expect(asksAboutStandingFact("Czy to zdjęcie jest aktualne?")).toBe(false);
+  });
+
   const input = "Rząd podniósł podatek VAT na żywność do 8 procent od stycznia 2026. To skandal.";
   const mk = (
     text: string,
@@ -87,6 +130,23 @@ describe("claims post-processing", () => {
     expect(result.claims[0]?.claim).toMatchObject({ text: attributed, type: "fakt", assertedAspect: "autorstwo" });
   });
 
+  it("keeps the stated reason inside a short attributed claim", () => {
+    const quote = "Anna Nowak powiedziała, że zostaje w klubie, bo chce dokończyć sezon.";
+    const shortened = "Anna Nowak powiedziała, że zostaje w klubie.";
+    const result = postProcessClaims(out([mk(shortened, { isMain: true }), mk(quote)]), quote);
+    expect(result.claims.map(c => c.claim)).toMatchObject([
+      { text: quote, type: "fakt", isMain: true, assertedAspect: "autorstwo" },
+    ]);
+  });
+
+  it("assesses the attribution of a named person's forecast", () => {
+    const quote = "Zdaniem Anny Nowak sezon zakończy się wcześniej.";
+    const result = postProcessClaims(out([{ ...mk(quote, { type: "prognoza" }), entities: ["Anny Nowak"] }]), quote);
+    expect(result.claims[0]?.claim).toMatchObject({ text: quote, type: "fakt", assertedAspect: "autorstwo" });
+    const unowned = "Sezon zakończy się wcześniej.";
+    expect(postProcessClaims(out([mk(unowned, { type: "prognoza" })]), unowned).claims[0]?.claim.type).toBe("prognoza");
+  });
+
   it("keeps an article's historical perspective separate from the date of the event", () => {
     const state = "Sieć prowadzi trzy stacje pomiarowe.";
     const event = "Sieć uruchomiła swoją pierwszą stację.";
@@ -96,6 +156,15 @@ describe("claims post-processing", () => {
     expect(result.claims[0]?.claim).toMatchObject({ text: expect.stringContaining("2018-03-08"), temporal: { kind: "stan", asOf: "2018-03-08" } });
     expect(result.claims[1]?.claim).toMatchObject({ text: event, temporal: { kind: "jednorazowe" } });
     expect(result.claims[1]?.claim.temporal.date).toBeUndefined();
+  });
+
+  it("zachowuje datę archiwalnego stanu publikacji po skróceniu tezy przez czytelnika", () => {
+    const fact = "Wydatki w 2024 roku wyniosły 2 mln zł.";
+    const quoted = "Według stanu publikacji na 30 kwietnia 2025 roku wydatki w 2024 roku wyniosły 2 mln zł.";
+    const entry = { ...mk(fact, { isMain: true, date: "2024" }), sourceText: quoted };
+    expect(postProcessClaims(out([entry]), quoted).claims[0]?.claim.temporal)
+      .toMatchObject({ date: "2024", publishedBy: "2025-04-30" });
+    expect(postProcessClaims(out([mk(fact, { date: "2024" })]), fact).claims[0]?.claim.temporal.publishedBy).toBeUndefined();
   });
 
   it("keeps claims grounded in the input, drops substituted ones, caps at 3", () => {
@@ -207,6 +276,26 @@ const detect = (text: string, location: DetectorHit["location"], recordId?: stri
 const strip = (text: string) => text.replace(INJ, "").trim();
 
 describe("assessment quote checks", () => {
+  it.each([
+    ["Fundacja wysyła książki do bibliotek.", "Fundacja nie wyśle książek do bibliotek.", "BRAK_DOWODOW"],
+    ["Fundacja wysyła książki do bibliotek.", "Stanowisko pozostaje bez zmian: nie będziemy wysyłać książek do bibliotek.", "BRAK_DOWODOW"],
+    ["Kurierzy są obecnie w bibliotekach.", "Kurierzy nie pojawią się w bibliotekach.", "BRAK_DOWODOW"],
+    ["Fundacja wysyła książki do bibliotek.", "Fundacja nie wysyła książek do bibliotek.", "FALSZYWE"],
+    ["Fundacja wysyła książki do bibliotek.", "Obecnie nie wysyłamy książek i nie wyślemy ich jutro.", "FALSZYWE"],
+    ["Kurier obecnie odwiedza bibliotekę.", "Kurier nie pojawia się w bibliotece.", "FALSZYWE"],
+    ["Fundacja planuje wysyłać książki.", "Nie planujemy wysyłać książek do bibliotek.", "BRAK_DOWODOW"],
+    ["Fundacja planuje wystąpić w Krakowie.", "Fundacja nie planuje wystąpić w Krakowie.", "FALSZYWE"],
+  ])("ocenia czas czynności pomimo zgodnej oceny modeli: %s / %s", (text, quote, verdict) => {
+    const claim: Claim = { id: "c1", text, type: "fakt", temporal: { kind: "stan" }, inputOverlap: 1, isMain: true };
+    const record = rec({ id: "A", text: quote });
+    const { assessments } = toAssessments(claim, prepareEvidence([record], detect, strip), {
+      fixedRole: [], content: [{ ref: "F1", relation: "OBALA", aspect: "sedno", period: null, quote }],
+    }, detect);
+    const decision = decideVerdict({ claim, assessments: assessments.map(a => ({ ...a, verifier: "zgoda" })),
+      records: new Map([[record.id, record]]), now: new Date("2026-11-22"), singleKeyVerifier: true });
+    expect(decision.verdict).toBe(verdict);
+    expect(decision.decisiveRecordIds).toEqual(verdict === "BRAK_DOWODOW" ? [] : ["A"]);
+  });
   it("excludes a record whose title was flagged before matching evidence or choosing an answer", () => {
     const record = rec({ id: "A", title: "oznaczony nagłówek", text: RECORD_TEXT });
     const metadataDetector = (text: string, location: DetectorHit["location"], recordId?: string): DetectorHit[] =>

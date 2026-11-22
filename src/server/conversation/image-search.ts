@@ -5,14 +5,14 @@ import { catalogSourceForUrl } from "../../corpus/catalog";
 import type { ImageSearchResult } from "../../shared/image-search";
 import type { ServerContext } from "../context";
 import { dayKey } from "../util";
-import { readMatchedCaptions } from "./image-captions";
+import { readMatchedPublications } from "./image-captions";
 
 type Image = { mime: string; base64: string };
 const LIMIT = 20;
 const WEB_DETECTION = "https://vision.googleapis.com/v1/images:annotate";
 const FACT_CHECK = "https://factchecktools.googleapis.com/v1alpha1/claims:imageSearch";
 const ImageUrl = z.object({ url: z.string().optional() });
-const PageMatch = ImageUrl.extend({ pageTitle: z.string().optional(), fullMatchingImages: z.array(ImageUrl).optional() });
+const PageMatch = ImageUrl.extend({ pageTitle: z.string().optional(), fullMatchingImages: z.array(ImageUrl).optional(), partialMatchingImages: z.array(ImageUrl).optional() });
 const WebDetection = z.object({
   fullMatchingImages: z.array(ImageUrl).default([]),
   partialMatchingImages: z.array(ImageUrl).default([]),
@@ -47,23 +47,38 @@ function cleanLabel(value: string | undefined, ctx: ServerContext, max: number):
   return text && !ctx.security.hasInjection?.(text) ? ctx.security.maskPii(text).text : undefined;
 }
 
+// Public collections used for occurrence links only. They do not grant retrieval or identity verification rights.
+const collectionPaths: Record<string, RegExp> = {
+  "science.nasa.gov": /^\/(?:resource|image-detail|earth\/earth-observatory)\//,
+  "www.nasa.gov": /^\/(?:image-article|image-feature)\//,
+  "airandspace.si.edu": /^\/(?:collection-objects|multimedia\/gallery)\//,
+  "www.esa.int": /^\/ESA_Multimedia\/Images\//,
+  "www.loc.gov": /^\/item\//,
+};
+
 function matchesFrom(web: z.infer<typeof WebDetection>, ctx: ServerContext): ImageSearchResult["matches"] {
   const matches: ImageSearchResult["matches"] = [];
   const seen = new Set<string>();
-  const add = (kind: "full" | "partial" | "page", raw?: string, title?: string) => {
+  const add = (kind: "full" | "partial" | "page", raw?: string, title?: string, pageMatch?: "full" | "partial") => {
     const url = publicUrl(raw);
-    if (!url || matches.length >= LIMIT) return;
+    if (!url) return;
     const host = url.hostname;
-    const showPage = kind === "page" && catalogSourceForUrl(url.href);
-    const key = kind + ":" + (showPage ? url.href : host);
+    const canLink = !!catalogSourceForUrl(url.href) || (!url.search && !!collectionPaths[host]?.test(url.pathname));
+    const key = kind + ":" + (canLink ? url.href : host);
     if (seen.has(key)) return;
     seen.add(key);
-    matches.push({ host, kind, ...(showPage ? { url: url.href, title: cleanLabel(title, ctx, 200) } : {}) });
+    matches.push({ host, kind, ...(pageMatch && { pageMatch }), ...(canLink ? { url: url.href, title: cleanLabel(title, ctx, 200) } : {}) });
   };
-  for (const p of web.pagesWithMatchingImages) add("page", p.url, p.pageTitle);
+  for (const p of web.pagesWithMatchingImages) add("page", p.url, p.pageTitle, p.fullMatchingImages?.length ? "full" : p.partialMatchingImages?.length ? "partial" : undefined);
   for (const i of web.fullMatchingImages) add("full", i.url);
   for (const i of web.partialMatchingImages) add("partial", i.url);
-  return matches;
+  function rank(m: ImageSearchResult["matches"][number]): number {
+    if (!m.url) return 10;
+    const full = m.kind === "full" || m.pageMatch === "full";
+    const partial = m.kind === "partial" || m.pageMatch === "partial";
+    return (full ? 0 : partial ? 2 : 4) + (m.kind === "page" ? 0 : 1);
+  }
+  return matches.sort((a, b) => rank(a) - rank(b)).slice(0, LIMIT);
 }
 
 function reserve(ctx: ServerContext): boolean {
@@ -113,7 +128,7 @@ async function findFactChecks(ctx: ServerContext, fullImage: URL, out: ImageSear
 const cooldownUntil = new WeakMap<ServerContext, number>();
 const limited = () => result("unavailable", "Wyszukiwanie obrazem w Google osiągnęło limit. Spróbuj później.");
 
-export async function searchImage(image: Image, ctx: ServerContext, options: { readCaptions?: boolean } = {}): Promise<ImageSearchResult> {
+export async function searchImage(image: Image, ctx: ServerContext, options: { readPublications?: boolean } = {}): Promise<ImageSearchResult> {
   if (ctx.cfg.reverseImageProvider !== "google_vision") return result("disabled", "Wyszukiwanie obrazem w Google jest wyłączone.");
   if (!ctx.cfg.googleVisionApiKey) return result("unavailable", "Do wyszukiwania obrazem potrzebny jest klucz Google Cloud Vision API.");
   if ((cooldownUntil.get(ctx) ?? 0) > ctx.now().getTime()) return limited();
@@ -125,11 +140,17 @@ export async function searchImage(image: Image, ctx: ServerContext, options: { r
   }
 
   const endpoint = new URL(WEB_DETECTION);
-  endpoint.searchParams.set("fields", "responses(error/code,webDetection(fullMatchingImages/url,partialMatchingImages/url,pagesWithMatchingImages(url,pageTitle,fullMatchingImages/url)))");
+  endpoint.searchParams.set("fields", "responses(error/code,webDetection(fullMatchingImages/url,partialMatchingImages/url,pagesWithMatchingImages(url,pageTitle,fullMatchingImages/url,partialMatchingImages/url)))");
   const request = JSON.stringify({ requests: [{ image: { content: copy.toString("base64") }, features: [{ type: "WEB_DETECTION", maxResults: LIMIT }] }] });
+  let requests = 0;
+  function withUsage(out: ImageSearchResult): ImageSearchResult {
+    if (requests) out.usage = { provider: "google_cloud_vision", feature: "WEB_DETECTION", requests, costUsd: null };
+    return out;
+  }
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
-      if (!reserve(ctx)) return limited();
+      if (!reserve(ctx)) return withUsage(limited());
+      requests++;
       const res = await ctx.fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json", "X-Goog-Api-Key": ctx.cfg.googleVisionApiKey },
         body: request, redirect: "error", signal: AbortSignal.timeout(10_000),
@@ -141,12 +162,12 @@ export async function searchImage(image: Image, ctx: ServerContext, options: { r
           continue;
         }
         cooldownUntil.set(ctx, ctx.now().getTime() + 60_000);
-        return limited();
+        return withUsage(limited());
       }
-      if (res.status === 403 || res.status === 401) return result("unavailable", "Google odmówiło dostępu do Cloud Vision. Sprawdź włączenie API, rozliczenia i uprawnienia klucza.");
+      if (res.status === 403 || res.status === 401) return withUsage(result("unavailable", "Google odmówiło dostępu do Cloud Vision. Sprawdź włączenie API, rozliczenia i uprawnienia klucza."));
       if (!res.ok) throw new Error("vision_http_error");
       const response = Annotation.parse(await res.json()).responses[0]!;
-      if (response.error?.code === 8) return limited();
+      if (response.error?.code === 8) return withUsage(limited());
       if (response.error) throw new Error("vision_annotation_error");
       const web = response.webDetection ?? WebDetection.parse({});
       const out = result("ok", "Wyniki z indeksu Google Cloud Vision. Dopasowanie może dotyczyć całego obrazu lub jego fragmentu.");
@@ -154,15 +175,23 @@ export async function searchImage(image: Image, ctx: ServerContext, options: { r
       if (!out.matches.length) out.messagePl = "Google Cloud Vision nie zwróciło dopasowań w swoim indeksie.";
       const fullImages = [...web.fullMatchingImages, ...web.pagesWithMatchingImages.flatMap(page => page.fullMatchingImages ?? [])];
       const fullImage = fullImages.map(i => publicUrl(i.url)).find(url => url !== undefined);
-      const [captions] = await Promise.all([
-        options.readCaptions ? readMatchedCaptions(ctx, web.pagesWithMatchingImages, web.fullMatchingImages) : undefined,
+      const [publications] = await Promise.all([
+        options.readPublications ? readMatchedPublications(ctx, web.pagesWithMatchingImages, web.fullMatchingImages) : undefined,
         fullImage ? findFactChecks(ctx, fullImage, out) : undefined,
       ]);
-      if (captions) out.captions = captions;
-      return out;
+      if (publications) {
+        out.captions = publications.flatMap(p => p.captions);
+        for (const match of out.matches) {
+          if (match.kind !== "page") continue;
+          const page = publications.find(p => p.url === match.url);
+          if (page?.publishedAt) match.publishedAt = page.publishedAt;
+        }
+        if (out.matches.some(m => m.publishedAt)) out.messagePl += " Daty odnoszą się do publikacji stron, na których odnaleziono ten obraz. Nie ustalają czasu wykonania zdjęcia ani dodania go do strony.";
+      }
+      return withUsage(out);
     }
   } catch {
-    return result("unavailable", "Google Cloud Vision nie zwróciło wyniku wyszukiwania. Spróbuj ponownie za chwilę.");
+    return withUsage(result("unavailable", "Google Cloud Vision nie zwróciło wyniku wyszukiwania. Spróbuj ponownie za chwilę."));
   }
-  return limited();
+  return withUsage(limited());
 }

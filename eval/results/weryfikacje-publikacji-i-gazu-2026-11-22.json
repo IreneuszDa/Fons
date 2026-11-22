@@ -1,0 +1,1012 @@
+{
+  "scope": "Test diagnostyczny publikacji i atrybucji. Przypadki zebrano oddzielnie od pomiaru F1.",
+  "method": "verifyInput przez createEngineDeps z włączonym wyszukiwaniem na żywo. Input zawierał wyłącznie tekst i czas odbioru. Archiwalne v31 i v32 pochodzą z pełnych przebiegów, a kontrole pochodzą z aktualnych wywołań modeli. Audyt energy-reports porównał oryginalny HTML i PDF z obydwoma rekordami.",
+  "archived": {
+    "v31": [
+      {
+        "id": "A17",
+        "verdict": "FALSZYWE",
+        "records": [
+          "un-news:13acab3b4464"
+        ]
+      },
+      {
+        "id": "A19",
+        "verdict": "FALSZYWE",
+        "records": [
+          "euvsdisinfo:5e2f2b01f2bd"
+        ]
+      },
+      {
+        "id": "R03",
+        "verdict": "FALSZYWE",
+        "records": [
+          "dpa-factchecking:ee8fdefa177f"
+        ]
+      },
+      {
+        "id": "A18",
+        "verdict": "FALSZYWE",
+        "records": [
+          "un-news:1ffc41d6d26b",
+          "un-news:795c40c9df48"
+        ]
+      }
+    ],
+    "v32": [
+      {
+        "id": "A17",
+        "verdict": "BRAK_DOWODOW",
+        "records": []
+      },
+      {
+        "id": "A19",
+        "verdict": "BRAK_DOWODOW",
+        "records": []
+      },
+      {
+        "id": "R03",
+        "verdict": "BRAK_DOWODOW",
+        "records": [
+          "dpa-factchecking:ee8fdefa177f"
+        ]
+      },
+      {
+        "id": "A18",
+        "verdict": "BRAK_DOWODOW",
+        "records": []
+      }
+    ]
+  },
+  "baseline": [
+    {
+      "id": "A19",
+      "text": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+      "createdAt": "2026-11-22T07:06:11.195Z",
+      "pipelineVersion": "engine-2026.11.22-32-registers-and-dates",
+      "corpusSnapshot": "98c4f29a544289072d7037ece970708a6424b3662f8ce9898dd1a9ff85e2d717",
+      "status": "OK",
+      "mainVerdict": "FALSZYWE",
+      "costUsd": 0.036265,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1403,
+          "outputTokens": 256,
+          "latencyMs": 4529,
+          "costUsd": 0.000268
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3358,
+          "outputTokens": 616,
+          "latencyMs": 8024,
+          "costUsd": 0.012876
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1820,
+          "outputTokens": 69,
+          "latencyMs": 1665,
+          "costUsd": 0.000217
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 26575,
+          "outputTokens": 492,
+          "latencyMs": 6357,
+          "costUsd": 0.022904
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "incident_narrative",
+        "non_eea_processing"
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "sedno"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "FALSZYWE",
+          "ruleApplied": 6,
+          "reasonPl": "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „DISINFO”). EUvsDisinfo (East StratCom Task Force, EEAS) (24 października 2016): Teza oceniana przez wydawcę: Ukrainian pilots shot down MH17",
+          "evidence": [
+            {
+              "recordId": "euvsdisinfo:5e2f2b01f2bd",
+              "url": "https://euvsdisinfo.eu/report/ukrainian-pilots-shot-down-mh17/",
+              "publishedAt": "2016-10-24",
+              "usedForVerdict": true,
+              "passageKind": "reviewed_claim",
+              "relation": "INNY_KONTEKST",
+              "ratingRaw": "DISINFO",
+              "quote": "Ukrainian pilots shot down MH17"
+            },
+            {
+              "recordId": "onderzoeksraad:065b4fe66132",
+              "url": "https://onderzoeksraad.nl/en/pers/dutch-safety-board-buk-surface-to-air-missile-system-caused-mh17-crash/",
+              "publishedAt": "2015-10-22",
+              "usedForVerdict": false,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "quote": "At 13.20 UTC (Coordinated Universal Time) a 9N314M warhead, launched by a Buk surface-to-air missile system from a 320-square-kilometre area in the eastern part of Ukraine, detonated to the left and above the cockpit."
+            },
+            {
+              "recordId": "prosecutionservice:d19ac69e1be5",
+              "url": "https://www.prosecutionservice.nl/topics/m/mh17-plane-crash/timeline-mh17-investigation-and-legal-proceedings",
+              "publishedAt": "2019-06-17",
+              "usedForVerdict": false,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "quote": "The Joint Investigation Team (JIT) is convinced that it has irrefutable evidence to establish that flight MH17 was shot down by a BUK missile from the 9M38 series."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "text": "Annalena Baerbock powiedziała, że nie odchodzi ze stanowiska ministry, bo inaczej Rosja przemaszeruje przez Polskę.",
+      "createdAt": "2026-11-22T07:06:08.394Z",
+      "pipelineVersion": "engine-2026.11.22-32-registers-and-dates",
+      "corpusSnapshot": "98c4f29a544289072d7037ece970708a6424b3662f8ce9898dd1a9ff85e2d717",
+      "status": "OK",
+      "mainVerdict": "BRAK_DOWODOW",
+      "costUsd": 0.04298,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1428,
+          "outputTokens": 507,
+          "latencyMs": 7848,
+          "costUsd": 0.000396
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3216,
+          "outputTokens": 304,
+          "latencyMs": 4548,
+          "costUsd": 0.009472
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 28260,
+          "outputTokens": 572,
+          "latencyMs": 6257,
+          "costUsd": 0.033112
+        }
+      ],
+      "warnings": [
+        "non_eea_processing",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "live"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Annalena Baerbock powiedziała, że nie odchodzi ze stanowiska ministry, bo inaczej Rosja przemaszeruje przez Polskę.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "brak"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "autorstwo"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "BRAK_DOWODOW",
+          "ruleApplied": 2,
+          "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "evidence": []
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "id": "A19",
+      "text": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+      "createdAt": "2026-11-22T07:11:48.958Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ee42785bff2172ee898d1b39aea9ff9dfba781b97cc5e29de85e466b5129cc28",
+      "status": "OK",
+      "mainVerdict": "FALSZYWE",
+      "costUsd": 0.038013,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1411,
+          "outputTokens": 196,
+          "latencyMs": 3030,
+          "costUsd": 0.000239
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3493,
+          "outputTokens": 757,
+          "latencyMs": 9453,
+          "costUsd": 0.014556
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1886,
+          "outputTokens": 170,
+          "latencyMs": 2871,
+          "costUsd": 0.000274
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 26765,
+          "outputTokens": 535,
+          "latencyMs": 4733,
+          "costUsd": 0.022944
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "incident_narrative",
+        "non_eea_processing",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "vector"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "autorstwo"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "FALSZYWE",
+          "ruleApplied": 6,
+          "reasonPl": "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „DISINFO”). EUvsDisinfo (East StratCom Task Force, EEAS) (24 października 2016): Teza oceniana przez wydawcę: Ukrainian pilots shot down MH17",
+          "evidence": [
+            {
+              "recordId": "euvsdisinfo:5e2f2b01f2bd",
+              "url": "https://euvsdisinfo.eu/report/ukrainian-pilots-shot-down-mh17/",
+              "publishedAt": "2016-10-24",
+              "usedForVerdict": true,
+              "passageKind": "reviewed_claim",
+              "relation": "INNY_KONTEKST",
+              "ratingRaw": "DISINFO",
+              "quote": "Ukrainian pilots shot down MH17"
+            },
+            {
+              "recordId": "un-news:b4106e3bb981",
+              "url": "https://news.un.org/en/story/2025/05/1163161",
+              "publishedAt": "2025-05-13",
+              "usedForVerdict": false,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "quote": "The JIT determined that flight MH17 was shot down by a missile launched from a Buk TELAR installation that was transported from Russia to a farm field in eastern Ukraine in an area controlled by separatists."
+            },
+            {
+              "recordId": "live:db533d17866f49d04855",
+              "url": "https://www.prosecutionservice.nl/topics/m/mh17-plane-crash/prosecution-and-trial/court-sessions-june-2020/alternative-scenarios",
+              "publishedAt": "2020-07-26T13:34:00.000Z",
+              "usedForVerdict": false,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "quote": "This narrative changed in the second half of 2015, when the Dutch Safety Board (OVV) shared its provisional conclusion that MH17 had been shot down by a Buk missile."
+            },
+            {
+              "recordId": "euvsdisinfo:05205ef40bdc",
+              "url": "https://euvsdisinfo.eu/report/ukraine-shot-down-flight-mh17/",
+              "publishedAt": "2019-06-12",
+              "usedForVerdict": false,
+              "passageKind": "reviewed_claim",
+              "relation": "INNY_KONTEKST",
+              "ratingRaw": "DISINFO",
+              "quote": "Ukraine shot down Flight MH17"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "text": "Annalena Baerbock powiedziała, że nie odchodzi ze stanowiska ministry, bo inaczej Rosja przemaszeruje przez Polskę.",
+      "createdAt": "2026-11-22T07:11:45.719Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ee42785bff2172ee898d1b39aea9ff9dfba781b97cc5e29de85e466b5129cc28",
+      "status": "OK",
+      "mainVerdict": "FALSZYWE",
+      "costUsd": 0.05171,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1422,
+          "outputTokens": 523,
+          "latencyMs": 6374,
+          "costUsd": 0.000404
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 2855,
+          "outputTokens": 215,
+          "latencyMs": 3311,
+          "costUsd": 0.00786
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1573,
+          "outputTokens": 23,
+          "latencyMs": 970,
+          "costUsd": 0.000169
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 29406,
+          "outputTokens": 672,
+          "latencyMs": 8762,
+          "costUsd": 0.043277
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "non_eea_processing",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "vector"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Annalena Baerbock powiedziała, że nie odchodzi ze stanowiska ministry, bo inaczej Rosja przemaszeruje przez Polskę.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "autorstwo"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "FALSZYWE",
+          "ruleApplied": 6,
+          "reasonPl": "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „Falsch”). dpa Faktencheck (Deutsche Presse-Agentur) (2 października 2024): „Baerbock bringt den russischen Angriff auf die Ukraine in keinen Zusammenhang mit ihrem Festhalten am Posten der Außenministerin. Über die Aggression aus Moskau spricht sie bei «Maischberger» in einem anderen Kontext.”",
+          "evidence": [
+            {
+              "recordId": "dpa-factchecking:ee8fdefa177f",
+              "url": "https://dpa-factchecking.com/germany/241002-99-591674",
+              "publishedAt": "2024-10-02",
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "ratingRaw": "Falsch",
+              "quote": "Baerbock bringt den russischen Angriff auf die Ukraine in keinen Zusammenhang mit ihrem Festhalten am Posten der Außenministerin. Über die Aggression aus Moskau spricht sie bei «Maischberger» in einem anderen Kontext."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "valid",
+      "text": "Według Annaleny Baerbock jej rezygnacja z funkcji szefowej niemieckiej dyplomacji oznaczałaby, że Rosja przemaszeruje przez Polskę.",
+      "createdAt": "2026-11-22T07:12:09.303Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ee42785bff2172ee898d1b39aea9ff9dfba781b97cc5e29de85e466b5129cc28",
+      "status": "OK",
+      "mainVerdict": "FALSZYWE",
+      "costUsd": 0.043388,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1437,
+          "outputTokens": 549,
+          "latencyMs": 6371,
+          "costUsd": 0.000418
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3746,
+          "outputTokens": 227,
+          "latencyMs": 3533,
+          "costUsd": 0.009762
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1584,
+          "outputTokens": 156,
+          "latencyMs": 2426,
+          "costUsd": 0.000236
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 26753,
+          "outputTokens": 593,
+          "latencyMs": 5910,
+          "costUsd": 0.032972
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "non_eea_processing",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "vector"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Według Annaleny Baerbock jej rezygnacja z funkcji szefowej niemieckiej dyplomacji oznaczałaby, że Rosja przemaszeruje przez Polskę.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "brak"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "autorstwo"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "FALSZYWE",
+          "ruleApplied": 6,
+          "reasonPl": "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „Falsch”). dpa Faktencheck (Deutsche Presse-Agentur) (2 października 2024): „Baerbock bringt den russischen Angriff auf die Ukraine in keinen Zusammenhang mit ihrem Festhalten am Posten der Außenministerin. Über die Aggression aus Moskau spricht sie bei «Maischberger» in einem anderen Kontext.”",
+          "evidence": [
+            {
+              "recordId": "dpa-factchecking:ee8fdefa177f",
+              "url": "https://dpa-factchecking.com/germany/241002-99-591674",
+              "publishedAt": "2024-10-02",
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "ratingRaw": "Falsch",
+              "quote": "Baerbock bringt den russischen Angriff auf die Ukraine in keinen Zusammenhang mit ihrem Festhalten am Posten der Außenministerin. Über die Aggression aus Moskau spricht sie bei «Maischberger» in einem anderen Kontext."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "positive",
+      "text": "Katastrofę lotu MH17 spowodował pocisk wystrzelony z ziemi.",
+      "createdAt": "2026-11-22T07:12:08.775Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ee42785bff2172ee898d1b39aea9ff9dfba781b97cc5e29de85e466b5129cc28",
+      "status": "OK",
+      "mainVerdict": "POTWIERDZONE",
+      "costUsd": 0.036799,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1408,
+          "outputTokens": 276,
+          "latencyMs": 3606,
+          "costUsd": 0.000279
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3221,
+          "outputTokens": 697,
+          "latencyMs": 8666,
+          "costUsd": 0.013412
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1811,
+          "outputTokens": 43,
+          "latencyMs": 1157,
+          "costUsd": 0.000203
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 26446,
+          "outputTokens": 521,
+          "latencyMs": 5382,
+          "costUsd": 0.022905
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "non_eea_processing",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "vector"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Katastrofę lotu MH17 spowodował pocisk wystrzelony z ziemi.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "sedno"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "POTWIERDZONE",
+          "ruleApplied": 7,
+          "reasonPl": "Potwierdzają to 2 niezależne źródła pierwotne: Rada ds. Bezpieczeństwa Niderlandów (Onderzoeksraad voor Veiligheid, Dutch Safety Board) i Organizacja Narodów Zjednoczonych - UN News i UN w Ukrainie. Rada ds. Bezpieczeństwa Niderlandów (Onderzoeksraad voor Veiligheid, Dutch Safety Board) (22 października 2015): „No scenario other than a Buk surface-to-air missile can explain this combination of facts. The 320-square-kilometre area from which the missile was launched has been determined on the basis of various simulations.”",
+          "evidence": [
+            {
+              "recordId": "onderzoeksraad:415b2f2a369c",
+              "url": "https://onderzoeksraad.nl/en/pers/dutch-safety-board-buk-surface-to-air-missile-system-caused-mh17-crash/",
+              "publishedAt": "2015-10-22",
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "quote": "No scenario other than a Buk surface-to-air missile can explain this combination of facts. The 320-square-kilometre area from which the missile was launched has been determined on the basis of various simulations."
+            },
+            {
+              "recordId": "onderzoeksraad:065b4fe66132",
+              "url": "https://onderzoeksraad.nl/en/pers/dutch-safety-board-buk-surface-to-air-missile-system-caused-mh17-crash/",
+              "publishedAt": "2015-10-22",
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "quote": "At 13.20 UTC (Coordinated Universal Time) a 9N314M warhead, launched by a Buk surface-to-air missile system from a 320-square-kilometre area in the eastern part of Ukraine, detonated to the left and above the cockpit."
+            },
+            {
+              "recordId": "un-news:b4106e3bb981",
+              "url": "https://news.un.org/en/story/2025/05/1163161",
+              "publishedAt": "2025-05-13",
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "quote": "The JIT determined that flight MH17 was shot down by a missile launched from a Buk TELAR installation that was transported from Russia to a farm field in eastern Ukraine in an area controlled by separatists."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "distinct",
+      "text": "Czy wypadek samolotu MH370 spowodował ukraiński myśliwiec?",
+      "createdAt": "2026-11-22T07:12:31.934Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ee42785bff2172ee898d1b39aea9ff9dfba781b97cc5e29de85e466b5129cc28",
+      "status": "OK",
+      "mainVerdict": "BRAK_DOWODOW",
+      "costUsd": 0.082414,
+      "models": [
+        {
+          "purpose": "source_answer",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3964,
+          "outputTokens": 60,
+          "latencyMs": 1494,
+          "costUsd": 0.008528
+        },
+        {
+          "purpose": "source_answer_check",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 482,
+          "outputTokens": 314,
+          "latencyMs": 3467,
+          "costUsd": 0.000205
+        },
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1411,
+          "outputTokens": 310,
+          "latencyMs": 3805,
+          "costUsd": 0.000296
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3126,
+          "outputTokens": 209,
+          "latencyMs": 3488,
+          "costUsd": 0.008342
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 46378,
+          "outputTokens": 809,
+          "latencyMs": 4551,
+          "costUsd": 0.065043
+        }
+      ],
+      "warnings": [
+        "non_eea_processing",
+        "branch_unavailable",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "vector",
+        "live"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Wypadek samolotu MH370 spowodował ukraiński myśliwiec.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "sedno"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "BRAK_DOWODOW",
+          "ruleApplied": 2,
+          "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "R05",
+      "text": "Trump powiedział, że NATO było bankrutem, dopóki on nie przyszedł i nie kazał wszystkim płacić.",
+      "createdAt": "2026-11-22T07:12:29.173Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ee42785bff2172ee898d1b39aea9ff9dfba781b97cc5e29de85e466b5129cc28",
+      "status": "OK",
+      "mainVerdict": "BRAK_DOWODOW",
+      "costUsd": 0.042854,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1424,
+          "outputTokens": 706,
+          "latencyMs": 8427,
+          "costUsd": 0.000495
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 2933,
+          "outputTokens": 299,
+          "latencyMs": 4380,
+          "costUsd": 0.008856
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 32850,
+          "outputTokens": 436,
+          "latencyMs": 5931,
+          "costUsd": 0.033503
+        }
+      ],
+      "warnings": [
+        "non_eea_processing",
+        "branch_unavailable"
+      ],
+      "unavailableBranches": [
+        "vector"
+      ],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "Trump powiedział, że NATO było bankrutem, dopóki on nie przyszedł i nie kazał wszystkim płacić.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "autorstwo"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "BRAK_DOWODOW",
+          "ruleApplied": 2,
+          "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "evidence": []
+        }
+      ]
+    }
+  ],
+  "gas": [
+    {
+      "id": "B01",
+      "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+      "createdAt": "2026-11-22T07:14:43.321Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "ec86dc74023698ca6b3242c88bc29e4ce71f07fa5b2ae9ae27d5180bf686cd6d",
+      "status": "OK",
+      "mainVerdict": "BRAK_DOWODOW",
+      "costUsd": 0.091921,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1406,
+          "outputTokens": 475,
+          "latencyMs": 5291,
+          "costUsd": 0.000378
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 3964,
+          "outputTokens": 289,
+          "latencyMs": 4455,
+          "costUsd": 0.010818
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 4244,
+          "outputTokens": 616,
+          "latencyMs": 7940,
+          "costUsd": 0.014648
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1588,
+          "outputTokens": 373,
+          "latencyMs": 5158,
+          "costUsd": 0.000345
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 49599,
+          "outputTokens": 1544,
+          "latencyMs": 7085,
+          "costUsd": 0.065732
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "non_eea_processing"
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2022-04"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "zakres"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "BRAK_DOWODOW",
+          "ruleApplied": 2,
+          "reasonPl": "Twierdzenie dotyczy kilku podmiotów, a nie dla każdego mamy wystarczające dowody: brakuje ich dla „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry”. „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski” — Potwierdzone. Potwierdza to źródło pierwotne. Komisja Europejska (commission.europa.eu) (data nieznana): „On 27 April, Gazprom terminated all shipments to Poland and Bulgaria (both countries had long-term contracts ending this year).” „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+          "evidence": [
+            {
+              "recordId": "ec-commission:18b7644f6696",
+              "url": "https://commission.europa.eu/system/files/2022-10/quarterly_report_on_european_gas_markets_q2_2022_final_0.pdf",
+              "publishedAt": null,
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "quote": "On 27 April, Gazprom terminated all shipments to Poland and Bulgaria (both countries had long-term contracts ending this year)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+      "createdAt": "2026-11-22T07:16:46.750Z",
+      "pipelineVersion": "engine-2026.11.22-33-evidence",
+      "corpusSnapshot": "8884627cc1fe65d8f90dd2ec607bad5e986350eda13f55e64585ea7f58f485b3",
+      "status": "OK",
+      "mainVerdict": "WPROWADZAJACE",
+      "costUsd": 0.084504,
+      "models": [
+        {
+          "purpose": "claims",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1414,
+          "outputTokens": 465,
+          "latencyMs": 6049,
+          "costUsd": 0.000374
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 4079,
+          "outputTokens": 530,
+          "latencyMs": 7038,
+          "costUsd": 0.013458
+        },
+        {
+          "purpose": "assess",
+          "provider": "openai",
+          "model": "gpt-6.2-sol",
+          "inputTokens": 4053,
+          "outputTokens": 643,
+          "latencyMs": 8266,
+          "costUsd": 0.014536
+        },
+        {
+          "purpose": "verifier",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 1592,
+          "outputTokens": 109,
+          "latencyMs": 1930,
+          "costUsd": 0.000214
+        },
+        {
+          "purpose": "live_search",
+          "provider": "openai",
+          "model": "gpt-6-luna",
+          "inputTokens": 51527,
+          "outputTokens": 1539,
+          "latencyMs": 6943,
+          "costUsd": 0.055922
+        }
+      ],
+      "warnings": [
+        "single_key_verifier",
+        "non_eea_processing"
+      ],
+      "unavailableBranches": [],
+      "claims": [
+        {
+          "id": "c1",
+          "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+          "type": "fakt",
+          "isMain": true,
+          "temporal": {
+            "kind": "jednorazowe",
+            "date": "2022-04"
+          },
+          "inputOverlap": 1,
+          "assertedAspect": "sedno"
+        }
+      ],
+      "verdicts": [
+        {
+          "claimId": "c1",
+          "verdict": "WPROWADZAJACE",
+          "ruleApplied": 9,
+          "reasonPl": "Twierdzenie jest prawdziwe tylko częściowo: „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry” to nieprawda, a „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski” — prawda. „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski” — Potwierdzone. Potwierdza to źródło pierwotne. Komisja Europejska (commission.europa.eu) (data nieznana): „On 27 April, Gazprom terminated all shipments to Poland and Bulgaria (both countries had long-term contracts ending this year).” „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry” — Fałszywe. Przeczy temu źródło pierwotne. Rząd Węgier (Magyarország Kormánya) (27 kwietnia 2022): „A Magyarországra irányuló földgázszállítás szerződés, ütemterv szerint és zavartalanul zajlik - jelentette ki Szijjártó Péter külgazdasági és külügyminiszter Facebook-oldalán szerdán.”",
+          "evidence": [
+            {
+              "recordId": "ec-commission:18b7644f6696",
+              "url": "https://commission.europa.eu/system/files/2022-10/quarterly_report_on_european_gas_markets_q2_2022_final_0.pdf",
+              "publishedAt": null,
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "quote": "On 27 April, Gazprom terminated all shipments to Poland and Bulgaria (both countries had long-term contracts ending this year)."
+            },
+            {
+              "recordId": "hungarian-government:acde7e4b88ac",
+              "url": "https://kormany.hu/hirek/szijjarto-peter-a-magyarorszagra-iranyulo-foldgazszallitas-szerzodes-utemterv-szerint-es-zavartalanul-zajlik",
+              "publishedAt": "2022-04-27",
+              "usedForVerdict": true,
+              "passageKind": "excerpt",
+              "relation": "OBALA",
+              "quote": "A Magyarországra irányuló földgázszállítás szerződés, ütemterv szerint és zavartalanul zajlik - jelentette ki Szijjártó Péter külgazdasági és külügyminiszter Facebook-oldalán szerdán."
+            },
+            {
+              "recordId": "live:71e4fe0088aa468520d5",
+              "url": "https://www.gov.pl/web/klimat/polska-wypowiedziala-porozumienie-gazowe-ws-jamalu",
+              "publishedAt": null,
+              "usedForVerdict": false,
+              "passageKind": "excerpt",
+              "relation": "CZESCIOWO",
+              "quote": "Kiedy Rosja odcinając nas od dostaw de facto złamała zapisy umowy, polski rząd uznał, że ze względu na naruszenie jego istotnych warunków, przestało ono obowiązywać"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "limitations": {
+    "A17": "W v31 źródło ONZ cytowało zaprzeczenie ambasadorki USA. Publikacja relacjonująca tę wypowiedź nie stanowi niezależnej inspekcji. Odczyt v32 miał kontekst bez rozstrzygnięcia.",
+    "A18": "W v31 wykorzystano ustalenia opisane w relacji UN News dotyczącej Buczy. V32 odnalazł publikację Demagoga o odpowiednim zdarzeniu, lecz pozostawił jej ocenę jako kontekst. W tych kontrolach nie wykonano nowego wywołania A17 ani A18.",
+    "R05": "Ocena prawdziwości treści wypowiedzi nie stanowi oceny jej autorstwa. Odpowiedź BRAK_DOWODOW wobec przypisania nie realizuje zapisanego klucza FALSZYWE.",
+    "B01": "Relacja węgierska podaje stan dostaw w dniu decyzji Gazpromu, 27 kwietnia 2022. Podano dwie kolejne próby na źródle ogólnym i na uzupełnionym o opis tranzytu. Wersji drugiej nie traktuje się jako niezależnej replikacji pierwszej."
+  }
+}

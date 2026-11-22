@@ -100,6 +100,18 @@ describe("gałąź BM25", () => {
     expect(branch.required).toBe(true);
   });
 
+  it("odzyskuje właściwą liczbę z treści przy wielu tytułach zawierających liczbę autora", async () => {
+    const db = createTestDb();
+    try {
+      const put = db.prepare("INSERT INTO records (id, source_id, title, text, type, level, role) VALUES (?, 'urzad', ?, ?, 'pierwotne', 1, 'tresc')");
+      put.run("statut", "Statut", "Komitet składa się z 24 delegatów.");
+      for (let i = 0; i < 12; i++) put.run("rubryka" + i, "Komitet, 70 delegatów", "Okręg liczy 70 delegatów.");
+      db.exec("INSERT INTO records_fts(records_fts) VALUES('rebuild')");
+      const hits = await createBm25Branch(db).search({ claim: claim("Komitet liczy 70 delegatów."), limit: 5 });
+      expect(hits.map(h => h.recordId)).toContain("statut");
+    } finally { db.close(); }
+  });
+
   it("odmiany fleksyjne: sankcji / sankcje / sankcjami znajdują te same rekordy", async () => {
     const run = async (text: string) => (await branch.search({ claim: claim(text) })).map((c) => c.recordId);
     const a = await run("sankcji");

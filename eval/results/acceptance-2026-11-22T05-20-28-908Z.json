@@ -1,0 +1,4260 @@
+{
+  "meta": {
+    "startedAt": "2026-11-22T05:20:28.908Z",
+    "finishedAt": "2026-11-22T05:23:22.750Z",
+    "gitSha": "f69ede267ba91d43fbe85eb2a2de63530f8eb3f2",
+    "gitDirty": true,
+    "pipeline": "engine-2026.11.22-27-evidence-time",
+    "codeSha256": "b16af02ede203cda1c5221b42d748ce9d8152a8712ecc96de9f8e6ee9845326b",
+    "corpusSnapshot": "69ea00d5d845a29b6dc4a052a034e7524bfd4eaf2789f2507df7f036b470cf9a",
+    "records": 3675,
+    "devSha256": "fef05a91b26994ad3340a695a23304e4af4e11345bd56b464b0e45f0f0912f23",
+    "provider": "openai",
+    "main": "gpt-6.2-sol",
+    "fast": "gpt-6-luna",
+    "liveSearch": true,
+    "parallel": 3,
+    "sample": [
+      "A01",
+      "A06",
+      "A08",
+      "A10",
+      "A13",
+      "A15",
+      "A19",
+      "A22",
+      "N01",
+      "N02",
+      "B01",
+      "B02",
+      "B04",
+      "B08",
+      "C01",
+      "C02",
+      "D01",
+      "D02",
+      "D04",
+      "D06",
+      "O01",
+      "O02",
+      "O04",
+      "G01",
+      "G02",
+      "H01",
+      "H02",
+      "P05",
+      "P07",
+      "L05"
+    ]
+  },
+  "metrics": {
+    "cases": 30,
+    "runsPerCase": 1,
+    "endToEnd": {
+      "n": 30,
+      "ok": 30,
+      "rate": 1
+    },
+    "confusion": {
+      "POTWIERDZONE": {
+        "POTWIERDZONE": 5,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 1,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "FALSZYWE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 4,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 3,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "WPROWADZAJACE": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 2,
+        "BRAK_DOWODOW": 2,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "BRAK_DOWODOW": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 8,
+        "NIE_PODLEGA": 0,
+        "BRAK_WYNIKU": 0
+      },
+      "NIE_PODLEGA": {
+        "POTWIERDZONE": 0,
+        "FALSZYWE": 0,
+        "WPROWADZAJACE": 0,
+        "BRAK_DOWODOW": 0,
+        "NIE_PODLEGA": 3,
+        "BRAK_WYNIKU": 0
+      }
+    },
+    "f1": {
+      "perClass": [
+        {
+          "label": "POTWIERDZONE",
+          "support": 6,
+          "tp": 5,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1,
+          "recall": 0.8333333333333334,
+          "f1": 0.9090909090909091
+        },
+        {
+          "label": "FALSZYWE",
+          "support": 7,
+          "tp": 4,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1,
+          "recall": 0.5714285714285714,
+          "f1": 0.7272727272727273
+        },
+        {
+          "label": "WPROWADZAJACE",
+          "support": 4,
+          "tp": 2,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        {
+          "label": "BRAK_DOWODOW",
+          "support": 8,
+          "tp": 8,
+          "fp": 6,
+          "fn": 0,
+          "precision": 0.5714285714285714,
+          "recall": 1,
+          "f1": 0.7272727272727273
+        },
+        {
+          "label": "NIE_PODLEGA",
+          "support": 3,
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
+        }
+      ],
+      "macroF1": 0.806060606060606,
+      "supportedClasses": [
+        "POTWIERDZONE",
+        "FALSZYWE",
+        "WPROWADZAJACE",
+        "BRAK_DOWODOW",
+        "NIE_PODLEGA"
+      ],
+      "accuracy": 0.7857142857142857,
+      "total": 28
+    },
+    "scenarios": {
+      "A": {
+        "n": 13,
+        "ok": 10,
+        "rate": 0.7692307692307693
+      },
+      "B": {
+        "n": 4,
+        "ok": 2,
+        "rate": 0.5
+      },
+      "C": {
+        "n": 2,
+        "ok": 2,
+        "rate": 1
+      },
+      "D": {
+        "n": 4,
+        "ok": 4,
+        "rate": 1
+      },
+      "G": {
+        "n": 2,
+        "ok": 1,
+        "rate": 0.5
+      },
+      "H": {
+        "n": 2,
+        "ok": 2,
+        "rate": 1
+      },
+      "X": {
+        "n": 3,
+        "ok": 3,
+        "rate": 1
+      }
+    },
+    "tags": {
+      "negation": {
+        "n": 3,
+        "ok": 0,
+        "rate": 0
+      },
+      "wrong_context": {
+        "n": 3,
+        "ok": 2,
+        "rate": 0.6666666666666666
+      },
+      "outdated": {
+        "n": 1,
+        "ok": 0,
+        "rate": 0
+      },
+      "politician": {
+        "n": 2,
+        "ok": 2,
+        "rate": 1
+      },
+      "link": {
+        "n": 1,
+        "ok": 1,
+        "rate": 1
+      },
+      "official_link": {
+        "n": 1,
+        "ok": 1,
+        "rate": 1
+      },
+      "misused_link": {
+        "n": 1,
+        "ok": 1,
+        "rate": 1
+      }
+    },
+    "citationCoverage": {
+      "n": 11,
+      "ok": 11,
+      "rate": 1,
+      "missing": []
+    },
+    "citationCorrectness": {
+      "n": 25,
+      "ok": 25,
+      "rate": 1,
+      "failures": []
+    },
+    "abstention": {
+      "scenarioD": {
+        "n": 4,
+        "ok": 4,
+        "rate": 1
+      },
+      "allExpectedAbstain": {
+        "n": 8,
+        "ok": 8,
+        "rate": 1
+      },
+      "overAbstention": {
+        "n": 17,
+        "ok": 6,
+        "rate": 0.35294117647058826
+      }
+    },
+    "injection": {
+      "resistance": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "detection": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "byGoal": {},
+      "failures": [],
+      "skipped": []
+    },
+    "latency": {
+      "n": 30,
+      "p50Ms": 16001.5,
+      "p95Ms": 20501,
+      "maxMs": 21791
+    },
+    "cost": {
+      "runs": 30,
+      "totalUsd": 1.2092060000000002,
+      "meanUsd": 0.04030686666666668,
+      "per100Usd": 4.030686666666668
+    },
+    "faults": {
+      "n": 0,
+      "ok": 0,
+      "rate": 0,
+      "failures": []
+    },
+    "soft": {
+      "conflictShown": {
+        "n": 2,
+        "ok": 0,
+        "rate": 0
+      },
+      "incidentWarning": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "engineModeratorClaims": [
+        "A22",
+        "N01",
+        "N02",
+        "B01",
+        "B08",
+        "C01",
+        "C02",
+        "D01",
+        "D02",
+        "D04",
+        "D06",
+        "G02",
+        "H01",
+        "H02"
+      ],
+      "strengthAtLeast": {
+        "n": 0,
+        "ok": 0,
+        "rate": 0
+      },
+      "strengthMisses": [],
+      "correctMeritStrength": {
+        "slaba": 0,
+        "srednia": 6,
+        "mocna": 3
+      }
+    },
+    "answers": {
+      "n": 2,
+      "ok": 2,
+      "rate": 1,
+      "runs": {
+        "n": 2,
+        "ok": 2,
+        "rate": 1
+      },
+      "failures": []
+    },
+    "inputModes": {
+      "claim": {
+        "accuracy": {
+          "n": 28,
+          "ok": 22,
+          "rate": 0.7857142857142857
+        },
+        "modeDetected": {
+          "n": 1,
+          "ok": 1,
+          "rate": 1
+        }
+      },
+      "question_yesno": {
+        "accuracy": {
+          "n": 0,
+          "ok": 0,
+          "rate": 0
+        },
+        "modeDetected": {
+          "n": 0,
+          "ok": 0,
+          "rate": 0
+        }
+      },
+      "question_open": {
+        "accuracy": {
+          "n": 2,
+          "ok": 2,
+          "rate": 1
+        },
+        "modeDetected": {
+          "n": 2,
+          "ok": 2,
+          "rate": 1
+        }
+      }
+    },
+    "demo": []
+  },
+  "webReportsWithAudit": 30,
+  "channels": [
+    {
+      "id": "G01",
+      "verdict": "POTWIERDZONE",
+      "cacheHit": true,
+      "saved": true,
+      "consistent": true
+    },
+    {
+      "id": "G02",
+      "verdict": "BRAK_DOWODOW",
+      "cacheHit": true,
+      "saved": true,
+      "consistent": true
+    },
+    {
+      "id": "P07",
+      "verdict": null,
+      "cacheHit": true,
+      "saved": true,
+      "consistent": true
+    },
+    {
+      "id": "D01",
+      "verdict": "BRAK_DOWODOW",
+      "cacheHit": true,
+      "saved": true,
+      "consistent": true
+    }
+  ],
+  "feedback": true,
+  "auditChain": {
+    "ok": true,
+    "checked": 34
+  },
+  "correct": 24,
+  "rows": [
+    {
+      "id": "A01",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Tak. Polska jest członkiem NATO od 12 marca 1999 roku.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Polska jest członkiem NATO od 12 marca 1999 roku.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "1999-03-12"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "czas"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "POTWIERDZONE",
+            "ruleApplied": 7,
+            "strength": {
+              "level": "mocna",
+              "score": 95,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "2 niezależne źródła urzędowe mówią to samo: Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne), NATO (Organizacja Traktatu Północnoatlantyckiego)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Kod (bez modeli) sprawdził, że nazwy i liczby z twierdzenia występują w cytacie ze źródła."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależność zapewniają tu zgodne źródła od różnych wydawców."
+                }
+              ],
+              "primarySources": 4,
+              "independentPublishers": 2,
+              "newestEvidenceAt": "2024-03-11",
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": []
+            },
+            "reasonPl": "Potwierdzają to 2 niezależne źródła urzędowe: NATO (Organizacja Traktatu Północnoatlantyckiego) i Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne). NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12).",
+            "evidence": [
+              {
+                "recordId": "nato:17b2896c4813",
+                "title": "NATO: Polska — członkostwo w NATO od 1999 r.",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              },
+              {
+                "recordId": "nato:bb383ce7e3a2",
+                "title": "NATO: członkowie przyjęci w 1999 r. — Czechy, Węgry i Polska",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Czechy, Węgry i Polska przystąpiły do NATO: 12 marca 1999 r. (1999-03-12).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              },
+              {
+                "recordId": "live:4452897a70334a18548a",
+                "title": "Polska od 25 lat jest członkiem Paktu Północnoatlantyckiego - Polska na Ukrainie - Portal Gov.pl",
+                "publisher": "Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne)",
+                "publishedAt": null,
+                "fetchedAt": "2026-11-22T05:20:38.816Z",
+                "url": "https://www.gov.pl/web/ukraina/polska-od-25-lat-jest-czlonkiem-paktu-polnocnoatlantyckiego",
+                "quote": "12 marca 1999 r. wolna i demokratyczna Polska przystąpiła do Sojuszu Północnoatlantyckiego.",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              },
+              {
+                "recordId": "live:a36f8207ab0f14ae1fd8",
+                "title": "Poland has been a member of the North Atlantic Alliance for 25 years - Ministry of Foreign Affairs Republic of Poland - Gov.pl website",
+                "publisher": "Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne)",
+                "publishedAt": null,
+                "fetchedAt": "2026-11-22T05:20:38.816Z",
+                "url": "https://www.gov.pl/web/diplomacy/poland-has-been-a-member-of-the-north-atlantic-alliance-for-25-years",
+                "quote": "On 12 March 1999, a free and democratic Poland joined the North Atlantic Alliance.",
+                "lang": "en",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Potwierdzone. Potwierdzają to 2 niezależne źródła urzędowe: NATO (Organizacja Traktatu Północnoatlantyckiego) i Rząd RP - serwis gov.pl (MSZ, MON, MSWiA, KPRM i inne). NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12).",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1408,
+            "outputTokens": 204,
+            "latencyMs": 2493,
+            "costUsd": 0.000243
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3547,
+            "outputTokens": 638,
+            "latencyMs": 7991,
+            "costUsd": 0.013474
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1586,
+            "outputTokens": 53,
+            "latencyMs": 926,
+            "costUsd": 0.000185
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 17972,
+            "outputTokens": 420,
+            "latencyMs": 4514,
+            "costUsd": 0.022007
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Polska jest członkiem NATO od 12 marca 1999 roku.",
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "latencyMs": 18868,
+      "costUsd": 0.035909
+    },
+    {
+      "id": "A06",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Tak. Konstytucja RP została uchwalona przez Zgromadzenie Narodowe 2 kwietnia 1997 roku.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Konstytucja RP została uchwalona przez Zgromadzenie Narodowe 2 kwietnia 1997 roku.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "1997-04-02"
+            },
+            "inputOverlap": 1
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "POTWIERDZONE",
+            "ruleApplied": 7,
+            "strength": {
+              "level": "mocna",
+              "score": 86,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: Senat Rzeczypospolitej Polskiej (senat.gov.pl)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Kod (bez modeli) sprawdził, że nazwy i liczby z twierdzenia występują w cytacie ze źródła."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależnie od modeli odczyt potwierdziła kontrola dosłowna w kodzie."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "2022-04-01",
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": []
+            },
+            "reasonPl": "Potwierdza to źródło urzędowe. Senat Rzeczypospolitej Polskiej (senat.gov.pl) (1 kwietnia 2022): „2 kwietnia 1997 r. Zgromadzenie Narodowe uchwaliło Konstytucję Rzeczypospolitej Polskiej”",
+            "evidence": [
+              {
+                "recordId": "senat-pl:14307efce215",
+                "title": "Senat RP: 25. rocznica uchwalenia Konstytucji RP",
+                "publisher": "Senat Rzeczypospolitej Polskiej (senat.gov.pl)",
+                "publishedAt": "2022-04-01",
+                "fetchedAt": "2026-11-22T04:43:33.947Z",
+                "url": "https://www.senat.gov.pl/aktualnoscilista/art,14652,25-rocznica-uchwalenia-konstytucji-rp.html",
+                "quote": "2 kwietnia 1997 r. Zgromadzenie Narodowe uchwaliło Konstytucję Rzeczypospolitej Polskiej",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Potwierdzone. Potwierdza to źródło urzędowe. Senat Rzeczypospolitej Polskiej (senat.gov.pl) (1 kwietnia 2022): „2 kwietnia 1997 r. Zgromadzenie Narodowe uchwaliło Konstytucję Rzeczypospolitej Polskiej”",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1417,
+            "outputTokens": 395,
+            "latencyMs": 4139,
+            "costUsd": 0.000339
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3096,
+            "outputTokens": 408,
+            "latencyMs": 5396,
+            "costUsd": 0.010272
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1239,
+            "outputTokens": 23,
+            "latencyMs": 795,
+            "costUsd": 0.000135
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 25823,
+            "outputTokens": 640,
+            "latencyMs": 5899,
+            "costUsd": 0.022903
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Konstytucja RP została uchwalona przez Zgromadzenie Narodowe 2 kwietnia 1997 roku.",
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "latencyMs": 19418,
+      "costUsd": 0.033649
+    },
+    {
+      "id": "A08",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie. „Sejm i Senat są wybierane na czteroletnie kadencje.”",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "FALSZYWE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Kadencja Sejmu trwa 5 lat.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "liczba"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "FALSZYWE",
+            "ruleApplied": 8,
+            "strength": {
+              "level": "srednia",
+              "score": 66,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Kod (bez modeli) porównał liczby: liczby „5” z twierdzenia nie ma w źródle, które podaje inną."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Źródła mówią o szczególe (np. dacie lub liczbie), a nie o całej informacji."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależnie od modeli odczyt potwierdziła kontrola dosłowna w kodzie."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Najnowszy dowód ma ponad 2 lata — sytuacja mogła się zmienić."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "1997-04-02",
+              "archivalWarning": true,
+              "verifierAgreement": "zgoda",
+              "notes": [
+                "Twierdzenie sprowadza się do jednego szczegółu (liczba lub kwota), a źródła podają inną liczbę — dlatego to fałsz, a nie tylko brak kontekstu. Kod (bez modeli) porównał: źródło podaje „4”, a twierdzenie „5”."
+              ]
+            },
+            "reasonPl": "Przeczy temu źródło urzędowe. Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (2 kwietnia 1997): „Art. 98. 1. Sejm i Senat są wybierane na czteroletnie kadencje.”",
+            "evidence": [
+              {
+                "recordId": "sejm-eli:4b0cf68c664f",
+                "title": "Konstytucja Rzeczypospolitej Polskiej z dnia 2 kwietnia 1997 r. (Dz.U. 1997 nr 78 poz. 483, tekst ujednolicony) — art. 98",
+                "publisher": "Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)",
+                "publishedAt": "1997-04-02",
+                "fetchedAt": "2026-11-21T16:18:44.587Z",
+                "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+                "quote": "Art. 98. 1. Sejm i Senat są wybierane na czteroletnie kadencje.",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "liczba",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Fałszywe. Przeczy temu źródło urzędowe. Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (2 kwietnia 1997): „Art. 98. 1. Sejm i Senat są wybierane na czteroletnie kadencje.”",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1403,
+            "outputTokens": 200,
+            "latencyMs": 2635,
+            "costUsd": 0.00024
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3319,
+            "outputTokens": 420,
+            "latencyMs": 6087,
+            "costUsd": 0.010838
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1216,
+            "outputTokens": 61,
+            "latencyMs": 1074,
+            "costUsd": 0.000152
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 17765,
+            "outputTokens": 430,
+            "latencyMs": 4618,
+            "costUsd": 0.021992
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Kadencja Sejmu trwa 5 lat.",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "latencyMs": 19594,
+      "costUsd": 0.033222
+    },
+    {
+      "id": "A10",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie. „Senat składa się ze 100 senatorów.”",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "FALSZYWE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Senat RP liczy 150 senatorów.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "liczba"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "FALSZYWE",
+            "ruleApplied": 8,
+            "strength": {
+              "level": "srednia",
+              "score": 66,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Kod (bez modeli) porównał liczby: liczby „150” z twierdzenia nie ma w źródle, które podaje inną."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Źródła mówią o szczególe (np. dacie lub liczbie), a nie o całej informacji."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależnie od modeli odczyt potwierdziła kontrola dosłowna w kodzie."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Najnowszy dowód ma ponad 2 lata — sytuacja mogła się zmienić."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "1997-04-02",
+              "archivalWarning": true,
+              "verifierAgreement": "zgoda",
+              "notes": [
+                "Twierdzenie sprowadza się do jednego szczegółu (liczba lub kwota), a źródła podają inną liczbę — dlatego to fałsz, a nie tylko brak kontekstu. Kod (bez modeli) porównał: źródło podaje „100”, a twierdzenie „150”."
+              ]
+            },
+            "reasonPl": "Przeczy temu źródło urzędowe. Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (2 kwietnia 1997): „Art. 97. 1. Senat składa się ze 100 senatorów.”",
+            "evidence": [
+              {
+                "recordId": "sejm-eli:a52a0a8b9e4e",
+                "title": "Konstytucja Rzeczypospolitej Polskiej z dnia 2 kwietnia 1997 r. (Dz.U. 1997 nr 78 poz. 483, tekst ujednolicony) — art. 97",
+                "publisher": "Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)",
+                "publishedAt": "1997-04-02",
+                "fetchedAt": "2026-11-21T16:18:44.587Z",
+                "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+                "quote": "Art. 97. 1. Senat składa się ze 100 senatorów.",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "liczba",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Fałszywe. Przeczy temu źródło urzędowe. Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI) (2 kwietnia 1997): „Art. 97. 1. Senat składa się ze 100 senatorów.”",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1398,
+            "outputTokens": 145,
+            "latencyMs": 1773,
+            "costUsd": 0.000212
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2976,
+            "outputTokens": 271,
+            "latencyMs": 3833,
+            "costUsd": 0.008662
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1200,
+            "outputTokens": 23,
+            "latencyMs": 678,
+            "costUsd": 0.000132
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18310,
+            "outputTokens": 493,
+            "latencyMs": 4225,
+            "costUsd": 0.022078
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Senat RP liczy 150 senatorów.",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "latencyMs": 13154,
+      "costUsd": 0.031084
+    },
+    {
+      "id": "A13",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Tak. Ukraina otrzymała status kraju kandydującego do Unii Europejskiej w czerwcu 2022 roku.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Ukraina otrzymała status kraju kandydującego do Unii Europejskiej w czerwcu 2022 roku.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2022-06"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "POTWIERDZONE",
+            "ruleApplied": 7,
+            "strength": {
+              "level": "srednia",
+              "score": 81,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: Portal Unii Europejskiej (Urząd Publikacji UE)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny, a źródło jest jedno — brak niezależnej kontroli krzyżowej."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": []
+            },
+            "reasonPl": "Potwierdza to źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): Odczyt z danych źródłowych: Ukraina (kraj kandydujący do UE), portal UE: Wniosek o członkostwo w UE złożyła w lutym 2022 r. Status kandydata otrzymała w czerwcu 2022 r.",
+            "evidence": [
+              {
+                "recordId": "eu-portal:9ce4a9d60272",
+                "title": "Unia Europejska: Ukraina — kraj kandydujący do UE (daty wniosku i statusu kandydata)",
+                "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+                "publishedAt": null,
+                "fetchedAt": "2026-11-21T21:22:36.719Z",
+                "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+                "quote": "Ukraina (kraj kandydujący do UE), portal UE: Wniosek o członkostwo w UE złożyła w lutym 2022 r. Status kandydata otrzymała w czerwcu 2022 r.",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Potwierdzone. Potwierdza to źródło urzędowe. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): Odczyt z danych źródłowych: Ukraina (kraj kandydujący do UE), portal UE: Wniosek o członkostwo w UE złożyła w lutym 2022 r. Status kandydata otrzymała w czerwcu 2022 r.",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1417,
+            "outputTokens": 344,
+            "latencyMs": 3791,
+            "costUsd": 0.000314
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3364,
+            "outputTokens": 379,
+            "latencyMs": 5141,
+            "costUsd": 0.010518
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1257,
+            "outputTokens": 23,
+            "latencyMs": 735,
+            "costUsd": 0.000137
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18313,
+            "outputTokens": 279,
+            "latencyMs": 3511,
+            "costUsd": 0.021971
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Ukraina otrzymała status kraju kandydującego do Unii Europejskiej w czerwcu 2022 roku.",
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "latencyMs": 14389,
+      "costUsd": 0.03294
+    },
+    {
+      "id": "A15",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Tak. Unia Europejska zakazała importu węgla z Rosji.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Unia Europejska zakazała importu węgla z Rosji.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "brak"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "POTWIERDZONE",
+            "ruleApplied": 7,
+            "strength": {
+              "level": "srednia",
+              "score": 81,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny, a źródło jest jedno — brak niezależnej kontroli krzyżowej."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "2026-11-06",
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": []
+            },
+            "reasonPl": "Potwierdza to źródło urzędowe. Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu) (6 listopada 2026): „Prohibition on the import of coal, peat and LPG (liquified petroleum gas) and seaborne crude oil”",
+            "evidence": [
+              {
+                "recordId": "ec-finance:fdf25764850d",
+                "title": "Komisja Europejska: Sanctions adopted following Russia’s military aggression against Ukraine (sankcje UE wobec Rosji i Białorusi, pakiety sankcji, zakaz importu węgla i ropy) (cz. 5)",
+                "publisher": "Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu)",
+                "publishedAt": "2026-11-06",
+                "fetchedAt": "2026-11-21T21:28:41.589Z",
+                "url": "https://finance.ec.europa.eu/eu-and-world/sanctions-restrictive-measures/sanctions-adopted-following-russias-military-aggression-against-ukraine_en",
+                "quote": "Prohibition on the import of coal, peat and LPG (liquified petroleum gas) and seaborne crude oil",
+                "lang": "en",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Potwierdzone. Potwierdza to źródło urzędowe. Komisja Europejska - DG ds. Stabilności Finansowej (finance.ec.europa.eu) (6 listopada 2026): „Prohibition on the import of coal, peat and LPG (liquified petroleum gas) and seaborne crude oil”",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1402,
+            "outputTokens": 193,
+            "latencyMs": 2103,
+            "costUsd": 0.000237
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3840,
+            "outputTokens": 422,
+            "latencyMs": 5586,
+            "costUsd": 0.0119
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1221,
+            "outputTokens": 23,
+            "latencyMs": 720,
+            "costUsd": 0.000134
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 22428,
+            "outputTokens": 366,
+            "latencyMs": 4358,
+            "costUsd": 0.022426
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Unia Europejska zakazała importu węgla z Rosji.",
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "latencyMs": 15801,
+      "costUsd": 0.034697
+    },
+    {
+      "id": "A19",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie. Źródła przeczą twierdzeniu „Samolot MH17 został zestrzelony przez ukraiński myśliwiec”.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "FALSZYWE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "autorstwo"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "FALSZYWE",
+            "ruleApplied": 6,
+            "strength": {
+              "level": "mocna",
+              "score": 96,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "3 niezależne źródła urzędowe mówią to samo: Rada ds. Bezpieczeństwa Niderlandów (Onderzoeksraad voor Veiligheid, Dutch Safety Board), Prokuratura Niderlandów (Openbaar Ministerie) - Wspólny Zespół Śledczy JIT ws. MH17, Organizacja Narodów Zjednoczonych - UN News i UN w Ukrainie."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Ocena organizacji sprawdzających fakty: EUvsDisinfo (East StratCom Task Force, EEAS) (ocena: „DISINFO”)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależność zapewniają tu zgodne źródła od różnych wydawców."
+                }
+              ],
+              "primarySources": 3,
+              "independentPublishers": 4,
+              "newestEvidenceAt": "2016-10-24",
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": [
+                "Werdykt pochodzi z oceny w bazie sprawdzonych informacji (fact-check)."
+              ]
+            },
+            "reasonPl": "Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „DISINFO”). EUvsDisinfo (East StratCom Task Force, EEAS) (24 października 2016): Teza oceniana przez wydawcę: Ukrainian pilots shot down MH17",
+            "evidence": [
+              {
+                "recordId": "euvsdisinfo:5e2f2b01f2bd",
+                "title": "EUvsDisinfo: Ukrainian pilots shot down MH17",
+                "publisher": "EUvsDisinfo (East StratCom Task Force, EEAS)",
+                "publishedAt": "2016-10-24",
+                "fetchedAt": "2026-11-21T21:43:52.128Z",
+                "url": "https://euvsdisinfo.eu/report/ukrainian-pilots-shot-down-mh17/",
+                "quote": "Ukrainian pilots shot down MH17",
+                "lang": "en",
+                "usedForVerdict": true,
+                "passageKind": "reviewed_claim",
+                "relation": "INNY_KONTEKST",
+                "aspect": "sedno",
+                "sourceType": "analiza",
+                "level": 2,
+                "role": "stala_rola",
+                "ratingRaw": "DISINFO",
+                "group": "kontekst"
+              },
+              {
+                "recordId": "un-news:80b44477cee7",
+                "title": "UN News: UN aviation council finds Russia responsible for downing of Malaysia Airlines flight (MH17: Rada ICAO uznała Rosję za odpowiedzialną za zestrzelenie) (cz. 1)",
+                "publisher": "Organizacja Narodów Zjednoczonych - UN News i UN w Ukrainie",
+                "publishedAt": "2025-05-13",
+                "fetchedAt": "2026-11-21T21:27:56.591Z",
+                "url": "https://news.un.org/en/story/2025/05/1163161",
+                "quote": "A UN body has found that Russia was responsible for the 17 July 2014 downing of Malaysia Airlines flight MH17 over eastern Ukraine that killed all 298 people on board.",
+                "lang": "en",
+                "usedForVerdict": false,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "autorstwo",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              },
+              {
+                "recordId": "un-news:b4106e3bb981",
+                "title": "UN News: UN aviation council finds Russia responsible for downing of Malaysia Airlines flight (MH17: Rada ICAO uznała Rosję za odpowiedzialną za zestrzelenie) (cz. 2)",
+                "publisher": "Organizacja Narodów Zjednoczonych - UN News i UN w Ukrainie",
+                "publishedAt": "2025-05-13",
+                "fetchedAt": "2026-11-21T21:27:56.591Z",
+                "url": "https://news.un.org/en/story/2025/05/1163161",
+                "quote": "The JIT determined that flight MH17 was shot down by a missile launched from a Buk TELAR installation that was transported from Russia to a farm field in eastern Ukraine in an area controlled by separatists.",
+                "lang": "en",
+                "usedForVerdict": false,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              },
+              {
+                "recordId": "onderzoeksraad:065b4fe66132",
+                "title": "Dutch Safety Board: Buk surface-to-air missile system caused MH17 crash (MH17: przyczyna katastrofy — rakieta Buk) (cz. 2)",
+                "publisher": "Rada ds. Bezpieczeństwa Niderlandów (Onderzoeksraad voor Veiligheid, Dutch Safety Board)",
+                "publishedAt": "2015-10-22",
+                "fetchedAt": "2026-11-21T21:27:39.869Z",
+                "url": "https://onderzoeksraad.nl/en/pers/dutch-safety-board-buk-surface-to-air-missile-system-caused-mh17-crash/",
+                "quote": "At 13.20 UTC (Coordinated Universal Time) a 9N314M warhead, launched by a Buk surface-to-air missile system from a 320-square-kilometre area in the eastern part of Ukraine, detonated to the left and above the cockpit.",
+                "lang": "en",
+                "usedForVerdict": false,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              },
+              {
+                "recordId": "prosecutionservice:d19ac69e1be5",
+                "title": "Prokuratura Niderlandów (JIT): Timeline: important steps in the investigation and legal proceedings (MH17: oś czasu śledztwa JIT i procesu) (cz. 2)",
+                "publisher": "Prokuratura Niderlandów (Openbaar Ministerie) - Wspólny Zespół Śledczy JIT ws. MH17",
+                "publishedAt": "2019-06-17",
+                "fetchedAt": "2026-11-21T21:27:42.742Z",
+                "url": "https://www.prosecutionservice.nl/topics/m/mh17-plane-crash/timeline-mh17-investigation-and-legal-proceedings",
+                "quote": "The crash of flight MH17 was caused by the detonation of a 9N314M-type warhead. That warhead was fired by a BUK missile system from the eastern part of Ukraine.",
+                "lang": "en",
+                "usedForVerdict": false,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Fałszywe. Organizacja sprawdzająca fakty oceniła to twierdzenie jako nieprawdziwe (ocena: „DISINFO”). EUvsDisinfo (East StratCom Task Force, EEAS) (24 października 2016): Teza oceniana przez wydawcę: Ukrainian pilots shot down MH17",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "incident_narrative",
+            "textPl": "EUvsDisinfo opisało wcześniej podobne twierdzenie. Ustalenie pochodzenia sprawdzanej wiadomości wymaga osobnych dowodów.",
+            "links": [
+              {
+                "title": "EUvsDisinfo: Ukrainian pilots shot down MH17",
+                "url": "https://euvsdisinfo.eu/report/ukrainian-pilots-shot-down-mh17/"
+              }
+            ]
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1409,
+            "outputTokens": 258,
+            "latencyMs": 2939,
+            "costUsd": 0.00027
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3297,
+            "outputTokens": 631,
+            "latencyMs": 8267,
+            "costUsd": 0.012904
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1774,
+            "outputTokens": 195,
+            "latencyMs": 2493,
+            "costUsd": 0.000275
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 22357,
+            "outputTokens": 508,
+            "latencyMs": 5059,
+            "costUsd": 0.02249
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Samolot MH17 został zestrzelony przez ukraiński myśliwiec.",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "latencyMs": 20717,
+      "costUsd": 0.035939
+    },
+    {
+      "id": "A22",
+      "correct": false,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Wojsko Polskie oficjalnie walczy na froncie w Ukrainie.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1403,
+            "outputTokens": 205,
+            "latencyMs": 2123,
+            "costUsd": 0.000243
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3007,
+            "outputTokens": 314,
+            "latencyMs": 4528,
+            "costUsd": 0.009154
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 28314,
+            "outputTokens": 561,
+            "latencyMs": 5950,
+            "costUsd": 0.033112
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "1",
+          "action": "recommended"
+        }
+      },
+      "input": "Wojsko Polskie oficjalnie walczy na froncie w Ukrainie.",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "latencyMs": 15081,
+      "costUsd": 0.042509
+    },
+    {
+      "id": "N01",
+      "correct": false,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Polska nie jest członkiem NATO.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "sprzeciw",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Model sprawdzający zakwestionował 2 dowody — nie liczymy ich.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Na temat, ale bez rozstrzygnięcia: 1. Odrzucone, bo cytat nie zgadzał się ze źródłem albo nie przeszedł kontroli: 2. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": [
+              {
+                "recordId": "nato:bb383ce7e3a2",
+                "title": "NATO: członkowie przyjęci w 1999 r. — Czechy, Węgry i Polska",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Czechy, Węgry i Polska przystąpiły do NATO: 12 marca 1999 r. (1999-03-12).",
+                "lang": "pl",
+                "usedForVerdict": false,
+                "passageKind": "structured_data",
+                "relation": "INNY_KONTEKST",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "kontekst"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1401,
+            "outputTokens": 155,
+            "latencyMs": 1861,
+            "costUsd": 0.000218
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2866,
+            "outputTokens": 657,
+            "latencyMs": 8210,
+            "costUsd": 0.012302
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1531,
+            "outputTokens": 47,
+            "latencyMs": 1190,
+            "costUsd": 0.000177
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 14312,
+            "outputTokens": 338,
+            "latencyMs": 3980,
+            "costUsd": 0.0316
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "2",
+          "action": "created"
+        }
+      },
+      "input": "Polska nie jest członkiem NATO.",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "latencyMs": 16898,
+      "costUsd": 0.044297
+    },
+    {
+      "id": "N02",
+      "correct": false,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Ukraina nie jest członkiem Unii Europejskiej.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1404,
+            "outputTokens": 218,
+            "latencyMs": 2667,
+            "costUsd": 0.000249
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2400,
+            "outputTokens": 225,
+            "latencyMs": 3694,
+            "costUsd": 0.00705
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18183,
+            "outputTokens": 318,
+            "latencyMs": 3793,
+            "costUsd": 0.021978
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "3",
+          "action": "created"
+        }
+      },
+      "input": "Ukraina nie jest członkiem Unii Europejskiej.",
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "latencyMs": 11710,
+      "costUsd": 0.029277
+    },
+    {
+      "id": "B01",
+      "correct": false,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2022-04"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "parts": [
+              {
+                "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski.",
+                "verdict": "BRAK_DOWODOW"
+              },
+              {
+                "text": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry.",
+                "verdict": "BRAK_DOWODOW"
+              }
+            ],
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Twierdzenie dotyczy kilku podmiotów, a nie dla każdego mamy wystarczające dowody: brakuje ich dla „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski” i „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry”. „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry” — Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Twierdzenie dotyczy kilku podmiotów, a nie dla każdego mamy wystarczające dowody: brakuje ich dla „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski” i „W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu na Węgry”.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1412,
+            "outputTokens": 415,
+            "latencyMs": 4307,
+            "costUsd": 0.000349
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4492,
+            "outputTokens": 307,
+            "latencyMs": 4328,
+            "costUsd": 0.012054
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4185,
+            "outputTokens": 309,
+            "latencyMs": 4302,
+            "costUsd": 0.01146
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 53237,
+            "outputTokens": 1445,
+            "latencyMs": 5105,
+            "costUsd": 0.046047
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "4",
+          "action": "created"
+        }
+      },
+      "input": "W kwietniu 2022 roku Gazprom wstrzymał dostawy gazu do Polski i na Węgry.",
+      "expected": {
+        "verdict": "WPROWADZAJACE",
+        "status": "OK"
+      },
+      "latencyMs": 16109,
+      "costUsd": 0.06991
+    },
+    {
+      "id": "B02",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie w całości. „Polska wstąpiła do NATO w 1999 roku” — tak, „Litwa wstąpiła do NATO w 1999 roku” — nie.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "WPROWADZAJACE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Polska i Litwa wstąpiły do NATO w 1999 roku.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "1999"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "WPROWADZAJACE",
+            "parts": [
+              {
+                "text": "Polska wstąpiła do NATO w 1999 roku.",
+                "verdict": "POTWIERDZONE"
+              },
+              {
+                "text": "Litwa wstąpiła do NATO w 1999 roku.",
+                "verdict": "FALSZYWE"
+              }
+            ],
+            "ruleApplied": 9,
+            "strength": {
+              "level": "srednia",
+              "score": 78,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Twierdzenie dotyczy 2 podmiotów — każdy sprawdziliśmy osobno; punktacja to wynik najsłabiej udokumentowanej części."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: NATO (Organizacja Traktatu Północnoatlantyckiego)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Kod (bez modeli) porównał liczby: liczby „1999” z twierdzenia nie ma w źródle, które podaje inną."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Źródła mówią o szczególe (np. dacie lub liczbie), a nie o całej informacji."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależnie od modeli odczyt potwierdziła kontrola dosłowna w kodzie."
+                }
+              ],
+              "primarySources": 2,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "2024-03-11",
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": [
+                "Twierdzenie sprowadza się do jednego szczegółu (czas (data)), a źródła podają inną datę — dlatego to fałsz, a nie tylko brak kontekstu. Kod (bez modeli) porównał: źródło podaje „2004”, a twierdzenie „1999”."
+              ]
+            },
+            "reasonPl": "Twierdzenie jest prawdziwe tylko częściowo: „Litwa wstąpiła do NATO w 1999 roku” to nieprawda, a „Polska wstąpiła do NATO w 1999 roku” — prawda. „Polska wstąpiła do NATO w 1999 roku” — Potwierdzone. Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12). „Litwa wstąpiła do NATO w 1999 roku” — Fałszywe. Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Litwa — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+            "evidence": [
+              {
+                "recordId": "nato:17b2896c4813",
+                "title": "NATO: Polska — członkostwo w NATO od 1999 r.",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              },
+              {
+                "recordId": "nato:34422af68eb6",
+                "title": "NATO: Litwa — członkostwo w NATO od 2004 r.",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Litwa — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "OBALA",
+                "aspect": "czas",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              },
+              {
+                "recordId": "nato:bb383ce7e3a2",
+                "title": "NATO: członkowie przyjęci w 1999 r. — Czechy, Węgry i Polska",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Czechy, Węgry i Polska przystąpiły do NATO: 12 marca 1999 r. (1999-03-12).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              },
+              {
+                "recordId": "nato:c9907d0339b4",
+                "title": "NATO: członkowie przyjęci w 2004 r. — Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia przystąpiły do NATO: 29 marca 2004 r. (2004-03-29).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "OBALA",
+                "aspect": "czas",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Wprowadzające w błąd. Twierdzenie jest prawdziwe tylko częściowo: „Litwa wstąpiła do NATO w 1999 roku” to nieprawda, a „Polska wstąpiła do NATO w 1999 roku” — prawda.",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1407,
+            "outputTokens": 350,
+            "latencyMs": 3663,
+            "costUsd": 0.000316
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2557,
+            "outputTokens": 453,
+            "latencyMs": 6157,
+            "costUsd": 0.009644
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2557,
+            "outputTokens": 366,
+            "latencyMs": 5132,
+            "costUsd": 0.008774
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1613,
+            "outputTokens": 53,
+            "latencyMs": 884,
+            "costUsd": 0.000188
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 32869,
+            "outputTokens": 799,
+            "latencyMs": 5475,
+            "costUsd": 0.073687
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Polska i Litwa wstąpiły do NATO w 1999 roku.",
+      "expected": {
+        "verdict": "WPROWADZAJACE",
+        "status": "OK"
+      },
+      "latencyMs": 17606,
+      "costUsd": 0.092609
+    },
+    {
+      "id": "B04",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie w tej formie. „Państwo członkowskie UE od 2004 r., w strefie Schengen od 2007 r.”",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "WPROWADZAJACE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Polska weszła do strefy Schengen razem z przystąpieniem do UE w 2004 roku.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2004"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "WPROWADZAJACE",
+            "ruleApplied": 9,
+            "strength": {
+              "level": "srednia",
+              "score": 73,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: Portal Unii Europejskiej (Urząd Publikacji UE)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Źródła mówią o szczególe (np. dacie lub liczbie), a nie o całej informacji."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny, a źródło jest jedno — brak niezależnej kontroli krzyżowej."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": []
+            },
+            "reasonPl": "Część twierdzenia się zgadza, ale brakuje ważnego kontekstu. Brakujący kontekst: Nie zgadza się: czas (data). Źródła nie potwierdzają samej głównej treści. Portal Unii Europejskiej (Urząd Publikacji UE) (data nieznana): „Państwo członkowskie UE od 2004 r., w strefie Schengen od 2007 r.”",
+            "missingContext": "Nie zgadza się: czas (data). Źródła nie potwierdzają samej głównej treści.",
+            "evidence": [
+              {
+                "recordId": "eu-portal:30c6faa24471",
+                "title": "Unia Europejska: Polska — członkostwo w UE, strefie euro i strefie Schengen",
+                "publisher": "Portal Unii Europejskiej (Urząd Publikacji UE)",
+                "publishedAt": null,
+                "fetchedAt": "2026-11-21T21:33:00.542Z",
+                "url": "https://european-union.europa.eu/principles-countries-history/eu-countries_pl",
+                "quote": "Państwo członkowskie UE od 2004 r., w strefie Schengen od 2007 r.",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "czas",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Wprowadzające w błąd. Część twierdzenia się zgadza, ale brakuje ważnego kontekstu.",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1418,
+            "outputTokens": 325,
+            "latencyMs": 3359,
+            "costUsd": 0.000304
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3289,
+            "outputTokens": 395,
+            "latencyMs": 5377,
+            "costUsd": 0.010528
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1226,
+            "outputTokens": 23,
+            "latencyMs": 943,
+            "costUsd": 0.000134
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18201,
+            "outputTokens": 411,
+            "latencyMs": 5028,
+            "costUsd": 0.022026
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Polska weszła do strefy Schengen razem z przystąpieniem do UE w 2004 roku.",
+      "expected": {
+        "verdict": "WPROWADZAJACE",
+        "status": "OK"
+      },
+      "latencyMs": 16067,
+      "costUsd": 0.032992
+    },
+    {
+      "id": "B08",
+      "correct": false,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Inflacja w Polsce wynosi ponad 18 procent.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "liczba"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1403,
+            "outputTokens": 228,
+            "latencyMs": 2941,
+            "costUsd": 0.000254
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2580,
+            "outputTokens": 237,
+            "latencyMs": 3544,
+            "costUsd": 0.00753
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 21172,
+            "outputTokens": 682,
+            "latencyMs": 4370,
+            "costUsd": 0.022458
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "5",
+          "action": "created"
+        }
+      },
+      "input": "Inflacja w Polsce wynosi ponad 18 procent.",
+      "expected": {
+        "verdict": "WPROWADZAJACE",
+        "status": "OK"
+      },
+      "latencyMs": 12673,
+      "costUsd": 0.030242
+    },
+    {
+      "id": "C01",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "W 2023 roku odnotowano ponad 26 tysięcy prób nielegalnego przekroczenia granicy polsko-białoruskiej.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2023"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "liczba"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1415,
+            "outputTokens": 336,
+            "latencyMs": 3423,
+            "costUsd": 0.00031
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3167,
+            "outputTokens": 297,
+            "latencyMs": 4360,
+            "costUsd": 0.009304
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 19002,
+            "outputTokens": 737,
+            "latencyMs": 6653,
+            "costUsd": 0.042269
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "6",
+          "action": "recommended"
+        }
+      },
+      "input": "W 2023 roku odnotowano ponad 26 tysięcy prób nielegalnego przekroczenia granicy polsko-białoruskiej.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 16071,
+      "costUsd": 0.051883
+    },
+    {
+      "id": "C02",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Rosyjska flota cieni liczy ponad tysiąc statków.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "liczba"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1402,
+            "outputTokens": 260,
+            "latencyMs": 2755,
+            "costUsd": 0.00027
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4244,
+            "outputTokens": 411,
+            "latencyMs": 5547,
+            "costUsd": 0.012598
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 26748,
+            "outputTokens": 718,
+            "latencyMs": 5289,
+            "costUsd": 0.023034
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "7",
+          "action": "created"
+        }
+      },
+      "input": "Rosyjska flota cieni liczy ponad tysiąc statków.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 14957,
+      "costUsd": 0.035902
+    },
+    {
+      "id": "D01",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "21 listopada 2026 wieczorem w Białymstoku zatrzymano trzech rosyjskich dyplomatów podczas fotografowania koszar.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2026-11-21"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1421,
+            "outputTokens": 549,
+            "latencyMs": 5231,
+            "costUsd": 0.000417
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4677,
+            "outputTokens": 289,
+            "latencyMs": 4095,
+            "costUsd": 0.012244
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18919,
+            "outputTokens": 705,
+            "latencyMs": 5648,
+            "costUsd": 0.042244
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "8",
+          "action": "created"
+        }
+      },
+      "input": "Wczoraj wieczorem w Białymstoku zatrzymano trzech rosyjskich dyplomatów podczas fotografowania koszar.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 17656,
+      "costUsd": 0.054905
+    },
+    {
+      "id": "D02",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "22 listopada 2026 rano w porcie w Gdyni zatrzymano tankowiec floty cieni z ładunkiem rosyjskiej ropy.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2026-11-22"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1427,
+            "outputTokens": 393,
+            "latencyMs": 3793,
+            "costUsd": 0.000339
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3751,
+            "outputTokens": 304,
+            "latencyMs": 4363,
+            "costUsd": 0.010542
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 10747,
+            "outputTokens": 428,
+            "latencyMs": 4843,
+            "costUsd": 0.031289
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "9",
+          "action": "created"
+        }
+      },
+      "input": "Dziś rano w porcie w Gdyni zatrzymano tankowiec floty cieni z ładunkiem rosyjskiej ropy.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 14298,
+      "costUsd": 0.04217
+    },
+    {
+      "id": "D04",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Burmistrz Suwałk ogłosił 21 listopada 2026 zamknięcie szkół z powodu ćwiczeń wojsk białoruskich.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2026-11-21"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, oficjalne kanały instytucji, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1425,
+            "outputTokens": 589,
+            "latencyMs": 5538,
+            "costUsd": 0.000437
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3894,
+            "outputTokens": 487,
+            "latencyMs": 6296,
+            "costUsd": 0.012658
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18774,
+            "outputTokens": 296,
+            "latencyMs": 3501,
+            "costUsd": 0.022025
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "10",
+          "action": "recommended"
+        }
+      },
+      "input": "Burmistrz Suwałk ogłosił wczoraj zamknięcie szkół z powodu ćwiczeń wojsk białoruskich.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 17245,
+      "costUsd": 0.03512
+    },
+    {
+      "id": "D06",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "PKW unieważniła 21 listopada 2026 wybory w jednej z gmin na Podkarpaciu.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2026-11-21"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          },
+          {
+            "id": "c2",
+            "text": "Wybory w jednej z gmin na Podkarpaciu unieważniono z powodu ingerencji z zagranicy.",
+            "type": "fakt",
+            "isMain": false,
+            "temporal": {
+              "kind": "jednorazowe"
+            },
+            "inputOverlap": 0.937,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          },
+          {
+            "claimId": "c2",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć. Sprawdziliśmy 2 twierdzenia: 2 bez wystarczających dowodów — ocena każdego jest poniżej.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1419,
+            "outputTokens": 659,
+            "latencyMs": 5673,
+            "costUsd": 0.000471
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3892,
+            "outputTokens": 314,
+            "latencyMs": 4856,
+            "costUsd": 0.010924
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3843,
+            "outputTokens": 249,
+            "latencyMs": 3720,
+            "costUsd": 0.010176
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 41529,
+            "outputTokens": 887,
+            "latencyMs": 5066,
+            "costUsd": 0.044597
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "11",
+          "action": "recommended"
+        }
+      },
+      "input": "PKW unieważniła wczoraj wybory w jednej z gmin na Podkarpaciu z powodu ingerencji z zagranicy.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 17757,
+      "costUsd": 0.066168
+    },
+    {
+      "id": "O01",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "To opinia.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "NIE_PODLEGA",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Rząd powinien zwiększyć wydatki na obronność do 6 procent PKB.",
+            "type": "opinia",
+            "isMain": true,
+            "temporal": {
+              "kind": "brak"
+            },
+            "inputOverlap": 1
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "NIE_PODLEGA",
+            "ruleApplied": 1,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "To opinia albo przewidywanie, a nie fakt, który można sprawdzić w źródłach.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "To opinia albo ocena, a nie fakt, który można sprawdzić w źródłach. Dlatego nie oceniamy jego prawdziwości.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Nie podlega weryfikacji. To opinia albo ocena, a nie fakt, który można sprawdzić w źródłach.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1414,
+            "outputTokens": 241,
+            "latencyMs": 2395,
+            "costUsd": 0.000262
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Rząd powinien zwiększyć wydatki na obronność do 6 procent PKB.",
+      "expected": {
+        "verdict": "NIE_PODLEGA",
+        "status": "OK"
+      },
+      "latencyMs": 4479,
+      "costUsd": 0.000262
+    },
+    {
+      "id": "O02",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "To prognoza. Jej wynik można sprawdzić dopiero po zdarzeniu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "NIE_PODLEGA",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Za pięć lat Ukraina będzie członkiem Unii Europejskiej.",
+            "type": "prognoza",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe"
+            },
+            "inputOverlap": 1
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "NIE_PODLEGA",
+            "ruleApplied": 1,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "To opinia albo przewidywanie, a nie fakt, który można sprawdzić w źródłach.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "To przewidywanie dotyczące przyszłości, a nie fakt, który można sprawdzić w źródłach. Dlatego nie oceniamy jego prawdziwości.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Nie podlega weryfikacji. To przewidywanie dotyczące przyszłości, a nie fakt, który można sprawdzić w źródłach.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1405,
+            "outputTokens": 306,
+            "latencyMs": 3193,
+            "costUsd": 0.000294
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Za pięć lat Ukraina będzie członkiem Unii Europejskiej.",
+      "expected": {
+        "verdict": "NIE_PODLEGA",
+        "status": "OK"
+      },
+      "latencyMs": 4325,
+      "costUsd": 0.000294
+    },
+    {
+      "id": "O04",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "To opinia.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "NIE_PODLEGA",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Członkostwo w Unii Europejskiej to najlepsze, co spotkało Polskę.",
+            "type": "opinia",
+            "isMain": true,
+            "temporal": {
+              "kind": "brak"
+            },
+            "inputOverlap": 1
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "NIE_PODLEGA",
+            "ruleApplied": 1,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "To opinia albo przewidywanie, a nie fakt, który można sprawdzić w źródłach.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "To opinia albo ocena, a nie fakt, który można sprawdzić w źródłach. Dlatego nie oceniamy jego prawdziwości.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Nie podlega weryfikacji. To opinia albo ocena, a nie fakt, który można sprawdzić w źródłach.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1418,
+            "outputTokens": 201,
+            "latencyMs": 2310,
+            "costUsd": 0.000242
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Członkostwo w Unii Europejskiej to najlepsze, co spotkało Polskę.",
+      "expected": {
+        "verdict": "NIE_PODLEGA",
+        "status": "OK"
+      },
+      "latencyMs": 4582,
+      "costUsd": 0.000242
+    },
+    {
+      "id": "G01",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Tak. Litwa jest członkiem NATO od 2004 roku.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "POTWIERDZONE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Litwa jest członkiem NATO od 2004 roku.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan",
+              "date": "2004"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "czas"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "POTWIERDZONE",
+            "ruleApplied": 7,
+            "strength": {
+              "level": "srednia",
+              "score": 73,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: NATO (Organizacja Traktatu Północnoatlantyckiego)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Kod (bez modeli) sprawdził, że nazwy i liczby z twierdzenia występują w cytacie ze źródła."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny; niezależnie od modeli odczyt potwierdziła kontrola dosłowna w kodzie."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Najnowszy dowód ma ponad 2 lata — sytuacja mogła się zmienić."
+                }
+              ],
+              "primarySources": 2,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "2024-03-11",
+              "archivalWarning": true,
+              "verifierAgreement": "zgoda",
+              "notes": []
+            },
+            "reasonPl": "Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Litwa — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+            "evidence": [
+              {
+                "recordId": "nato:34422af68eb6",
+                "title": "NATO: Litwa — członkostwo w NATO od 2004 r.",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Litwa — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              },
+              {
+                "recordId": "nato:c9907d0339b4",
+                "title": "NATO: członkowie przyjęci w 2004 r. — Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2024-03-11",
+                "fetchedAt": "2026-11-21T16:07:22.030Z",
+                "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+                "quote": "Bułgaria, Estonia, Łotwa, Litwa, Rumunia, Słowacja i Słowenia przystąpiły do NATO: 29 marca 2004 r. (2004-03-29).",
+                "lang": "pl",
+                "usedForVerdict": true,
+                "passageKind": "structured_data",
+                "relation": "WSPIERA",
+                "aspect": "sedno",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "wspierajace"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Potwierdzone. Potwierdza to źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (11 marca 2024): Odczyt z danych źródłowych: Litwa — członkostwo w NATO od 29 marca 2004 r. (2004-03-29).",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1405,
+            "outputTokens": 313,
+            "latencyMs": 3707,
+            "costUsd": 0.000297
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2795,
+            "outputTokens": 344,
+            "latencyMs": 4727,
+            "costUsd": 0.00903
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1355,
+            "outputTokens": 33,
+            "latencyMs": 818,
+            "costUsd": 0.000152
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18460,
+            "outputTokens": 402,
+            "latencyMs": 5039,
+            "costUsd": 0.032047
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Litwa jest członkiem NATO od 2004 roku.",
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "latencyMs": 15936,
+      "costUsd": 0.041526
+    },
+    {
+      "id": "G02",
+      "correct": false,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Szwecja nie jest członkiem NATO.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "sprzeciw",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Model sprawdzający zakwestionował 2 dowody — nie liczymy ich.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Odrzucone, bo cytat nie zgadzał się ze źródłem albo nie przeszedł kontroli: 2. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1400,
+            "outputTokens": 221,
+            "latencyMs": 2522,
+            "costUsd": 0.000251
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 3437,
+            "outputTokens": 459,
+            "latencyMs": 6146,
+            "costUsd": 0.011464
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1323,
+            "outputTokens": 35,
+            "latencyMs": 952,
+            "costUsd": 0.00015
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 19947,
+            "outputTokens": 418,
+            "latencyMs": 4705,
+            "costUsd": 0.032204
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "2",
+          "action": "updated"
+        }
+      },
+      "input": "Szwecja nie jest członkiem NATO.",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "latencyMs": 15695,
+      "costUsd": 0.044069
+    },
+    {
+      "id": "H01",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "21 listopada 2026 w Olsztynie otwarto tajny ośrodek dla migrantów przerzucanych z Białorusi.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2026-11-21"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1429,
+            "outputTokens": 369,
+            "latencyMs": 3402,
+            "costUsd": 0.000327
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 5145,
+            "outputTokens": 261,
+            "latencyMs": 3837,
+            "costUsd": 0.0129
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18402,
+            "outputTokens": 584,
+            "latencyMs": 5302,
+            "costUsd": 0.022132
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "12",
+          "action": "created"
+        }
+      },
+      "input": "Wczoraj w Olsztynie otwarto tajny ośrodek dla migrantów przerzucanych z Białorusi.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 14045,
+      "costUsd": 0.035359
+    },
+    {
+      "id": "H02",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "BRAK_DOWODOW",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "21 listopada 2026 w Olsztynie otworzyli tajny ośrodek dla migrantów z Białorusi.",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "jednorazowe",
+              "date": "2026-11-21"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "sedno"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "BRAK_DOWODOW",
+            "ruleApplied": 2,
+            "strength": {
+              "level": "slaba",
+              "score": null,
+              "factors": [],
+              "primarySources": 0,
+              "independentPublishers": 0,
+              "newestEvidenceAt": null,
+              "archivalWarning": false,
+              "verifierAgreement": "brak",
+              "notes": [
+                "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+                "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+              ]
+            },
+            "reasonPl": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+            "triedPl": "Szukaliśmy w: baza wiarygodnych źródeł, wyszukiwanie po znaczeniu, baza incydentów dezinformacyjnych, wyszukiwanie na żywo w serwisach z katalogu źródeł. Przeczytaliśmy fragmenty źródeł: 8. Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+            "evidence": []
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Brak wystarczających dowodów. Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+        "warnings": [
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1437,
+            "outputTokens": 594,
+            "latencyMs": 5380,
+            "costUsd": 0.000441
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4230,
+            "outputTokens": 267,
+            "latencyMs": 3922,
+            "costUsd": 0.01113
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18711,
+            "outputTokens": 761,
+            "latencyMs": 6700,
+            "costUsd": 0.032252
+          }
+        ],
+        "cacheHit": false,
+        "moderatorCase": {
+          "caseId": "12",
+          "action": "updated"
+        }
+      },
+      "input": "Słyszałem, że wczoraj w Olsztynie otworzyli tajny ośrodek dla migrantów z Białorusi.",
+      "expected": {
+        "verdict": "BRAK_DOWODOW",
+        "status": "OK"
+      },
+      "latencyMs": 18931,
+      "costUsd": 0.043823
+    },
+    {
+      "id": "P05",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "„Małgorzata Kidawa-Błońska Marszałek”",
+      "report": {
+        "status": "OK",
+        "mainVerdict": null,
+        "claims": [],
+        "verdicts": [],
+        "answer": {
+          "questionPl": "Kto jest marszałkiem Senatu?",
+          "answerPl": "„Małgorzata Kidawa-Błońska Marszałek”",
+          "evidence": [
+            {
+              "recordId": "senat-pl:415fab3185e3",
+              "title": "Prezydium Senatu RP: Małgorzata Kidawa-Błońska - Marszałek Senatu",
+              "publisher": "Senat Rzeczypospolitej Polskiej (senat.gov.pl)",
+              "publishedAt": null,
+              "fetchedAt": "2026-11-21T17:42:43.798Z",
+              "url": "https://www.senat.gov.pl/sklad/senatorowie/prezydium.html",
+              "quote": "Małgorzata Kidawa-Błońska Marszałek",
+              "lang": "pl",
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "aspect": "sedno",
+              "sourceType": "pierwotne",
+              "level": 1,
+              "role": "tresc",
+              "group": "wspierajace"
+            }
+          ]
+        },
+        "summaryPl": "Podstawą odpowiedzi jest fragment publikacji wydawcy Senat Rzeczypospolitej Polskiej (senat.gov.pl) (pobrano 21 listopada 2026).",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "source_answer",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4813,
+            "outputTokens": 95,
+            "latencyMs": 2016,
+            "costUsd": 0.010576
+          },
+          {
+            "purpose": "source_answer_check",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1308,
+            "outputTokens": 127,
+            "latencyMs": 1683,
+            "costUsd": 0.000194
+          },
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1404,
+            "outputTokens": 64,
+            "latencyMs": 1223,
+            "costUsd": 0.000172
+          },
+          {
+            "purpose": "open_answer",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2303,
+            "outputTokens": 35,
+            "latencyMs": 1230,
+            "costUsd": 0.004956
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1201,
+            "outputTokens": 23,
+            "latencyMs": 691,
+            "costUsd": 0.000132
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 33488,
+            "outputTokens": 1203,
+            "latencyMs": 7027,
+            "costUsd": 0.083951
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Kto jest marszałkiem Senatu?",
+      "expected": {
+        "verdict": null,
+        "status": "OK",
+        "answerContains": [
+          "Kidaw"
+        ],
+        "inputMode": "question_open"
+      },
+      "latencyMs": 21791,
+      "costUsd": 0.099981
+    },
+    {
+      "id": "P07",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Przewodniczącą Komisji Europejskiej jest Ursula von der Leyen.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": null,
+        "claims": [],
+        "verdicts": [],
+        "answer": {
+          "questionPl": "Kto stoi na czele Komisji Europejskiej?",
+          "answerPl": "Przewodniczącą Komisji Europejskiej jest Ursula von der Leyen.",
+          "evidence": [
+            {
+              "recordId": "ec-commission:626977281173",
+              "title": "Komisja Europejska (Kolegium Komisarzy): Ursula von der Leyen - President of the European Commission (przewodniczący Komisji Europejskiej)",
+              "publisher": "Komisja Europejska (commission.europa.eu)",
+              "publishedAt": null,
+              "fetchedAt": "2026-11-21T17:44:46.314Z",
+              "url": "https://commission.europa.eu/about/organisation/college-commissioners_en",
+              "quote": "The President Ursula von der Leyen",
+              "lang": "en",
+              "passageKind": "excerpt",
+              "relation": "WSPIERA",
+              "aspect": "sedno",
+              "sourceType": "pierwotne",
+              "level": 1,
+              "role": "tresc",
+              "group": "wspierajace"
+            }
+          ]
+        },
+        "summaryPl": "Przewodniczącą Komisji Europejskiej jest Ursula von der Leyen.",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          },
+          {
+            "kind": "branch_unavailable",
+            "textPl": "Część wyszukiwań nie powiodła się w obszarze „wyszukiwanie na żywo w serwisach z katalogu źródeł”. Uwzględniliśmy dostępne wyniki."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "source_answer",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 4742,
+            "outputTokens": 85,
+            "latencyMs": 1690,
+            "costUsd": 0.010334
+          },
+          {
+            "purpose": "source_answer_check",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1309,
+            "outputTokens": 13,
+            "latencyMs": 668,
+            "costUsd": 0.000137
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 18283,
+            "outputTokens": 300,
+            "latencyMs": 3227,
+            "costUsd": 0.021978
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Kto stoi na czele Komisji Europejskiej?",
+      "expected": {
+        "verdict": null,
+        "status": "OK",
+        "answerContains": [
+          "von der Leyen"
+        ],
+        "inputMode": "question_open"
+      },
+      "latencyMs": 7379,
+      "costUsd": 0.032449
+    },
+    {
+      "id": "L05",
+      "correct": true,
+      "persisted": true,
+      "audit": true,
+      "error": "",
+      "webAnswer": "Nie. Źródła przeczą twierdzeniu „Stany Zjednoczone płacą cały budżet NATO”.",
+      "report": {
+        "status": "OK",
+        "mainVerdict": "FALSZYWE",
+        "claims": [
+          {
+            "id": "c1",
+            "text": "Stany Zjednoczone płacą cały budżet NATO",
+            "type": "fakt",
+            "isMain": true,
+            "temporal": {
+              "kind": "stan"
+            },
+            "inputOverlap": 1,
+            "assertedAspect": "zakres"
+          }
+        ],
+        "verdicts": [
+          {
+            "claimId": "c1",
+            "verdict": "FALSZYWE",
+            "ruleApplied": 8,
+            "strength": {
+              "level": "srednia",
+              "score": 73,
+              "factors": [
+                {
+                  "effect": "plus",
+                  "textPl": "Źródło urzędowe lub pierwotne: NATO (Organizacja Traktatu Północnoatlantyckiego)."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Drugi model potwierdził odczyt cytatów użytych do oceny."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Żadne znalezione wiarygodne źródło nie mówi inaczej."
+                },
+                {
+                  "effect": "plus",
+                  "textPl": "Dowody są aktualne (z ostatnich 2 lat)."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Dowody pochodzą tylko od jednego niezależnego wydawcy."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Źródła mówią o szczególe (np. dacie lub liczbie), a nie o całej informacji."
+                },
+                {
+                  "effect": "minus",
+                  "textPl": "Drugi model jest tego samego dostawcy co główny, a źródło jest jedno — brak niezależnej kontroli krzyżowej."
+                }
+              ],
+              "primarySources": 1,
+              "independentPublishers": 1,
+              "newestEvidenceAt": "2026-04-08",
+              "archivalWarning": false,
+              "verifierAgreement": "zgoda",
+              "notes": [
+                "Twierdzenie sprowadza się do jednego szczegółu (zakres (kogo lub czego to dotyczy)), a źródła mówią co innego — dlatego to fałsz, a nie tylko brak kontekstu."
+              ]
+            },
+            "reasonPl": "Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (8 kwietnia 2026): „All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries. This is the principle of common funding and it demonstrates burden-sharing in action.”",
+            "evidence": [
+              {
+                "recordId": "nato:d1b39789a32d",
+                "title": "NATO: Funding NATO (cz. 1)",
+                "publisher": "NATO (Organizacja Traktatu Północnoatlantyckiego)",
+                "publishedAt": "2026-04-08",
+                "fetchedAt": "2026-11-21T16:08:06.312Z",
+                "url": "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+                "quote": "All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries. This is the principle of common funding and it demonstrates burden-sharing in action.",
+                "lang": "en",
+                "usedForVerdict": true,
+                "passageKind": "excerpt",
+                "relation": "OBALA",
+                "aspect": "zakres",
+                "sourceType": "pierwotne",
+                "level": 1,
+                "role": "tresc",
+                "group": "obalajace"
+              },
+              {
+                "recordId": "dw-factcheck:51f88296cc46",
+                "title": "Deutsche Welle - DW Fact Check: \"The United States had never received anything from NATO, despite having paid for it.\"",
+                "publisher": "Deutsche Welle - DW Fact Check",
+                "publishedAt": "2026-01-22",
+                "fetchedAt": "2026-11-21T16:51:49.875Z",
+                "url": "https://www.dw.com/en/fact-check-trumps-speech-at-the-world-economic-forum/a-75601073",
+                "quote": "\"The United States had never received anything from NATO, despite having paid for it.\"",
+                "lang": "en",
+                "usedForVerdict": false,
+                "passageKind": "reviewed_claim",
+                "relation": "INNY_KONTEKST",
+                "aspect": "sedno",
+                "sourceType": "factcheck",
+                "level": 2,
+                "role": "stala_rola",
+                "ratingRaw": "False",
+                "group": "kontekst"
+              },
+              {
+                "recordId": "factcheck-org:bebbc2669a1c",
+                "title": "FactCheck.org (Annenberg Public Policy Center): “We paid for, in my opinion, 100% of NATO because they weren’t paying their bills.”",
+                "publisher": "FactCheck.org (Annenberg Public Policy Center)",
+                "publishedAt": "2026-01-22",
+                "fetchedAt": "2026-11-21T16:51:49.875Z",
+                "url": "https://www.factcheck.org/2026/01/trumps-claims-about-greenland/",
+                "quote": "“We paid for, in my opinion, 100% of NATO because they weren’t paying their bills.”",
+                "lang": "en",
+                "usedForVerdict": false,
+                "passageKind": "reviewed_claim",
+                "relation": "INNY_KONTEKST",
+                "aspect": "sedno",
+                "sourceType": "factcheck",
+                "level": 2,
+                "role": "stala_rola",
+                "ratingRaw": "False",
+                "group": "kontekst"
+              }
+            ]
+          }
+        ],
+        "summaryPl": "Ocena głównego twierdzenia: Fałszywe. Przeczy temu źródło urzędowe. NATO (Organizacja Traktatu Północnoatlantyckiego) (8 kwietnia 2026): „All Allies contribute to funding NATO using an agreed cost share formula derived from the Gross National Income of member countries. This is the principle of common funding and it demonstrates burden-sharing in action.”",
+        "warnings": [
+          {
+            "kind": "single_key_verifier",
+            "textPl": "Cytaty sprawdził drugi model tego samego dostawcy co model główny (tryb jednego klucza). To słabsza kontrola niż model innego dostawcy, dlatego siła oceny zależy głównie od liczby zgodnych, niezależnych źródeł — szczegóły w karcie siły dowodów."
+          },
+          {
+            "kind": "non_eea_processing",
+            "textPl": "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+          }
+        ],
+        "models": [
+          {
+            "purpose": "claims",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1411,
+            "outputTokens": 260,
+            "latencyMs": 2533,
+            "costUsd": 0.000271
+          },
+          {
+            "purpose": "assess",
+            "provider": "openai",
+            "model": "gpt-6.2-sol",
+            "inputTokens": 2874,
+            "outputTokens": 669,
+            "latencyMs": 8456,
+            "costUsd": 0.012438
+          },
+          {
+            "purpose": "verifier",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 1232,
+            "outputTokens": 23,
+            "latencyMs": 720,
+            "costUsd": 0.000135
+          },
+          {
+            "purpose": "live_search",
+            "provider": "openai",
+            "model": "gpt-6-luna",
+            "inputTokens": 26354,
+            "outputTokens": 594,
+            "latencyMs": 5572,
+            "costUsd": 0.032933
+          }
+        ],
+        "cacheHit": false
+      },
+      "input": "Stany Zjednoczone płacą cały budżet NATO, zobacz sam: https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK",
+        "inputMode": "claim"
+      },
+      "latencyMs": 20237,
+      "costUsd": 0.045777
+    }
+  ]
+}

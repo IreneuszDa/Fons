@@ -27,8 +27,13 @@ import { ingestEurostat } from "./ingest/eurostat";
 import { ingestGovPl } from "./ingest/govpl";
 import { ingestGus } from "./ingest/gus";
 import { ingestOfficialPages } from "./ingest/officialpages";
+import { ingestResearchEstimates } from "./ingest/research-estimates";
+import { ingestEnergyReports } from "./ingest/energy-reports";
+import { ingestInstitutionalReferences } from "./ingest/institutional-references";
+import { ingestMonetaryStatistics } from "./ingest/monetary-statistics";
 import { ingestGovPlOfficials } from "./ingest/govpl-officials";
 import { ingestNato } from "./ingest/nato";
+import { ingestOfficeHistory } from "./ingest/office-history";
 import { ingestSejmMp } from "./ingest/sejm-mp";
 import { ingestStateOfficials } from "./ingest/state-officials";
 import { type IngestOptions, type IngestResult, finalizeRecords, writeJsonl } from "./ingest/common";
@@ -50,6 +55,7 @@ export const INGESTERS: Record<string, Ingester> = {
   euvsdisinfo: ingestEuvsdisinfo,
   // Faza 2: osoby pełniące funkcje publiczne (pytania „kto jest …”) i sonda blokad fact-checkerów.
   "gov-pl-officials": ingestGovPlOfficials,
+  "office-history": ingestOfficeHistory,
   "sejm-mp": ingestSejmMp,
   "state-officials": ingestStateOfficials,
   "eu-leadership": ingestEuLeadership,
@@ -57,7 +63,11 @@ export const INGESTERS: Record<string, Ingester> = {
   demagog: ingestDemagogWithArchive,
   // Rodziny tematyczne: sankcje UE, Schengen, MH17, Bucza, "biolaby" (strony instytucji) oraz statystyka GUS (API BDL).
   "official-pages": ingestOfficialPages,
+  "institutional-references": ingestInstitutionalReferences,
+  "research-estimates": ingestResearchEstimates,
+  "energy-reports": ingestEnergyReports,
   "gus-bdl": ingestGus,
+  "monetary-statistics": ingestMonetaryStatistics,
 };
 
 interface CliArgs {

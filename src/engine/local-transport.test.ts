@@ -18,7 +18,12 @@ describe("lokalne przepisy transportowe", () => {
       expect(localTransportQuestion(tickets.toLowerCase())?.placeStem).toBe("pcim");
       expect(findLocalTransportRecords(db, sale)).toEqual([]);
       expect(unresolvedQuestion(sale.claim, ["korpus"]).verdicts[0]!.triedPl).toBe("korpus");
-      expect(unresolvedQuestion(zone.claim, ["korpus"], "uchwała rady gminy").summaryPl).toContain("uchwała rady gminy");
+      expect(unresolvedQuestion(sale.claim, ["korpus"], sale.neededEvidencePl).summaryPl).toContain("sposoby zakupu i datę zmiany");
+      const unresolved = unresolvedQuestion(zone.claim, ["korpus"], zone.neededEvidencePl);
+      for (const detail of ["uchwała rady gminy", "granic strefy", "pojazdów", "datą"]) {
+        expect(unresolved.summaryPl).toContain(detail);
+        expect(unresolved.verdicts[0]!.missingContext).toContain(detail);
+      }
     } finally {
       db.close();
     }

@@ -209,7 +209,8 @@ export default function ChatPage() {
 
   function submit(input: ChatInput, fileName?: string) {
     const user: ChatEntry = { id: nextId(), role: "user", text: input.text ?? "", fileName,
-      imageSrc: input.image ? imagePreviewSrc(input.image) : undefined };
+      imageSrc: input.image ? imagePreviewSrc(input.image) : undefined,
+      comparisonSrc: input.comparisonImage ? imagePreviewSrc(input.comparisonImage) : undefined };
     void run(active, { ...input, fileName }, user);
   }
 

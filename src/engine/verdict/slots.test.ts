@@ -1,5 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { extractSlots, isSingleDateClaim, quoteCorrectsSlot } from "./slots";
+import { extractSlots, institutionalMeasure, isSingleDateClaim, quoteCorrectsSlot, sourceMeasureValues } from "./slots";
+
+describe("jedna liczba przypisana wskazanej instytucji", () => {
+  it.each([
+    ["Czy kadencja Sejmu trwa 5 lat?", "Art. 98. 1. Sejm i Senat są wybierane na czteroletnie kadencje.", true, [4]],
+    ["Kadencja zarządu trwa 2 lata.", "Zarząd jest wybierany na sześcioletnią kadencję.", true, [6]],
+    ["Kadencja Senatu trwa 5 lat.", "Komitet jest wybierany na sześcioletnią kadencję.", true, []],
+    ["Senat RP liczy 150 senatorów.", "Art. 97. 1. Senat składa się ze 100 senatorów.", true, [100]],
+    ["Senat RP liczy 150 senatorów.", "Senat składa się ze 100 senatorów.", false, []],
+    ["Komitet liczy 15 członków.", "Komitet liczy 15 członków. Rada liczy 25 członków.", false, [15]],
+    ["Komitet liczy 15 członków.", "Komitet liczy 36 obserwatorów.", false, []],
+    ["Komitet liczy 15 członków.", "Komitet osiedlowy liczy 36 członków.", false, []],
+    ["Komitet liczy 15 członków.", "Komitet nie liczy 36 członków.", false, []],
+    ["Komitet liczy 15 członków.", "Czy komitet liczy 36 członków? Komitet liczy 28 członków?", false, []],
+    ["Kadencja Senatu trwa 5 lat.", "Dawniej Sejm i Senat są wybierane na czteroletnie kadencje.", true, []],
+    ["Komitet liczy 15 członków.", "Komitet liczy 36 członków, o ile obradują wszystkie delegacje.", false, []],
+  ] as const)("%s ↔ %s", (claim, quote, legal, expected) => {
+    expect(sourceMeasureValues(institutionalMeasure(claim)!, quote, legal)).toEqual(expected);
+  });
+});
 
 describe("extractSlots — lata i wartości", () => {
   it.each([

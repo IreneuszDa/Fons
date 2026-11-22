@@ -15,6 +15,7 @@ import { Heading, Text } from "@astryxdesign/core/Text";
 import type { CatalogSource } from "../../shared/contracts";
 import { ApiError, fetchSources, NETWORK_ERROR_PL, type SourcesResponse } from "../api";
 import { StatusNotice } from "../components/StatusNotice";
+import { MaterialArchive } from "../components/MaterialArchive";
 import { safeUrl } from "../lib/safeUrl";
 import { SOURCE_TYPE_PL } from "../lib/report";
 
@@ -46,6 +47,12 @@ function PublisherCell({ row: r }: { row: Row }) {
       <Text type="supporting" color="secondary">
         {r.qualification}
       </Text>
+      <Collapsible trigger="Zasady aktualizacji i wykluczania" chevronPosition="start">
+        <VStack gap={1}>
+          <Text type="supporting">{r.updateFrequency}</Text>
+          {r.exclusion && <Text type="supporting">{r.exclusion}</Text>}
+        </VStack>
+      </Collapsible>
     </VStack>
   );
 }
@@ -54,6 +61,12 @@ export default function SourcesPage() {
   const [data, setData] = useState<SourcesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const archiveLink = useMemo(() => {
+    const hash = typeof window === "undefined" ? "" : window.location.hash;
+    if (!hash.startsWith("#archiwum?")) return null;
+    const params = new URLSearchParams(hash.slice("#archiwum?".length));
+    return { initialUrl: params.get("url")?.slice(0, 2048), recordId: params.get("record")?.slice(0, 160) };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -122,6 +135,9 @@ export default function SourcesPage() {
           </Text>
         </VStack>
         <VStack className="sources-method" width="100%">
+            <Collapsible defaultIsOpen={Boolean(archiveLink)} chevronPosition="start" trigger="Moje archiwum materiałów">
+              <MaterialArchive {...archiveLink} />
+            </Collapsible>
             <Collapsible defaultIsOpen={false} chevronPosition="start" trigger="Jak dobieramy i porównujemy dowody">
               <VStack gap={2} paddingBlock={2}>
                 <Text as="p">Wyszukiwanie porównuje słowa oraz znaczenie pytania z dokumentami w bazie.
@@ -192,6 +208,7 @@ export default function SourcesPage() {
       </VStack>
       <VStack as="section" className="sources-catalog" width="100%" maxWidth="72rem" gap={4} paddingBlockStart={6}>
         <Heading level={2}>Katalog wydawców</Heading>
+        <Link href="/api/sources">Otwórz katalog w formacie JSON</Link>
         {data ? (
               <MetadataList orientation="horizontal" columns="multi">
                 <MetadataListItem label="Wersja bazy źródeł">

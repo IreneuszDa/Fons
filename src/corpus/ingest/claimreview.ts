@@ -11,7 +11,7 @@ import { dirname, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { CorpusRecord } from "../../shared/contracts";
-import { catalogSourceForHost } from "../catalog";
+import { sourceAtUrl } from "../catalog";
 import { mapRating, extractRatingLabel } from "../ratings";
 import { paths } from "../paths";
 import {
@@ -231,13 +231,7 @@ export async function ingestClaimReview(opts: IngestOptions): Promise<IngestResu
   for await (const item of iterateFeedItems(feed.file)) {
     total++;
     if (!item.url || !item.claimReviewed) continue;
-    let host: string;
-    try {
-      host = new URL(item.url).hostname.toLowerCase();
-    } catch {
-      continue;
-    }
-    const src = catalogSourceForHost(host);
+    const src = sourceAtUrl(opts.catalog, item.url);
     if (!src || !wanted.has(src.id)) continue;
     const claim = squash(item.claimReviewed);
     const raw = item.reviewRating?.alternateName ?? item.reviewRating?.textualRating ?? "";
@@ -286,14 +280,14 @@ export async function ingestClaimReview(opts: IngestOptions): Promise<IngestResu
     list.sort((a, b) => b.score - a.score || (b.item.datePublished ?? "").localeCompare(a.item.datePublished ?? ""));
     const cap = CAPS[sourceId] ?? 30;
     const chosen = list.slice(0, cap);
-    const src = catalogSourceForHost(new URL(chosen[0]!.item.url!).hostname)!;
+    const src = opts.catalog.find(s => s.id === sourceId)!;
     const base = baseFromCatalog(src);
     for (const c of chosen) {
       const it = c.item;
       const claim = squash(it.claimReviewed!);
       const explanation = c.explanation ? clipVerbatim(c.explanation, MAX_QUOTE_CHARS) : "";
       const text = explanation && explanation !== claim ? `${claim}\n${explanation}` : claim;
-      const lang = it.inLanguage ? it.inLanguage.slice(0, 2).toLowerCase() : guessLang(claim, src.id === "dpa-factchecking" ? undefined : undefined);
+      const lang = guessLang(claim, it.inLanguage);
       const claimDate = isoDate(it.itemReviewed?.datePublished);
       const rec: CorpusRecord = {
         ...base,

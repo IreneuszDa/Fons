@@ -47,7 +47,7 @@ export default function ResultPage({ token }: { token: string }) {
       content={
         <LayoutContent isScrollable={false}>
           <VStack gap={6}>
-            <Heading level={1}>Wynik sprawdzenia</Heading>
+            <Heading level={1}>{state.kind === "ok" && state.report.inputMode === "transcription" ? "Transkrypcja nagrania" : "Wynik sprawdzenia"}</Heading>
             {state.kind === "loading" ? <Spinner size="lg" label="Wczytuję wynik…" aria-label="Wczytuję wynik" /> : null}
             {state.kind === "notfound" ? (
               <EmptyState
@@ -75,6 +75,14 @@ export default function ResultPage({ token }: { token: string }) {
 }
 
 function ReportView({ report }: { report: VerdictReport }) {
+  if (report.inputMode === "transcription" || report.videoAnalysis?.status === "metadata_only") return (
+    <VStack gap={3}>
+      <Text as="p">{report.summaryPl}</Text>
+      <Text as="p" type="supporting" color="secondary">{report.transparencyPl}</Text>
+      <ReportWarnings warnings={report.warnings} />
+      <Button label="Wróć do czatu" variant="secondary" href="/" />
+    </VStack>
+  );
   return (
     <VStack gap={6}>
       <VStack gap={2}>
@@ -85,7 +93,7 @@ function ReportView({ report }: { report: VerdictReport }) {
       </VStack>
       {report.article && <ArticleOrigin article={report.article} />}
       {report.imageAnalysis?.only && <ImageFindings analysis={report.imageAnalysis} summaryPl={report.summaryPl} expanded />}
-      {report.imageAnalysis && !report.imageAnalysis.visual && report.status !== "OK" && <ReportWarnings warnings={report.warnings} />}
+      {report.imageAnalysis?.only && !report.imageAnalysis.visual && report.status !== "OK" && <ReportWarnings warnings={report.warnings} />}
       {report.questionParts?.length ? (
         <>
           <QuestionBreakdown parts={report.questionParts} />
@@ -105,11 +113,9 @@ function ReportView({ report }: { report: VerdictReport }) {
             hint={report.status === "OK" || report.videoAnalysis ? undefined : STATUS_HINT_PL[report.status]}
           />
           {report.videoAnalysis && (
-            <>
-              <VideoFindings analysis={report.videoAnalysis} pendingClaims={report.claims} />
-              <ReportWarnings warnings={report.warnings} />
-            </>
+            <VideoFindings analysis={report.videoAnalysis} pendingClaims={report.claims} />
           )}
+          <ReportWarnings warnings={report.warnings} />
           <TransparencyBlock report={report} />
         </>
       )}

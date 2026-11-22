@@ -91,6 +91,7 @@ export function memoryStore(records: CorpusRecord[], snapshot = "snap-test"): Co
   const map = new Map(records.map((r) => [r.id, r]));
   return {
     get: (id) => map.get(id),
+    catalogPage: url => records.filter(r => r.url === url && r.origin === "corpus"),
     getMany: (ids) => ids.map((id) => map.get(id)).filter((r): r is CorpusRecord => !!r),
     snapshotId: () => snapshot,
     count: () => map.size,

@@ -1,0 +1,12 @@
+[
+  {
+    "incidentId": "claimreview:6b1c2e330bac",
+    "url": "https://pravda.org.pl/dezinformacja-na-twitterze-uwaga-na-falszywe-konta/",
+    "publisher": "Stowarzyszenie Pravda",
+    "stixNoteId": "note--963716c9-723a-4571-b1e8-fc861d0321d6",
+    "reviewedAt": "2026-11-22T04:51:26.000Z",
+    "technique": "T0143.003",
+    "techniqueUrl": "https://github.com/DISARMFoundation/DISARMframeworks/blob/main/generated_pages/techniques/T0143.003.md",
+    "reasonPl": "Według analizy Stowarzyszenia Pravda z 22 kwietnia 2022 r. autor konta podawał się za redakcję Gazety Wyborczej. Fons przypisuje opisanemu zachowaniu technikę DISARM T0143.003 (Impersonated Persona)."
+  }
+]

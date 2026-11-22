@@ -10,6 +10,7 @@ import { dirname } from "node:path";
 export type ProviderName = "anthropic" | "mistral" | "openai";
 
 export interface AppConfig {
+  extensionsModule?: string;
   env: "development" | "production" | "test";
   port: number;
   publicBaseUrl: string;
@@ -39,6 +40,7 @@ export interface AppConfig {
   adminPasswordGenerated: boolean;
   userIdPepper: string;
   chatloomWebhookSecret?: string;
+  whatsappSignupOrigin?: string;
   dailyTokenBudget: number;
   /**
    * Część dobowego budżetu, jaką może zużyć jeden adres klienta (IPv4 albo sieć IPv6 /64), 0–1 (IP_DAILY_TOKEN_SHARE,
@@ -137,6 +139,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
 
   const modelFast = nonEmpty(e.MODEL_FAST) ?? DEFAULT_MODELS[llmProvider].fast;
   const cfg: AppConfig = {
+    extensionsModule: nonEmpty(e.FONS_EXTENSIONS_MODULE),
     env: nodeEnv,
     port: Number(e.PORT ?? 8787),
     publicBaseUrl: nonEmpty(e.PUBLIC_BASE_URL) ?? `http://localhost:${e.PORT ?? 8787}`,
@@ -159,6 +162,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     adminPasswordGenerated: !adminFromEnv,
     userIdPepper: nonEmpty(e.USER_ID_PEPPER) ?? readOrCreateSecret(`${varDir}/user-id-pepper`),
     chatloomWebhookSecret: nonEmpty(e.CHATLOOM_WEBHOOK_SECRET),
+    whatsappSignupOrigin: nonEmpty(e.WHATSAPP_SIGNUP_ORIGIN),
     dailyTokenBudget: Number(e.DAILY_TOKEN_BUDGET ?? 3_000_000),
     ipDailyTokenShare: e.IP_DAILY_TOKEN_SHARE !== undefined ? Number(e.IP_DAILY_TOKEN_SHARE) : undefined,
     rateLimitPerMinute: Number(e.RATE_LIMIT_PER_MINUTE ?? 10),

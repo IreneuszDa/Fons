@@ -5,15 +5,15 @@
  *  1 retrieval (same branches as for claims) → up to 8 content records (fixed-role records such as
  *    fact-checks are excluded: they quote the false claims they debunk),
  *  2 the main model picks ONE fragment and a verbatim quote that answers the question (or none),
- *  3 quote check in code (substring / fuzzy >= 0.90 against the stored record; detector on the quote;
+ *  3 quote check in code (contiguous passage in the stored record; detector on the quote;
  *    a quote living only in a flagged sentence is rejected),
  *  4 independent verifier vote („czy cytat wprost odpowiada na pytanie?”) — "sprzeciw" drops the answer,
- *  5 the answer text is built HERE from a template with publisher/date/link copied from the record:
- *      „{wydawca} ({data}) podaje: «{cytat}»” (mianownik nazwy wydawcy — poprawne dla każdej nazwy).
+ *  5 the short answer shows the verified passage. Attribution, publication and retrieval dates
+ *    travel with it in the evidence record.
  * No verified quote → no answer; the summary says what was searched and that sources did not answer.
  */
 import type { CorpusRecord, EvidenceItem, LlmProvider, ModelUsage, VerdictReport } from "../shared/contracts";
-import { passageKind, passageText } from "../shared/evidence";
+import { passageAssessment, passageKind, passageText } from "../shared/evidence";
 import { findQuoteInRecord, type DetectFn, type PreparedRecord } from "./assess";
 import { fence } from "./llm/fence";
 import { OPEN_ANSWER_SYSTEM, OpenAnswerOut, VERIFIER_SYSTEM, VerifierOut } from "./prompts";
@@ -57,8 +57,8 @@ export async function runOpenAnswer(
 }
 
 export type QuoteCheck =
-  | { ok: true; record: CorpusRecord; quote: string; score: number }
-  | { ok: false; reason: "none" | "unknown_ref" | "quote_not_found" | "quote_too_short" | "detector_hit"; events?: ReturnType<DetectFn> };
+  | { ok: true; record: CorpusRecord; quote: string; score: number; translationPl?: string }
+  | { ok: false; reason: "none" | "unknown_ref" | "quote_not_found" | "quote_too_short" | "detector_hit" | "missing_translation"; events?: ReturnType<DetectFn> };
 
 /** Code-side check of the model's pick: the quote must be in the stored record and pass the detector. */
 export function checkOpenAnswer(out: OpenAnswerOut, prepared: PreparedRecord[], detect: DetectFn): QuoteCheck {
@@ -72,19 +72,29 @@ export function checkOpenAnswer(out: OpenAnswerOut, prepared: PreparedRecord[], 
   const recordQuote = truncateWords(m.matched, QUOTE_MAX_CHARS);
   const qHits = detect(recordQuote, "quote", p.record.id);
   if (qHits.length > 0) return { ok: false, reason: "detector_hit", events: qHits };
-  return { ok: true, record: p.record, quote: recordQuote, score: m.score };
+  const isPolish = p.record.lang.toLowerCase().split("-")[0] === "pl";
+  const translationPl = isPolish ? "" : out.translationPl.trim();
+  if (!isPolish && !translationPl) return { ok: false, reason: "missing_translation" };
+  if (translationPl) {
+    if (translationPl.length > 900 || /https?:\/\//i.test(translationPl)) return { ok: false, reason: "missing_translation" };
+    const hits = detect(translationPl, "quote", p.record.id);
+    if (hits.length) return { ok: false, reason: "detector_hit", events: hits };
+  }
+  return { ok: true, record: p.record, quote: recordQuote, score: m.score, ...(translationPl && { translationPl }) };
 }
 
 export async function verifyOpenAnswer(
   verifier: LlmProvider,
   question: string,
   quote: string,
+  translationPl?: string,
   signal?: AbortSignal,
 ): Promise<{ vote: "zgoda" | "sprzeciw" | "niepewne"; usage: ModelUsage }> {
-  const body = `Rodzaj: odpowiedź\nPytanie: ${question}\nCytat: ${quote}\nZaproponowano: cytat odpowiada na pytanie`;
+  const body = `Rodzaj: odpowiedź\nPytanie: ${question}\nCytat: ${quote}\nZaproponowano: cytat odpowiada na pytanie` +
+    (translationPl ? `\nProponowany polski przekład: ${translationPl}` : "");
   const res = await verifier.complete({
     purpose: "verifier",
-    system: VERIFIER_SYSTEM,
+    system: VERIFIER_SYSTEM + (translationPl ? " Zgoda wymaga też, by proponowany przekład był po polsku, oddawał sens całego cytatu i zachowywał liczby, daty, zastrzeżenia oraz negacje. Odrzuć dopowiedzenia." : ""),
     user: `Oceń każdą pozycję.\n${fence("POZYCJA_V1", body).text}`,
     schema: VerifierOut,
     schemaName: "verifier_votes",
@@ -113,7 +123,7 @@ export function asksAboutPresent(question: string, modelFlag: boolean): boolean 
   return modelFlag || PRESENT.test(question);
 }
 
-export function answerEvidenceItem(r: CorpusRecord, quote: string): EvidenceItem {
+export function answerEvidenceItem(r: CorpusRecord, quote: string, relation: EvidenceItem["relation"] = "WSPIERA"): EvidenceItem {
   return {
     recordId: r.id,
     title: r.title,
@@ -122,34 +132,32 @@ export function answerEvidenceItem(r: CorpusRecord, quote: string): EvidenceItem
     fetchedAt: r.fetchedAt,
     url: r.url,
     quote,
-    passageKind: passageKind(r, quote),
-    relation: "WSPIERA",
+    lang: r.lang,
+    ...passageAssessment(r, quote, relation),
     aspect: "sedno",
     sourceType: r.type,
     level: r.level,
     role: r.role,
-    group: "wspierajace",
+    ...(r.rating?.raw && { ratingRaw: r.rating.raw }),
   };
 }
 
 /** Template answer — every descriptive field comes from the record, the quote from its stored text. */
-export function buildAnswer(questionPl: string, r: CorpusRecord, quote: string): OpenAnswer {
+export function buildAnswer(questionPl: string, r: CorpusRecord, quote: string, translationPl?: string): OpenAnswer {
   const kind = passageKind(r, quote);
   return {
     questionPl,
-    answerPl: kind !== "excerpt"
-      ? `${passageText(quote, kind)} (${r.publisher}).`
-      : `${r.publisher} (${formatDatePl(evidenceDate(r))}) podaje: «${quote}»`,
+    answerPl: translationPl ?? passageText(quote, kind),
     evidence: [answerEvidenceItem(r, quote)],
   };
 }
 
 export function archivalAnswerPl(r: CorpusRecord): string {
-  return `Źródło odpowiedzi pochodzi z ${formatDatePl(evidenceDate(r))}, czyli sprzed ponad roku. Pytasz o stan obecny, a ten mógł się zmienić — sprawdź datę i aktualne informacje u źródła.`;
+  return `Materiał ${r.publishedAt ? "opublikowano" : "pobrano"} ${formatDatePl(evidenceDate(r))}, ponad rok temu. Obecna sytuacja mogła się zmienić.`;
 }
 
 export function answerSummaryPl(r: CorpusRecord, archival: boolean): string {
-  const base = `Podstawą odpowiedzi jest ${passageKind(r, r.text) === "structured_data" ? "rekord danych" : "fragment publikacji"} wydawcy ${r.publisher} (${formatDatePl(evidenceDate(r))}).`;
+  const base = `Podstawą odpowiedzi jest ${passageKind(r, r.text) === "structured_data" ? "rekord danych" : "fragment publikacji"} wydawcy ${r.publisher} (${r.publishedAt ? "opublikowano" : "pobrano"} ${formatDatePl(evidenceDate(r))}).`;
   return archival ? `${base} Uwaga: to materiał sprzed ponad roku, stan mógł się zmienić.` : base;
 }
 

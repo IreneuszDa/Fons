@@ -1,4 +1,5 @@
 import { parseHTML } from "linkedom";
+import { z } from "zod";
 import { catalogSourceForUrl } from "../../corpus/catalog";
 import { parsePresidentPage, PRESIDENT_URL } from "../../corpus/ingest/state-officials";
 import { fetchPage } from "../../security/fetch";
@@ -33,12 +34,13 @@ function isPresidentialProfile(url: string): boolean {
 }
 
 /** Read only the caption belonging to the exact resource on the page. Article titles often name other people. */
-function findCaptions(html: string, base: string, title: string, exactUrls: Set<string>, ctx: ServerContext): ImageCitation[] {
+function findCaptions(html: string, base: string, title: string, exactUrls: Set<string>, ctx: ServerContext) {
   const { document } = parseHTML(html);
   const matches = (raw?: string | null) => exactUrls.has(resourceUrl(raw, base) ?? "");
   const captions = new Set<string>();
   const articleImages = isPresidentialProfile(base) ? document.querySelectorAll(".articles-single__description img") : [];
   let matchedProfile = false;
+  let matchedImage = false;
   for (const image of document.querySelectorAll("img")) {
     const resources = ["src", "data-src", "data-original"].map(attr => image.getAttribute(attr));
     const sources = [image, ...Array.from(image.closest("picture")?.querySelectorAll("source") ?? [])];
@@ -48,6 +50,7 @@ function findCaptions(html: string, base: string, title: string, exactUrls: Set<
       }
     }
     if (!resources.some(matches)) continue;
+    matchedImage = true;
     if (articleImages.length === 1 && image === articleImages[0]) matchedProfile = true;
     const figure = image.closest("figure");
     const attached = figure?.querySelectorAll("img").length === 1 ? figure.querySelector("figcaption")?.textContent : undefined;
@@ -60,7 +63,10 @@ function findCaptions(html: string, base: string, title: string, exactUrls: Set<
   let matchedOgImage = false;
   for (const meta of document.querySelectorAll("meta[property]")) {
     const property = meta.getAttribute("property")?.toLowerCase();
-    if (property === "og:image" || property === "og:image:url") matchedOgImage = matches(meta.getAttribute("content"));
+    if (property === "og:image" || property === "og:image:url") {
+      matchedOgImage = matches(meta.getAttribute("content"));
+      if (matchedOgImage) matchedImage = true;
+    }
     if (property === "og:image:alt" && matchedOgImage) {
       const quote = sourceText(meta.getAttribute("content"), ctx);
       if (quote) captions.add(quote);
@@ -72,12 +78,12 @@ function findCaptions(html: string, base: string, title: string, exactUrls: Set<
     const heading = sourceText(profile?.heading, ctx);
     if (profile?.officeSentences.length && heading) items.unshift({ kind: "official_profile", url: base, title: heading, quote: heading });
   }
-  return items;
+  return { matchedImage, captions: items };
 }
 
-export async function readMatchedCaptions(
+export async function readMatchedPublications(
   ctx: ServerContext, pages: PageWithImages[], globalImages: { url?: string }[],
-): Promise<ImageCitation[]> {
+) {
   const fetcher = ctx.engineDeps?.fetchPage ?? fetchPage;
   const candidates = new Map<string, Set<string>>();
   for (const page of pages) {
@@ -93,11 +99,15 @@ export async function readMatchedCaptions(
   const prioritized = [...candidates].sort(([a], [b]) => Number(isPresidentialProfile(b)) - Number(isPresidentialProfile(a)));
   const results = await Promise.all(prioritized.slice(0, 3).map(async ([url, exact]) => {
     try {
-      const page = await fetcher(url, { timeoutMs: 4500, maxBytes: 1_500_000 });
+      const page = await fetcher(url, { timeoutMs: 4500, maxBytes: 1_500_000, allowUrl: u => !!catalogSourceForUrl(u.href) });
       const source = catalogSourceForUrl(page.finalUrl);
       if (!source || !page.rawHtml || !resourceUrl(page.finalUrl)) return [];
       const title = sourceText(page.title, ctx) ?? source.publisher;
-      return findCaptions(page.rawHtml, page.finalUrl, title, exact, ctx);
+      const { matchedImage, captions } = findCaptions(page.rawHtml, page.finalUrl, title, exact, ctx);
+      if (!matchedImage) return [];
+      const day = page.publishedAt?.slice(0, 10);
+      const publishedAt = day && z.iso.date().safeParse(day).success && day <= ctx.now().toISOString().slice(0, 10) ? day : undefined;
+      return [{ url, publishedAt, captions }];
     } catch {
       return [];
     }

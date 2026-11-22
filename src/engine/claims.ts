@@ -21,6 +21,10 @@ import type { Claim, LlmProvider, ModelUsage } from "../shared/contracts";
 import { fence } from "./llm/fence";
 import { CLAIMS_SYSTEM, ClaimsOut, PAGE_LABEL, type InputMode } from "./prompts";
 import { foldForMatch, isoDateOrUndefined, ngramContainment, splitSentences, truncateWords } from "./text";
+import { registeredCountryName, subjectAliases } from "./retrieval/subject";
+import { isSingleDateClaim } from "./verdict/slots";
+import { explicitPublicationCutoff } from "./publication-window";
+import { asksForElectionRoundDate } from "./election-result";
 
 export const CLAIM_OVERLAP_THRESHOLD = 0.55;
 /** Stricter: the verbatim fragment must really be in the input (it replaces a rewritten claim). */
@@ -41,6 +45,8 @@ export interface ExtractedClaim {
   extraQueries: string[];
   /** Entity names, years and numbers that a relevant record should mention (rerank boost). */
   mustHave: string[];
+  /** Named subjects whose presence the decisive citation must establish for a coordinated claim. */
+  requiredSubjects?: string[];
   /** Sub-claims, one per subject (empty = the claim is checked as a whole). */
   parts: ExtractedClaim[];
 }
@@ -102,6 +108,23 @@ export async function extractClaims(llm: LlmProvider, input: string, signal?: Ab
 const INTERROGATIVE =
   /^(kto|kogo|komu|kim|co|czego|czym|ile|ilu|kiedy|gdzie|skąd|dokąd|jak|jaki|jaka|jakie|jakich|jakim|jakiego|jakiej|który|która|które|którzy|którego|której|których|dlaczego|czemu|po co|w jakim|w którym|w której|od kiedy|do kiedy|na czym|o czym|z kim|who|what|when|where|which|how|why)(?!\p{L})/iu;
 const YES_NO = /^(czy|is|are|does|do|did|was|were|has|have|can)(?!\p{L})/iu;
+
+/** A question about a standing fact can use the same auditable verdict rules as its declarative form. */
+export function asksAboutStandingFact(input: string): boolean {
+  const question = input.trim();
+  // A lead yes/no clause can introduce a request to reconcile sources. It needs the
+  // multi-source answer even when the writer ends the first clause with a period.
+  if (/(?:^|[\s,.!?;])(?:dlaczego|czemu|wyjaśnij|porównaj|why|explain|compare)(?!\p{L})|\bskąd\s+(?:ta\s+)?(?:różnic|rozbieżn)/iu.test(question)) return false;
+  if (/\S.+[.!]\s*(?:czy\s+)?to prawda\?$/iu.test(question)) return true;
+  if (!YES_NO.test(question) || question.split("?").filter(part => part.trim()).length !== 1) return false;
+  if (/\b(?:ostatnio|wczoraj|niedawno|wpis|film|zdjęcie|depesz\p{L}*|zapowied\p{L}*)\b/iu.test(question)) return false;
+  // In Polish, "X to Y" is also a complete copular claim about an office.
+  if (/\sto\s/iu.test(question) && roleQueryFor(question.replace(/^czy\s+/iu, ""))) return true;
+  return /(?:^|\s)(?:jest|są|należy|należą|graniczy|liczy|wynosi|pełni|sprawuje|wchodzi|należał[ao]?|mogą|można)(?=\s|[?.!]|$)/iu.test(question)
+    || /\b\d{1,2}\s+(?:stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|września|października|listopada|grudnia)\b/iu.test(question) && /\b(?:tura|wybory|wyborów|kadencj\p{L}*)/iu.test(question)
+    || /\b(?:19|20)\d{2}\b/u.test(question) && /(?<!\p{L})(?:\p{L}{2,}ł(?:a|o|y)?|\p{L}{2,}li|did|was|were)(?!\p{L})/iu.test(question)
+    || /^(?:is|are|does)\s/iu.test(question);
+}
 
 function lastSentence(input: string): string {
   const t = input.trim();
@@ -175,11 +198,50 @@ function mentions(text: string, entity: string): boolean {
   });
 }
 
+// A short assertion can be split by the reader into unrelated top-level claims. For an
+// explicitly coordinated grammatical subject preserve its joint scope, even in that case.
+const NAME_PHRASE = String.raw`\p{Lu}[\p{L}’'-]*(?:\s+\p{Lu}[\p{L}’'-]*)*`;
+const NAMED_SUBJECTS = new RegExp(String.raw`^(${NAME_PHRASE}(?:,\s*${NAME_PHRASE})*\s+(?:i|oraz|and)\s+${NAME_PHRASE})\s+(?=\p{Ll})`, "u");
+
+function coordinatedSubjects(text: string): string[] {
+  const match = NAMED_SUBJECTS.exec(text);
+  if (!match || /;|,\s+(?:a|ale|lecz|natomiast|while|but)\s/iu.test(text.slice(match[0].length))) return [];
+  const list = match[1];
+  if (list && registeredCountryName(list)) return [list];
+  return list?.split(/,\s*|\s+(?:i|oraz|and)\s+/u) ?? [];
+}
+
+/** Verify coverage on the quoted material with original names and source-independent aliases. */
+export function coversSubjects(text: string, subjects: string[]): boolean {
+  return subjects.every(subject => mentionsSubject(text, subject));
+}
+
+function mentionsSubject(text: string, aliases: string): boolean {
+  const tokens: string[] = text.match(/[\p{L}\p{N}]+/gu) ?? [];
+  const words = tokens.map(foldForMatch);
+  return aliases.split("|").some(raw => {
+    const alias = raw.trim();
+    if (alias.length === 1) return tokens.includes(alias);
+    const name = foldForMatch(alias).split(" ");
+    return words.some((_, i) => name.every((w, j) => {
+      const observed = words[i + j];
+      if (!observed) return false;
+      if (w === observed) return true;
+      // Regular inflections of names ending with a vowel (e.g. Litwa / Litwy, Szwecja / Szwecji).
+      const stem = w.length >= 4 && /[aeoy]$/u.test(w) ? w.slice(0, -1) : w;
+      return stem.length >= 3 && observed.startsWith(stem) && /^(?:a|e|i|o|y|u|em|ie|ej|om|ow|ych|ami)$/u.test(observed.slice(stem.length));
+    }));
+  });
+}
+
 /** Numbers of a part must be the parent's numbers (a part never brings a new date or figure). */
 function numbersWithin(part: string, parent: string): boolean {
-  const pn = new Set(parent.match(YEAR_OR_NUMBER) ?? []);
-  return (part.match(YEAR_OR_NUMBER) ?? []).every((n) => pn.has(n));
+  const figures = (s: string) => (s.match(/\d+(?:[.,]\d+)*/gu) ?? []).map(n => n.replace(/,/gu, "."));
+  const pn = new Set(figures(parent));
+  return figures(part).every((n) => pn.has(n));
 }
+
+const NEGATED = /(?<!\p{L})(?:nie|nigdy|bez|żad(?:en|na|ne)|not|never|without|no)(?!\p{L})/iu;
 
 /** Validated parts of a claim (each within the parent's words, distinct, 2–MAX_PARTS of them), or []. */
 export function validParts(parentText: string, parts: string[]): string[] {
@@ -189,14 +251,30 @@ export function validParts(parentText: string, parts: string[]): string[] {
     const t = truncateWords(raw.trim(), 400);
     const k = foldForMatch(t);
     if (!k || seen.has(k)) continue;
-    if (ngramContainment(t, parentText) < PART_OVERLAP_THRESHOLD || !numbersWithin(t, parentText)) return [];
+    if (ngramContainment(t, parentText) < PART_OVERLAP_THRESHOLD || !numbersWithin(t, parentText)
+      || NEGATED.test(t) !== NEGATED.test(parentText)) return [];
     seen.add(k);
     out.push(t);
   }
-  return out.length >= 2 ? out.slice(0, MAX_PARTS) : [];
+  if (out.length < 2 || out.length > MAX_PARTS) return [];
+  const subjects = coordinatedSubjects(parentText);
+  if (subjects.length && (out.length !== subjects.length ||
+    out.some(part => !numbersWithin(parentText, part)) ||
+    subjects.some(subject => out.filter(part => mentionsSubject(part, subject)).length !== 1) ||
+    out.some(part => subjects.filter(subject => mentionsSubject(part, subject)).length !== 1))) return [];
+  return out;
 }
 
-const NAMED_ATTRIBUTION = /^(?:[Cc]zy\s+)?((?:[\p{Lu}][\p{L}’'-]+\s+){1,3}[\p{Lu}][\p{L}’'-]+)\s+(?:powiedzia[łl]a?|m[óo]wi(?:[łl]a?)?|stwierdzi[łl]a?|napisa[łl]a?|oświadczy[łl]a?|oznajmi[łl]a?)(?:\s*:\s*|(?:\s*,\s*|\s+)(?:[żz]e|i[żz])\s+)/u;
+const NAMED_ATTRIBUTION = /^(?:[Cc]zy\s+)?((?:[\p{Lu}][\p{L}’'-]*\.?\s+){0,4}[\p{Lu}][\p{L}’'-]+\.?)\s+(?:powiedzia[łl]a?|m[óo]wi(?:[łl]a?)?|(?:s?twierdzi|napisa|oświadczy|oznajmi)[łl]a?)(?:\s*:\s*|(?:\s*,\s*|\s+)(?:[żz]e|i[żz])\s+)/u;
+const NAMED_OPINION = /^(?:[Ww]edług|[Zz]daniem|[Ww] opinii)\s+((?:[\p{Lu}][\p{L}’'-]+\s+){1,2}[\p{Lu}][\p{L}’'-]+)(?=,?\s+\p{Ll})/u;
+
+// In short indirect speech, a causal or comparative clause is part of what
+// was attributed to the speaker. Dropping it changes the fact being checked.
+function completeAttributedSentence(input: string): boolean {
+  if (!NAMED_ATTRIBUTION.test(input)) return false;
+  return /,\s*(?:bo|ponieważ|gdyż|inaczej|jeśli|jeżeli|gdyby|dopóki|gdy|skoro|więc|o\s+\d+)\b/iu.test(input)
+    && !/[;!?…]|,\s*(?:ale|lecz|natomiast|a)\s/iu.test(input);
+}
 
 /** An explicit attribution is part of the claim even if the model extracts only the quoted statement. */
 function restoreAttribution(text: string, sourceText: string, input: string): { text: string; speaker: string } | undefined {
@@ -208,21 +286,65 @@ function restoreAttribution(text: string, sourceText: string, input: string): { 
   return { text: fragment.replace(/^[Cc]zy\s+/u, "").replace(/\?\s*$/u, "."), speaker: match[1]! };
 }
 
+/** In Polish a direct polar question already contains the proposition. Keep its exact scope,
+ * including every negation and attribution. Determining truth is left to evidence assessment. */
+function polishPolarProposition(input: string): string | undefined {
+  if (input.length > 400 || splitSentences(input).length !== 1) return;
+  const match = /^czy\s+(?:to\s+prawda,?\s+że\s+)?([^?]+?)\s*\??$/iu.exec(input.trim());
+  const body = match?.[1]?.trim().replace(/[.!]+$/u, "");
+  if (!body || /(?:^|\s)czy\s/iu.test(body)) return;
+  return body.charAt(0).toLocaleUpperCase("pl") + body.slice(1) + ".";
+}
+
+/** A second reading must confirm the direction of evidence before giving a binary answer to a negation. */
+export function needsPolarityCheck(input: string): boolean {
+  const proposition = polishPolarProposition(input);
+  return !!proposition && NEGATED.test(proposition);
+}
+
 export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLimitFor(input), article = false, articleDate?: string): Omit<ClaimsResult, "usage"> {
   const kept: { raw: ClaimsOut["claims"][number]; text: string; overlap: number }[] = [];
   const rejected: { text: string; overlap: number }[] = [];
   const seen = new Set<string>();
-  for (const raw of out.claims) {
+  const singleSentence = input.length <= 400 && splitSentences(input).length === 1 ? input.trim() : undefined;
+  const polar = !article && resolveInputMode(out.inputMode, input, out.claims.length) === "question_yesno"
+    ? polishPolarProposition(input) : undefined;
+  const originalScope = polar ?? singleSentence;
+  const subjects = originalScope ? coordinatedSubjects(originalScope) : [];
+  let proposals = out.claims;
+  const opinionAuthor = originalScope && NAMED_OPINION.exec(originalScope)?.[1];
+  const personalOpinion = opinionAuthor && proposals.some(r => (r.type === "opinia" || r.type === "prognoza")
+    && r.entities.some(entity => mentions(entity, opinionAuthor)));
+  if (!article && originalScope && proposals.length && (completeAttributedSentence(originalScope) || personalOpinion)) {
+    const full = proposals.find(r => foldForMatch(r.text) === foldForMatch(originalScope));
+    const main = full ?? proposals.find(r => r.isMain) ?? proposals[0]!;
+    proposals = [{ ...main, text: originalScope, sourceText: originalScope, isMain: true,
+      temporalKind: "jednorazowe", parts: [], entities: [...new Set(proposals.flatMap(r => r.entities))] }];
+  } else if (originalScope && subjects.length && proposals.some(r => ngramContainment(r.text, originalScope) >= PART_OVERLAP_THRESHOLD
+    && !coversSubjects(r.text, subjects) && subjects.some(name => mentionsSubject(r.text, name)))) {
+    const main = proposals.find(r => r.isMain) ?? proposals[0]!;
+    // Complete extracted parts can be aggregated. With a missing part, evaluate the original
+    // proposition jointly and require a citation covering every named subject.
+    proposals = [{ ...main, text: originalScope, sourceText: originalScope, isMain: true,
+      entities: [...new Set(proposals.flatMap(r => r.entities))],
+      parts: proposals.flatMap(r => r.parts.length ? r.parts : [r.text]) }];
+  }
+  for (const raw of proposals) {
     let text = raw.text.trim();
     if (!text) continue;
     let overlap = Math.round(ngramContainment(text, input) * 1000) / 1000;
-    if (overlap < CLAIM_OVERLAP_THRESHOLD) {
-      // Rewritten or translated claim: fall back to the verbatim fragment it came from (in the input's language).
-      const src = (raw.sourceText ?? "").trim();
-      const srcOverlap = src ? Math.round(ngramContainment(src, input) * 1000) / 1000 : 0;
-      if (srcOverlap >= SOURCE_OVERLAP_THRESHOLD) {
-        text = truncateWords(src, 400);
-        overlap = srcOverlap;
+    const sourceText = raw.sourceText?.trim();
+    const original = sourceText && input.includes(sourceText) ? sourceText : undefined;
+    const anchor = original ?? singleSentence;
+    const changedNumber = !numbersWithin(text, anchor ?? input);
+    const changedNegation = anchor && NEGATED.test(text) !== NEGATED.test(anchor);
+    if (overlap < CLAIM_OVERLAP_THRESHOLD || changedNumber || changedNegation) {
+      // N-grams deliberately ignore stop words and short numbers. They cannot validate
+      // a removed "nie" or a changed price. Restore only actual words from the input.
+      const fallback = original ?? (overlap >= CLAIM_OVERLAP_THRESHOLD ? singleSentence : undefined);
+      if (fallback && fallback.length <= 400) {
+        text = fallback.replace(/^czy\s+/iu, "").replace(/\?$/u, ".");
+        overlap = Math.round(ngramContainment(text, input) * 1000) / 1000;
       } else {
         rejected.push({ text: truncateWords(text, 200), overlap });
         continue;
@@ -233,12 +355,17 @@ export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLi
       text = attribution.text;
       overlap = Math.round(ngramContainment(text, input) * 1000) / 1000;
     }
+    if (polar) {
+      text = polar;
+      overlap = Math.round(ngramContainment(text, input) * 1000) / 1000;
+    }
     const key = foldForMatch(text);
     if (seen.has(key)) continue;
     seen.add(key);
-    const speaker = attribution?.speaker ?? NAMED_ATTRIBUTION.exec(text)?.[1];
+    const speaker = attribution?.speaker ?? NAMED_ATTRIBUTION.exec(text)?.[1] ?? (personalOpinion && text === originalScope ? opinionAuthor : undefined);
     const preserved = speaker && input.includes(speaker)
       ? { ...raw, type: "fakt" as const, assertedAspect: "autorstwo" as const, entities: [speaker, ...raw.entities], parts: [] }
+      : polar && NEGATED.test(polar) ? { ...raw, parts: [] }
       : raw;
     kept.push({ raw: preserved, text, overlap });
     if (kept.length >= limit) break;
@@ -278,16 +405,20 @@ export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLi
     ]);
     // Rule 3 compares the EVENT date asserted by the claim with the evidence — a date the claim's own words do not
     // state (the page's dateline or publication date, copied by the model) is dropped (demo DEMO09).
-    const assertedDate = date && claimStatesDate(date, [text, raw.sourceText ?? ""]) ? date : undefined;
+    const assertedDate = date && claimStatesDate(date, [text]) ? date : undefined;
     const asOf = article && kind === "stan" ? assertedDate ?? isoDateOrUndefined(articleDate) : undefined;
-    const scopedText = (s: string) => asOf && !assertedDate ? `${s} (stan opisany w materiale z ${asOf})` : s;
-    const focus = raw.assertedAspect ?? undefined;
+    const publishedBy = explicitPublicationCutoff(text) ?? explicitPublicationCutoff(raw.sourceText && input.includes(raw.sourceText) ? raw.sourceText : singleSentence ?? "");
+    const scopedText = (s: string) => {
+      const statement = asOf && !assertedDate ? `${s} (stan opisany w materiale z ${asOf})` : s;
+      return publishedBy && !explicitPublicationCutoff(s) ? `${statement} (stan publikacji na ${publishedBy})` : statement;
+    };
+    const focus = assertedDate && asksForElectionRoundDate(text) ? "czas" : raw.assertedAspect ?? undefined;
     const claim: Claim = {
       id: `c${i + 1}`,
       text: scopedText(truncateWords(text, 400)),
       type: raw.type,
       isMain: i === mainIdx,
-      temporal: { kind, ...(assertedDate && { date: assertedDate }), ...(asOf && { asOf }) },
+      temporal: { kind, ...(assertedDate && assertedDate !== publishedBy && { date: assertedDate }), ...(asOf && { asOf }), ...(publishedBy && { publishedBy }) },
       inputOverlap: overlap,
       ...(focus && raw.type === "fakt" ? { assertedAspect: focus } : {}),
     };
@@ -296,13 +427,30 @@ export function postProcessClaims(out: ClaimsOut, input: string, limit = claimLi
         ? validParts(text, raw.parts ?? []).map(
             (p, k): ExtractedClaim => ({
               claim: { ...claim, id: `${claim.id}p${k + 1}`, text: scopedText(p), isMain: false, inputOverlap: Math.round(ngramContainment(p, input) * 1000) / 1000 },
-              extraQueries: cleanQueries([p, ...extraQueries]),
+              extraQueries: cleanQueries([p, entities.filter(en => mentions(p, en)).join(" ")]),
               mustHave: mustHaveTerms(p, entities.filter((en) => mentions(p, en))),
               parts: [],
             }),
           )
         : [];
-    return { claim, extraQueries, mustHave: mustHaveTerms(text, entities), parts };
+    const names = coordinatedSubjects(text);
+    const groupAliases = names.map(subjectAliases);
+    const translated = raw.keywordsPl.map(q => q.split(/\s+/u)
+      .filter(word => !/\d/u.test(word) && !groupAliases.some(name => mentionsSubject(word, name)))
+      .join(" "));
+    for (const p of parts) {
+      if (!names.length) continue;
+      p.requiredSubjects = names.filter(name => mentionsSubject(p.claim.text, name)).map(subjectAliases);
+      // The parent's "sedno" may be about collective participation. Each dated proposition
+      // has its own focus. Apply the ordinary evidence rules to that part's actual wording.
+      if (p.claim.assertedAspect === "sedno" && p.claim.temporal.kind === "jednorazowe" && isSingleDateClaim(p.claim.text)) {
+        delete p.claim.assertedAspect;
+      }
+      const subject = p.requiredSubjects.join(" ").replace(/\|/gu, " ");
+      p.extraQueries = cleanQueries([...p.extraQueries, ...translated.map(q => subject + " " + q)]);
+    }
+    return { claim, extraQueries, mustHave: mustHaveTerms(text, entities), parts,
+      ...(names.length && { requiredSubjects: groupAliases }) };
   });
   return { inputMode, claims: withinUnitBudget(claims), rejected, claimLimit: limit };
 }
@@ -359,7 +507,7 @@ function isInstitutionWord(w: string): boolean {
   return INSTITUTION_PREFIXES.some((p) => f.startsWith(p));
 }
 
-const PUBLIC_OFFICE = /\b(?:prezydent\w*|premier\w*|ministr\w*|minister\w*|marszalk\w*|posel|posl\w*|senator\w*|ambasador\w*|wojewod\w*|komisarz\w*|przewodniczac\w*|prezes\w* rady ministrow|sekretarz\w* generaln\w*|president|ambassador|commissioner|secretary general)\b/;
+const PUBLIC_OFFICE = /\b(?:prezydent\w*|premier\w*|ministr\w*|minister\w*|marszal(?:e)?k\w*|posel|posl\w*|senator\w*|ambasador\w*|wojewod\w*|komisarz\w*|przewodniczac\w*|prezes\w* rady ministrow|sekretarz\w* generaln\w*|president|ambassador|commissioner|secretary general|wysok\w* przedstawiciel\w*|high representative)\b/;
 const HOLDS_OFFICE = /\b(?:jest|byl|byla|zostal|zostala|zostanie|to|mianowan\w*|powolan\w*|pelni\w*|objal|objela|obejm\w*|piastuje|is|was|became|serves as|appointed)\b/;
 
 /**

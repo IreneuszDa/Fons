@@ -1,0 +1,118 @@
+{
+  "method": "Dwa publiczne wejścia do oddzielnych sesji, rzeczywista usługa WWW Hono na 127.0.0.1, świeża baza SQLite, skonfigurowane usługi i publiczny korpus. POST /api/chat, ponowny odczyt GET /api/report i porównanie z dziennikiem. Modele widziały jedynie przesyłaną wiadomość.",
+  "baseline": "aktualny-zamiar-v30.json",
+  "rows": [
+    {
+      "input": "Polska planuje aneksję zachodniej Ukrainy.",
+      "started": "2026-11-22T06:18:46.819Z",
+      "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+      "status": "OK",
+      "http": 200,
+      "readbackHttp": 200,
+      "persisted": true,
+      "auditMatches": true,
+      "elapsedMs": 20297,
+      "costUsd": 0.044475,
+      "answerPl": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "verdict": "BRAK_DOWODOW",
+      "claims": [
+        {
+          "text": "Polska planuje aneksję zachodniej Ukrainy.",
+          "temporal": {
+            "kind": "stan"
+          }
+        }
+      ],
+      "rule": 2,
+      "reason": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+      "notes": [
+        "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+        "Do ustalenia obecnego zamiaru potrzeba aktualnego, datowanego źródła, które wprost określa działanie tego podmiotu i jego przedmiot. Pozostałe materiały pokazujemy jako kontekst.",
+        "Znaleźliśmy 1 dowód poniżej progu (np. tylko jedno źródło wtórne albo ocena nieznana) — to za mało na werdykt.",
+        "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+      ],
+      "evidence": [
+        {
+          "recordId": "euvsdisinfo:03b8c9898ab6",
+          "relation": "INNY_KONTEKST",
+          "publishedAt": "2023-02-08",
+          "fetchedAt": "2026-11-21T16:36:00.258Z",
+          "url": "https://euvsdisinfo.eu/report/poland-has-plans-to-annex-western-ukraine/",
+          "quote": "Poland has plans to annex Western Ukraine",
+          "usedForVerdict": false,
+          "publisher": "EUvsDisinfo (East StratCom Task Force, EEAS)"
+        }
+      ]
+    },
+    {
+      "input": "Czy celem władz Polski jest przyłączenie zachodniej części Ukrainy do Polski?",
+      "started": "2026-11-22T06:18:46.824Z",
+      "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+      "status": "OK",
+      "http": 200,
+      "readbackHttp": 200,
+      "persisted": true,
+      "auditMatches": true,
+      "elapsedMs": 20264,
+      "costUsd": 0.036986,
+      "answerPl": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "verdict": "BRAK_DOWODOW",
+      "claims": [
+        {
+          "text": "Celem władz Polski jest przyłączenie zachodniej części Ukrainy do Polski.",
+          "temporal": {
+            "kind": "stan"
+          }
+        }
+      ],
+      "rule": 2,
+      "reason": "Nie znaleźliśmy w wiarygodnych źródłach dowodu, który pozwalałby to rozstrzygnąć.",
+      "notes": [
+        "Nie znaleźliśmy w wiarygodnych źródłach niczego, co pozwala to rozstrzygnąć.",
+        "Do ustalenia obecnego zamiaru potrzeba aktualnego, datowanego źródła, które wprost określa działanie tego podmiotu i jego przedmiot. Pozostałe materiały pokazujemy jako kontekst.",
+        "Znaleźliśmy 3 dowody poniżej progu (np. tylko jedno źródło wtórne albo ocena nieznana) — to za mało na werdykt.",
+        "Model sprawdzający zakwestionował 1 dowód — nie liczymy ich.",
+        "Drugi model sprawdzający jest z tej samej rodziny (ten sam dostawca) co pierwszy — to słabsza kontrola, więc o sile decyduje głównie liczba zgodnych, niezależnych źródeł."
+      ],
+      "evidence": [
+        {
+          "recordId": "sejm-eli:9f0fca326e3d",
+          "relation": "CZESCIOWO",
+          "publishedAt": "2022-01-27",
+          "fetchedAt": "2026-11-21T16:19:25.687Z",
+          "url": "https://api.sejm.gov.pl/eli/acts/MP/2022/122/text/O/M20220122.pdf",
+          "quote": "Ukraina jest państwem suwerennym, wolnym i demokratycznym. Integralność jej terytorium, nienaruszalność granic\ni prawo do samostanowienia narodu ukraińskiego nie mogą być w żaden sposób łamane.",
+          "usedForVerdict": false,
+          "publisher": "Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)"
+        },
+        {
+          "recordId": "euvsdisinfo:5f654978759a",
+          "relation": "INNY_KONTEKST",
+          "publishedAt": "2022-11-14",
+          "fetchedAt": "2026-11-21T16:35:56.118Z",
+          "url": "https://euvsdisinfo.eu/report/poland-could-annex-western-ukraine/",
+          "quote": "Poland could annex Western Ukraine",
+          "usedForVerdict": false,
+          "publisher": "EUvsDisinfo (East StratCom Task Force, EEAS)"
+        },
+        {
+          "recordId": "euvsdisinfo:03b8c9898ab6",
+          "relation": "INNY_KONTEKST",
+          "publishedAt": "2023-02-08",
+          "fetchedAt": "2026-11-21T16:36:00.258Z",
+          "url": "https://euvsdisinfo.eu/report/poland-has-plans-to-annex-western-ukraine/",
+          "quote": "Poland has plans to annex Western Ukraine",
+          "usedForVerdict": false,
+          "publisher": "EUvsDisinfo (East StratCom Task Force, EEAS)"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "checkedBy": "asystent AI",
+    "scope": "Dwie osobne rozmowy WWW powtórzone na niezmienionej kopii v31. W poprzedniej próbie na v30 drugie pytanie uzyskało zbyt stanowczą odpowiedź z ogólnej deklaracji o suwerenności.",
+    "judgment": "W obu raportach treść wyszukanych materiałów i brak jednoznacznej datowanej deklaracji w sprawie wskazanej konkretnej czynności uzasadniają wstrzymanie się. Udokumentowano 2 z 2 poprawnych zapisów i zgodność 2 z 2 odczytów w dzienniku. Żaden fragment pokazany jako kontekst nie wpłynął na werdykt.",
+    "totalEngineUsd": 0.081461,
+    "limitations": "Dwie celowe próby, bez ponownego testowania jakości całej setki. Konserwatywne porównanie może pominąć poprawną informację wyrażoną inną składnią, odmianą albo innym językiem. Testy reguł obejmują także publikację konkretnie potwierdzającą albo negującą wskazane działanie."
+  }
+}

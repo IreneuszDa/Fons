@@ -37,6 +37,7 @@ import { useAdmin, useAdminAction, useAdminData } from "./useAdminData";
 // ───────────── Eksport ─────────────
 
 export function ExportsPanel() {
+  const [dataset, setDataset] = useState<"cases" | "runs">("cases");
   const run = useAdminAction();
   const [busy, setBusy] = useState<ExportFormat | null>(null);
   const [error, setError] = useState("");
@@ -46,27 +47,27 @@ export function ExportsPanel() {
     setBusy(format);
     setError("");
     setDone("");
-    const r = await run(() => fetchExport(format));
+    const r = await run(() => fetchExport(format, dataset));
     setBusy(null);
     if (!r.ok) return setError(r.error.message);
     const date = new Date().toISOString().slice(0, 10);
-    saveBlob(r.value, `fons-eksport-${date}.${format}`);
+    saveBlob(r.value, format === "stix" ? `fons-stix-${date}.json` : `fons-${dataset}-${date}.${format}`);
     setDone(`Pobrano plik ${format.toUpperCase()}.`);
   };
 
   return (
     <VStack gap={4}>
       <SectionHeader title="Eksport danych" />
-      <Text as="p" color="secondary">
-        Eksport zawiera sprawy i zagregowane wyniki sprawdzeń. Nadawcy są pseudonimizowani — nie ma w nim numerów telefonów ani treści
-        wiadomości z danymi osobowymi.
-      </Text>
+      <Selector label="Dane do eksportu" value={dataset} options={[{ value: "cases", label: "Sprawy moderatorów" }, { value: "runs", label: "Przebiegi sprawdzeń" }]}
+        onChange={v => { if (v === "cases" || v === "runs") setDataset(v); }} />
       {error ? <Banner status="error" title={error} collapsible={false} /> : null}
       {done ? <Banner status="success" title={done} collapsible={false} /> : null}
       <HStack gap={2} wrap="wrap">
         <Button label="Pobierz CSV" variant="primary" isLoading={busy === "csv"} onClick={() => void download("csv")} />
         <Button label="Pobierz JSON" isLoading={busy === "json"} onClick={() => void download("json")} />
       </HStack>
+      <Text as="p">Do analizy w OpenCTI pobierz publiczne odnośniki z katalogu incydentów oraz uzasadnione przypisania technik DISARM.</Text>
+      <Button label="Pobierz STIX 2.1" isLoading={busy === "stix"} onClick={() => void download("stix")} />
     </VStack>
   );
 }

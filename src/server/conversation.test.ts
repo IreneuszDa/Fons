@@ -327,7 +327,7 @@ describe("asystent przed weryfikacją", () => {
     expect([...env.ctx.clientUsage.values()][0]?.tokens).toBe(3 * (usage.inputTokens + usage.outputTokens));
   });
 
-  it("rozpoznaje cel przed odczytaniem cache i nie zwraca starego raportu podczas rozmowy", async () => {
+  it("nie pozwala modelowi rozmowy zastąpić dowodów przy powtórnym pytaniu o fakt", async () => {
     const env = makeEnv();
     const text = "Czy Polska należy do NATO?";
     const agent = vi.fn<ConversationAgent>()
@@ -338,8 +338,8 @@ describe("asystent przed weryfikacją", () => {
     const first = await chat(env, { text });
     expect(first.json.reply.report.cacheHit).toBe(false);
     const second = await chat(env, { text }, first.cookie);
-    expect(second.json.reply.textPl).toBe("Tak zapisałeś poprzednie pytanie.");
-    expect(second.json.reply.report).toBeUndefined();
+    expect(second.json.reply.report.cacheHit).toBe(true);
+    expect(second.json.reply.textPl).toMatch(/^Tak[.]/);
     const repeated = await chat(env, { text }, first.cookie);
     expect(repeated.json.reply.report.cacheHit).toBe(true);
     expect(env.calls).toHaveLength(1);
@@ -359,7 +359,7 @@ describe("asystent przed weryfikacją", () => {
     const env = makeEnv({ cfg: { dailyTokenBudget: 2_000, ipDailyTokenShare: 0.01 } });
     const agent = vi.fn<ConversationAgent>().mockResolvedValue({ kind: "verify", query: null, usage });
     env.ctx.conversationAgent = agent;
-    const result = await chat(env, { text: "Czy Polska należy do NATO?" });
+    const result = await chat(env, { text: "Czy biblioteka miejska będzie otwarta w niedzielę?" });
     expect(result.json.reply.kind).toBe("status");
     expect(result.json.reply.textPl).toContain("limit");
     expect(agent).toHaveBeenCalledTimes(1);

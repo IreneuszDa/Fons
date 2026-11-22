@@ -92,14 +92,15 @@ describe("katalog źródeł", () => {
 
   it("flaga liveSearch uwzględnia kanały API i blokady automatycznego dostępu", () => {
     const catalog = loadCatalog();
-    const offlinePrimary = new Set(["gus-bdl", "consilium-eu", "ohchr", "un-press", "eu-enlargement", "pap-depesze", "wroclaw-transport", "rpo"]);
+    const offlinePrimary = new Set(["gus-bdl", "consilium-eu", "ohchr", "un-press", "eu-enlargement", "pap-depesze", "wroclaw-transport", "rpo", "zus-wskazniki", "zus-swiadczenia", "cbos", "unhcr-data", "sipri", "iiss", "kse-institute"]);
     for (const s of catalog) expect(typeof s.liveSearch, s.id).toBe("boolean");
     for (const s of catalog) {
-      if (s.type === "pierwotne") expect(s.liveSearch, s.id).toBe(!offlinePrimary.has(s.id));
+      if (s.type === "pierwotne" && (s.fetchMethod === "dump" || offlinePrimary.has(s.id))) expect(s.liveSearch, s.id).toBe(false);
       // fetchMethod "api" = dane tylko przez API pośrednika (np. Demagog przez Google Fact Check Tools API) — bez pobierania stron.
       if (s.type === "factcheck" && s.ifcnEfcsn) expect(s.liveSearch, s.id).toBe(s.fetchMethod !== "api");
       if (s.type === "factcheck" && !s.ifcnEfcsn) expect(s.liveSearch, s.id).toBe(false);
     }
+    for (const id of ["gov-pl", "nato", "msz-odyseusz"]) expect(catalogSourceById(id)?.liveSearch, id).toBe(true);
     expect(catalogSourceById("demagog")?.liveSearch).toBe(false);
     expect(catalogSourceById("demagog")?.fetchMethod).toBe("api");
     expect(catalogSourceById("konkret24")?.liveSearch).toBe(false);

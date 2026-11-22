@@ -45,6 +45,11 @@ describe("extractFromHtml", () => {
     expect(page.publishedAt).toBe(new Date("2026-11-20T08:30:00+01:00").toISOString());
   });
 
+  it("odczytuje język publikacji z deklaracji wydawcy", () => {
+    expect(extractFromHtml('<html lang="fr-CA"><body>Une publication.</body></html>').lang).toBe("fr");
+    expect(extractFromHtml('<html lang="invalid language!"><body>Texte.</body></html>').lang).toBeUndefined();
+  });
+
   it("collects every kind of hidden segment", () => {
     const joined = page.hiddenSegments.join(" | ");
     for (const s of [
@@ -105,6 +110,11 @@ describe("extractFromHtml", () => {
     expect(dateline.publishedAt).toBeUndefined();
     const c = extractFromHtml(`<html><body><p>bez daty</p></body></html>`);
     expect(c.publishedAt).toBeUndefined();
+  });
+
+  it("reads the PAP issue date separately from its nested update", () => {
+    const fragment = '<div class="articleInfo"><div class="date">13.09.2024 09:28 <span class="actualDate">aktualizacja: 15.09.2024 13:04</span></div></div>';
+    expect(extractFromHtml(fragment).publishedAt).toBe("2024-09-13");
   });
 
   it("short pages fall back to body text", () => {

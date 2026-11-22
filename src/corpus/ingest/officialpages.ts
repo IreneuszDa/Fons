@@ -35,6 +35,10 @@ export interface PageSpec {
   selector?: string;
   /** Maks. liczba rekordów (kawałków) ze strony. */
   max: number;
+  /** Jedno dosłowne zdanie zawierające wskazany fragment, z limitem cytowania źródła. */
+  quoteContaining?: RegExp;
+  /** Maksymalna długość całego wybranego fragmentu, również gdy obejmuje sąsiednie akapity. */
+  maxExcerptLength?: number;
   /** Zaczynamy od pierwszej linii pasującej do wyrażenia (odcina nawigację). */
   startAt?: RegExp;
   /** Kończymy przed pierwszą linią pasującą do wyrażenia (stopka, "Related links"). */
@@ -270,8 +274,10 @@ export function detectPublishedAt(parsed: ReturnType<typeof parseHtmlPage>, opts
     return m ? m[1]! : null;
   };
   const meta = parsed.meta;
-  const fromMeta = iso(meta["article:published_time"]) ?? null;
+  const displayed = parsed.document.querySelector(".event-date")?.textContent?.trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  const fromMeta = iso(meta["article:published_time"]) ?? iso(meta["og:article:published_time"]);
   if (fromMeta) return fromMeta;
+  if (displayed) return `${displayed[3]}-${displayed[2]}-${displayed[1]}`;
   if (!opts.ignoreTimeElement) {
     const t = parsed.document.querySelector("time");
     const fromTime = iso(t?.getAttribute("datetime")) ?? parseEnglishDate(t?.textContent ?? "");
@@ -313,22 +319,25 @@ function plDate(iso: string): string {
   return `${Number(d)} ${MONTHS_PL_GEN[Number(m) - 1]} ${y} r.`;
 }
 
-export async function ingestOfficialPages(opts: IngestOptions): Promise<IngestResult> {
-  const result = newResult("official-pages");
+export async function ingestOfficialPages(opts: IngestOptions, pages = PAGES, fileId?: string): Promise<IngestResult> {
+  const result = newResult(fileId ?? "official-pages");
+  if (fileId) result.fileId = fileId;
   const client = new PoliteClient({ refresh: opts.refresh });
 
-  for (const spec of PAGES) {
+  for (const spec of pages) {
     try {
       const src = sourceFromCatalog(opts.catalog, spec.sourceId);
       const base = baseFromCatalog(src);
       const res = await client.get(spec.url);
       if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+      if (!src.hosts.includes(new URL(res.finalUrl).hostname)) throw new Error("przekierowanie poza domenę wydawcy");
       const parsed = parseHtmlPage(res.body, spec.selector);
       if (isChallengePage(res.body, parsed.title)) throw new Error("strona zwraca wyzwanie antybotowe (nie obchodzimy)");
       let lines = parsed.text.split("\n").map(squash).filter(Boolean);
       if (spec.startAt) {
         const i = lines.findIndex((l) => spec.startAt!.test(l));
         if (i >= 0) lines = lines.slice(i);
+        else if (fileId) throw new Error("brak wskazanej sekcji dokumentu");
       }
       if (spec.stopAt) {
         const i = lines.findIndex((l, idx) => idx > 0 && spec.stopAt!.test(l));
@@ -352,7 +361,16 @@ export async function ingestOfficialPages(opts: IngestOptions): Promise<IngestRe
         null;
       let pageTitle = squash(parsed.title.replace(PAGE_PUBLISHER_SUFFIX, "")) || spec.url;
       if (pageTitle.startsWith(`${spec.titlePrefix}: `)) pageTitle = pageTitle.slice(spec.titlePrefix.length + 2);
-      const chunks = chunkText(body.join("\n"), 1200).filter((c) => c.length >= 80).slice(0, spec.max);
+      let chunks = chunkText(body.join("\n"), 1200).filter((c) => c.length >= 80).slice(0, spec.max);
+      if (spec.quoteContaining) {
+        const segmenter = new Intl.Segmenter(spec.lang, { granularity: "sentence" });
+        const expression = spec.quoteContaining;
+        const sentence = body.flatMap(line => [...segmenter.segment(line)].map(part => part.segment.trim()))
+          .find(text => text.length >= 25 && text.length <= 300 && expression.test(text));
+        if (!sentence) throw new Error("brak pełnego zdania mieszczącego się w limicie cytatu");
+        chunks = [sentence];
+      }
+      if (spec.maxExcerptLength && chunks.some(chunk => chunk.length > spec.maxExcerptLength!)) throw new Error("Wybrany fragment przekracza limit cytatu");
       chunks.forEach((chunk, idx) => {
         const rec: CorpusRecord = {
           ...base,
@@ -393,7 +411,7 @@ export async function ingestOfficialPages(opts: IngestOptions): Promise<IngestRe
     }
   }
   result.requests = client.requests;
-  result.notes.push(
+  if (!fileId) result.notes.push(
     "Strony instytucji pobrane z listy PAGES (bez wyszukiwania). Pominięte z powodu blokad botów: consilium.europa.eu (Browser check), ohchr.org (HTTP 403), press.un.org (Client Challenge), neighbourhood-enlargement.ec.europa.eu (HTTP 403), icao.int (brak stabilnego adresu komunikatu; rozstrzygnięcie ICAO cytujemy przez UN News i rząd NL).",
   );
   return result;

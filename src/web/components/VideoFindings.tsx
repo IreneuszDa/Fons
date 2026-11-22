@@ -4,6 +4,7 @@ import { Link } from "@astryxdesign/core/Link";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import type { Claim, VideoAnalysis } from "../../shared/contracts";
+import { recordingFileLabel } from "../../shared/attachments";
 import { safeUrl } from "../lib/safeUrl";
 
 type ClaimOrigin = VideoAnalysis["claimOrigins"][number];
@@ -61,6 +62,7 @@ export function VideoFindings({ analysis, pendingClaims = [] }: { analysis: Vide
   return (
     <VStack gap={2}>
       <Heading level={4}>{platformLabels[analysis.platform]}</Heading>
+      {analysis.file && <Text as="p" type="supporting">{recordingFileLabel(analysis.file)}</Text>}
       {analysis.title && <Text weight="semibold">{analysis.title}</Text>}
       {analysis.author && <Text type="supporting" color="secondary">Autor: {analysis.author}</Text>}
       {thumbnail && <Link href={thumbnail} isExternalLink newTabLabel="(otwiera się w nowej karcie)" referrerPolicy="no-referrer" type="supporting">Zobacz miniaturę filmu</Link>}
@@ -77,7 +79,7 @@ export function VideoFindings({ analysis, pendingClaims = [] }: { analysis: Vide
       {analysis.transcriptSource === "openai" &&
         <Text as="p" type="supporting" color="secondary">Czas przy wypowiedzi wskazuje początek fragmentu dźwięku.</Text>}
       {analysis.mediaIssue && <Text as="p" type="supporting" color="secondary">{analysis.mediaIssue}</Text>}
-      {analysis.status !== "unavailable" && analysis.status !== "caption_only" &&
+      {analysis.status !== "unavailable" && analysis.status !== "caption_only" && analysis.status !== "metadata_only" &&
         <TimedPassages title={analysis.transcriptSource === "platform" ? "Napisy platformy" : "Transkrypcja"} entries={analysis.transcript} empty="Nie rozpoznano wypowiedzi w nagraniu." />}
       {analysis.status === "analyzed" &&
         <TimedPassages title="Obraz i napisy" entries={analysis.observations} empty="Brak odczytanych szczegółów obrazu." />}

@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS reports (
 CREATE INDEX IF NOT EXISTS idx_reports_sender ON reports(sender_id);
 CREATE INDEX IF NOT EXISTS idx_reports_expires ON reports(expires_at);
 
+CREATE TABLE IF NOT EXISTS material_archives (
+  id TEXT PRIMARY KEY,
+  sender_id TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  material_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  UNIQUE(sender_id, sha256)
+);
+CREATE INDEX IF NOT EXISTS idx_material_archive_expiry ON material_archives(expires_at);
+
 -- Dziennik audytu (append-only, łańcuch SHA-256). Usunięcie danych użytkownika czyści pola osobowe
 -- (erased=1), ale zostawia wiersz i skrót, więc łańcuch nadal się weryfikuje.
 CREATE TABLE IF NOT EXISTS runs (
@@ -222,6 +233,7 @@ export interface PurgeResult {
   securityEvents: number;
   /** Wygasłe migawki wyszukiwania na żywo (tabela live_snapshots, jeśli istnieje). */
   liveSnapshots: number;
+  archives: number;
 }
 
 /** Usuwa wygasłe wiersze live_snapshots. Tabela należy do modułu wyszukiwania i może nie istnieć. */
@@ -258,7 +270,8 @@ export function purgeRetention(db: Db, now: Date): PurgeResult {
     db.prepare("DELETE FROM token_usage WHERE day < ?").run(tokensCut);
     db.prepare("DELETE FROM image_search_usage WHERE day < ?").run(tokensCut);
     const liveSnapshots = purgeLiveSnapshots(db, now);
-    return { runs, sessions, reports, cache, securityEvents, liveSnapshots };
+    const archives = db.prepare("DELETE FROM material_archives WHERE expires_at <= ?").run(iso).changes;
+    return { runs, sessions, reports, cache, securityEvents, liveSnapshots, archives };
   });
   return tx();
 }

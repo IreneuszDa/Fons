@@ -1,0 +1,183 @@
+{
+  "at": "2026-11-22T05:29:20.514Z",
+  "pipeline": "engine-2026.11.22-28-register-evidence",
+  "method": "POST /api/chat i GET /api/report w tej samej aplikacji Hono z rzeczywistym korpusem, bazą SQLite i kontrolą audytu. Dla wykazu nie wywołano modeli.",
+  "passed": 9,
+  "total": 9,
+  "routerCalls": 0,
+  "rows": [
+    {
+      "text": "Polska nie jest członkiem NATO.",
+      "expected": "FALSZYWE",
+      "verdict": "FALSZYWE",
+      "http": 200,
+      "elapsedMs": 252,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Nie. Polska należy do NATO.",
+      "sources": [
+        {
+          "recordId": "nato:17b2896c4813",
+          "quote": "Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12). Lista państw członkowskich NATO: „Poland 1999”.",
+          "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+          "fetchedAt": "2026-11-21T16:07:22.030Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Czy Polska jest członkiem NATO?",
+      "expected": "POTWIERDZONE",
+      "verdict": "POTWIERDZONE",
+      "http": 200,
+      "elapsedMs": 10,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Tak. Polska należy do NATO.",
+      "sources": [
+        {
+          "recordId": "nato:17b2896c4813",
+          "quote": "Polska — członkostwo w NATO od 12 marca 1999 r. (1999-03-12). Lista państw członkowskich NATO: „Poland 1999”.",
+          "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+          "fetchedAt": "2026-11-21T16:07:22.030Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Ukraina nie jest członkiem Unii Europejskiej.",
+      "expected": "POTWIERDZONE",
+      "verdict": "POTWIERDZONE",
+      "http": 200,
+      "elapsedMs": 9,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Tak. Ukraina ma status kandydata do UE.",
+      "sources": [
+        {
+          "recordId": "eu-portal:9ce4a9d60272",
+          "quote": "Ukraina (kraj kandydujący do UE)",
+          "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+          "fetchedAt": "2026-11-21T21:22:36.719Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Czy Ukraina jest w UE?",
+      "expected": "FALSZYWE",
+      "verdict": "FALSZYWE",
+      "http": 200,
+      "elapsedMs": 49,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Nie. Ukraina ma status kandydata do UE.",
+      "sources": [
+        {
+          "recordId": "eu-portal:9ce4a9d60272",
+          "quote": "Ukraina (kraj kandydujący do UE)",
+          "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+          "fetchedAt": "2026-11-21T21:22:36.719Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Czy Niemcy są w UE?",
+      "expected": "POTWIERDZONE",
+      "verdict": "POTWIERDZONE",
+      "http": 200,
+      "elapsedMs": 8,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Tak. Niemcy należą do UE.",
+      "sources": [
+        {
+          "recordId": "eu-portal:7dfda9f14485",
+          "quote": "Państwo członkowskie UE od 1958 r., należy do strefy euro od 1999 r., a do strefy Schengen od 1995 r. Dowiedz się więcej o członkostwie Niemiec w UE.",
+          "url": "https://european-union.europa.eu/principles-countries-history/eu-countries_pl",
+          "fetchedAt": "2026-11-21T21:33:00.542Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Albania jest członkiem UE.",
+      "expected": "FALSZYWE",
+      "verdict": "FALSZYWE",
+      "http": 200,
+      "elapsedMs": 6,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Nie. Albania ma status kandydata do UE.",
+      "sources": [
+        {
+          "recordId": "eu-portal:e581ae4c2172",
+          "quote": "Albania (kraj kandydujący do UE)",
+          "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+          "fetchedAt": "2026-11-21T21:22:36.719Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Czy Chorwacja nie należy do NATO?",
+      "expected": "FALSZYWE",
+      "verdict": "FALSZYWE",
+      "http": 200,
+      "elapsedMs": 5,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Nie. Chorwacja należy do NATO.",
+      "sources": [
+        {
+          "recordId": "nato:139c8d14a811",
+          "quote": "Chorwacja — członkostwo w NATO od 1 kwietnia 2009 r. (2009-04-01). Lista państw członkowskich NATO: „Croatia 2009”.",
+          "url": "https://www.nato.int/en/about-us/organization/nato-member-countries",
+          "fetchedAt": "2026-11-21T16:07:22.030Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Czy Serbia nie należy do UE?",
+      "expected": "POTWIERDZONE",
+      "verdict": "POTWIERDZONE",
+      "http": 200,
+      "elapsedMs": 6,
+      "modelCalls": 0,
+      "checked": 1,
+      "answer": "Tak. Serbia ma status kandydata do UE.",
+      "sources": [
+        {
+          "recordId": "eu-portal:43a900b71443",
+          "quote": "Serbia (kraj kandydujący do UE)",
+          "url": "https://european-union.europa.eu/principles-countries-history/eu-enlargement_pl",
+          "fetchedAt": "2026-11-21T21:22:36.719Z"
+        }
+      ],
+      "persisted": true,
+      "auditMatches": true
+    },
+    {
+      "text": "Norwegia nie jest członkiem UE.",
+      "expected": "BRAK_DOWODOW",
+      "verdict": "BRAK_DOWODOW",
+      "http": 200,
+      "elapsedMs": 1278,
+      "modelCalls": 0,
+      "checked": 0,
+      "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+      "sources": [],
+      "persisted": true,
+      "auditMatches": true
+    }
+  ]
+}

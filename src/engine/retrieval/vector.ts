@@ -43,7 +43,7 @@ export interface VectorBranchOptions {
  */
 export const DEFAULT_MIN_VECTOR_SCORE = 0.78;
 /** Dodatkowi kandydaci wymagają zgodności z pełnym twierdzeniem i trafienia mocniejszego niż zwykły próg gałęzi. */
-const FACT_CHECK_MIN_CLAIM_SCORE = 0.83;
+const STRONG_CLAIM_SCORE = 0.83;
 const FACT_CHECK_MIN_SCORE = 0.84;
 const FACT_CHECK_MAX_SCORE_GAP = 0.02;
 const FACT_CHECK_MAX_RESULTS = 2;
@@ -195,6 +195,7 @@ export function createVectorBranch(db: Database, opts: VectorBranchOptions = {})
   }
 
   const existsStmtCache = new Map<number, import("better-sqlite3").Statement>();
+  let recentPrimaryStmt: import("better-sqlite3").Statement | undefined;
   let factCheckStmt: import("better-sqlite3").Statement | undefined;
   function existingIds(ids: string[]): Set<string> {
     if (ids.length === 0) return new Set();
@@ -245,11 +246,31 @@ export function createVectorBranch(db: Database, opts: VectorBranchOptions = {})
       }
 
       const limit = q.limit ?? DEFAULT_BRANCH_LIMIT;
+      if (q.recentPrimaryOnly) {
+        const asOf = new Date(q.asOf ?? "");
+        if (!Number.isFinite(asOf.getTime())) return skipLookup(q);
+        const since = new Date(asOf);
+        since.setUTCFullYear(since.getUTCFullYear() - 1);
+        recentPrimaryStmt ??= db.prepare("SELECT id, published_at FROM records WHERE role = 'tresc' AND level = 1 AND substr(published_at, 1, 10) BETWEEN ? AND ?");
+        const rows = recentPrimaryStmt.all(since.toISOString().slice(0, 10), asOf.toISOString().slice(0, 10)) as { id: string; published_at: string }[];
+        const dated = new Map(rows.map(row => [row.id, Date.parse(row.published_at)]));
+        const candidates: EvidenceCandidate[] = [];
+        for (const [i, recordId] of index.ids.entries()) {
+          const published = dated.get(recordId);
+          if (published === undefined || !Number.isFinite(published)) continue;
+          const similarity = dot(index.matrix, i * index.dims, queryVecs[0]!, index.dims);
+          if (similarity < Math.max(minScore, STRONG_CLAIM_SCORE)) continue;
+          // Recency breaks near-ties in semantic relevance. It never admits an unrelated match.
+          const freshness = (published - since.getTime()) / (asOf.getTime() - since.getTime());
+          candidates.push({ recordId, score: similarity + 0.02 * freshness, via: "vector" });
+        }
+        return candidates.sort((a, b) => b.score - a.score || a.recordId.localeCompare(b.recordId)).slice(0, limit);
+      }
       const factCheckThreshold = Math.max(minScore, FACT_CHECK_MIN_SCORE);
       let factCheckIds: Set<string> | undefined;
       if (q.includeSemanticFactCheck && limit > 1 && texts[0] === stripPiiPlaceholders(q.claim.text)) {
         factCheckStmt ??= db.prepare(
-          "SELECT id FROM records WHERE source_id = 'demagog' AND role = 'stala_rola' AND claim_reviewed IS NOT NULL",
+          "SELECT id FROM records WHERE role = 'stala_rola' AND (level <= 2 OR origin = 'organizer') AND claim_reviewed IS NOT NULL",
         );
         const rows = factCheckStmt.all() as { id: string }[];
         factCheckIds = new Set(rows.map((r) => r.id));
@@ -269,7 +290,7 @@ export function createVectorBranch(db: Database, opts: VectorBranchOptions = {})
         scores[row] = best;
         // Warianty pomagają odnaleźć parafrazę, ale same ogólne słowa kluczowe nie rezerwują miejsca.
         const id = index.ids[row]!;
-        const strongMatch = claimScore >= FACT_CHECK_MIN_CLAIM_SCORE
+        const strongMatch = claimScore >= STRONG_CLAIM_SCORE
           || (claimScore >= FACT_CHECK_PARAPHRASE_MIN_CLAIM_SCORE && best >= FACT_CHECK_PARAPHRASE_MIN_SCORE);
         if (factCheckIds?.has(id) && strongMatch && best >= factCheckThreshold) factChecks.push({ id, score: best });
       }

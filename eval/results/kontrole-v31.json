@@ -1,0 +1,77 @@
+{
+  "pipeline": "engine-2026.11.22-31-comparable-evidence-direct-intent",
+  "corpusSnapshot": "f8f2b23e95f8ac1d32a1d924b2958f2f250caa170132400b88869adccceadaba",
+  "verification": {
+    "vitest": {
+      "command": "RUN_E5_TESTS=1 npm test -- --maxWorkers=2 --testTimeout=60000 --hookTimeout=60000 --reporter=dot",
+      "result": [
+        "Test Files  105 passed (105)",
+        "Tests  1745 passed (1745)",
+        "Duration  66.28s (import 69%, tests 27%, transform 4%)"
+      ]
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "build": {
+      "command": "npm run build",
+      "result": [
+        "(!) Some chunks are larger than 700 kB after minification. Consider:",
+        "✓ built in 6.83s"
+      ]
+    },
+    "astryx": {
+      "command": "npx astryx doctor --built web-dist",
+      "summary": [
+        "pass: 25, warn: 0, fail: 0, info: 13"
+      ]
+    },
+    "corpus": {
+      "command": "npm run corpus:verify",
+      "output": [
+        "gus-cpi: zgodne wiersze korpusu 46/46, nadmiarowe 0",
+        "nbp-rates: zgodne wiersze korpusu 94/94, nadmiarowe 0",
+        "institutional-references: potwierdzono w źródle 37/37 rekordów",
+        "published-documents: potwierdzono w źródle 6/6 rekordów",
+        "research-estimates: potwierdzono w źródle 35/35 rekordów",
+        "Dodatkowe cytaty publikacji Demagoga: potwierdzono z HTML 0, bez kopii HTML 5, niezgodnych 0",
+        "Porównano 1776 rekordów, poza tą kontrolą 2074, zgłoszono 0 problemów",
+        "EUvsDisinfo: porównano 455 rekordów z listą HTML, sprawdzono strukturę 0 z MCP, niezgodnych: 0",
+        "ClaimReview: sprawdzono 189 z 189 rekordów, niezgodnych: 0"
+      ]
+    },
+    "stix": {
+      "parser": "Python stix2 3.0.1",
+      "data": "katalog-stix-2026-11-22.json",
+      "validUrlObjects": 595,
+      "validNotes": 1,
+      "openCtiImportVerified": false
+    }
+  },
+  "artifactsSha256": {
+    "kod-pomiaru-v31.zip": "7895d32cd3f4a18f01c7d0f5ba00e78983fc3d3ebb32e881b7a804ae64d4bef5",
+    "www-2026-11-22.json": "f8395091947e1c141d2aa3dbab7919c962f14c4c3e9a191580aac4974f6f24fd",
+    "archiwum-www-2026-11-22.json": "4cc97e47ce4705da28532bbb65a4c0dd7a9dbc0174fb6a0bdf88ce469e63cc46",
+    "multimedia-v31.json": "8fb15ca051da4263a996f1e33285be75f4519811bd52ff7169c1bf0df5b2693a",
+    "sam-url-v31.json": "0e5716b62c1dc4214d5e2da27c80214d7c969c4fc18016156160785e20e4ac1a",
+    "aktualny-zamiar-v31.json": "342d243f7c63efec768b622dc93a83db363a1a94c12df89bbab763dd52c7ec5b",
+    "katalog-stix-2026-11-22.json": "82548fbdb9454257510134c2769f9a991de769b8ed4e85dc77b804dfd7f242d6",
+    "teksty-100-v31.json.gz": "876df29b9411fd9ba89334636c17cf035947ffcedc39c1f8d9028d69ebc649c4",
+    "podsumowanie-v31.json": "5936400db8b352ba2ef363f79d790b901da523be4f0558e106a8c8b529bbec64",
+    "review-v31.json": "4d5c6e42c02d4551f539ce47af25ba881a5de07a7cd5bda69d945cdbe8b7c012",
+    "acceptance-2026-11-22T06-19-55-568Z.json": "563b783d5d9e9b6d86000d2fafac52bdaec6d4d5ac88f47f6f1c90aea1e8a4fd"
+  },
+  "additionalWorkspaceRegression": {
+    "testsPassed": 1745,
+    "filesPassed": 105,
+    "typecheck": true,
+    "build": true,
+    "astryx": {
+      "pass": 25,
+      "warn": 0,
+      "fail": 0
+    },
+    "scope": "Dodatkowy przebieg w katalogu projektu po równoległych zmianach, osobno od migawki płatnych pomiarów."
+  }
+}

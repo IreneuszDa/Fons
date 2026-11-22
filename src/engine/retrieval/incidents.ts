@@ -1,6 +1,8 @@
 import type { Database } from "better-sqlite3";
 import type { CorpusRecord, EvidenceAssessment, EvidenceCandidate, ReportWarning, RetrievalBranch, RetrievalQuery } from "../../shared/contracts";
 import { detectInjection } from "../../security/detector";
+import { outletChannel, outletHost } from "../../corpus/incident-outlets";
+import { submittedAddresses } from "../../shared/publication-url";
 import { DEFAULT_BRANCH_LIMIT, queryTexts } from "./bm25";
 import { skipLookup, throwIfAborted } from "./errors";
 import { buildMatchQuery } from "./fts";
@@ -69,55 +71,11 @@ export function narrativeLinks(
 
 // ───────────────────────── Dopasowanie domen incydentów (tylko ostrzeżenia) ─────────────────────────
 
-/** Normalizuje host: małe litery, bez kropki końcowej, IDN → punycode. Bez usuwania „www.” i subdomen. */
-function normalizeHost(host: string): string | null {
-  let h = host.trim().toLowerCase();
-  if (h.endsWith(".")) h = h.slice(0, -1);
-  if (h === "" || !/^[\p{L}\p{N}.-]+$/u.test(h)) return null;
-  try {
-    const ascii = new URL(`http://${h}/`).hostname;
-    return ascii === "" ? null : ascii;
-  } catch {
-    return null;
-  }
-}
-
-/** Wpis domains_json może być hostem, hostem ze ścieżką albo pełnym URL-em. */
-function hostFromListEntry(entry: unknown): string | null {
-  if (typeof entry !== "string") return null;
-  const e = entry.trim();
-  if (e === "") return null;
-  try {
-    const u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(e) ? e : `http://${e}`);
-    return normalizeHost(u.hostname);
-  } catch {
-    return null;
-  }
-}
-
-const URL_WITH_SCHEME = /\bhttps?:\/\/[^\s<>"'`]+/giu;
-// Host bez schematu (np. „przyklad.pl/wiadomosc”); lookbehind wyklucza domeny z adresów e-mail i fragmenty dłuższych nazw.
-const BARE_HOST = /(?<![@\p{L}\p{N}._-])((?:[\p{L}\p{N}][\p{L}\p{N}-]*\.)+\p{L}{2,})(?=[:/?#]|[\s,.;!?)\]}"'…]|$)/giu;
+const hostOfAddress = (url: URL) => url.hostname.replace(/\.$/u, "");
 
 /** Wyciąga hosty z URL-i (ze schematem i bez) znalezionych w tekście. Dokładne hosty, bez dziedziczenia. */
 export function extractHosts(urlOrText: string): string[] {
-  const hosts = new Set<string>();
-  const add = (h: string | null) => {
-    if (h) hosts.add(h);
-  };
-  const text = urlOrText.slice(0, 20_000);
-
-  for (const m of text.matchAll(URL_WITH_SCHEME)) {
-    try {
-      add(normalizeHost(new URL(m[0].replace(/[.,;:!?)\]}…]+$/u, "")).hostname));
-    } catch {
-      /* niepoprawny URL — pomijamy */
-    }
-  }
-  // Tekst bez schematów: usuwamy już rozpoznane URL-e, żeby nie liczyć ich dwa razy.
-  const rest = text.replace(URL_WITH_SCHEME, " ");
-  for (const m of rest.matchAll(BARE_HOST)) add(normalizeHost(m[1]!));
-  return [...hosts];
+  return [...new Set(submittedAddresses(urlOrText).map(hostOfAddress))];
 }
 
 /**
@@ -130,10 +88,12 @@ export function matchIncidentDomains(
   urlOrText: string,
   db: Database,
 ): { incidentId: string; title: string; url: string }[] {
-  const hosts = new Set(extractHosts(urlOrText));
-  if (hosts.size === 0) return [];
+  const addresses = submittedAddresses(urlOrText);
+  if (!addresses.length) return [];
+  const hosts = new Set(addresses.map(hostOfAddress));
+  const channels = new Set(addresses.map(url => outletChannel(url.href)).filter(Boolean));
   const rows = db
-    .prepare(`SELECT id, title, url, domains_json FROM incidents WHERE domains_json IS NOT NULL`)
+    .prepare(`SELECT id, title, url, domains_json FROM incidents WHERE domains_json <> '[]' ORDER BY published_at DESC, id`)
     .all() as { id: string; title: string | null; url: string | null; domains_json: string }[];
   const out: { incidentId: string; title: string; url: string }[] = [];
   for (const row of rows) {
@@ -145,10 +105,16 @@ export function matchIncidentDomains(
     }
     if (!Array.isArray(list)) continue;
     const hit = list.some((entry) => {
-      const h = hostFromListEntry(entry);
-      return h !== null && hosts.has(h);
+      if (typeof entry === "string") {
+        const host = outletHost(entry);
+        return !!host && hosts.has(host);
+      }
+      if (typeof entry?.channel !== "string") return false;
+      const channel = outletChannel(entry.channel, true);
+      return !!channel && channels.has(channel);
     });
-    if (hit) out.push({ incidentId: row.id, title: row.title ?? "", url: row.url ?? "" });
+    if (hit && row.title && row.url && /^https?:\/\//i.test(row.url)
+        && !detectInjection(row.title, "evidence", row.id).length) out.push({ incidentId: row.id, title: row.title, url: row.url });
   }
   return out;
 }

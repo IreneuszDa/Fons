@@ -1,0 +1,26 @@
+{
+  "url": "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+  "http": 200,
+  "durationMs": 28021,
+  "pipeline": "engine-2026.11.22-29-current-evidence",
+  "readback": true,
+  "kind": "verdict",
+  "status": "OK",
+  "answer": "Nie wiem. W sprawdzonych źródłach brakuje dowodu.",
+  "mainVerdict": "BRAK_DOWODOW",
+  "mode": "claim",
+  "articleUrl": "https://www.nato.int/en/what-we-do/introduction-to-nato/funding-nato",
+  "claims": [
+    "The Civil Budget for 2026 is EUR 528.2 million.",
+    "The Military Budget for 2026 is EUR 2.42 billion.",
+    "The 2026 ceiling for the NSIP is EUR 2.2 billion.",
+    "The North Atlantic Council approves NATO budgets and investments and exercises oversight over NATO's financial management.",
+    "The Civil and Military Budgets and the NSIP contribution ceilings are annual, coinciding with the calendar year.",
+    "A reform was introduced in 2018 to accelerate the delivery of common-funded capabilities across NATO."
+  ],
+  "evidence": [],
+  "warnings": [
+    "Tekst (po ukryciu danych osobowych) przetworzył model OpenAI na serwerach w Stanach Zjednoczonych, czyli poza Europejskim Obszarem Gospodarczym."
+  ],
+  "costUsd": 0.135475
+}

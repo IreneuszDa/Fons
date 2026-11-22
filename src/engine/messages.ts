@@ -52,7 +52,14 @@ export function branchNamePl(id: string): string {
   const s = id.toLowerCase();
   if (s === "google_claimreview") return "indeks Google Fact Check Tools";
   if (s === "publications") return "publikacje źródłowe w katalogu";
+  if (s === "catalog_url") return "dopasowanie adresu publikacji do korpusu";
   if (s === "local_transport") return "dokumenty dotyczące transportu w tej miejscowości";
+  if (s === "official_membership") return "oficjalny wykaz członkostwa w NATO lub UE";
+  if (s === "official_rate_series") return "bieżące i historyczne dane GUS lub NBP";
+  if (s === "office_history") return "urzędowe publikacje o kadencjach";
+  if (s === "sejm_club_register") return "wykazy klubów i imienne głosowania Sejmu";
+  if (s === "subject_profiles") return "źródła pierwotne o wskazanych podmiotach";
+  if (s === "cited_catalog_page") return "wskazana publikacja ze zbioru źródeł pierwotnych";
   if (s.includes("official")) return "oficjalne kanały instytucji";
   if (s.includes("live")) return "wyszukiwanie na żywo w serwisach z katalogu źródeł";
   if (s.includes("vector") || s.includes("embed") || s.includes("wektor")) return "wyszukiwanie po znaczeniu";
@@ -69,7 +76,7 @@ export function nonEeaPl(providerLabel: string, processedImage = false): string 
 
 export function incidentPl(titles: string[]): string {
   const list = titles.slice(0, 3).map((t) => `„${t}”`).join(", ");
-  return `Ten adres lub kanał pojawia się w katalogu incydentów dezinformacyjnych (${list}). To tylko informacja — nie wpływa na ocenę.`;
+  return `Podany adres prowadzi do domeny lub profilu wskazanego w opisie wcześniejszego incydentu (${list}). Ocenę obecnej treści ustalamy osobno na podstawie dowodów.`;
 }
 
 export function warning(kind: ReportWarning["kind"], textPl: string, links?: ReportWarning["links"]): ReportWarning {

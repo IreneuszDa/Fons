@@ -18,7 +18,8 @@ import { fence } from "./llm/fence";
 import { passageKind, passageText } from "../shared/evidence";
 import { SMOOTH_SYSTEM, SmoothOut } from "./prompts";
 import { foldForMatch, formatDatePl } from "./text";
-import { plural } from "./verdict/texts";
+import { NOTE, plural } from "./verdict/texts";
+import { copiedPassageKey } from "./verdict/decisive";
 
 /** The part of the rules module's decision that the templates need. */
 export interface DecisionLike {
@@ -95,20 +96,27 @@ function corroboration(
     if (!prev || r.level < prev.level) groups.set(r.independenceGroup, r);
   }
   const topRecord = input.records.get(top.recordId);
-  const recs = [...groups.values()];
+  const passages = new Set<string>();
+  const recs = [...groups.values()].sort((a, b) => a.level - b.level).filter(r => {
+    const copy = copiedPassageKey(r);
+    if (!copy) return true;
+    if (passages.has(copy)) return false;
+    passages.add(copy);
+    return true;
+  });
   const n = recs.length;
-  const allOfficial = n > 0 && recs.every((r) => r.level === 1);
-  const someOfficial = recs.some((r) => r.level === 1);
+  const allPrimary = n > 0 && recs.every((r) => r.level === 1);
+  const somePrimary = recs.some((r) => r.level === 1);
   const names = [...new Set(recs.map((r) => r.publisher))];
   const list = names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} i ${names[names.length - 1]}`;
   let lead: string;
   if (n >= 2) {
-    const kind = allOfficial
-      ? plural(n, "niezależne źródło urzędowe", "niezależne źródła urzędowe", "niezależnych źródeł urzędowych")
-      : `${plural(n, "niezależne wiarygodne źródło", "niezależne wiarygodne źródła", "niezależnych wiarygodnych źródeł")}${someOfficial ? ", w tym urzędowe" : ""}`;
+    const kind = allPrimary
+      ? plural(n, "niezależne źródło pierwotne", "niezależne źródła pierwotne", "niezależnych źródeł pierwotnych")
+      : `${plural(n, "niezależne wiarygodne źródło", "niezależne wiarygodne źródła", "niezależnych wiarygodnych źródeł")}${somePrimary ? ", w tym pierwotne" : ""}`;
     lead = `${verb.many} ${n} ${kind}: ${list}.`;
   } else {
-    const kind = topRecord?.level === 1 ? "źródło urzędowe" : "wiarygodne źródło";
+    const kind = topRecord?.level === 1 ? "źródło pierwotne" : "wiarygodne źródło";
     // Wydawcę podaje zaraz potem cytat — nie powtarzamy go.
     lead = `${verb.one} ${kind}.`;
   }
@@ -131,7 +139,7 @@ export function buildTriedPl(input: JustifyInput): string {
     (a) => !a.excluded && a.relation !== "BEZ_ZWIAZKU" && !input.decision.decisiveRecordIds.includes(a.recordId),
   ).length;
   const rejected = input.assessments.filter((a) =>
-    ["quote_not_found", "quote_too_short", "detector_hit", "verifier_dissent"].includes(a.excluded ?? ""),
+    ["quote_not_found", "quote_too_short", "detector_hit", "verifier_dissent", "unconfirmed_polarity"].includes(a.excluded ?? ""),
   ).length;
   const parts: string[] = [];
   if (input.searchedPl.length) parts.push(`Szukaliśmy w: ${input.searchedPl.join(", ")}.`);
@@ -144,12 +152,12 @@ export function buildTriedPl(input: JustifyInput): string {
     if (rejected > 0) parts.push(`Odrzucone, bo cytat nie zgadzał się ze źródłem albo nie przeszedł kontroli: ${rejected}.`);
   }
   if (input.decision.ruleApplied === 3 && input.claim.temporal.date) {
-    parts.push(`Zabrakło źródła nowszego niż data zdarzenia (${formatDatePl(input.claim.temporal.date)}).`);
+    parts.push(`Potrzebna jest wiarygodna relacja z przebiegu zdarzenia z ${formatDatePl(input.claim.temporal.date)}.`);
   } else if (input.decision.conflicting) {
     parts.push("Zabrakło zgodności między źródłami.");
   } else {
     parts.push(
-      "Zabrakło źródła urzędowego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
+      "Zabrakło źródła pierwotnego, oceny organizacji fact-checkingowej albo dwóch niezależnych źródeł, które wprost to potwierdzają lub obalają.",
     );
   }
   return parts.join(" ");
@@ -232,7 +240,7 @@ export function buildJustification(input: JustifyInput): Justification {
   }
   if (decision.ruleApplied === 3) {
     return {
-      reasonPl: "To zdarzenie jest nowsze niż dowody, które mamy w bazie. Starsze, podobne zdarzenia go nie obalają.",
+      reasonPl: NOTE.eventNewer,
       triedPl: tried,
     };
   }

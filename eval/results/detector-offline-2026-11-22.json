@@ -1,0 +1,35 @@
+{
+  "observedAt": "2026-11-22T05:05:50.497Z",
+  "fixtureDigest": "102aff4ce623efc8e297a242e4fc945bfe4cfa372374672c57e297f0dc10b55b",
+  "method": "Jednostką pomiaru jest strona lub wiadomość. Co najmniej jedno trafienie detektora oznacza dodatnią klasyfikację. Etykiety pochodzą z expected.attack w redteam.jsonl oraz z katalogu benign.",
+  "scope": "Pomiar dotyczy wyłącznie statycznych danych z repozytorium. Skuteczność ochrony werdyktu i zachowania modelu w rzeczywistym ruchu wymaga odrębnego pomiaru.",
+  "command": "node --import tsx eval/detector-offline.ts",
+  "filteringTestCommand": "npx vitest run src/security/detector.test.ts -t stripFlaggedSentences",
+  "groups": {
+    "markedPages": {
+      "total": 19,
+      "scanned": 19,
+      "flagged": 17
+    },
+    "markedMessages": {
+      "total": 24,
+      "scanned": 24,
+      "flagged": 17
+    },
+    "controlPages": {
+      "total": 3,
+      "scanned": 3,
+      "flagged": 0
+    },
+    "controlMessages": {
+      "total": 7,
+      "scanned": 7,
+      "flagged": 0
+    },
+    "benignProse": {
+      "total": 31,
+      "scanned": 31,
+      "flagged": 0
+    }
+  }
+}

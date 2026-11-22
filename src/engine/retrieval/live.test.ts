@@ -141,6 +141,16 @@ describe("createLiveBranch(db, opts)", () => {
     expect(sp.calls).toEqual([Q.claim.text, "a one"]);
   });
 
+  it("zachowuje zadeklarowany język publikacji obcojęzycznej w zapisanym dowodzie", async () => {
+    const { db, branch } = setup({ fetch: async url => page(url, {
+      cleanText: "La Suède est devenue membre de l’OTAN le 7 mars 2024. Le traité comporte une clause de défense collective.",
+      lang: "fr-CA",
+    }) });
+    const hits = await branch.search({ claim: claim("Kiedy Szwecja wstąpiła do NATO?"), extraQueries: ["Suède membre OTAN mars"] });
+    expect(getLiveSnapshot(db, hits[0]!.recordId, new Date())?.lang).toBe("fr");
+    db.close();
+  });
+
   it("przekazuje nazwiska i liczby, pomija etykiety maskowania oraz zapytania złożone tylko z etykiet", async () => {
     const { branch, sp } = setup({});
     await branch.search({

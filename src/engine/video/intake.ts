@@ -19,6 +19,18 @@ export function hasOnlyText(video: VideoAnalysis): boolean {
   return video.status === "subtitles_only" || video.status === "transcript_only" || video.status === "caption_only";
 }
 
+export function asksForMediaMetadata(note: string): boolean {
+  return /^(?:(?:pokaz|podaj|odczytaj|sprawdz|przeanalizuj) )?(?:metadane|parametry techniczne)(?: (?:tego |przeslanego )?(?:nagrania|audio|filmu|pliku))?$/.test(foldForMatch(note));
+}
+
+/** Only a request for the spoken words may bypass fact checking. */
+export function asksForTranscript(note: string): boolean {
+  const text = foldForMatch(note).replace(/^(?:prosze (?:o )?|(?:czy )?mozesz )/, "").replace(/ prosze$/, "");
+  const direct = /^(?:transkrypcj[ae]|(?:zrob|podaj|pokaz|przygotuj) transkrypcje|przepisz|przepisac|transkrybuj|spisz|zapisz slowa)(?: mi)?(?: (?:to |tego |cale |calego |przeslane |przeslanego )?(?:nagranie|nagrania|audio|wypowiedz|plik|pliku))?(?: (?:audio|slowo w slowo|doslownie))?$/;
+  const spoken = /^co (?:zostalo powiedziane|powiedziano|mowia|mowi(?: ta osoba| rozmowca)?|powiedzial[ao]?|slychac)(?: (?:na|w) (?:tym )?(?:nagraniu|pliku|audio))?$/;
+  return direct.test(text) || spoken.test(text);
+}
+
 /** Keep the original cue time, including for a sentence split over adjacent WebVTT cues. */
 export function anchorSubtitleClaims(proposals: ExtractedClaim[], analysis: VideoAnalysis): ExtractedClaim[] {
   const claims: ExtractedClaim[] = [];
@@ -100,10 +112,6 @@ export async function readVideo(
 ): Promise<VideoIntake> {
   const analysis: VideoAnalysis = { platform, status: "unavailable", caption: "", transcript: [], observations: [], claimOrigins: [] };
   const result: VideoIntake = { analysis, url: upload ? "" : publicPostUrl(url), claims: [], hits: [], usages: [] };
-  if (!services) {
-    result.message = ANALYSIS_DISABLED;
-    return result;
-  }
   if (activeVideos >= MAX_ACTIVE_VIDEOS) {
     result.message = "Trwa analiza innych filmów. Spróbuj ponownie za chwilę.";
     return result;
@@ -140,6 +148,20 @@ export async function readVideo(
   try {
     if (!upload) stage("fetching_video");
     result.focus = sanitize(note, "user_message");
+    if (upload && asksForMediaMetadata(note)) {
+      const bytes = Buffer.from(upload.base64, "base64");
+      try {
+        const decoded = await decodeVideo({ bytes, mimeType: upload.mime }, { includeAudio: false, probeOnly: true, signal });
+        analysis.file = decoded.file;
+        analysis.status = "metadata_only";
+      } catch (error) {
+        signal?.throwIfAborted();
+        result.message = error instanceof Error && error.message === "video_decoder_missing" ? "Odczyt metadanych wymaga narzędzia FFprobe na serwerze."
+          : "Nie udało się odczytać parametrów nagrania. Sprawdź format i limit długości pliku.";
+      }
+      return result;
+    }
+    if (!services) { result.message = ANALYSIS_DISABLED; return result; }
     if ("loadCaption" in services) {
       if (upload) { result.message = ANALYSIS_DISABLED; return result; }
       savePost(await services.loadCaption(url, signal));
@@ -158,15 +180,17 @@ export async function readVideo(
       const audioOnly = platform === "upload_audio";
       const decoded = await decodeVideo(media, { includeAudio: audioOnly, continuousAudio: audioOnly, probeOnly: !audioOnly, signal });
       media.durationSeconds = decoded.durationSeconds;
+      analysis.file = decoded.file;
       if (decoded.wav) { media.bytes = decoded.wav; media.mimeType = "audio/wav"; }
     }
-    const { data, usage, additionalUsage } = await services.analyze({
+    const { data, usage, additionalUsage, file } = await services.analyze({
       ...("youtubeUrl" in media ? { youtubeUrl: media.youtubeUrl } : { bytes: media.bytes, mimeType: media.mimeType }),
       durationSeconds: media.durationSeconds,
       ...(analysis.transcript.length && { subtitles: analysis.transcript }),
       caption: analysis.caption, focus: result.focus,
     }, signal);
     result.usages.push(...(additionalUsage ?? []), usage);
+    if (upload && file) analysis.file = file;
     analysis.status = platform === "upload_audio" ? "transcript_only" : "analyzed";
     if (analysis.transcriptSource !== "platform") {
       analysis.transcript = segments(data.transcript);

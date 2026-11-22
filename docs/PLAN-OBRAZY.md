@@ -1,5 +1,7 @@
 # Analiza obrazu w Fons: plan
 
+> Od 22 listopada 2026 r. czat porównuje pliki również z lokalnym katalogiem dwóch fotografii NASA. Raport odróżnia identyczny plik od podobnego obrazu, podaje datę publikacji i link. Pytania o okoliczności wykonania zdjęcia korzystają z publikacji lub podpisów powiązanych z obrazem. [Zakres, wzorce i sposób odtworzenia testów](../data/image-references/README.md)
+
 > **Stan wdrożenia.** Czat dobiera odczyt obrazu, sprawdzenie pochodzenia i wyszukiwanie w Google do pytania użytkownika. Przy pytaniu o tożsamość Fons szuka podpisu powiązanego z tym samym zdjęciem. Opis przełącznika Google w dalszej części dokumentu pochodzi z pierwotnego planu. [Obecne możliwości i konfiguracja](../README.md#pliki-w-czacie)
 > **Stan wiedzy:** 21.11.2026.
 > **Jak powstał:** 6 ścieżek researchu (wykrywanie AI, wyszukiwanie wcześniejszych wystąpień, „kto to jest” i prawo, datowanie, OCR i bezpieczeństwo, integracja z kodem) oraz dwie recenzje krytyczne (prawo i prywatność; zgodność z zadaniem i wykonalność). Uwagi recenzentów są naniesione.
@@ -217,7 +219,8 @@ SanitizedImage {
 
 **Co pokazujemy i co zapisujemy**
 - **Host z katalogu** (`data/sources.yaml`, dokładny host): tytuł (pole `pageTitle` z odpowiedzi Vision), data i link. Strony źródeł pierwotnych (np. gov.pl, nato.int) stają się kandydatami przez istniejącą ścieżkę live-snapshot (`fetchPage`, detektor, zwykły potok: ocena, cytat, reguły). **Stron fact-checkerów (Demagog, AFP Sprawdzam itd.) nie pobieramy.** Ich oceny przychodzą wyłącznie przez Fact Check Tools API (§3.7).
-- **Host spoza katalogu:** tylko **domena, typ dopasowania i data**. Tytułów i ścieżek nie pokazujemy ani nie zapisujemy, bo mogą zawierać nazwiska osób prywatnych.
+- **Publiczne kolekcje obrazów.** Dla wybranych ścieżek instytucjonalnych NASA, Smithsonian, ESA i Biblioteki Kongresu USA pokazujemy link i tytuł z indeksu. W raporcie oznaczamy pełne lub częściowe dopasowanie, jeśli Google określiło jego typ. Lista ścieżek służy wyłącznie do pokazania miejsca publikacji. [Zasady wyboru adresu](../src/server/conversation/image-search.ts)
+- **Pozostałe hosty spoza katalogu.** Pokazujemy domenę, typ dopasowania i datę, jeśli jest znana. Tytuły i ścieżki mogą zawierać dane prywatnych osób.
 
 **Linia zakresu, zawsze widoczna:** „Zakres: indeks Google Cloud Vision (do 20 wyników). To nie jest pełne wyszukiwanie odwrotne: nie obejmuje zamkniętych grup, komunikatorów, większości Instagrama i TikToka ani treści usuniętych.”
 
@@ -513,7 +516,7 @@ Zmieniamy istniejące strony, bez nowego szablonu (AGENTS.md). Przed użyciem ko
 |---|---|---|
 | Oryginalne bajty i kopia oczyszczona | pamięć (`ctx.media`) | do końca żądania (`finally`), sweeper ≤2 min |
 | Metadane | tylko pola z listy dozwolonych (§3.3, §3.4) | razem z raportem |
-| Wystąpienia | katalog: tytuł, URL, data; spoza katalogu: **tylko domena, typ dopasowania, data** | razem z raportem |
+| Wystąpienia | Katalog i wskazane publiczne kolekcje obrazów również z tytułem i adresem. Pozostałe strony z domeną, typem dopasowania i datą, jeśli jest znana. | razem z raportem |
 | Nazwiska | tylko dopasowane do katalogu (etap 2); w tezach z obrazów maskowane | razem z raportem |
 | Raport (`imageAnalysis`, tezy) | SQLite | 30 dni; „Usuń sesję” usuwa |
 | Klucz cache | HMAC (pseudonimowy) | 48 h / 15 min |

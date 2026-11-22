@@ -19,6 +19,74 @@
 # Wpisy bez rekordów w korpusie (recordCount = 0) są w katalogu, bo: (a) źródło jest zablokowane dla botów
 # i zostało pominięte (opis w docs/SOURCES.md), albo (b) oczekujemy go w pakiecie organizatora.
 
+- id: ecb
+  hosts: [www.ecb.europa.eu]
+  publisher: Europejski Bank Centralny
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: ecb
+  licence: Cytaty z komunikatów z atrybucją EBC, https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Komunikaty EBC o wprowadzeniu euro i składzie Eurosystemu.
+  exclusion: Bez zdjęć, kursów rynkowych i danych dostarczanych przez osoby trzecie.
+  homepage: https://www.ecb.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: gus-cpi
+  hosts: [publikacje.new.stat.gov.pl]
+  publisher: Główny Urząd Statystyczny
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: gus
+  licence: Dane GUS udostępnione na licencji CC BY 4.0, z podaniem wydawcy, okresu i odnośnika do publikacji.
+  fetchMethod: dump
+  updateFrequency: przy przebudowaniu korpusu, po miesięcznej publikacji GUS
+  qualification: Miesięczny krajowy wskaźnik cen konsumpcyjnych ogółem, Polska, analogiczny miesiąc poprzedniego roku = 100.
+  exclusion: Pozostałe podstawy porównania i puste pola CSV.
+  homepage: https://publikacje.new.stat.gov.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: nbp-rates
+  hosts: [static.nbp.pl]
+  publisher: Narodowy Bank Polski
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: nbp
+  licence: Wartości stopy referencyjnej z publicznych tabel XML NBP z podaniem wydawcy, okresu i adresu tabeli.
+  fetchMethod: dump
+  updateFrequency: przy przebudowaniu korpusu, po zmianach stóp NBP
+  qualification: Bieżąca i archiwalna stopa referencyjna NBP, procent w skali roku.
+  exclusion: Pozostałe stopy banku centralnego.
+  homepage: https://nbp.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: gus-publications
+  hosts: [stat.gov.pl]
+  publisher: Główny Urząd Statystyczny (publikacje)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: gus
+  licence: Krótkie cytaty z publikacji Głównego Urzędu Statystycznego z atrybucją, tytułem i odnośnikiem do dokumentu.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Oficjalne opracowania statystyki publicznej o terytorium i granicach państwa.
+  exclusion: Bez ponownej publikacji całych opracowań i materiałów ilustracyjnych.
+  homepage: https://stat.gov.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
 - id: sejm-eli
   hosts: [api.sejm.gov.pl]
   publisher: Sejm RP / Dziennik Ustaw i Monitor Polski (API ELI)
@@ -73,6 +141,7 @@
   liveSearch: true
 
 - id: eurostat
+  archivePolicy: aggregate-statistics-v1
   hosts: [ec.europa.eu]
   publisher: Eurostat (Komisja Europejska)
   type: pierwotne
@@ -219,10 +288,10 @@
   level: 3
   role: tresc
   independenceGroup: sky-italia
-  licence: Krótki cytat, metadane i link do zestawienia, do którego odsyła MSZ.
+  licence: Krótkie cytaty, metadane i linki do publikacji. Prawa do tekstów pozostają przy Sky TG24.
   fetchMethod: metadane
   updateFrequency: przy aktualizacji archiwum komunikatów
-  qualification: Redakcja opublikowała zestawienie zgromadzeń wskazane w komunikacie dla podróżujących.
+  qualification: Redakcja opublikowała zestawienie zgromadzeń wskazane w komunikacie dla podróżujących i prowadziła własną relację z ich przebiegu.
   homepage: https://tg24.sky.it/
   liveSearch: false
 
@@ -520,6 +589,38 @@
   ifcnEfcsn: false
   liveSearch: true
 
+- id: zus-swiadczenia
+  hosts: [www.zus.pl]
+  publisher: Zakład Ubezpieczeń Społecznych
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: zus
+  licence: Krótkie cytaty z informatorów ZUS, z podaniem wydawcy i odsyłaczem. Licencja otwarta nie jest potwierdzona.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Informacje ZUS jako instytucji wypłacającej świadczenia dla rodzin.
+  exclusion: Pomijamy nawigację, komentarze i treści innych autorów.
+  homepage: https://www.zus.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: zus-wskazniki
+  hosts: [psz.zus.pl]
+  publisher: Zakład Ubezpieczeń Społecznych
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: zus
+  licence: Publiczne wskaźniki ZUS. Przechowujemy wartości liczbowe, daty obowiązywania i krótkie wiersze z odsyłaczem do zestawienia. Licencja otwarta nie jest potwierdzona.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: ZUS publikuje chronologiczne dane o minimalnym wynagrodzeniu za pracę i wskazuje podstawy prawne kolejnych stawek.
+  exclusion: Zestawienie importujemy po jednym pełnym wierszu na okres, aby zachować powiązanie kwoty z datą i podstawą prawną.
+  homepage: https://psz.zus.pl/
+  liveSearch: false
+
 - id: senat-pl
   hosts: [www.senat.gov.pl]
   publisher: Senat Rzeczypospolitej Polskiej (senat.gov.pl)
@@ -527,15 +628,11 @@
   level: 1
   role: tresc
   independenceGroup: senat-rp
-  licence: >-
-    Oficjalna strona Senatu RP (informacje urzędowe). Licencja otwarta nie jest potwierdzona maszynowo, dlatego
-    stosujemy krótkie dosłowne fragmenty (imię i nazwisko + pełniona funkcja w Prezydium) + link. robots.txt dopuszcza
-    pobieranie stron (zakazane tylko /gfx/ i /pdf/).
+  licence: Informacje urzędowe Senatu RP. Licencja otwarta nie jest potwierdzona. Przechowujemy krótkie cytaty (do 300 znaków), tytuł i odnośnik do wydawcy.
   fetchMethod: html
-  updateFrequency: przy przebudowaniu korpusu (skład Prezydium Senatu zmienia się rzadko)
-  qualification: >-
-    Strona urzędowa izby wyższej parlamentu - źródło pierwotne dla pytań o Marszałka Senatu i wicemarszałków.
-  exclusion: Wykluczamy zdjęcia, biogramy i aktualności; bierzemy tylko listę Prezydium Senatu z funkcjami.
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Informacje Senatu o składzie Prezydium oraz o udziale parlamentu w procesie uchwalania Konstytucji.
+  exclusion: Pobieramy listę Prezydium i wskazane materiały historyczne. Pomijamy zdjęcia oraz pozostałe aktualności.
   homepage: https://www.senat.gov.pl/
   nonEea: false
   ifcnEfcsn: false
@@ -555,9 +652,26 @@
   updateFrequency: przy przebudowaniu korpusu (skład Kolegium Komisarzy zmienia się rzadko)
   qualification: >-
     Oficjalna strona instytucji UE - źródło pierwotne dla pytań o skład Komisji Europejskiej, jej Przewodniczącą,
-    Wysoką Przedstawiciel i polskiego komisarza.
-  exclusion: Wykluczamy komunikaty prasowe i materiały niezwiązane ze składem Kolegium.
+    Wysoką Przedstawiciel i polskiego komisarza oraz dla ustaleń Komisji o europejskim rynku gazu.
+  exclusion: Ze strony instytucjonalnej wybieramy skład Kolegium i kwartalne raporty Komisji o rynku gazu. Pomijamy komentarze i dokumenty osób trzecich.
   homepage: https://commission.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: hungarian-government
+  hosts: [kormany.hu]
+  publisher: Rząd Węgier (Magyarország Kormánya)
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: hungarian-government
+  licence: Link i krótki cytat z komunikatu ze wskazaniem wydawcy i daty. Otwarta licencja nie została potwierdzona.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Oficjalne, datowane wypowiedzi właściwego ministra w sprawie stanu dostaw energii na Węgry.
+  exclusion: Pomijamy komentarze partyjne i przewidywania o przyszłych dostawach.
+  homepage: https://kormany.hu/
   nonEea: false
   ifcnEfcsn: false
   liveSearch: true
@@ -716,6 +830,7 @@
   liveSearch: true
 
 - id: gus-bdl
+  archivePolicy: aggregate-statistics-v1
   hosts: [bdl.stat.gov.pl]
   publisher: Główny Urząd Statystyczny - Bank Danych Lokalnych (API BDL)
   type: pierwotne
@@ -812,6 +927,118 @@
     (sprawdzone 2026-11-21); daty statusu kandydata pobieramy z portalu european-union.europa.eu (strona "Rozszerzenie UE").
   exclusion: Pobieranie automatyczne wyłączone (HTTP 403).
   homepage: https://neighbourhood-enlargement.ec.europa.eu/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: sg-pl
+  hosts: [www.strazgraniczna.pl]
+  publisher: Straż Graniczna RP
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: pl-straz-graniczna
+  licence: Krótki cytat lub zagregowany wynik z atrybucją i odnośnikiem do dokumentu wydawcy.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Komunikaty o zdarzeniach zarejestrowanych przez polską Straż Graniczną.
+  homepage: https://www.strazgraniczna.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: true
+
+- id: cbos
+  hosts: [www.cbos.pl]
+  publisher: Centrum Badania Opinii Społecznej
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: cbos
+  licence: Krótki cytat lub zagregowany wynik z atrybucją i odnośnikiem do dokumentu wydawcy.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Własne sondaże CBOS. Termin, brzmienie pytania i populacja określają zakres wyniku.
+  homepage: https://www.cbos.pl/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: unhcr-data
+  hosts: [data.unhcr.org]
+  publisher: UNHCR — Operational Data Portal
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: un
+  licence: Krótki cytat lub zagregowany wynik z atrybucją i odnośnikiem do dokumentu wydawcy.
+  fetchMethod: pdf
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Statystyki i definicje populacji zawarte w raportach UNHCR.
+  homepage: https://data.unhcr.org/
+  nonEea: true
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: sipri
+  hosts: [www.sipri.org]
+  publisher: Stockholm International Peace Research Institute
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: sipri
+  licence: Użytek niekomercyjny z atrybucją SIPRI. Komercyjne użycie danych wymaga licencji SIPRI, https://www.sipri.org/databases/milex
+  fetchMethod: html, xlsx
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Własne szacunki wydatków wojskowych. Każda edycja bazy może rewidować wcześniejsze lata.
+  homepage: https://www.sipri.org/
+  nonEea: false
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: iiss
+  hosts: [www.iiss.org]
+  publisher: International Institute for Strategic Studies
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: iiss
+  licence: Krótki cytat lub zagregowany wynik z atrybucją i odnośnikiem do dokumentu wydawcy.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Oryginalne szacunki opublikowane przez autorów The Military Balance.
+  homepage: https://www.iiss.org/
+  nonEea: true
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: kse-institute
+  hosts: [institute.kse.ua]
+  publisher: KSE Institute — Kyiv School of Economics
+  type: pierwotne
+  level: 1
+  role: tresc
+  independenceGroup: kse
+  licence: Krótki cytat lub zagregowany wynik z atrybucją i odnośnikiem do dokumentu wydawcy.
+  fetchMethod: pdf
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Własne badanie zbiorowości statków z podaną definicją, okresem i metodą.
+  homepage: https://institute.kse.ua/
+  nonEea: true
+  ifcnEfcsn: false
+  liveSearch: false
+
+- id: marsz-organizator
+  hosts: [marszniepodleglosci.pl]
+  publisher: Stowarzyszenie Marsz Niepodległości
+  type: analiza
+  level: 3
+  role: tresc
+  independenceGroup: stowarzyszenie-marsz-niepodleglosci
+  licence: Krótki cytat lub zagregowany wynik z atrybucją i odnośnikiem do dokumentu wydawcy.
+  fetchMethod: html
+  updateFrequency: przy przebudowaniu korpusu
+  qualification: Deklaracje organizatora o frekwencji na jego wydarzeniach. Organizator ma interes w podawanym oszacowaniu.
+  homepage: https://marszniepodleglosci.pl/
   nonEea: false
   ifcnEfcsn: false
   liveSearch: false

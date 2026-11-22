@@ -10,9 +10,11 @@ import { z } from "zod";
 import { CHAT_STREAM_CONTENT_TYPE, type ChatResponse, type ChatStreamEvent, type VerificationStage } from "../shared/chat";
 import { InboundMessage, type ChannelAdapter } from "../shared/contracts";
 import { createAdminRoutes } from "./admin";
+import { archiveRoutes } from "./material-archive";
 import { authenticateBearerRequest, authorizeMetrics } from "./auth/principal";
 import { buildWebInbound } from "./channels/web";
 import { createChatLoomWebhook } from "./channels/chatloom";
+import { forwardWhatsAppSignup, WHATSAPP_SIGNUP_PATH } from "./channels/whatsapp-signup";
 import type { ServerContext } from "./context";
 import { handleInbound, type InboundOptions } from "./conversation";
 import { RATE_LIMITED_TEXT } from "./conversation/templates";
@@ -27,7 +29,7 @@ import { createStaticHandler } from "./static";
 
 export const SESSION_COOKIE = "pw_sid";
 const SESSION_COOKIE_MAX_AGE = 7 * 86_400;
-const CHAT_BODY_MAX = 8 * 1024 * 1024;
+const CHAT_BODY_MAX = 2 * Math.ceil(MAX_ATTACHMENT_BYTES / 3) * 4 + 65_536;
 const MAX_RECORDING_BASE64 = Math.ceil(MAX_RECORDING_BYTES / 3) * 4;
 const RECORDING_ROUTE = "/api/chat/recording";
 const DICTATION_ROUTE = "/api/dictation";
@@ -53,14 +55,14 @@ const defaultMcpLoader = async (): Promise<unknown> => {
   return import(spec);
 };
 
+const ChatImage = z.object({ mime: z.enum(IMAGE_MIMES), base64: z.string().max(8_000_000) });
 const ChatBody = z.object({
   sessionId: z.string().max(128).optional(),
   text: z.string().max(50_000).optional(),
   action: z.string().max(64).optional(),
   fileName: z.string().max(512).optional(),
-  image: z
-    .object({ mime: z.enum(IMAGE_MIMES), base64: z.string().max(8_000_000) })
-    .optional(),
+  image: ChatImage.optional(),
+  comparisonImage: ChatImage.optional(),
   document: z.object({ mime: z.enum(DOCUMENT_MIMES), base64: z.string().max(8_000_000) }).optional(),
   recording: z.object({ mime: z.enum(RECORDING_MIMES), base64: z.string().max(MAX_RECORDING_BASE64) }).optional(),
   imageOptions: z.object({ searchWeb: z.boolean().optional() }).optional(),
@@ -199,6 +201,11 @@ export function createApp(ctx: ServerContext): Hono {
 
   // ───────── publiczne API ─────────
 
+  app.post(WHATSAPP_SIGNUP_PATH, async c => {
+    const rejected = crossSiteRejection(c, ctx, { requireJson: true });
+    return rejected ?? forwardWhatsAppSignup(c, ctx);
+  });
+
   app.get("/api/health", (c) => {
     let records = 0;
     let dbOk = true;
@@ -219,6 +226,8 @@ export function createApp(ctx: ServerContext): Hono {
   app.get("/api/sources", (c) =>
     c.json({ catalog: ctx.corpus.catalog(), counts: ctx.corpus.countsBySource(), snapshotId: ctx.engine.snapshotId() }),
   );
+
+  app.route("/api/archives", archiveRoutes(ctx, ownerFrom, rememberOwner, crossSiteRejection));
 
   app.get("/api/report/:token", (c) => {
     const report = getReportByToken(ctx.db, c.req.param("token"), ctx.now());
@@ -288,17 +297,18 @@ export function createApp(ctx: ServerContext): Hono {
     if (!parsed.success) return c.json({ error: "bad_request", messagePl: "Nieprawidłowe żądanie." }, 400);
     const body = parsed.data;
     const attachments = [body.image, body.document, body.recording].filter(file => !!file);
-    const attachment = attachments[0];
-    if (attachments.length > 1 || (c.req.path !== "/api/chat") !== !!body.recording || (body.action && attachment) || (body.imageOptions && !body.image)) {
-      return c.json({ error: "bad_request", messagePl: "Wyślij jeden plik z opcjonalną wiadomością." }, 400);
+    if (attachments.length > 1 || (c.req.path !== "/api/chat") !== !!body.recording || (body.action && attachments.length)
+      || (body.imageOptions && !body.image) || (body.comparisonImage && (!body.image || body.imageOptions?.searchWeb))) {
+      return c.json({ error: "bad_request", messagePl: "Wyślij jeden plik lub dwa obrazy do lokalnego porównania." }, 400);
     }
-    if (attachment) {
+    if (body.comparisonImage) attachments.push(body.comparisonImage);
+    for (const attachment of attachments) {
       const b64 = attachment.base64;
       const limit = body.recording ? MAX_RECORDING_BYTES : MAX_ATTACHMENT_BYTES;
       if (!b64 || b64.length % 4 === 1 || Buffer.byteLength(b64, "base64") > limit || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
         return c.json({ error: "bad_attachment", messagePl: `Nie mogę odczytać pliku. Limit wynosi ${limit / 1024 ** 2} MB.` }, 400);
       }
-      if (body.image && !imageMagicOk(body.image.mime, b64)) {
+      if (attachment.mime.startsWith("image/") && !imageMagicOk(attachment.mime, b64)) {
         return c.json({ error: "bad_image", messagePl: "Nie mogę odczytać tego pliku. Wyślij zdjęcie JPG, PNG lub WebP do 5 MB." }, 400);
       }
     }
@@ -340,6 +350,7 @@ export function createApp(ctx: ServerContext): Hono {
       text: body.text,
       action: body.action,
       image: body.image,
+      comparisonImage: body.comparisonImage,
       document: body.document,
       recording: body.recording,
       imageOptions: body.imageOptions,
@@ -402,7 +413,7 @@ export function createApp(ctx: ServerContext): Hono {
     if (crossSite) return crossSite;
     const owner = ownerFrom(c);
     deleteCookie(c, SESSION_COOKIE, { path: "/" });
-    if (!owner) return c.json({ ok: true, deleted: { reports: 0, runs: 0, cache: 0, caseSenders: 0, sessions: 0 } });
+    if (!owner) return c.json({ ok: true, deleted: { reports: 0, runs: 0, cache: 0, caseSenders: 0, sessions: 0, archives: 0 } });
     const deleted = await inTurnOrder(ctx, owner.senderId, () => eraseSender(ctx, owner.senderId));
     return c.json({ ok: true, deleted });
   });

@@ -1,0 +1,271 @@
+{
+  "title": "Dokładna liczebność i aktualność oceny wydawcy",
+  "method": "Dwie rozłączne próby. W realEngine zapisano odpowiedzi rzeczywistego silnika z monitorowanej serii 100 publicznych tekstów. W ruleReplay wykorzystano prawdziwe cytaty i metadane z v27 i uruchomiono samą funkcję decideVerdict. W tej drugiej próbie jawnie zadano głos weryfikatora „zgoda”, relację względem twierdzenia (OBALA dla negacji liczby zgodnej, inaczej WSPIERA dla próbek liczbowych) oraz dopasowanie ta_sama dla recenzji. Każdy cytat sprawdzono jako dosłowny fragment tekstu lub pole claimReviewed.",
+  "baseline": "eval/results/teksty-100-v27.json.gz",
+  "baselineCompressedSha256": "3709f7240cc3707e97adeea63cf27170610cf9fb547e1672f61b1919667da910",
+  "evidenceInBaseline": {
+    "A09": [
+      {
+        "recordId": "sejm-eli:637858a81c3e",
+        "quote": "Art. 96. 1. Sejm składa się z 460 posłów.",
+        "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+        "publishedAt": "1997-04-02",
+        "fetchedAt": "2026-11-21T16:18:44.587Z",
+        "relation": "WSPIERA",
+        "aspect": "liczba",
+        "usedForVerdict": false
+      },
+      {
+        "recordId": "sejm-eli:90228df2a408",
+        "quote": "Według API Sejmu w Sejmie RP X kadencji mandat poselski sprawuje 460 posłów",
+        "url": "https://api.sejm.gov.pl/sejm/term10/MP",
+        "publishedAt": null,
+        "fetchedAt": "2026-11-21T17:41:27.833Z",
+        "relation": "WSPIERA",
+        "aspect": "liczba",
+        "usedForVerdict": false
+      }
+    ],
+    "A20": [
+      {
+        "recordId": "euvsdisinfo:03b8c9898ab6",
+        "quote": "Poland has plans to annex Western Ukraine",
+        "url": "https://euvsdisinfo.eu/report/poland-has-plans-to-annex-western-ukraine/",
+        "publishedAt": "2023-02-08",
+        "fetchedAt": "2026-11-21T16:36:00.258Z",
+        "relation": "INNY_KONTEKST",
+        "aspect": "sedno",
+        "usedForVerdict": true
+      }
+    ]
+  },
+  "baselineVerdicts": {
+    "A09": "BRAK_DOWODOW",
+    "A20": "FALSZYWE"
+  },
+  "realEngine": [
+    {
+      "id": "A09",
+      "input": "Sejm Rzeczypospolitej Polskiej składa się z 460 posłów.",
+      "pipeline": "engine-2026.11.22-29-current-evidence",
+      "codeSha256": "89bbe8197296d7a964a2e3117b6ad7f05d3648d0f538d6746a9501ea6d021034",
+      "receivedAt": "2026-11-22T06:09:30.052Z",
+      "verdict": "POTWIERDZONE",
+      "rule": 7,
+      "expected": {
+        "verdict": "POTWIERDZONE",
+        "status": "OK"
+      },
+      "evidence": [
+        {
+          "url": "https://api.sejm.gov.pl/eli/acts/DU/1997/483/text/U/D19970483Lj.pdf",
+          "quote": "Art. 96. 1. Sejm składa się z 460 posłów.",
+          "usedForVerdict": true,
+          "publishedAt": "1997-04-02"
+        },
+        {
+          "url": "https://api.sejm.gov.pl/sejm/term10/MP",
+          "quote": "Według API Sejmu w Sejmie RP X kadencji mandat poselski sprawuje 460 posłów",
+          "usedForVerdict": false,
+          "publishedAt": null
+        }
+      ]
+    },
+    {
+      "id": "A20",
+      "input": "Polska planuje aneksję zachodniej Ukrainy.",
+      "pipeline": "engine-2026.11.22-29-current-evidence",
+      "codeSha256": "89bbe8197296d7a964a2e3117b6ad7f05d3648d0f538d6746a9501ea6d021034",
+      "receivedAt": "2026-11-22T06:09:49.401Z",
+      "verdict": "FALSZYWE",
+      "rule": 8,
+      "expected": {
+        "verdict": "FALSZYWE",
+        "status": "OK"
+      },
+      "evidence": [
+        {
+          "url": "https://www.gov.pl/web/sluzby-specjalne/klamstwa-rosyjskiej-propagandy2",
+          "quote": "Jednocześnie w materiałach propagandowych przypominane są wcześniejsze rosyjskie kłamstwa dotyczące rzekomych planów aneksji zachodniej Ukrainy przez Polskę.",
+          "usedForVerdict": true,
+          "publishedAt": null
+        },
+        {
+          "url": "https://www.gov.pl/web/sluzby-specjalne/klamstwa-rosyjskiej-propagandy2",
+          "quote": "Kłamstwa dotyczące planów aneksji zachodniej Ukrainy są wykorzystywane przez rosyjską propagandę także do zastraszania Polaków.",
+          "usedForVerdict": true,
+          "publishedAt": null
+        },
+        {
+          "url": "https://euvsdisinfo.eu/report/poland-has-plans-to-annex-western-ukraine/",
+          "quote": "Poland has plans to annex Western Ukraine",
+          "usedForVerdict": false,
+          "publishedAt": "2023-02-08"
+        }
+      ]
+    }
+  ],
+  "ruleReplay": [
+    {
+      "input": "Sejm Rzeczypospolitej Polskiej składa się z 460 posłów.",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A09",
+      "v28": "POTWIERDZONE",
+      "finalRules": "POTWIERDZONE",
+      "rule": 7,
+      "decisive": [
+        "sejm-eli:637858a81c3e"
+      ],
+      "historicalContext": []
+    },
+    {
+      "input": "Czy Sejm RP nie liczy 460 posłów?",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A09",
+      "v28": "FALSZYWE",
+      "finalRules": "FALSZYWE",
+      "rule": 8,
+      "decisive": [
+        "sejm-eli:637858a81c3e"
+      ],
+      "historicalContext": []
+    },
+    {
+      "input": "Czy Sejm RP nie liczy 150 posłów?",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A09",
+      "v28": "POTWIERDZONE",
+      "finalRules": "POTWIERDZONE",
+      "rule": 7,
+      "decisive": [
+        "sejm-eli:637858a81c3e"
+      ],
+      "historicalContext": []
+    },
+    {
+      "input": "Czy Sejm RP liczy 460 senatorów?",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A09",
+      "v28": "BRAK_DOWODOW",
+      "finalRules": "BRAK_DOWODOW",
+      "rule": 2,
+      "decisive": [],
+      "historicalContext": []
+    },
+    {
+      "input": "Czy Senat RP liczy 460 posłów?",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A09",
+      "v28": "BRAK_DOWODOW",
+      "finalRules": "BRAK_DOWODOW",
+      "rule": 2,
+      "decisive": [],
+      "historicalContext": []
+    },
+    {
+      "input": "Polska planuje aneksję zachodniej Ukrainy.",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A20",
+      "v28": "BRAK_DOWODOW",
+      "finalRules": "BRAK_DOWODOW",
+      "rule": 2,
+      "decisive": [],
+      "historicalContext": [
+        "euvsdisinfo:03b8c9898ab6"
+      ]
+    },
+    {
+      "input": "Polska planuje aneksję zachodniej Ukrainy.",
+      "date": "2023-02-08",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A20",
+      "v28": "FALSZYWE",
+      "finalRules": "FALSZYWE",
+      "rule": 6,
+      "decisive": [
+        "euvsdisinfo:03b8c9898ab6"
+      ],
+      "historicalContext": []
+    },
+    {
+      "input": "Polska planuje aneksję zachodniej Ukrainy.",
+      "date": "2025-02-09",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A20",
+      "v28": "BRAK_DOWODOW",
+      "finalRules": "BRAK_DOWODOW",
+      "rule": 2,
+      "decisive": [],
+      "historicalContext": [
+        "euvsdisinfo:03b8c9898ab6"
+      ]
+    },
+    {
+      "input": "Celem Polski jest aneksja zachodniej Ukrainy.",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A20",
+      "v28": "FALSZYWE",
+      "finalRules": "BRAK_DOWODOW",
+      "rule": 2,
+      "decisive": [],
+      "historicalContext": [
+        "euvsdisinfo:03b8c9898ab6"
+      ]
+    },
+    {
+      "input": "Polska dąży do aneksji zachodniej Ukrainy.",
+      "date": "2026-11-22",
+      "temporal": {
+        "kind": "stan"
+      },
+      "quotedEvidenceFromCase": "A20",
+      "v28": "FALSZYWE",
+      "finalRules": "BRAK_DOWODOW",
+      "rule": 2,
+      "decisive": [],
+      "historicalContext": [
+        "euvsdisinfo:03b8c9898ab6"
+      ]
+    }
+  ],
+  "limitations": [
+    "Ochrona oceny z przeszłości obejmuje stan oznaczony przez ekstrakcję jako bieżący. Błąd ekstrakcji co do czasu nadal może zmienić ocenę źródeł. Granica 24 miesięcy jest heurystyką. Późniejsze pobranie strony nie odmładza daty publikacji.",
+    "W doświadczeniu offline ten sam fragment przy historycznej dacie jest kontrolowaną symulacją samej reguły. Zrzut korpusu wykonano w 2026 r. Odpowiedzi online zależą również od wyszukania, oceny cytatu przez model i innych dostępnych materiałów.",
+    "Liczebność musi mieć tę samą jednostkę i ten sam podmiot przy zgodnym odczycie źródła. Testy nie mierzą wszystkich odmian gramatycznych i jednostek."
+  ],
+  "readingOfRealRuns": {
+    "A09": "Końcowy silnik potwierdził literalną liczbę na podstawie art. 96 Konstytucji RP. Drugi fragment z API Sejmu pokazano dodatkowo.",
+    "A20": {
+      "assessment": "Dawną ocenę EUvsDisinfo silnik poprawnie potraktował jako kontekst. Wydał jednak stanowczy werdykt na podstawie dwóch ustępów tej samej, jeszcze starszej publikacji urzędowej. Artykuł opisuje narrację badaną w 2022 r. i sam nie rozstrzyga aktualnych zamiarów w listopadzie 2026 r. To błąd semantyczny mimo zgodności z etykietą zestawu.",
+      "publication": "https://www.gov.pl/web/sluzby-specjalne/klamstwa-rosyjskiej-propagandy2",
+      "publicationDateShownByPublisher": "2022-05-06",
+      "publicationDateShownInReport": null,
+      "distinctPublicationsUsedForVerdict": 1
+    }
+  }
+}

@@ -104,7 +104,7 @@ async function respond(msg: InboundMessage, ctx: ServerContext, session: Session
         ? {
             kind: "confirm_delete",
             textPl:
-              "Czy na pewno usunąć Twoje rozmowy, raporty i historię zapytań? Tej operacji nie można cofnąć. Napisz „tak” albo użyj przycisku.",
+              "Czy na pewno usunąć Twoje rozmowy, raporty, historię zapytań i zapisane fragmenty materiałów? Tej operacji nie można cofnąć. Napisz „tak” albo użyj przycisku.",
             quickReplies: [
               { id: ACTION.deleteConfirm, labelPl: "Tak, usuń" },
               { id: ACTION.deleteCancel, labelPl: "Nie, zostaw" },

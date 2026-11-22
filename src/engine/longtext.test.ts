@@ -92,6 +92,17 @@ describe("twierdzenie w języku wiadomości (RT-04)", () => {
     expect(r.claims).toHaveLength(0);
     expect(r.rejected).toHaveLength(1);
   });
+
+  it.each([
+    ["Rada nie przyjęła wniosku o budowę biblioteki.", "Rada przyjęła wniosek o budowę biblioteki."],
+    ["Dotacja na rozbudowę biblioteki wyniosła 250000 zł.", "Dotacja na rozbudowę biblioteki wyniosła 250001 zł."],
+    ["Opłata za korzystanie z biblioteki wynosi 1,5 zł.", "Opłata za korzystanie z biblioteki wynosi 15 zł."],
+  ])("zachowuje sens i liczbę ze zgłoszenia: %s", (source, altered) => {
+    for (const claimedSource of [source, altered]) {
+      const result = postProcessClaims(out([raw(altered, { sourceText: claimedSource })]), source);
+      expect(result.claims.map(c => c.claim.text)).toEqual([source]);
+    }
+  });
 });
 
 describe("części twierdzenia o kilku podmiotach", () => {
@@ -102,8 +113,36 @@ describe("części twierdzenia o kilku podmiotach", () => {
 
   it("część z nową liczbą albo nowym faktem → twierdzenie sprawdzane w całości", () => {
     expect(validParts(PARENT, ["Polska wstąpiła do NATO w 1999 roku.", "Litwa wstąpiła do NATO w 2004 roku."])).toEqual([]);
+    expect(validParts(PARENT, ["Polska wstąpiła do NATO w 1999 roku.", "Litwa wstąpiła do NATO."])).toEqual([]);
     expect(validParts(PARENT, ["Polska wstąpiła do NATO w 1999 roku.", "Rakiety spadły na stolicę sąsiedniego kraju."])).toEqual([]);
     expect(validParts(PARENT, ["Polska wstąpiła do NATO w 1999 roku."])).toEqual([]); // jedna część to nie podział
+  });
+
+  it("zachowuje wszystkich wymienionych uczestników, gdy ekstraktor opuścił jednego lub wybrał osobną tezę główną", () => {
+    const original = "Alfa i Beta otrzymały certyfikat w 2020 roku.";
+    const first = "Alfa otrzymała certyfikat w 2020 roku.";
+    const second = "Beta otrzymała certyfikat w 2020 roku.";
+    const split = postProcessClaims(out([raw(first, { isMain: true }), raw(second)]), original);
+    expect(split.claims.map(c => c.claim.text)).toEqual([original]);
+    expect(split.claims[0]?.parts.map(p => p.requiredSubjects)).toEqual([["Alfa"], ["Beta"]]);
+    const dated = postProcessClaims(out([raw(original, {
+      assertedAspect: "sedno", temporalKind: "jednorazowe", date: "2020", parts: [first, second],
+    })]), original).claims[0]!;
+    expect(dated.claim.assertedAspect).toBe("sedno");
+    expect(dated.parts.every(p => p.claim.assertedAspect === undefined)).toBe(true);
+    const incomplete = postProcessClaims(out([raw(first, { isMain: true, sourceText: first })]), original);
+    expect(incomplete.claims[0]).toMatchObject({ claim: { text: original }, parts: [], requiredSubjects: ["Alfa", "Beta"] });
+    expect(validParts(original, [first, "Alfa w 2020 roku otrzymała certyfikat."])).toEqual([]);
+  });
+
+  it("nie dzieli nazwy jednego państwa na podmioty i nie ufa tłumaczeniu nazwy wymyślonemu przez model", () => {
+    const single = "Trinidad and Tobago signed the agreement in 2020.";
+    expect(validParts(single, ["Trinidad signed the agreement in 2020.", "Tobago signed the agreement in 2020."])).toEqual([]);
+    const original = "Alfa i Beta otrzymały certyfikat.";
+    const c = postProcessClaims(out([raw(original, { entities: ["Alfa | Gamma", "Beta"], parts: [
+      "Alfa otrzymała certyfikat.", "Beta otrzymała certyfikat.",
+    ] })]), original).claims[0];
+    expect(c?.parts[0]?.requiredSubjects).toEqual(["Alfa"]);
   });
 
   it("postProcess tworzy części z własnymi id i terminami; checkUnits sprawdza części zamiast rodzica", () => {

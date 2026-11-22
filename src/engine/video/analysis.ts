@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Claim, type DetectorHit, type LlmResponse, type ModelUsage } from "../../shared/contracts";
+import { Claim, type DetectorHit, type LlmResponse, type ModelUsage, type VideoAnalysis } from "../../shared/contracts";
 import { MAX_CLAIMS_LONG } from "../claims";
 import { isolateFenceMarkers } from "../normalize";
 import { detectInjection, maskPii, stripFlaggedSentences } from "../ports";
@@ -38,5 +38,5 @@ export const analysisSchema = z.object({
 });
 export type VideoAnalysisData = z.infer<typeof analysisSchema>;
 export type VideoAnalyzer = (video: VideoAnalyzerInput, signal?: AbortSignal) => Promise<
-  LlmResponse<VideoAnalysisData> & { additionalUsage?: ModelUsage[] }
+  LlmResponse<VideoAnalysisData> & { additionalUsage?: ModelUsage[]; file?: VideoAnalysis["file"] }
 >;

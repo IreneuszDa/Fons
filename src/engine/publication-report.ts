@@ -21,7 +21,7 @@ function indexMiss(run: PublicationRun, result: IndexMiss): VerdictReport {
 /** The publisher's label evaluates the cited claim. Sources supplying only context stay with the public answer. */
 function publicationVerdict(run: PublicationRun, publication: PublishedAnswer, question: string, liveReview: boolean): ClaimVerdict[] {
   if (!publication.claimPl || !publication.verdict) return [];
-  const evidence = publication.evidence.filter(e => e.role === "stala_rola" && e.ratingRaw && e.relation !== "INNY_KONTEKST");
+  const evidence = publication.evidence.filter(e => e.role === "stala_rola" && e.ratingRaw && e.recordId === publication.reviewRecordId);
   const source = evidence[0];
   if (!source) return [];
   const claim: Claim = {
@@ -55,10 +55,17 @@ export function reportPublication(run: PublicationRun, publication: PublishedAns
   const { origin = "publications", verdictMode = "rules" } = options;
   if (origin !== "retrieval") run.recordLookup(origin, "completed", publication.evidence.map(e => e.recordId));
   const verdicts = publicationVerdict(run, publication, question, origin === "google_claimreview");
+  // Lead the answer with the publisher's finding when it supplies the verdict.
+  // A headline can identify the item, and a quoted claimant can explain the dispute.
+  const findings = new Set(verdicts[0]?.evidence.filter(e =>
+    e.passageKind === "excerpt" && (e.relation === "OBALA" || e.relation === "WSPIERA")));
+  const evidenceOrder = (e: PublishedAnswer["evidence"][number]) =>
+    findings.has(e) ? 0 : e.passageKind === "reviewed_claim" ? 2 : 1;
+  const evidence = [...publication.evidence].sort((a, b) => evidenceOrder(a) - evidenceOrder(b));
   run.inputMode = /^czy\b/i.test(question.trim()) ? "question_yesno" : "question_open";
   return run.report({
     status: "OK", verdictMode, verdicts, mainVerdict: verdicts[0]?.verdict ?? null,
-    answer: { questionPl: question, answerPl: publication.answerPl, evidence: publication.evidence },
+    answer: { questionPl: question, answerPl: publication.answerPl, evidence },
     summaryPl: publication.answerPl,
     transparencyPl: options.basisPl ?? "Odpowiedź oparto na publikacjach wskazanych w raporcie.",
   });

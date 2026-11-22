@@ -127,7 +127,7 @@ export class FakeLlmProvider implements EngineLlmProvider {
             if (score > best.score) best = { ref: f.label.slice("FRAGMENT_".length), quote: truncateWords(s, 300), score };
           }
         }
-        return best.score >= 0.3 ? { found: true, ref: best.ref, quote: best.quote } : { found: false, ref: "", quote: "" };
+        return best.score >= 0.3 ? { found: true, ref: best.ref, quote: best.quote, translationPl: "" } : { found: false, ref: "", quote: "", translationPl: "" };
       }
       case "assessment":
       case "assessment_proposal": {

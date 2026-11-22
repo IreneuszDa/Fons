@@ -13,6 +13,7 @@
  */
 import type { CorpusRecord } from "../../shared/contracts";
 import { pdfToText } from "./eli";
+import { clubHistoryRecords, CLUB_ROLL_CALLS, rollCallUrl, type RollCall } from "./sejm-club-history";
 import {
   PoliteClient,
   type IngestOptions,
@@ -203,6 +204,15 @@ export async function ingestSejmMp(opts: IngestOptions): Promise<IngestResult> {
       origin: "corpus",
     };
     result.records.push(rec);
+  }
+
+  for (const archive of CLUB_ROLL_CALLS.filter(vote => vote.term === term)) {
+    const url = rollCallUrl(archive);
+    // If an archive request fails, abort this ingester so a transient failure cannot erase historical records.
+    const { data, res } = await client.getJson<RollCall>(url);
+    const history = clubHistoryRecords(archive, data, mps, base, publisher, res.fetchedAt);
+    result.records.push(...history);
+    opts.log(`  Głosowanie ${data.date}: ${data.votes.length} wpisów posłów, ${history.length} historycznych przynależności różniących się od obecnego składu.`);
   }
 
   // 3. Marszałek Sejmu — najnowsze obwieszczenie Marszałka Sejmu z podpisem.

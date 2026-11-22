@@ -88,7 +88,7 @@ export const AssessOut = z.object({
   content: z.array(
     z.object({
       ref: z.string(),
-      relation: z.enum([...Relation.options, "KORYGUJE_CZESC"]),
+      relation: z.enum([...Relation.options, "KORYGUJE_CZESC", "POTWIERDZA_DAWNY_STAN"]),
       aspect: Aspect,
       period: z.string().nullable(),
       quote: z.string(),
@@ -107,31 +107,33 @@ export type AssessProposalOut = z.infer<typeof AssessProposalOut>;
  * podane wprost. Bez przykładów ze zbioru ewaluacyjnego (PLAN §1.6).
  */
 export const FIXED_ROLE_TENSE_RULE =
-  "Czas to daty i okresy podane wprost: inny czas gramatyczny (przeszły, teraźniejszy), język lub słowa tego samego stwierdzenia nie czynią tezy inną; " +
-  "inna jest przy wprost różnych datach lub okresach albo innym zdarzeniu, podmiocie lub liczbie. ";
+  "Parafraza, przekład i czas gramatyczny mogą opisywać ten sam fakt. Inny podmiot, zdarzenie, liczba lub okres zmieniają tezę. " +
+  "Przy autorstwie sprawdź, czy wydawca oceniał przypisanie słów tej osobie, także w mowie zależnej lub przekładzie. Oddziel autorstwo od prawdziwości słów. " +
+  "Ustal zakres z tezy i uzasadnienia wydawcy. Dla zmiennej wartości porównaj okres pomiaru. Nieustalona zgodność okresów lub częściowa negacja oznacza niepewne. ";
+
+const FUTURE_VS_OBSERVED =
+  "Sprawdzając trwające działanie, wymagaj opisu wykonania lub braku wykonania w badanym okresie. Nawet aktualna deklaracja o przyszłości opisuje zamiar. ";
+
+const MEASUREMENT_BOUNDS =
+  "Sprawdź kierunek nierówności, populację, jednostkę i okres. Przedział przecinający próg lub granica po niewłaściwej stronie nie rozstrzyga. ";
 
 export const ASSESS_SYSTEM =
   FONS_PERSONA +
-  "Twoja rola: czytelnik dowodów. Oceniasz, jak fragmenty źródeł odnoszą się do twierdzenia (blok TWIERDZENIE). " +
-  "Lista 'content' — jedna pozycja dla każdego bloku FRAGMENT_<ref>: ref; " +
-  "relation: " +
-  "WSPIERA — fragment wprost potwierdza twierdzenie (także z dodatkowymi informacjami; sam rok zamiast daty wystarcza); " +
-  "fragment potwierdzający tylko jeden z kilku podmiotów to nie WSPIERA; " +
-  "OBALA — fragment wprost przeczy głównemu faktowi (np. zdarzenie nie nastąpiło); " +
-  "OBALA także, gdy twierdzenie podaje datę lub liczbę jednorazowego zdarzenia (przystąpienie, uchwalenie lub wejście w życie ustawy, wybory, początek wojny) " +
-  "albo wskaźnika za okres, a fragment podaje dla TEGO SAMEGO zdarzenia lub wskaźnika INNĄ datę lub liczbę — aspect czas albo liczba, nawet jeśli zdarzenie nastąpiło; " +
-  "CZESCIOWO — źródło potwierdza tylko część, np. jedno z kilku miast. Milczy o reszcie. " +
-  "KORYGUJE_CZESC — cytat wprost wykazuje istotny błąd w szczególe lub wniosku; sam węższy zakres źródła to CZESCIOWO. " +
-  "INNY_KONTEKST — fragment opisuje TO SAMO zdarzenie, dokument, wypowiedź lub dane, do których odnosi się twierdzenie, i pokazuje, że twierdzenie przenosi je w inny czas, miejsce, zakres lub sytuację; " +
-  "BEZ_ZWIAZKU — fragment ani nie potwierdza, ani nie przeczy twierdzeniu. " +
-  "Fragment o innym zdarzeniu, państwie lub podmiocie, o ogólnym tle tematu albo pomijający to, czego dotyczy twierdzenie, to zawsze BEZ_ZWIAZKU. " +
-  "Brak wzmianki o elemencie twierdzenia to nie zaprzeczenie ani korekta: fragment potwierdzający główny fakt bez tego elementu to WSPIERA sedno. " +
-  "Gdy twierdzenie sprowadza się do daty lub liczby, fragment potwierdzający zdarzenie z inną datą lub liczbą to OBALA (czas/liczba), nie WSPIERA sedno. " +
-  "aspect = aspekt twierdzenia, którego dotyczy relacja: sedno (główny fakt: kto, co), czas, miejsce, liczba, autorstwo albo zakres; gdy fragment potwierdza lub obala cały główny fakt, wybierz sedno; " +
-  "period = okres danych we fragmencie (RRRR, RRRR-MM, RRRR-Qn) albo null; " +
-  "quote = DOSŁOWNY cytat z treści tego fragmentu (nie z tytułu), skopiowany znak po znaku, najwyżej 300 znaków, na którym opierasz ocenę (pusty przy BEZ_ZWIAZKU). " +
-  "Lista 'fixedRole' — jedna pozycja dla każdego bloku TEZA_<ref> (teza sprawdzona przez organizację fact-checkingową): " +
-  "Porównaj sedno i czas: ta_sama, zaprzeczona (pełna negacja), niepewne (częściowe pokrycie lub wątpliwość), inna. " +
+  "Oceń fragmenty względem TWIERDZENIA. W content zwróć dla każdego FRAGMENT_<ref> ref, relation, aspect, period i quote. " +
+  "WSPIERA: cytat wprost potwierdza główny fakt, także innymi słowami lub mniej precyzyjnie. " +
+  "OBALA: przeczy temu samemu faktowi. Inna wartość wykluczająca podaną liczbę, datę, osobę lub miejsce tego samego zdarzenia lub wskaźnika za ten sam okres obala odpowiedni aspekt. " +
+  MEASUREMENT_BOUNDS +
+  "Rozróżniaj etapy wyborów. " +
+  FUTURE_VS_OBSERVED + "Dla samej zapowiedzi wobec tezy o realizacji wybierz BEZ_ZWIAZKU. " +
+  "CZESCIOWO: potwierdza tylko część zakresu (np. część wymienionych osób). KORYGUJE_CZESC: cytat wprost wykazuje istotny błąd w szczególe lub wniosku. " +
+  "POTWIERDZA_DAWNY_STAN: dla tezy o stanie obecnym źródło poświadcza dokładnie tę osobę na tym urzędzie albo tę liczbę w tym zakresie we wskazanym wcześniejszym okresie. Podaj ten okres. Sam wiek publikacji lub wzmianka o osobie nie wystarczają. " +
+  "INNY_KONTEKST tylko gdy cytat identyfikuje dokładnie ten sam materiał, wypowiedź lub zdarzenie i pokazuje konkretnie, że teza przenosi je w inny czas, miejsce lub zakres. " +
+  "Inne zdarzenie, przepis, środek, instytucja, tło lub brak wzmianki o tezie to BEZ_ZWIAZKU. Wspólny temat nie wystarcza. " +
+  "aspect: sedno (główny fakt) albo czas, miejsce, liczba, autorstwo, zakres. Gdy teza podaje tylko datę lub liczbę, inna wartość tego samego obala czas lub liczbę. " +
+  "period: udokumentowany okres danych, np. RRRR, RRRR-MM, RRRR-Qn lub zakres lat, inaczej null. " +
+  "quote: ciągły dosłowny cytat do 300 znaków z tekstu, nigdy z tytułu. Zachowaj podmiot i datę, jeśli są potrzebne do zrozumienia. Dla BEZ_ZWIAZKU wpisz pusty ciąg. " +
+  "Przy kilku różnych szacunkach zacytuj jeden wraz z autorem i zastrzeżeniem. " +
+  "W fixedRole porównaj każdą TEZA_<ref> z twierdzeniem: ta_sama, zaprzeczona (pełna negacja), niepewne (częściowe pokrycie) lub inna. " +
   FIXED_ROLE_TENSE_RULE +
   "Nie oceniaj prawdziwości z własnej wiedzy; opieraj się wyłącznie na fragmentach. " +
   UNTRUSTED_DATA_RULES;
@@ -152,20 +154,21 @@ export type VerifierOut = z.infer<typeof VerifierOut>;
  * typu „X to prezydent Polski” ↔ cytat urzędowy „Y – Prezydent RP”, bo cytat nie zaprzecza słowami.
  */
 export const VERIFIER_EXCLUSION_RULE =
-  "OBALA jest poprawna także wtedy, gdy cytat nie zaprzecza słowami, ale podaje dla tego samego inną, wykluczającą się wartość: " +
-  "inną osobę na tym samym jednoosobowym urzędzie lub stanowisku albo inną liczbę, datę lub miejsce tego samego zdarzenia lub wskaźnika — " +
-  "o ile chodzi o ten sam czas (twierdzenie bez daty dotyczy stanu obecnego). WSPIERA jest poprawna także wtedy, gdy cytat mówi to samo innymi słowami. " +
-  "Głos niepewne daj tylko wtedy, gdy z samego cytatu naprawdę nie da się tego ocenić (np. cytat jest urwany albo może dotyczyć czegoś innego), " +
-  "a nie dlatego, że cytat nie powtarza twierdzenia dosłownie. Aktualności cytatu nie oceniaj — daty sprawdza kod. ";
+  "OBALA także inna osoba na tym samym jednoosobowym urzędzie lub wykluczająca się liczba, data czy miejsce dla tego samego zdarzenia, wskaźnika i okresu. " +
+  MEASUREMENT_BOUNDS +
+  "Przy tezie o wyłączności (jeden podmiot robi lub pokrywa całość) wystarczy, że cytat wykazuje rzeczywisty udział innych w tej samej czynności lub kosztach. Nie trzeba znać wielkości udziałów. Sama możliwość uczestnictwa nie wystarcza. " +
+  "WSPIERA obejmuje parafrazy oraz wykluczenie przeciwnego statusu przez udokumentowany status obecny. Dawny status nie wystarcza. " +
+  "Niepewne wybierz przy niejasnym cytacie. Zapisany okres i tytuł mogą identyfikować czas i zdarzenie. Wartość oraz kierunek szacunku muszą wynikać z cytatu. ";
 
 export const VERIFIER_SYSTEM =
   FONS_PERSONA +
-  "Twoja rola: niezależny weryfikator. Każdy blok POZYCJA_<ref> zawiera twierdzenie albo pytanie, " +
-  "cytat ze źródła i ocenę zaproponowaną przez inny model. " +
-  "Dla rodzaju 'relacja' oceń wyłącznie na podstawie samego cytatu, czy cytat rzeczywiście daje tę relację do twierdzenia. " +
-  "Znaczenie relacji: WSPIERA — cytat potwierdza twierdzenie; " +
-  "OBALA — cytat przeczy twierdzeniu, także gdy dla tego samego jednorazowego zdarzenia albo wskaźnika i okresu podaje inną datę lub liczbę niż twierdzenie (nawet jeśli samo zdarzenie nastąpiło); " +
-  "CZESCIOWO — źródło obejmuje część. KORYGUJE_CZESC wymaga, by cytat wprost wykazywał istotny błąd w szczególe lub wniosku; daj sprzeciw, jeśli podaje zgodne dane dla części podmiotów i milczy o pozostałych. " +
+  "Niezależnie oceń każdą POZYCJA_<ref>. W 'relacja' głos dotyczy relacji cytatu do tezy. WSPIERA wymaga potwierdzenia, OBALA sprzeczności. Daj zgodę, jeśli proponowana relacja jest trafna. " +
+  "Wykazana przyczyna może wykluczyć przyczynę przypisaną temu samemu zdarzeniu, o ile nie mogły współwystąpić. " +
+  "CZESCIOWO obejmuje część tezy. KORYGUJE_CZESC wymaga istotnego błędu w szczególe lub wniosku. Milczenie o części podmiotów nie wykazuje błędu. " +
+  "INNY_KONTEKST wymaga cytatu wskazującego ten sam materiał lub zdarzenie i konkretną różnicę czasu, miejsca lub zakresu. " +
+  "Daj sprzeciw, gdy cytat opisuje inną regulację, środek, osobę lub odrębne zdarzenie, dostarcza tła lub milczy o tezie. Zbieżność tematu nie dowodzi błędu. " +
+  "Odrzuć przypisanie końcowego wyniku na podstawie cytatu o prowadzeniu, kwalifikacji lub zapowiedzi kolejnego etapu. " +
+  FUTURE_VS_OBSERVED + "Daj sprzeciw, gdy zapowiedzią uzasadniono wniosek o bieżącym działaniu. " +
   VERIFIER_EXCLUSION_RULE +
   "Dla rodzaju 'dopasowanie' oceń, czy teza sprawdzona przez fact-checkerów jest — jak zaproponowano — tą samą tezą co twierdzenie albo jej zaprzeczeniem. " +
   FIXED_ROLE_TENSE_RULE +
@@ -203,6 +206,7 @@ export const OpenAnswerOut = z.object({
   found: z.boolean(),
   ref: z.string(),
   quote: z.string(),
+  translationPl: z.string(),
 });
 export type OpenAnswerOut = z.infer<typeof OpenAnswerOut>;
 
@@ -211,6 +215,7 @@ export const OPEN_ANSWER_SYSTEM =
   "Twoja rola: znaleźć w źródłach odpowiedź na pytanie z bloku PYTANIE. " +
   "Wskaż jeden blok FRAGMENT_<ref>, który wprost odpowiada na pytanie, i skopiuj z jego treści (nie z tytułu) DOSŁOWNY cytat " +
   "(znak po znaku, najwyżej 300 znaków), który zawiera odpowiedź. Gdy kilka fragmentów odpowiada, wybierz najnowszy. " +
+  "Dla obcojęzycznego cytatu podaj osobno wierny przekład całego cytatu na polski w translationPl. Zachowaj liczby, czas, warunki i negacje. Dla polskiego cytatu lub braku odpowiedzi wpisz pusty translationPl. " +
   "Nie łącz informacji z kilku fragmentów, nie uzupełniaj cytatu i nie odpowiadaj z własnej wiedzy. " +
   "Gdy żaden fragment nie odpowiada wprost na pytanie, zwróć found = false oraz puste ref i quote. " +
   UNTRUSTED_DATA_RULES;

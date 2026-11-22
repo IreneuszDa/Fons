@@ -121,6 +121,20 @@ function reductionCases(): Case[] {
   return [
     // ── FAŁSZYWE: twierdzenie = jedna wartość, obalona
     {
+      name: "8b: czas trwania wyrażony przymiotnikiem dotyczy dokładnie tego organu",
+      claim: { ...claim({ text: "Kadencja Sejmu trwa 5 lat." }), assertedAspect: "liczba" },
+      records: [primary("sejm-eli:art")],
+      assessments: [asm("sejm-eli:art", "OBALA", "czas", { quote: "Art. 98. 1. Sejm i Senat są wybierane na czteroletnie kadencje." })],
+      expect: { verdict: "FALSZYWE", rule: 8, decisive: ["sejm-eli:art"] },
+    },
+    {
+      name: "8b: sam numer artykułu i czas trwania dla innego organu nie obalają liczby",
+      claim: { ...claim({ text: "Kadencja Sejmu trwa 5 lat." }), assertedAspect: "liczba" },
+      records: [primary("sejm-eli:art")],
+      assessments: [asm("sejm-eli:art", "OBALA", "czas", { quote: "Art. 98. 1. Zarząd jest wybierany na czteroletnią kadencję." })],
+      expect: { verdict: "BRAK_DOWODOW", rule: 2, decisive: [] },
+    },
+    {
       name: "8b A03: „Polska wstąpiła do NATO w 2004”, OBALA/czas („Poland 1999”) → FALSZYWE (8)",
       claim: nato(),
       records: natoRecs(),
@@ -278,6 +292,28 @@ function reductionCases(): Case[] {
   ];
 }
 
+describe("jedno twierdzenie o dokładnej liczebności", () => {
+  const matches = "Komitet składa się z 24 delegatów.";
+  it.each([
+    ["Komitet liczy 24 delegatów.", matches, "WSPIERA", "liczba", "zgoda", "POTWIERDZONE"],
+    ["Komitet nie liczy 24 delegatów.", matches, "OBALA", "liczba", "zgoda", "FALSZYWE"],
+    ["Komitet nie liczy 36 delegatów.", matches, "WSPIERA", "liczba", "zgoda", "POTWIERDZONE"],
+    ["Komitet liczy 36 delegatów.", matches, "OBALA", "liczba", "zgoda", "FALSZYWE"],
+    ["Komitet nie liczy 24 delegatów.", matches, "WSPIERA", "sedno", "zgoda", "BRAK_DOWODOW"],
+    ["Komitet liczy 24 obserwatorów.", matches, "WSPIERA", "sedno", "zgoda", "BRAK_DOWODOW"],
+    ["Komitet liczy 24 delegatów.", "Zarząd liczy 24 delegatów.", "WSPIERA", "liczba", "zgoda", "BRAK_DOWODOW"],
+    ["Komitet liczy 24 delegatów.", "Art. 24. Komitet składa się z 36 delegatów.", "WSPIERA", "liczba", "zgoda", "BRAK_DOWODOW"],
+    ["Komitet liczy 24 delegatów.", "Komitet nie liczy 24 delegatów.", "WSPIERA", "liczba", "zgoda", "BRAK_DOWODOW"],
+    ["Komitet liczy 24 delegatów.", matches, "WSPIERA", "liczba", "niepewne", "BRAK_DOWODOW"],
+  ] as const)("%s / %s / %s / %s / %s → %s", (text, quote, relation, aspect, verifier, verdict) => {
+    const r = primary("statut:1", { text: quote });
+    const result = decideVerdict({ claim: claim({ text }), records: new Map([[r.id, r]]),
+      assessments: [asm(r.id, relation, aspect, { quote, verifier })], now: NOW, singleKeyVerifier: true });
+    expect(result.verdict).toBe(verdict);
+    expect(result.decisiveRecordIds).toEqual(verdict === "BRAK_DOWODOW" ? [] : [r.id]);
+  });
+});
+
 // ───────────────────────── table ─────────────────────────
 
 interface Case {
@@ -419,6 +455,52 @@ const cases: Case[] = [
     assessments: [fixedAsm("demagog:1", "ta_sama"), fixedAsm("afp:1", "ta_sama")],
     expect: { verdict: "BRAK_DOWODOW", rule: 5, conflicting: { supporting: ["afp:1"], refuting: ["demagog:1"] } },
   },
+  {
+    name: "Dwie niezależne relacje o tym samym okresie uzasadniają wstrzymanie i wskazanie obu cytatów",
+    records: [secondary("a:1", "a", { period: "2024" }), secondary("b:1", "b", { period: "2024" })],
+    assessments: [asm("a:1", "WSPIERA", "liczba"), asm("b:1", "OBALA", "liczba")],
+    expect: { verdict: "BRAK_DOWODOW", rule: 5, conflicting: { supporting: ["a:1"], refuting: ["b:1"] } },
+  },
+  {
+    name: "Sprzeczne fragmenty z jednej publikacji nie stanowią dwóch źródeł",
+    records: [primary("a:1", { url: "https://example.org/pierwsza" }), primary("a:2", { url: "https://example.org/pierwsza#inna-sekcja" })],
+    assessments: [asm("a:1", "WSPIERA"), asm("a:2", "OBALA")],
+    expect: { verdict: "BRAK_DOWODOW", rule: 2, conflicting: null },
+  },
+  {
+    name: "Jedna publikacja znaleziona w dwóch indeksach występuje raz po swojej stronie sporu",
+    records: [primary("a:1"), primary("b:1"), primary("live:1", { url: "https://example.org/b%3A1", origin: "live_snapshot",
+      independenceGroup: "grp-b:1" })],
+    assessments: [asm("a:1", "WSPIERA"), asm("b:1", "OBALA"), asm("live:1", "OBALA")],
+    expect: { verdict: "BRAK_DOWODOW", rule: 5, conflicting: { supporting: ["a:1"], refuting: ["b:1"] } },
+  },
+  {
+    name: "Niezgodne relacje o tym samym okresie wymagają potwierdzenia znaczenia obu cytatów",
+    records: [secondary("a:1", "a", { period: "2024" }), secondary("b:1", "b", { period: "2024" })],
+    assessments: [asm("a:1", "WSPIERA"), asm("b:1", "OBALA", "sedno", { verifier: "niepewne" })],
+    expect: { verdict: "BRAK_DOWODOW", rule: 2, conflicting: null },
+  },
+  {
+    name: "Niepewne odczytanie pomiaru urzędu nie przesądza wyniku, gdy niezależne źródło dokumentuje przeciwny szacunek",
+    records: [primary("a:1", { period: "2024" }), secondary("b:1", "b", { period: "2024" })],
+    assessments: [asm("a:1", "OBALA", "liczba", { verifier: "niepewne" }), asm("b:1", "WSPIERA", "liczba")],
+    expect: { verdict: "BRAK_DOWODOW", rule: 2, conflicting: null },
+  },
+  {
+    name: "Obecna ocena pomija udokumentowaną wcześniejszą wersję pomiaru",
+    records: [primary("a:1", { period: "2024", publishedAt: "2025-04-01", supersededAt: "2026-04-01" }),
+      primary("a:2", { period: "2024", publishedAt: "2026-04-01" }), primary("b:1", { period: "2024", publishedAt: "2025-03-01" })],
+    assessments: [asm("a:1", "WSPIERA"), asm("a:2", "OBALA"), asm("b:1", "OBALA")],
+    expect: { verdict: "FALSZYWE", rule: 8, conflicting: null, decisive: ["a:2", "b:1"] },
+  },
+  {
+    name: "Dawny stan publikacji dopuszcza pierwotne dane i odrzuca rewizję opublikowaną po wskazanej dacie",
+    claim: claim({ temporal: { kind: "brak", publishedBy: "2025-04-30" } }),
+    records: [primary("a:1", { period: "2024", publishedAt: "2025-04-01", supersededAt: "2026-04-01" }),
+      primary("a:2", { period: "2024", publishedAt: "2026-04-01" }), primary("b:1", { period: "2024", publishedAt: "2025-03-01" })],
+    assessments: [asm("a:1", "WSPIERA"), asm("a:2", "OBALA"), asm("b:1", "OBALA")],
+    expect: { verdict: "BRAK_DOWODOW", rule: 5, conflicting: { supporting: ["a:1"], refuting: ["b:1"] } },
+  },
   // ── D: nic
   {
     name: "D: brak jakichkolwiek ocen → BRAK (2)",
@@ -532,6 +614,20 @@ const cases: Case[] = [
   },
   // ── stany i nieaktualność
   {
+    name: "Zweryfikowany dawny stan i zmieniona wartość w późniejszym rejestrze",
+    claim: stan(),
+    records: [primary("archiwum"), primary("rejestr", { period: "2026" })],
+    assessments: [asm("archiwum", "INNY_KONTEKST", "sedno", { period: "2015-2020", historicalSupport: true }), asm("rejestr", "OBALA")],
+    expect: { verdict: "WPROWADZAJACE", rule: 4, archival: true },
+  },
+  {
+    name: "Sam dawny stan nie rozstrzyga o stanie aktualnym",
+    claim: stan(),
+    records: [primary("archiwum")],
+    assessments: [asm("archiwum", "INNY_KONTEKST", "sedno", { period: "2020", historicalSupport: true })],
+    expect: { verdict: "BRAK_DOWODOW", rule: 2 },
+  },
+  {
     name: "Nieaktualne: stan, starsze pierwotne wspiera liczbę, nowsze urzędowe obala → WPROWADZAJACE (4) archival",
     claim: stan(),
     records: [
@@ -593,7 +689,7 @@ const cases: Case[] = [
     expect: { verdict: "BRAK_DOWODOW", rule: 5 },
   },
   {
-    name: "Stan: nowsze obalające jest tylko wtórne (nie urzędowe) → nie reguła 4, lecz 5",
+    name: "Stan: rozbieżne pomiary z różnych lat nie dokumentują sporu o tę samą wartość",
     claim: stan(),
     records: [
       primary("gus:2022", { period: "2022", publishedAt: "2023-01-15" }),
@@ -601,7 +697,7 @@ const cases: Case[] = [
       secondary("tvn:1", "tvn", { period: "2025", publishedAt: "2026-01-16" }),
     ],
     assessments: [asm("gus:2022", "WSPIERA"), asm("pap:1", "OBALA"), asm("tvn:1", "OBALA")],
-    expect: { verdict: "BRAK_DOWODOW", rule: 5 },
+    expect: { verdict: "BRAK_DOWODOW", rule: 2, conflicting: null },
   },
   {
     name: "Stan: aktualny, ale jedyny dowód ma ponad 2 lata → POTWIERDZONE z ostrzeżeniem archiwalnym",
@@ -611,6 +707,29 @@ const cases: Case[] = [
     expect: { verdict: "POTWIERDZONE", rule: 7, archival: false, archivalWarning: true },
   },
   // ── reguła 3: jednorazowe zdarzenie nowsze niż dowody
+  {
+    name: "Sama wcześniejsza zapowiedź z dokładną datą nie potwierdza, że protest się odbył",
+    claim: claim({ text: "20 listopada 2026 w Gdańsku odbył się protest.", temporal: { kind: "jednorazowe", date: "2026-11-20" } }),
+    records: [primary("gov:1", { publishedAt: "2026-11-12" })],
+    assessments: [asm("gov:1", "WSPIERA", "sedno", { quote: "Organizatorzy zapowiedzieli protest w Gdańsku na 20 listopada 2026 r." })],
+    expect: { verdict: "BRAK_DOWODOW", rule: 3, strength: "slaba" },
+  },
+  {
+    name: "Sprostowanie po wydarzeniu rozstrzyga mimo wcześniejszej zapowiedzi",
+    claim: claim({ text: "20 listopada 2026 w Gdańsku odbył się protest.", temporal: { kind: "jednorazowe", date: "2026-11-20" } }),
+    records: [primary("plan", { publishedAt: "2026-11-12" }), primary("raport", { publishedAt: "2026-11-21" })],
+    assessments: [asm("plan", "WSPIERA", "sedno", { quote: "Protest zaplanowano na 20 listopada 2026 r." }),
+      asm("raport", "OBALA", "sedno", { quote: "Organizatorzy odwołali protest w Gdańsku, zgromadzenie się nie odbyło." })],
+    expect: { verdict: "FALSZYWE", rule: 8, decisive: ["raport"] },
+  },
+  {
+    name: "Wcześniejsza zapowiedź nie zapewnia niezależnego potwierdzenia późniejszej relacji wtórnej",
+    claim: claim({ text: "20 listopada 2026 w Gdańsku odbył się protest.", temporal: { kind: "jednorazowe", date: "2026-11-20" } }),
+    records: [secondary("plan", "a", { publishedAt: "2026-11-12" }), secondary("raport", "b", { publishedAt: "2026-11-21" })],
+    assessments: [asm("plan", "WSPIERA", "sedno", {quote: "Na 20 listopada 2026 planujemy protest."}),
+      asm("raport", "WSPIERA", "sedno", {quote: "W Gdańsku 20 listopada 2026 odbył się protest."})],
+    expect: { verdict: "BRAK_DOWODOW", rule: 3, strength: "slaba" },
+  },
   {
     name: "Jednorazowe zdarzenie nowsze niż najnowszy dowód → BRAK (3)",
     claim: claim({ text: "20 listopada 2026 w Gdańsku odbył się protest.", temporal: { kind: "jednorazowe", date: "2026-11-20" } }),
@@ -854,6 +973,119 @@ function run(c: Case): VerdictDecision {
   });
 }
 
+describe("aktualność oceny wydawcy o obecnych zamiarach", () => {
+  const reviewed = "Biblioteka zamierza zlikwidować czytelnię.";
+  const old = factcheck("redakcja:ocena", R_FALSZ, { publishedAt: "2020-05-10", claimReviewed: reviewed });
+  const original = fixedAsm(old.id, "ta_sama", { quote: reviewed });
+  const assess = (c: Claim, records = [old], assessments = [original], now = NOW) =>
+    decideVerdict({ claim: c, records: new Map(records.map(r => [r.id, r])), assessments, now, singleKeyVerifier: false });
+
+  it("zachowuje starą ocenę w kontekście i wstrzymuje się od oceny zamiaru", () => {
+    const result = assess(stan(reviewed));
+    expect(result.verdict).toBe("BRAK_DOWODOW");
+    expect(result.decisiveRecordIds).toEqual([]);
+    expect(result.priorEventRecordIds).toEqual([old.id]);
+    expect(result.strength.notes.join(" ")).toContain("obecnego zamiaru");
+  });
+
+  it("liczy wiek oceny od publikacji względem dnia pytania", () => {
+    const text = "Czytelnia jest zamknięta.";
+    const rating = { ...old, claimReviewed: text };
+    const evaluated = fixedAsm(rating.id, "ta_sama", { quote: text });
+    expect(assess(stan(text), [rating], [evaluated], new Date("2022-05-10T16:00:00Z")).verdict).toBe("FALSZYWE");
+    expect(assess(stan(text), [rating], [evaluated], new Date("2022-05-11T00:00:00Z")).verdict).toBe("BRAK_DOWODOW");
+    expect(assess(stan(text), [{ ...rating, publishedAt: null, fetchedAt: NOW.toISOString() }], [evaluated]).verdict).toBe("BRAK_DOWODOW");
+  });
+
+  it("zachowuje ocenę planu z badanego okresu oraz ocenę uchwalonej decyzji", () => {
+    const historical = claim({ text: reviewed, temporal: { kind: "stan", asOf: "2020-05-10" } });
+    expect(assess(historical).verdict).toBe("FALSZYWE");
+    expect(assess(claim({ text: reviewed, temporal: { kind: "stan", date: "2020-05-10" } })).verdict).toBe("FALSZYWE");
+    const decision = "Biblioteka przyjęła plan rozbudowy czytelni.";
+    const record = { ...old, claimReviewed: decision };
+    expect(assess(claim({ text: decision }), [record], [fixedAsm(record.id, "ta_sama", { quote: decision })]).verdict).toBe("FALSZYWE");
+  });
+
+  it.each([
+    "Celem biblioteki jest likwidacja czytelni.",
+    "Biblioteka dąży do likwidacji czytelni.",
+    "Czytelnia jest zamknięta.",
+  ])("sprawdza datę recenzji każdego jawnego stanu: %s", text => {
+    const item = { ...old, claimReviewed: text };
+    const match = fixedAsm(item.id, "ta_sama", { quote: text });
+    const oldReviewOnly = assess(stan(text), [item], [match]);
+    expect(oldReviewOnly.verdict).toBe("BRAK_DOWODOW");
+    expect(oldReviewOnly.priorEventRecordIds).toEqual([item.id]);
+    const current = primary("biblioteka:ogloszenie", { publishedAt: "2026-11-20", text });
+    const corroborated = assess(stan(text), [item, current], [match, asm(current.id, "WSPIERA", "sedno", { quote: text })]);
+    expect(corroborated.verdict).toBe("POTWIERDZONE");
+    expect(corroborated.decisiveRecordIds).toEqual([current.id]);
+  });
+
+  it("bieżący komunikat rozstrzyga pomimo przeciwnej dawnej oceny", () => {
+    const current = primary("biblioteka:komunikat", { publishedAt: "2026-11-20", text: reviewed });
+    const result = assess(stan(reviewed), [old, current], [original, asm(current.id, "WSPIERA", "sedno", { quote: reviewed })]);
+    expect(result.verdict).toBe("POTWIERDZONE");
+    expect(result.decisiveRecordIds).toEqual([current.id]);
+    expect(result.strength.independentPublishers).toBe(1);
+  });
+
+  it("wiekowej oceny pozytywnej też nie stosuje do obecnego zamiaru w pytaniu angielskim", () => {
+    const text = "The railway operator intends to close the station.";
+    const record = factcheck("independent:review", R_PRAWDA, { publishedAt: "2020-01-01", claimReviewed: text });
+    expect(assess(claim({ text }), [record], [fixedAsm(record.id, "ta_sama", { quote: text })]).verdict).toBe("BRAK_DOWODOW");
+  });
+
+  it.each(["Biblioteka zamierza zamknąć czytelnię.", "Celem biblioteki jest zamknięcie czytelni.",
+    "Biblioteka dąży do zamknięcia czytelni.", "The library's goal is to close the reading room."])(
+    "oddziela przeszłe dementi od aktualnej deklaracji dla %s", text => {
+      const archive = primary("urzad:archiwum", { publishedAt: "2022-05-06", fetchedAt: NOW.toISOString() });
+      const previous = "Ówczesne doniesienia o likwidacji czytelni były fałszywe.";
+      const reading = asm(archive.id, "OBALA", "sedno", { quote: previous });
+      for (const publishedAt of ["2022-05-06", null, "2026-11-19"]) {
+        const result = assess(stan(text), [{ ...archive, publishedAt, text: previous }], [reading]);
+        expect(result.verdict).toBe("BRAK_DOWODOW");
+        expect(result.priorEventRecordIds).toEqual([archive.id]);
+      }
+      const datedReport = "W 2022 roku zarząd zdementował te doniesienia.";
+      expect(assess(stan(text), [{ ...archive, publishedAt: "2026-11-19", text: datedReport }],
+        [{ ...reading, quote: datedReport }]).verdict).toBe("BRAK_DOWODOW");
+      const announces = text;
+      const current = primary("urzad:decyzja", { publishedAt: "2026-11-19", text: announces });
+      const result = assess(stan(text), [archive, current], [reading, asm(current.id, "WSPIERA", "sedno", { quote: announces })]);
+      expect(result.verdict).toBe("POTWIERDZONE");
+      expect(result.decisiveRecordIds).toEqual([current.id]);
+    });
+
+  it.each([
+    ["Biblioteka planuje otworzyć czytelnię.", "Biblioteka planuje zamknąć czytelnię.", "OBALA", "BRAK_DOWODOW"],
+    ["Biblioteka planuje otworzyć czytelnię.", "Biblioteka planuje otworzyć świetlicę.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Biblioteka planuje otworzyć czytelnię.", "Szkoła planuje otworzyć czytelnię.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Biblioteka planuje dołączyć do projektu.", "Biblioteka nie planuje dołączyć do projektu.", "OBALA", "FALSZYWE"],
+    ["Biblioteka planuje dołączyć do projektu.", "Biblioteka nie planuje dołączyć do projektu.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Biblioteka zamierza otworzyć czytelnię.", "Biblioteka chce otworzyć czytelnię.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Biblioteka chce zmiany.", "Biblioteka chce zmiany.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Motywacją zarządu jest oszczędność.", "Koszty ogrzewania spadły.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Czy celem spółki jest zamknięcie zakładu?", "Celem spółki jest utrzymanie zakładu.", "OBALA", "BRAK_DOWODOW"],
+    ["The council plans to repair the bridge.", "The council does not plan to repair the bridge.", "OBALA", "FALSZYWE"],
+    ["The council plans to repair the bridge.", "The council plans to paint the bridge.", "WSPIERA", "BRAK_DOWODOW"],
+    ["Biblioteka planuje otworzyć czytelnię.", "Czy biblioteka planuje otworzyć czytelnię?", "WSPIERA", "BRAK_DOWODOW"],
+  ] as const)("ten sam podmiot i przedmiot nie wystarczają bez danej czynności i zgodnej polaryzacji: %s / %s", (text, quote, relation, verdict) => {
+    const source = primary("urzad:komunikat", { text: quote, publishedAt: "2026-11-18" });
+    const result = assess(stan(text), [source], [asm(source.id, relation, "sedno", { quote })]);
+    expect(result.verdict).toBe(verdict);
+    expect(result.decisiveRecordIds).toEqual(verdict === "BRAK_DOWODOW" ? [] : [source.id]);
+  });
+
+  it("jedna świeża relacja wtórna z dawną relacją innego wydawcy nie wystarcza do oceny zamiaru", () => {
+    const text = "Zarząd planuje remont.";
+    const a = secondary("redakcja-a:1", "a", { publishedAt: "2022-01-01", text });
+    const b = secondary("redakcja-b:1", "b", { publishedAt: "2026-11-15", text });
+    const result = assess(stan(text), [a, b], [asm(a.id, "WSPIERA", "sedno", { quote: text }), asm(b.id, "WSPIERA", "sedno", { quote: text })]);
+    expect(result.verdict).toBe("BRAK_DOWODOW");
+  });
+});
+
 describe("decideVerdict — tabela przypadków (PLAN §4)", () => {
   it("ma co najmniej 35 przypadków", () => {
     expect(cases.length).toBeGreaterThanOrEqual(35);
@@ -987,7 +1219,7 @@ describe("decideVerdict — punktacja siły (score + czynniki)", () => {
     expect(d.strength.level).toBe("mocna");
     expect(d.strength.score).toBeGreaterThanOrEqual(90);
     const plus = (d.strength.factors ?? []).filter((f) => f.effect === "plus").map((f) => f.textPl).join(" ");
-    expect(plus).toContain("2 niezależne źródła urzędowe");
+    expect(plus).toContain("2 niezależne źródła pierwotne");
     expect(plus).toContain("Kancelaria Prezydenta RP");
     expect(plus).toContain("Żadne znalezione wiarygodne źródło nie mówi inaczej");
     expect(plus).toContain("aktualne");

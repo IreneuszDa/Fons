@@ -1,10 +1,10 @@
 {
-  "builtAt": "2026-11-22T00:30:39.191Z",
+  "builtAt": "2026-11-22T07:30:14.559Z",
   "node": "v22.15.0",
   "args": {
     "refresh": false,
     "only": [
-      "demagog"
+      "institutional-references"
     ]
   },
   "ingesters": [
@@ -165,6 +165,16 @@
       "durationMs": 11650
     },
     {
+      "ingester": "energy-reports",
+      "records": 2,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [],
+      "durationMs": 529
+    },
+    {
       "ingester": "eu-leadership",
       "records": 80,
       "incidents": 0,
@@ -178,20 +188,20 @@
     },
     {
       "ingester": "eu-portal",
-      "records": 69,
+      "records": 70,
       "incidents": 0,
       "requests": 0,
       "skippedCount": 1,
       "skipped": [
         {
           "what": "https://european-union.europa.eu/principles-countries-history/eu-countries_pl",
-          "reason": "znaleziono 21 z 27 krajów"
+          "reason": "Nie potwierdzono kompletności spisu na wszystkich stronach UE"
         }
       ],
       "notes": [
         "Profile krajów nie podają daty publikacji — publishedAt = null; dane liczbowe na stronie mają własne adnotacje o źródle (Eurostat) i roku. Strony zbiorcze (lista krajów UE, strefa euro, rozszerzenie) mają wiersz 'Ostatnia aktualizacja strony' → publishedAt (gdy jest)."
       ],
-      "durationMs": 242
+      "durationMs": 210
     },
     {
       "ingester": "eur-lex",
@@ -294,8 +304,28 @@
       "durationMs": 51
     },
     {
+      "ingester": "institutional-references",
+      "records": 47,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [],
+      "durationMs": 1040
+    },
+    {
+      "ingester": "monetary-statistics",
+      "records": 140,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [],
+      "durationMs": 91
+    },
+    {
       "ingester": "nato",
-      "records": 314,
+      "records": 315,
       "incidents": 0,
       "requests": 3,
       "skippedCount": 2,
@@ -312,7 +342,66 @@
       "notes": [
         "Strony nato.int zawierają linię 'Updated: <data>' (publishedAt); gdy jej brak, data ze ścieżki URL tekstu oficjalnego, inaczej null."
       ],
-      "durationMs": 3801
+      "durationMs": 3500
+    },
+    {
+      "ingester": "office-history",
+      "records": 27,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 12,
+      "skipped": [
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2025/1190/text/O/M20251190.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2007/921/text/O/M20070921.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2007/319/text/O/M20070319.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2005/908/text/O/M20050908.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2005/9/text/O/M20050009.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2004/301/text/O/M20040301.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/2001/583/text/O/M20010583.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/1995/156/text/O/M19950156.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/1989/155/text/O/M19890155.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/1985/212/text/O/M19850212.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/1980/44/text/O/M19800044.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        },
+        {
+          "what": "https://api.sejm.gov.pl/eli/acts/MP/1971/72/text/O/M19710072.pdf",
+          "reason": "Brak czytelnego zdania o wyborze Marszałka Sejmu w PDF"
+        }
+      ],
+      "notes": [],
+      "durationMs": 1432
     },
     {
       "ingester": "official-pages",
@@ -327,8 +416,18 @@
       "durationMs": 3484
     },
     {
+      "ingester": "research-estimates",
+      "records": 35,
+      "incidents": 0,
+      "requests": 0,
+      "skippedCount": 0,
+      "skipped": [],
+      "notes": [],
+      "durationMs": 1158
+    },
+    {
       "ingester": "sejm-mp",
-      "records": 513,
+      "records": 579,
       "incidents": 0,
       "requests": 0,
       "skippedCount": 0,
@@ -336,7 +435,7 @@
       "notes": [
         "API Sejmu, kadencja 10: zdania o posłach i klubach generowane z pól API (tag generated-from-data), url = adres wpisu; publishedAt = null; bez danych prywatnych. Marszałek Sejmu: dosłowna linia podpisu z najnowszego obwieszczenia Marszałka Sejmu (ELI)."
       ],
-      "durationMs": 317
+      "durationMs": 119
     },
     {
       "ingester": "state-officials",
@@ -352,90 +451,118 @@
     }
   ],
   "stats": {
-    "total": 3637,
+    "total": 3957,
     "incidents": 604,
     "bySource": {
       "demagog": 745,
       "dpa-factchecking": 35,
       "dw-factcheck": 34,
-      "ec-commission": 27,
+      "ec-commission": 28,
       "ec-finance": 44,
       "ec-home-affairs": 4,
       "eeas": 6,
+      "hungarian-government": 1,
       "ep-open-data": 53,
-      "eu-portal": 69,
-      "eur-lex": 98,
-      "eurostat": 382,
+      "eu-portal": 70,
+      "eur-lex": 99,
+      "eurostat": 383,
       "euvsdisinfo": 455,
       "factcheck-org": 25,
-      "gov-pl": 180,
+      "gov-pl": 194,
       "government-nl": 2,
       "gus-bdl": 70,
-      "nato": 314,
+      "gus-cpi": 46,
+      "ecb": 1,
+      "gus-publications": 3,
+      "sejm-eli": 1025,
+      "senat-pl": 7,
+      "zus-swiadczenia": 2,
+      "zus-wskazniki": 26,
+      "nato": 329,
+      "nbp-rates": 94,
+      "prezydent-pl": 2,
       "onderzoeksraad": 9,
       "politifact": 25,
       "pravda-pl": 70,
-      "prezydent-pl": 1,
       "prosecutionservice": 8,
       "pap-depesze": 1,
       "wroclaw-transport": 1,
       "msz-odyseusz": 1,
-      "sky-tg24": 1,
+      "sky-tg24": 2,
       "rpo": 1,
-      "sejm-eli": 946,
-      "senat-pl": 6,
+      "cbos": 1,
+      "iiss": 1,
+      "kse-institute": 1,
+      "marsz-organizator": 2,
+      "sg-pl": 1,
+      "sipri": 25,
+      "unhcr-data": 1,
       "un-news": 24
     },
     "byType": {
       "factcheck": 934,
-      "pierwotne": 2241,
-      "analiza": 462
+      "pierwotne": 2558,
+      "analiza": 465
     },
     "byHost": {
       "demagog.org.pl": 745,
       "dpa-factchecking.com": 35,
       "www.dw.com": 34,
-      "commission.europa.eu": 27,
+      "commission.europa.eu": 28,
       "finance.ec.europa.eu": 44,
       "home-affairs.ec.europa.eu": 4,
       "www.eeas.europa.eu": 6,
+      "kormany.hu": 1,
       "data.europarl.europa.eu": 53,
-      "european-union.europa.eu": 69,
-      "eur-lex.europa.eu": 98,
-      "ec.europa.eu": 382,
+      "european-union.europa.eu": 70,
+      "eur-lex.europa.eu": 99,
+      "ec.europa.eu": 383,
       "euvsdisinfo.eu": 455,
       "www.factcheck.org": 25,
-      "www.gov.pl": 180,
+      "www.gov.pl": 194,
       "www.government.nl": 2,
       "bdl.stat.gov.pl": 70,
-      "www.nato.int": 314,
+      "publikacje.new.stat.gov.pl": 46,
+      "www.ecb.europa.eu": 1,
+      "stat.gov.pl": 3,
+      "api.sejm.gov.pl": 1025,
+      "www.senat.gov.pl": 7,
+      "www.zus.pl": 2,
+      "psz.zus.pl": 26,
+      "www.nato.int": 329,
+      "static.nbp.pl": 94,
+      "www.prezydent.pl": 2,
       "onderzoeksraad.nl": 9,
       "www.politifact.com": 25,
       "pravda.org.pl": 70,
-      "www.prezydent.pl": 1,
       "www.prosecutionservice.nl": 8,
       "www.pap.pl": 1,
       "www.wroclaw.pl": 1,
       "odyseusz.gov.pl": 1,
-      "tg24.sky.it": 1,
+      "tg24.sky.it": 2,
       "bip.brpo.gov.pl": 1,
-      "api.sejm.gov.pl": 946,
-      "www.senat.gov.pl": 6,
+      "www.cbos.pl": 1,
+      "www.iiss.org": 1,
+      "institute.kse.ua": 1,
+      "marszniepodleglosci.pl": 2,
+      "www.strazgraniczna.pl": 1,
+      "www.sipri.org": 25,
+      "data.unhcr.org": 1,
       "news.un.org": 20,
       "ukraine.un.org": 4
     },
     "byLevel": {
-      "1": 2241,
+      "1": 2558,
       "2": 1395,
-      "3": 1
+      "3": 4
     },
     "byRole": {
       "stala_rola": 1389,
-      "tresc": 2248
+      "tresc": 2568
     },
-    "domains": 31,
-    "withPublishedAt": 2815,
-    "newestFetchedAt": "2026-11-22T00:25:34.428Z",
+    "domains": 45,
+    "withPublishedAt": 2918,
+    "newestFetchedAt": "2026-11-22T07:17:05.832Z",
     "oldestFetchedAt": "2026-11-21T16:07:22.030Z"
   }
 }

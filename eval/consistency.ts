@@ -13,7 +13,7 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import type { ChannelId, ConversationReply } from "../src/shared/contracts";
+import type { ChannelId, ConversationReply, VerdictReport } from "../src/shared/contracts";
 import { loadConfig } from "../src/server/config";
 import { RESULTS_DIR, selectCases, type EvalCaseX } from "./cases";
 import { displayPath, gitProvenance, provenanceLabel } from "./provenance";
@@ -43,6 +43,7 @@ interface ChannelResult {
   status: string;
   mainVerdict: string | null;
   recordIds: string[];
+  content?: string;
   securityEvents: number;
   cacheHit: boolean;
 }
@@ -56,6 +57,19 @@ interface PairResult {
   reasons: string[];
 }
 
+/** Match each claim or question to its own verdict, quotes, their roles and publication links. */
+export function evidenceChain(r: Pick<VerdictReport, "claims" | "verdicts" | "answer" | "questionParts">): string {
+  const evidence = (items: VerdictReport["verdicts"][number]["evidence"]) =>
+    items.map(e => JSON.stringify([e.recordId, e.url, e.quote, e.relation, e.group])).sort();
+  return JSON.stringify({
+    verdicts: r.verdicts.map(v => [
+      r.claims.find(c => c.id === v.claimId)?.text, v.verdict, evidence(v.evidence),
+    ]).sort(),
+    answer: r.answer && [r.answer.answerPl, evidence(r.answer.evidence)],
+    parts: r.questionParts?.map(p => [p.questionPl, p.answerPl, evidence(p.evidence)]),
+  });
+}
+
 function summarizeReply(channel: ChannelId, reply: ConversationReply | undefined, error?: string): ChannelResult {
   const r = reply?.report;
   return {
@@ -64,6 +78,7 @@ function summarizeReply(channel: ChannelId, reply: ConversationReply | undefined
     status: r?.status ?? "BRAK_RAPORTU",
     mainVerdict: r?.mainVerdict ?? null,
     recordIds: reportRecordIds(r),
+    content: r && evidenceChain(r),
     securityEvents: r?.securityEvents.length ?? 0,
     cacheHit: r?.cacheHit ?? false,
   };
@@ -74,7 +89,9 @@ export function comparePair(web: ChannelResult, cli: ChannelResult, isAttack: bo
   if (web.status !== cli.status) reasons.push(`status ${web.status} ≠ ${cli.status}`);
   if (web.mainVerdict !== cli.mainVerdict) reasons.push(`werdykt ${web.mainVerdict ?? "-"} ≠ ${cli.mainVerdict ?? "-"}`);
   if (web.recordIds.join("|") !== cli.recordIds.join("|")) reasons.push(`różne zestawy rekordów-dowodów`);
-  if (isAttack && (web.securityEvents === 0) !== (cli.securityEvents === 0)) reasons.push(`zdarzenie bezpieczeństwa tylko w jednym kanale`);
+  if (web.content !== cli.content) reasons.push("różnica w odpowiedzi, cytacie lub jego przypisaniu do twierdzenia");
+  if (isAttack && (!web.securityEvents || !cli.securityEvents)) reasons.push(
+    web.securityEvents || cli.securityEvents ? "zdarzenie bezpieczeństwa tylko w jednym kanale" : "brak zdarzenia bezpieczeństwa w obu kanałach");
   if (web.status === "BRAK_RAPORTU" || cli.status === "BRAK_RAPORTU") reasons.push(`brak raportu w co najmniej jednym kanale`);
   return reasons;
 }
@@ -91,7 +108,7 @@ async function main(): Promise<void> {
   const { buildProductionContext } = await import("../src/server/wiring");
   const { handleInbound } = await import("../src/server/conversation");
   const dbPath = resolve(args.db ?? process.env.EVAL_DB_PATH ?? "var/eval.db");
-  const cfg = loadConfig({ dbPath, liveSearch: false, rateLimitPerMinute: 1_000_000 });
+  const cfg = loadConfig({ dbPath, liveSearch: false, rateLimitPerMinute: 1_000_000, alertWebhookUrl: undefined });
   mkdirSync(dirname(dbPath), { recursive: true });
   const startedAt = new Date();
   const db = openDatabase(dbPath);
@@ -105,7 +122,13 @@ async function main(): Promise<void> {
   deps.fetchPage = makeFixtureFetch(deps.fetchPage, pool);
   const ctx = buildProductionContext(cfg, db);
   let currentFault: string | undefined;
-  ctx.engine = { ...ctx.engine, verify: (req) => verifyInput({ ...req, ...(currentFault ? { fault: currentFault } : {}) }, deps) };
+  const { normalizeInput } = await import("../src/engine/normalize");
+  ctx.engine = {
+    ...ctx.engine,
+    readArticle: req => normalizeInput({ kind: "url", url: req.url, text: req.text, receivedAt: req.receivedAt },
+      { llm: deps.llm, fetchPage: deps.fetchPage, receivedAt: new Date(req.receivedAt), ocrDown: false }),
+    verify: (req, articleRead) => verifyInput({ ...req, ...(currentFault ? { fault: currentFault } : {}) }, deps, { articleRead }),
+  };
 
   const textual = selectCases(pool, { split: args.split }).filter((c) => c.input.kind !== "image");
   let chosen: EvalCaseX[];
@@ -161,14 +184,21 @@ async function main(): Promise<void> {
     const before = countRows(db, "moderator_cases");
     const problems: string[] = [];
     const verdicts: (string | null)[] = [];
+    const caseIds = new Set<string>();
     for (const [i, c] of cs.entries()) {
-      const res = await send(c, i % 2 === 0 ? "web" : "cli", newId(`cons-h-${group}-${i}`), newId("consh"));
+      const sender = newId(`cons-h-${group}-${i}`);
+      const res = await send(c, i % 2 === 0 ? "web" : "cli", sender, newId("consh"));
       const reply = res.reply;
       verdicts.push(reply?.report?.mainVerdict ?? null);
       if (reply) problems.push(...falseForwardingClaims(db, reply.textPl));
-      if (reply?.report?.moderatorCase && reply.report.mainVerdict !== "BRAK_DOWODOW") problems.push(`${c.id}: sprawa przy werdykcie ${reply.report.mainVerdict}`);
+      const caseId = reply?.report?.moderatorCase?.caseId;
+      if (reply?.report?.status !== "OK" || reply.report.mainVerdict !== "BRAK_DOWODOW") problems.push(c.id + ": brak oczekiwanego wstrzymania");
+      if (caseId) caseIds.add(caseId);
+      if (!caseId || !db.prepare("SELECT 1 FROM case_senders WHERE case_id = ? AND sender_id = ?").get(caseId, sender))
+        problems.push(c.id + ": brak zarejestrowanego zgłoszenia nadawcy w sprawie");
     }
     const newCases = countRows(db, "moderator_cases") - before;
+    if (caseIds.size !== 1) problems.push("Zgłoszenia powinny prowadzić do tej samej zapisanej sprawy.");
     if (newCases > 1) problems.push(`utworzono ${newCases} spraw zamiast co najwyżej jednej`);
     hResults.push({ group, newCases, verdicts, problems, ok: problems.length === 0 });
   }
@@ -206,7 +236,7 @@ async function main(): Promise<void> {
   writeFileSync(join(RESULTS_DIR, "consistency-latest.md"), md);
   console.log(md);
   db.close();
-  const allOk = consistent === pairs.length && triple.ok && hResults.every((h) => h.ok);
+  const allOk = pairs.length > 0 && consistent === pairs.length && triple.ok && hResults.length > 0 && hResults.every((h) => h.ok);
   process.exit(allOk ? 0 : 1);
 }
 

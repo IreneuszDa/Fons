@@ -90,17 +90,17 @@ function input(over: Partial<JustifyInput>): JustifyInput {
 }
 
 describe("uzasadnienie FAŁSZYWE / POTWIERDZONE", () => {
-  it("dwa niezależne źródła urzędowe: liczba, wydawcy i cytat ze źródła głównego", () => {
+  it("dwa niezależne źródła pierwotne: liczba, wydawcy i cytat ze źródła głównego", () => {
     const j = buildJustification(input({}));
-    expect(j.reasonPl.startsWith("Przeczą temu 2 niezależne źródła urzędowe: Kancelaria Prezydenta RP i Dziennik Ustaw.")).toBe(true);
+    expect(j.reasonPl.startsWith("Przeczą temu 2 niezależne źródła pierwotne: Kancelaria Prezydenta RP i Dziennik Ustaw.")).toBe(true);
     expect(j.reasonPl).toContain("„Dr Karol Nawrocki – Prezydent Rzeczypospolitej Polskiej”");
   });
 
-  it("jedno źródło urzędowe: rodzaj źródła, a wydawca raz — w cytacie", () => {
+  it("jedno źródło pierwotne: rodzaj źródła, a wydawca raz — w cytacie", () => {
     const j = buildJustification(
       input({ assessments: [asm("prezydent:1", { quote: "Dr Karol Nawrocki" })], decision: { verdict: "FALSZYWE", ruleApplied: 8, decisiveRecordIds: ["prezydent:1"], archival: false } }),
     );
-    expect(j.reasonPl.startsWith("Przeczy temu źródło urzędowe. Kancelaria Prezydenta RP (")).toBe(true);
+    expect(j.reasonPl.startsWith("Przeczy temu źródło pierwotne. Kancelaria Prezydenta RP (")).toBe(true);
   });
 
   it("zawetowany dowód nie liczy się do potwierdzeń", () => {
@@ -112,10 +112,10 @@ describe("uzasadnienie FAŁSZYWE / POTWIERDZONE", () => {
         ],
       }),
     );
-    expect(j.reasonPl.startsWith("Przeczy temu źródło urzędowe")).toBe(true);
+    expect(j.reasonPl.startsWith("Przeczy temu źródło pierwotne")).toBe(true);
   });
 
-  it("POTWIERDZONE z wtórnym i urzędowym: „w tym urzędowe”", () => {
+  it("POTWIERDZONE z wtórnym i pierwotnym: „w tym pierwotne”", () => {
     const pap = rec({ id: "pap:1", publisher: "PAP", level: 3, type: "analiza", independenceGroup: "pap" });
     const j = buildJustification(
       input({
@@ -127,7 +127,7 @@ describe("uzasadnienie FAŁSZYWE / POTWIERDZONE", () => {
         ]),
       }),
     );
-    expect(j.reasonPl.startsWith("Potwierdzają to 2 niezależne wiarygodne źródła, w tym urzędowe: Kancelaria Prezydenta RP i PAP.")).toBe(true);
+    expect(j.reasonPl.startsWith("Potwierdzają to 2 niezależne wiarygodne źródła, w tym pierwotne: Kancelaria Prezydenta RP i PAP.")).toBe(true);
   });
 
   it("FAŁSZYWE z reguły 8b (OBALA/czas): źródło i cytat z inną datą", () => {
@@ -140,7 +140,7 @@ describe("uzasadnienie FAŁSZYWE / POTWIERDZONE", () => {
         records: new Map([[nato.id, nato]]),
       }),
     );
-    expect(j.reasonPl.startsWith("Przeczy temu źródło urzędowe.")).toBe(true);
+    expect(j.reasonPl.startsWith("Przeczy temu źródło pierwotne.")).toBe(true);
     expect(j.reasonPl).toContain("„Poland 1999”");
   });
 });
@@ -149,7 +149,7 @@ describe("podsumowanie", () => {
   it("przy jasnym werdykcie pokazuje od razu cytat ze źródła", () => {
     const j = buildJustification(input({}));
     const s = buildSummaryPl({ verdict: "FALSZYWE", reasonPl: j.reasonPl }, 0);
-    expect(s.startsWith("Ocena głównego twierdzenia: Fałszywe. Przeczą temu 2 niezależne źródła urzędowe")).toBe(true);
+    expect(s.startsWith("Ocena głównego twierdzenia: Fałszywe. Przeczą temu 2 niezależne źródła pierwotne")).toBe(true);
     expect(s).toContain("Dr Karol Nawrocki");
   });
 

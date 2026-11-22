@@ -36,6 +36,12 @@ it("keeps a public speaker and the claimed figure in the normalized search input
 });
 
 describe("neutralizeMarkupTags (raw-HTML detector pass)", () => {
+  it("ignores the consent configuration served with a Demagog article", () => {
+    const html = `<script id="cookie-law-info-gcm-var-js">
+var _ckyGcm = {"status":true,"default_settings":[{"analytics":"denied","advertisement":"denied","functional":"denied","necessary":"granted","ad_user_data":"denied","ad_personalization":"denied","regions":"All"}],"wait_for_update":2000,"url_passthrough":false,"ads_data_redaction":false}</script>`;
+    expect(scanRaw(html)).toEqual([]);
+  });
+
   it("does not flag ordinary page markup that shares names with fence words", () => {
     const html =
       "<html><body><main><article><h1>NATO</h1><p>Sweden joined NATO on 7 March 2024.</p>" +

@@ -4,7 +4,8 @@ import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { loadConfig } from "./config";
 import { purgeRetention } from "./db";
-import { buildProductionContext, openServerDatabase } from "./wiring";
+import { purgeWithdrawnArchives } from "./material-archive";
+import { configuredProductionContext, openServerDatabase } from "./wiring";
 
 async function main(): Promise<void> {
   // Hasło administratora: pokazywane tylko raz (przy pierwszym wygenerowaniu pliku), na stderr,
@@ -17,7 +18,7 @@ async function main(): Promise<void> {
   }
 
   const db = openServerDatabase(cfg);
-  const ctx = buildProductionContext(cfg, db);
+  const ctx = await configuredProductionContext(cfg, db);
   const app = createApp(ctx);
   if (!cfg.adminPasswordGenerated && cfg.adminPassword.length < 10) {
     ctx.log.warn({ event: "weak_bootstrap_password", hint: "ADMIN_PASSWORD ma mniej niż 10 znaków; zmień je albo dodaj użytkownika: npm run user" });
@@ -27,6 +28,7 @@ async function main(): Promise<void> {
   const purge = () => {
     try {
       const r = purgeRetention(db, new Date());
+      r.archives += purgeWithdrawnArchives(ctx);
       if (Object.values(r).some((n) => n > 0)) ctx.log.info({ event: "retention", ...r });
     } catch (e) {
       ctx.log.error({ event: "retention_failed", error: e instanceof Error ? e.name : "error" });

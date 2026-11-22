@@ -26,7 +26,7 @@
  */
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { relativeWindowDay } from "../security/dates";
-import { passageKind } from "../shared/evidence";
+import { passageAssessment, prioritizeConflictEvidence } from "../shared/evidence";
 import type BetterSqlite3 from "better-sqlite3";
 import {
   LlmUnavailableError,
@@ -68,16 +68,21 @@ import {
   type OpenAnswer,
 } from "./answer";
 import { MAX_FRAGMENTS_PER_CLAIM, prepareEvidence, runAssessment, toAssessments, type PreparedRecord } from "./assess";
-import { MAX_CLAIMS_LONG, checkUnits, extractClaims, isLongInput, roleQueryFor, type ExtractedClaim, type OpenQuestion } from "./claims";
+import { MAX_CLAIMS_LONG, asksAboutStandingFact, checkUnits, coversSubjects, extractClaims, isLongInput, needsPolarityCheck, roleQueryFor, type ExtractedClaim, type OpenQuestion } from "./claims";
+import { opposingReports } from "./verdict/conflict";
+import { isSingleDateClaim, quoteCorrectsSlot } from "./verdict/slots";
+import { rateSeriesIds } from "./retrieval/rate-series";
+import { isProfileField, officeHistoryIds, primarySubjectIds, registeredCountryName, subjectAliases } from "./retrieval/subject";
+import { requestedEventDay, statedDays } from "./event-day";
 import { buildCompoundReasonPl, buildJustification, buildSummaryPl, smoothJustification, type DecisionLike } from "./justify";
 import { aggregateCompound, type PartOutcome } from "./verdict/compound";
 import { createLlmProviders } from "./llm";
 import { runWithRouteTrace, type RouteTrace } from "./llm/router";
 import { modelNameFor, processingRegion } from "./llm/types";
-import type { InputMode } from "./prompts";
 import { lexicalRerank, scoreCandidates } from "./retrieval/rerank";
 import { diversifyFragments } from "./retrieval/diversity";
 import { narrativeLinks } from "./retrieval/incidents";
+import { publicationAddress } from "../shared/publication-url";
 import { currentLiveScope, liveUsageModels, runWithLiveScope } from "./retrieval/live-usage";
 import {
   STATUS_PL,
@@ -92,13 +97,19 @@ import { normalizeInput, userNoteBesideUrl, type NormalizeOutcome } from "./norm
 import { socialVideoPlatform } from "./video/platforms";
 import { findPublicationReport, publicationQuestionPart, reportPublication } from "./publication-report";
 import { answerSourceQuestion } from "./source-question";
-import { compareReviewedDocument, documentUrl, linkedPublicationRecords, screenshotClaim, withScreenshotReading } from "./attachment-answer";
-import { routeArticleRequest } from "./article-intent";
+import { archivedDocumentIdentity, asksForIdentity, compareReviewedAppearance, compareReviewedDocument, documentUrl, linkedPublicationRecords, screenshotClaim, withScreenshotReading } from "./attachment-answer";
+import { asksWhatArticleReports, readArticleAccount, routeArticleRequest } from "./article-intent";
 import { MAX_QUESTION_PARTS, separateQuestions } from "./question-parts";
 import { reviewedMediaRecords } from "./attachment-answer";
 import { findLocalTransportRecords, localTransportQuestion, unresolvedQuestion } from "./local-transport";
+import { accessionComparison, accessionComparisonReport } from "./accession-comparison";
+import { natoOfficeReport } from "./nato-office";
+import { sejmClubReport } from "./sejm-club";
+import { benefitComparisonReport } from "./benefit-comparison";
+import { membershipReport, parseMembership } from "./membership";
 import { createDemagogTopicIndex, type DemagogTopicIndex } from "./retrieval/demagog-topic";
-import { anchorSubtitleClaims, hasOnlyText, readVideo, type VideoServices } from "./video/intake";
+import { anchorSubtitleClaims, asksForTranscript, hasOnlyText, readVideo, type VideoServices } from "./video/intake";
+import { recordingFileLabel } from "../shared/attachments";
 import { createVideoServices } from "./video/services";
 import {
   createCorpusStore,
@@ -111,22 +122,22 @@ import {
   matchIncidentDomains,
   pinOfficialRecords,
   retrieve,
+  resolveRelativeDates,
   stripFlaggedSentences,
   warmUp,
 } from "./ports";
 import { applyVote, runVerifier, type VerifierCandidate } from "./verifier";
 import { hostOf } from "./text";
+import { explicitPublicationCutoff, publicationAvailable } from "./publication-window";
 import type { CreateBranchesOptions } from "./retrieval";
 
 type Database = BetterSqlite3.Database;
 
-export const PIPELINE_VERSION = "engine-2026.11.22-20-article-scope";
+export const PIPELINE_VERSION = "engine-2026.11.22-34";
 
 const PER_BRANCH_TIMEOUT_MS = 4000;
 /** Live search (paid, slow) only for the first units in importance order; the rest use the corpus. */
 export const LIVE_MAX_UNITS = 3;
-/** The raw-text query uses live search only for a short message (for a long text it is just its beginning). */
-const RAW_LIVE_MAX_CHARS = 600;
 /**
  * Claim about a named person: a second, name-free query („Prezydentem Polski jest”) finds the page that says who
  * really holds the office; up to ROLE_PINNED_SLOTS primary records from it (covering ≥ ROLE_MIN_COVERAGE of its
@@ -183,6 +194,7 @@ export interface VerifyRequest {
 }
 
 export interface EngineDeps {
+  pipelineVersion?: string;
   llm: LlmProvider;
   verifier: LlmProvider;
   singleKey: boolean;
@@ -210,14 +222,25 @@ export interface VerifyOptions {
 export function createEngineDeps(
   db: Database,
   cfg: AppConfig,
-  opts: { liveOptions?: CreateBranchesOptions["liveOptions"] } = {},
+  opts: {
+    liveOptions?: CreateBranchesOptions["liveOptions"];
+    extensions?: Pick<import("../server/extensions").FonsExtensions, "models" | "branches" | "version">;
+  } = {},
 ): EngineDeps {
-  const { main, verifier, singleKey } = createLlmProviders(cfg);
+  const custom = opts.extensions?.models;
+  const { main, verifier, singleKey } = custom
+    ? { main: custom.main, verifier: custom.verifier ?? custom.main, singleKey: !custom.verifier || custom.verifier.family === custom.main.family }
+    : createLlmProviders(cfg);
   const branches = createRetrievalBranches(db, { liveSearch: cfg.liveSearch, liveConfig: cfg, liveOptions: opts.liveOptions });
+  for (const branch of opts.extensions?.branches ?? []) {
+    if (!branch.id || branches.some(b => b.id === branch.id)) throw new Error(`Nieprawidłowy lub powtórzony identyfikator wyszukiwarki: ${branch.id}`);
+    branches.push(branch);
+  }
   // Start loading the embedding model / index now, so the first query does not hit the branch timeout.
   void warmUp(branches).catch(() => undefined);
   return {
     llm: main,
+    pipelineVersion: opts.extensions ? `${PIPELINE_VERSION}/${opts.extensions.version}` : PIPELINE_VERSION,
     verifier,
     singleKey,
     store: createCorpusStore(db),
@@ -247,7 +270,7 @@ export function cacheKeyFor(req: VerifyRequest, normalized: NormalizedInput, dep
           .digest("hex")
       : undefined;
   const payload = JSON.stringify({
-    v: PIPELINE_VERSION,
+    v: deps.pipelineVersion ?? PIPELINE_VERSION,
     snapshot,
     kind: normalized.kind,
     text: normalized.textResolvedDates,
@@ -375,17 +398,11 @@ export function gateProposedVerdict(
   if (proposed === "FALSZYWE" && !valid.some((a) => a.relation === "OBALA")) {
     return { verdict: "BRAK_DOWODOW", ruleApplied: 2, gated: true };
   }
-  if (proposed === "WPROWADZAJACE" && !valid.some(a => a.relation === "OBALA" || a.relation === "INNY_KONTEKST"
+  if (proposed === "WPROWADZAJACE" && !valid.some(a => a.relation === "OBALA" || (a.relation === "INNY_KONTEKST" && a.verifier === "zgoda" && !a.fixedRoleMatch)
     || (a.relation === "CZESCIOWO" && (a.fixedRoleMatch === "ta_sama" || (a.partialMeaning === "correction" && a.verifier === "zgoda"))))) {
     return { verdict: "BRAK_DOWODOW", ruleApplied: 2, gated: true };
   }
   return { verdict: proposed, ruleApplied: RULE_FOR_VERDICT[proposed], gated: false };
-}
-
-function evidenceGroup(rel: EvidenceAssessment["relation"]): EvidenceItem["group"] {
-  if (rel === "WSPIERA") return "wspierajace";
-  if (rel === "OBALA") return "obalajace";
-  return "kontekst";
 }
 
 /** EvidenceItem — descriptive fields copied from the CorpusRecord, never from model output. */
@@ -398,15 +415,14 @@ function toEvidenceItem(a: EvidenceAssessment, r: CorpusRecord): EvidenceItem {
     fetchedAt: r.fetchedAt,
     url: r.url,
     quote: a.quote, // verified span cut from r.text (quotes.ts) or chosen by code
-    passageKind: passageKind(r, a.quote),
-    relation: a.relation,
+    lang: r.lang,
+    ...passageAssessment(r, a.quote, a.relation),
     ...(a.partialMeaning && { partialMeaning: a.partialMeaning }),
     aspect: a.aspect,
     sourceType: r.type,
     level: r.level,
     role: r.role,
     ...(r.rating?.raw ? { ratingRaw: r.rating.raw } : {}),
-    group: evidenceGroup(a.relation),
   };
 }
 
@@ -424,8 +440,9 @@ export function buildTransparencyPl(opts: {
   verifier: LlmProvider;
   singleKey: boolean;
   verifierUsed: boolean;
+  verifierUnavailable?: boolean;
   status: TechStatus;
-  inputMode?: InputMode;
+  inputMode?: VerdictReport["inputMode"];
   answered?: boolean;
 }): string {
   if (opts.status !== "OK") {
@@ -435,7 +452,11 @@ export function buildTransparencyPl(opts: {
   const y = providerLabel(opts.verifier, "fast");
   if (opts.inputMode === "question_open") {
     if (!opts.answered) {
-      return "Żaden ze sprawdzonych fragmentów nie zawierał bezpośredniej odpowiedzi na pytanie.";
+      return opts.verifierUnavailable
+        ? "Usługa drugiego odczytu cytatu była niedostępna. Wstrzymaliśmy odpowiedź."
+        : opts.verifierUsed
+          ? "Drugi odczyt nie potwierdził, że cytat wystarcza do odpowiedzi na pytanie."
+          : "Żaden ze sprawdzonych fragmentów nie zawierał bezpośredniej odpowiedzi na pytanie.";
     }
     const check = !opts.verifierUsed
       ? ""
@@ -447,7 +468,9 @@ export function buildTransparencyPl(opts: {
     );
   }
   const code = "Kod sprawdził zgodność fragmentów z rekordami w katalogu, rodzaj źródła, daty i pochodzenie publikacji.";
-  const verifierPart = !opts.verifierUsed
+  const verifierPart = opts.verifierUnavailable
+    ? "Drugi model był niedostępny. Karta siły uwzględnia brak tej kontroli."
+    : !opts.verifierUsed
     ? "Weryfikator nie był potrzebny, bo nie było dowodu rozstrzygającego."
     : opts.singleKey
       ? `Model ${y} to sprawdził — to ten sam dostawca (tryb jednego klucza), czyli słabsza kontrola niż model innego dostawcy; karta siły dowodów uwzględnia to jako osobny czynnik.`
@@ -478,7 +501,8 @@ class Run {
   article?: VerdictReport["article"];
   videoAnalysis?: VideoAnalysis;
   verifierUsed = false;
-  inputMode: InputMode = "claim";
+  verifierUnavailable = false;
+  inputMode: VerdictReport["inputMode"] = "claim";
   /** Router decisions and failed attempts of this request (filled by llm/router.ts). */
   readonly route: RouteTrace = { usages: [], decisions: [] };
 
@@ -505,7 +529,7 @@ class Run {
     if (branches.length) this.stage("searching");
     const searched: string[] = [];
     try {
-      const outcome = await retrieve(branches, q, {
+      const outcome = await retrieve(branches, { ...q, asOf: this.req.receivedAt }, {
         perBranchTimeoutMs: PER_BRANCH_TIMEOUT_MS,
         onBranchResult: (id, status, candidates) => {
           if (status === "completed" || status === "partial") searched.push(id);
@@ -578,7 +602,13 @@ class Run {
     const verdictMode = fields.verdictMode ?? this.deps.verdictMode;
     const sourceActivity = this.sourceActivity();
     const degraded = sourceActivity.branches.filter(b => b.status === "partial" || b.status === "unavailable");
-    for (const b of degraded) this.warn("branch_unavailable", branchUnavailablePl(b.id, b.status === "partial"));
+    for (const b of degraded) {
+      if (b.id === "live" && currentLiveScope()?.dailySearchLimitReached) {
+        this.warn("daily_search_limit", "Dzienny limit wyszukiwania w sieci zablokował dalsze zapytania. Raport uwzględnia dostępne źródła.");
+      } else {
+        this.warn("branch_unavailable", branchUnavailablePl(b.id, b.status === "partial"));
+      }
+    }
     const report: VerdictReport = {
       inputMode: this.inputMode,
       ...(ok && fields.answer ? { answer: fields.answer } : {}),
@@ -586,7 +616,7 @@ class Run {
       id: randomUUID(),
       token: randomBytes(16).toString("base64url"),
       createdAt: this.deps.now().toISOString(),
-      pipelineVersion: PIPELINE_VERSION,
+      pipelineVersion: this.deps.pipelineVersion ?? PIPELINE_VERSION,
       corpusSnapshot: this.snapshot(),
       verdictMode,
       status: fields.status,
@@ -606,6 +636,7 @@ class Run {
         verifier: this.deps.verifier,
         singleKey: this.deps.singleKey,
         verifierUsed: this.verifierUsed,
+        verifierUnavailable: this.verifierUnavailable,
         status: fields.status,
         inputMode: this.inputMode,
         answered: !!fields.answer,
@@ -659,7 +690,7 @@ export function modelProcessingWarning(models: ModelUsage[], deps: EngineDeps): 
   if (media.length) {
     const frames = media.some(m => m.purpose === "video_analysis");
     const audio = media.some(m => m.purpose === "video_transcription");
-    const subject = frames && audio ? "Klatki filmu i dźwięk" : frames ? "Klatki filmu" : "Dźwięk z filmu";
+    const subject = frames && audio ? "Klatki filmu i dźwięk" : frames ? "Klatki filmu" : "Dźwięk nagrania";
     return { kind: "non_eea_processing", textPl: `${subject} przetworzono w USA przez ${providerBrand(media[0]!.provider)}, poza Europejskim Obszarem Gospodarczym.` };
   }
   const image = us.find(m => m.purpose === "vision" || m.purpose === "image_question");
@@ -716,6 +747,10 @@ function independentOfSubject(record: CorpusRecord, urls: (string | undefined)[]
     || (record.origin === "live_snapshot" && hostOf(record.url) === hostOf(url))));
 }
 
+function questionWithAdditionalSource(note?: string): string | undefined {
+  return note && /^(.*\?)\s*(?:sprawdź|sprawdz|zobacz)\s+(?:również|też|dodatkowo|tez|rowniez)(?!\p{L})[^?!.]*[:.]?$/isu.exec(note)?.[1]?.trim();
+}
+
 function loadRecords(store: CorpusStore, ids: string[], ...subjectUrls: (string | undefined)[]): Map<string, CorpusRecord> | null {
   let fetched: CorpusRecord[];
   try {
@@ -731,12 +766,14 @@ function loadRecords(store: CorpusStore, ids: string[], ...subjectUrls: (string 
   return records;
 }
 
-function questionRecords(store: CorpusStore, candidates: EvidenceCandidate[], query: string, ...subjectUrls: (string | undefined)[]): CorpusRecord[] | null {
+function questionRecords(store: CorpusStore, candidates: EvidenceCandidate[], query: string, now: Date, ...subjectUrls: (string | undefined)[]): CorpusRecord[] | null {
   const indexed = loadRecords(store, candidates.map(c => c.recordId), ...subjectUrls);
   if (!indexed) return null;
-  const ranked = lexicalRerank(candidates.filter(c => indexed.has(c.recordId)), indexed, { queryTexts: [query] });
+  const cutoff = explicitPublicationCutoff(query);
+  const ranked = lexicalRerank(candidates.filter(c => publicationAvailable(indexed.get(c.recordId), now, cutoff)), indexed, { queryTexts: [query] });
   const ids = diversifyFragments(ranked.map(c => c.recordId), indexed, { max: 12, fixedRole: 5 });
-  return linkedPublicationRecords(ids.map(id => indexed.get(id)!), store).filter(record => independentOfSubject(record, subjectUrls));
+  return linkedPublicationRecords(ids.map(id => indexed.get(id)!), store)
+    .filter(record => publicationAvailable(record, now, cutoff) && independentOfSubject(record, subjectUrls));
 }
 
 type QuestionPart = NonNullable<VerdictReport["questionParts"]>[number];
@@ -749,13 +786,22 @@ async function answerQuestionParts(run: Run, questions: string[], normalized: No
   const material = [context, normalized.attachmentText?.slice(0, 3000)].filter(Boolean).join("\n\n");
   for (const questionPl of questions.slice(0, MAX_QUESTION_PARTS)) {
     try {
+      if (normalized.kind === "url" && normalized.attachmentText && asksWhatArticleReports(questionPl)) {
+        run.stage("assessing");
+        const account = await readArticleAccount(normalized, llm, verifier, signal);
+        run.models.push(...account.usage);
+        if (account.answerPl) run.verifierUsed = true;
+        parts.push({ questionPl, status: account.answerPl ? "answered" : "insufficient", evidence: [],
+          answerPl: account.answerPl ?? "Nie udało się potwierdzić streszczenia dosłownym cytatem z podanego artykułu." });
+        continue;
+      }
       if (normalized.kind === "text") {
         const indexed = await publicationQuestionPart(run, questionPl, signal);
         if (indexed) { parts.push(indexed); continue; }
       }
       const query = { claim: pseudoClaim(questionPl), extraQueries: [context.slice(0, 400)], limit: CLAIM_QUERY_LIMIT, signal };
       const search = await run.search(branches, query);
-      const records = search.requiredFailed ? null : questionRecords(run.deps.store, search.candidates, questionPl, normalized.submittedUrl, run.req.url);
+      const records = search.requiredFailed ? null : questionRecords(run.deps.store, search.candidates, questionPl, receivedAt, normalized.submittedUrl, run.req.url);
       if (!records || !llm.available) {
         parts.push({ questionPl, status: "unavailable", evidence: [], answerPl: records ? STATUS_PL.llmNotConfigured : STATUS_PL.corpusDown });
         continue;
@@ -818,7 +864,8 @@ async function answerOpenQuestion(run: Run, ctx: OpenQuestionCtx): Promise<Verdi
   const records = loadRecords(deps.store, pool.map((c) => c.recordId), normalized.submittedUrl, run.req.url);
   if (!records) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
   // Fact-check records quote the false claims they debunk — never used as an answer.
-  const contentPool = pool.filter((c) => records.get(c.recordId)?.role === "tresc");
+  const cutoff = explicitPublicationCutoff(question.questionPl);
+  const contentPool = pool.filter((c) => records.get(c.recordId)?.role === "tresc" && publicationAvailable(records.get(c.recordId), new Date(run.req.receivedAt), cutoff));
   const ranked = lexicalRerank(contentPool, records, {
     queryTexts: [question.questionPl, ...question.queries],
     mustHave: question.mustHave,
@@ -851,19 +898,20 @@ async function answerOpenQuestion(run: Run, ctx: OpenQuestionCtx): Promise<Verdi
     deps.debug?.("open_answer", { fragments: sendable.map((p) => ({ ref: p.ref, recordId: p.record.id, title: p.record.title })), out, check: chk.ok ? "ok" : chk.reason });
     if (!chk.ok && chk.events) run.events.push(...chk.events);
     if (chk.ok) {
-      run.verifierUsed = true;
       let vote: "zgoda" | "sprzeciw" | "niepewne" = "niepewne";
       try {
         run.stage("checking_quotes");
-        const v = await verifyOpenAnswer(verifier, question.questionPl, chk.quote, signal);
+        const v = await verifyOpenAnswer(verifier, question.questionPl, chk.quote, chk.translationPl, signal);
+        run.verifierUsed = true;
         run.models.push(v.usage);
         vote = v.vote;
       } catch (err) {
         if (!(err instanceof LlmUnavailableError)) throw err;
+        run.verifierUnavailable = true;
         run.warn("branch_unavailable", WARNING_PL.verifierUnavailable);
       }
       if (vote === "zgoda") {
-        answer = buildAnswer(question.questionPl, chk.record, chk.quote);
+        answer = buildAnswer(question.questionPl, chk.record, chk.quote, chk.translationPl);
         answerRecord = chk.record;
         if (asksAboutPresent(question.questionPl, question.aboutPresent) && isArchival(chk.record, deps.now())) {
           archival = true;
@@ -909,12 +957,39 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   run.echo = safeMask(req.kind === "url" ? (req.url ?? req.text ?? "") : req.kind === "image" ? "[obraz]" : (req.text ?? ""));
 
   const url = req.kind === "url" ? (req.url ?? req.text ?? "").trim() : "";
+  if (url && !faults.has("corpus_down") && deps.store.catalogPage) {
+    try {
+      const address = publicationAddress(url);
+      if (address && new URL(address).origin + "/" !== address) {
+        const records = deps.store.catalogPage(address);
+        run.recordLookup("catalog_url", "completed", records.map(r => r.id));
+        const entry = records.find(r => r.url === address && !detectInjection(r.title, "evidence", r.id).length);
+        if (entry) run.warn("source_status", "Adres wskazuje publikację zapisaną w korpusie Fonsa. Zgodność adresu pozwala zidentyfikować materiał. Prawdziwość twierdzeń wymaga sprawdzenia jego treści.", [{ title: entry.title, url: entry.url }]);
+      }
+    } catch { /* an invalid URL or unavailable index cannot establish a match */ }
+  }
+  // Match only addresses supplied by the sender, never URLs found inside a fetched document.
+  // Keep this outside retrieval and verdict computation, including for unreadable materials.
+  const inputForNotice = url || (req.kind === "text" ? req.text : undefined);
+  if (inputForNotice?.includes(".") && !faults.has("corpus_down")) {
+    try {
+      const links = matchIncidentDomains(inputForNotice, deps.db).slice(0, 3).map(({ title, url }) => ({ title, url }));
+      if (links.length) run.warn("incident_domain", incidentPl(links.map(link => link.title)), links);
+    } catch { /* optional catalogue */ }
+  }
   const upload = req.kind === "recording" ? req.recording : undefined;
   if (req.kind === "recording" && !upload) return run.stop("NIEPELNE", "Dodaj nagranie ponownie.");
   const platform = upload ? (upload.mime.startsWith("audio/") ? "upload_audio" : "upload_video") : url && socialVideoPlatform(url);
   let videoClaims: ExtractedClaim[] | undefined;
   let subtitleFocus: string | undefined;
   let normalized = opts.normalized;
+  if (url && !faults.has("corpus_down")) {
+    const note = userNoteBesideUrl(req, url);
+    if (asksForIdentity(note) && !detectInjection(note, "user_message").length) {
+      const citedPost = await compareReviewedAppearance(note, url, deps.store, deps.fetchPage, signal);
+      if (citedPost) return reportPublication(run, citedPost, safeMask(note), { basisPl: "Porównano dokładny adres wpisu z polem itemReviewed.appearance opublikowanym przez fact-checkera dla tej samej tezy oraz z metadanymi cytowanego dokumentu." });
+    }
+  }
   const answerMediaQuestion = async (mediaUrl: string, note: string) => {
     if (faults.has("corpus_down") || !llm.available || detectInjection(note, "user_message").length) return;
     const records = reviewedMediaRecords(mediaUrl, deps.store);
@@ -959,6 +1034,16 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     run.videoAnalysis = video.analysis;
     if (video.analysis.status === "caption_only") run.warn("source_status", "Sprawdzam wyłącznie twierdzenia z publicznego opisu posta. Platforma nie udostępniła obrazu ani dźwięku. Aby sprawdzić samo nagranie, możesz przesłać plik w czacie.");
     if (video.message) return run.stop("NIEPELNE", video.message);
+    if (video.analysis.status === "metadata_only" && video.analysis.file) {
+      return run.report({ status: "OK", summaryPl: recordingFileLabel(video.analysis.file),
+        transparencyPl: "FFprobe odczytał parametry strumieni i czas trwania przesłanego pliku lokalnie. Te dane techniczne nie ustalają daty ani miejsca nagrania." });
+    }
+    if (platform === "upload_audio" && video.analysis.transcript.length && asksForTranscript(video.focus ?? "")
+        && !video.hits.some(hit => hit.location === "user_message")) {
+      run.inputMode = "transcription";
+      return run.report({ status: "OK", summaryPl: video.analysis.transcript.map(row => row.text).join(" "),
+        transparencyPl: "Automatycznie rozpoznano mowę w przesłanym pliku. Transkrypcja może zawierać błędy odczytu." });
+    }
     const question = video.focus && /\?|^(?:czy|kto|co|kiedy|ile|gdzie|dlaczego|skąd|porównaj|wyjaśnij)\s/iu.test(video.focus)
       && !video.hits.some(hit => hit.location === "user_message") ? video.focus : undefined;
     const observed = [video.analysis.title, video.analysis.caption,
@@ -999,7 +1084,14 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       run.events.push(...n.hits);
       if (n.hits.length > 0) run.warn("injection_detected", WARNING_PL.injection);
       const note = url && userNoteBesideUrl(req, url);
-      const independent = note && /^(.*\?)\s*(?:sprawdź|sprawdz|zobacz)\s+(?:również|też|dodatkowo|tez|rowniez)(?!\p{L})/isu.exec(note)?.[1];
+      if (url && note && !n.hits.length && !faults.has("corpus_down") && n.messagePl !== STATUS_PL.pageBlocked && !detectInjection(note, "user_message").length) {
+        const identity = archivedDocumentIdentity(note, url, deps.store);
+        if (identity) {
+          run.warn("source_status", n.messagePl);
+          return reportPublication(run, identity, safeMask(note), { basisPl: "Zestawiono adres z archiwalnymi metadanymi dokumentu i odnośnikiem z recenzji." });
+        }
+      }
+      const independent = questionWithAdditionalSource(note || undefined);
       if (!independent || detectInjection(independent, "user_message").length) return run.stop(n.status, n.messagePl);
       const question = await normalizeInput({ kind: "text", text: independent, receivedAt: req.receivedAt }, { fetchPage: deps.fetchPage, llm, receivedAt, ocrDown: false, signal });
       if (!question.ok) return run.stop(n.status, n.messagePl);
@@ -1014,7 +1106,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   }
   if (!upload) run.echo =
     normalized.kind === "url"
-      ? [normalized.submittedUrl, normalized.pageTitle].filter(Boolean).join("\n")
+      ? [normalized.userNote, normalized.submittedUrl, normalized.pageTitle].filter(Boolean).join("\n")
       : normalized.text;
 
   // ── 2. detector hits ──
@@ -1032,13 +1124,39 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     for (const branch of branches.filter(b => b.required)) run.recordLookup(branch.id, "unavailable", []);
     return run.stop("NIEPELNE", STATUS_PL.corpusDown);
   }
-  const articleRoute = normalized.kind === "url" && !run.videoAnalysis
+  if (normalized.kind === "text" && !normalized.detectorHits.length && !upload && !platform) {
+    const natoOffice = natoOfficeReport(run, normalized.text);
+    if (natoOffice) return natoOffice;
+    const club = sejmClubReport(run, normalized.text);
+    if (club) return club;
+    const benefits = await benefitComparisonReport(run, normalized.text, llm, verifier, receivedAt, signal);
+    if (benefits) return benefits;
+    const membership = parseMembership(normalized.text);
+    if (membership) {
+      const report = membershipReport(run, membership);
+      if (report) return report;
+    }
+    const comparison = accessionComparison(normalized.text);
+    if (comparison) {
+      const report = accessionComparisonReport(run, comparison);
+      if (report) return report;
+    }
+  }
+  const additionalQuestion = normalized.kind === "url" ? questionWithAdditionalSource(normalized.userNote) : undefined;
+  const note = additionalQuestion ?? (normalized.kind === "text" ? normalized.textResolvedDates : normalized.userNote);
+  const questionClauses = separateQuestions(note);
+  const explicitArticleQuestion = !!note && (asksForIdentity(note) || asksWhatArticleReports(note) || questionClauses.some(asksWhatArticleReports));
+  const articleRoute = normalized.kind === "url" && !run.videoAnalysis && !additionalQuestion && !explicitArticleQuestion
     ? await routeArticleRequest(normalized.userNote, llm, signal) : undefined;
   if (articleRoute?.usage) run.models.push(articleRoute.usage);
   const articleReview = articleRoute?.review ?? false;
-  const questions = articleReview ? [] : separateQuestions(normalized.kind === "text" ? normalized.textResolvedDates : normalized.userNote);
+  const senderClaim = articleRoute?.claim && resolveRelativeDates(articleRoute.claim, receivedAt);
+  const questions = articleReview ? [] : questionClauses;
   if (!run.videoAnalysis && questions.length && !normalized.detectorHits.some(hit => hit.location === "user_message")) {
     return answerQuestionParts(run, questions, normalized, branches, llm, verifier, receivedAt, signal);
+  }
+  if (!run.videoAnalysis && normalized.kind === "url" && normalized.userNote && asksWhatArticleReports(normalized.userNote)) {
+    return answerQuestionParts(run, [normalized.userNote], normalized, branches, llm, verifier, receivedAt, signal);
   }
   if (!platform) {
     const published = await findPublicationReport(run, normalized, receivedAt, signal);
@@ -1066,25 +1184,32 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   // ── 3 ∥ 4. claims + raw-text retrieval ──
   t = performance.now();
   const noLive = branches.filter((b) => b.id !== "live");
-  const question = normalized.kind !== "text" ? (articleReview ? undefined : normalized.userNote) :
+  const question = normalized.kind !== "text" ? (articleReview || senderClaim ? undefined : additionalQuestion ?? normalized.userNote) :
     !platform && normalized.text.length <= 1400 && /\?|^(?:czy|kto|kiedy|ile|gdzie|dlaczego|porównaj|wyjaśnij)\s/iu.test(normalized.text) ? normalized.text : undefined;
-  const subject = normalized.kind === "image" ? screenshotClaim(normalized) : normalized.attachmentText;
-  const queryText = question
+  const subject = additionalQuestion ? undefined : normalized.kind === "image" ? screenshotClaim(normalized) : normalized.attachmentText;
+  const queryText = senderClaim ?? additionalQuestion ?? (question
     ? [question, normalized.pageTitle, subject?.slice(0, 420)].filter(Boolean).join(" ")
-    : normalized.textResolvedDates;
-  const rawBranches = normalized.textResolvedDates.length <= RAW_LIVE_MAX_CHARS ? branches : noLive;
+    : normalized.textResolvedDates);
+  const polarFact = question && !local && normalized.kind === "text" && asksAboutStandingFact(question);
   if (!question && !deps.llm.available) return run.stop("NIEPELNE", STATUS_PL.llmNotConfigured);
-  const rawRetrieval = localOutcome ? Promise.resolve(localOutcome) : run.search(question ? branches : rawBranches, {
+  // Fact statements get online lookup once their checkable units are known. An opinion needs none.
+  const rawRetrieval = localOutcome ? Promise.resolve(localOutcome) : run.search(question && !polarFact ? branches : noLive, {
     claim: pseudoClaim(queryText),
     limit: RAW_QUERY_LIMIT,
     signal,
   });
-  let neededEvidencePl: string | undefined;
-  if (question && !normalized.detectorHits.some(hit => hit.location === "user_message")) {
+  let neededEvidencePl = local?.neededEvidencePl;
+  if (question && !polarFact && !normalized.detectorHits.some(hit => hit.location === "user_message")) {
     const search = await rawRetrieval;
     if (search.requiredFailed) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
-    const records = questionRecords(deps.store, search.candidates, queryText, normalized.submittedUrl, run.req.url);
+    const records = questionRecords(deps.store, search.candidates, queryText, receivedAt, normalized.submittedUrl, run.req.url);
     if (!records) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+    if (additionalQuestion && normalized.submittedUrl) {
+      const url = documentUrl(normalized.submittedUrl);
+      const suggested = deps.store.getMany([...new Set(search.candidates.map(c => c.recordId))])
+        .filter(r => r.origin === "corpus" && url && documentUrl(r.url) === url && publicationAvailable(r, receivedAt, explicitPublicationCutoff(queryText)));
+      records.unshift(...suggested);
+    }
     const comparison = !platform && normalized.kind === "url" && compareReviewedDocument(normalized, records, deps.store);
     if (comparison) return reportPublication(run, comparison, question, { origin: "retrieval", basisPl: "Porównano cechy materiału z dokumentem wskazanym w wyszukanej publikacji." });
     if (llm.available) {
@@ -1103,7 +1228,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
         return reportPublication(run, answer, question, { origin: "retrieval", verdictMode: "rules",
           basisPl: "Odpowiedź opracowano z wyszukanych źródeł. Kod sprawdził cytaty, a drugie wywołanie modelu oceniło, czy uzasadniają odpowiedź." });
       }
-      neededEvidencePl = synthesis.neededEvidencePl;
+      neededEvidencePl ??= synthesis.neededEvidencePl;
     }
     if (!records.length && (local || neededEvidencePl)) {
       const claim = local?.claim ?? pseudoClaim(question);
@@ -1123,7 +1248,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
           claimLimit: 1, rejected: [], usage: undefined, question: undefined }
       : videoClaims
       ? { claims: videoClaims, inputMode: "claim" as const, claimLimit: MAX_CLAIMS_LONG, rejected: [], usage: undefined, question: undefined }
-      : await extractClaims(llm, (articleReview && normalized.attachmentText) || normalized.textResolvedDates, signal, subtitleFocus, articleReview,
+      : await extractClaims(llm, senderClaim || (articleReview && normalized.attachmentText) || normalized.textResolvedDates, signal, subtitleFocus, articleReview,
         normalized.pagePublishedAt ?? normalized.pageDisplayedDate, normalized.userNote);
     if (res.usage) run.models.push(res.usage);
     extracted = run.videoAnalysis && hasOnlyText(run.videoAnalysis) ? anchorSubtitleClaims(res.claims, run.videoAnalysis) : res.claims;
@@ -1157,6 +1282,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   const liveUnits = new Set(factClaims.slice(0, LIVE_MAX_UNITS).map((e) => e.claim.id));
   const roleQueries = factClaims.map((e) => roleQueryFor(e.claim.text));
   const noRole: RetrievalOutcome = { candidates: [], requiredFailed: false, searched: [] };
+  const semanticBranch = noLive.filter(b => b.id === "vector");
   const [raw, ...rest] = await Promise.all([
     rawRetrieval,
     ...factClaims.map((e, i) =>
@@ -1171,9 +1297,14 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     ...roleQueries.map((rq, i) =>
       rq ? run.search(noLive, { claim: { ...factClaims[i]!.claim, text: rq.query }, limit: ROLE_QUERY_LIMIT, signal }) : Promise.resolve(noRole),
     ),
+    ...factClaims.map((e, i) =>
+      !localOutcome && semanticBranch.length && !roleQueries[i] && e.claim.temporal.kind === "stan" && !e.claim.temporal.asOf
+        ? run.search(semanticBranch, { claim: e.claim, recentPrimaryOnly: true, limit: 2, signal }) : Promise.resolve(noRole),
+    ),
   ]);
   const perClaim = rest.slice(0, factClaims.length);
-  const rolePools = rest.slice(factClaims.length);
+  const rolePools = rest.slice(factClaims.length, 2 * factClaims.length);
+  const recentPools = rest.slice(2 * factClaims.length);
   run.timings.retrieval = Math.round(performance.now() - tRet);
   const outcomes = [raw!, ...perClaim];
   if (outcomes.some((o) => o.requiredFailed)) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
@@ -1181,16 +1312,84 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   // Candidate pool per claim (per-claim ranking first, then raw-text hits) → lexical rerank.
   const poolByClaim = new Map<string, EvidenceCandidate[]>();
   factClaims.forEach((e, i) => poolByClaim.set(e.claim.id, mergeCandidates(perClaim[i]?.candidates ?? [], raw!.candidates)));
-  const allIds = [...new Set([...poolByClaim.values(), ...rolePools.map((o) => o.candidates)].flat().map((c) => c.recordId))];
+  const subjectPools = factClaims.map(e => {
+    const day = requestedEventDay(e.claim);
+    const countries = day ? e.mustHave.map(term => term.split("|")[0]!.trim()).filter(registeredCountryName) : [];
+    const subject = e.requiredSubjects?.length === 1 ? e.requiredSubjects[0]
+      : countries.length === 1 ? subjectAliases(countries[0]!) : undefined;
+    if (!subject || typeof deps.db.prepare !== "function") return [];
+    try {
+      const neutral = primarySubjectIds(deps.db, subject);
+      const ids = day ? [...new Set([...neutral, ...primarySubjectIds(deps.db, subject, day.slice(0, 4))])] : neutral;
+      run.recordLookup("subject_profiles", "completed", ids);
+      return ids.map(recordId => ({ recordId, score: 1, via: "bm25" as const }));
+    } catch {
+      run.recordLookup("subject_profiles", "unavailable", []);
+      return [];
+    }
+  });
+  const ratePools = factClaims.map(e => {
+    try {
+      const ids = rateSeriesIds(deps.db, e.claim);
+      if (ids) run.recordLookup("official_rate_series", "completed", ids);
+      return ids ?? [];
+    } catch {
+      run.recordLookup("official_rate_series", "unavailable", []);
+      return [];
+    }
+  });
+  const officeHistory = roleQueries.map(query => {
+    if (!query || typeof deps.db.prepare !== "function") return [];
+    try {
+      const ids = officeHistoryIds(deps.db, query.names);
+      run.recordLookup("office_history", "completed", ids);
+      return ids;
+    } catch {
+      run.recordLookup("office_history", "unavailable", []);
+      return [];
+    }
+  });
+  const allIds = [...new Set([
+    ...[...poolByClaim.values(), ...subjectPools, ...[...rolePools, ...recentPools].map(o => o.candidates)].flat().map(c => c.recordId),
+    ...ratePools.flat(), ...officeHistory.flat(),
+  ])];
   const records = loadRecords(deps.store, allIds, normalized.submittedUrl, run.req.url);
   if (!records) return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+  // A citizen can cite an official table in support of their own claim. Its pre-qualified records may
+  // contradict them. Reviewing an article itself continues to require evidence from elsewhere.
+  let citedRecords: CorpusRecord[] = [];
+  if (senderClaim && normalized.submittedUrl && !normalized.detectorHits.length) {
+    try {
+      citedRecords = (deps.store.catalogPage?.(normalized.submittedUrl) ?? [])
+        .filter(r => r.origin === "corpus" && r.type === "pierwotne" && r.role === "tresc" && r.level === 1);
+      for (const record of citedRecords) records.set(record.id, record);
+      run.recordLookup("cited_catalog_page", "completed", citedRecords.map(r => r.id));
+    } catch {
+      return run.stop("NIEPELNE", STATUS_PL.corpusDown);
+    }
+  }
   const recordIdsByClaim = new Map<string, string[]>();
   factClaims.forEach((e, i) => {
-    const pool = (poolByClaim.get(e.claim.id) ?? []).filter((c) => records.has(c.recordId));
+    const available = (id: string) => publicationAvailable(records.get(id), receivedAt, e.claim.temporal.publishedBy);
+    const pool = (poolByClaim.get(e.claim.id) ?? []).filter((c) => available(c.recordId));
+    // catalogPage returns chunks in identifier order, with no retrieval score. Treating that
+    // position as relevance can outweigh every lexical hit in the actual cited passage.
+    const cited = lexicalRerank(citedRecords.map(r => ({ recordId: r.id, via: "bm25" as const, score: 1 })), records,
+      { queryTexts: [e.claim.text, ...e.extraQueries], mustHave: e.mustHave, weights: { rank: 0 }, limit: 2 }).map(c => c.recordId);
     const ranked = lexicalRerank(pool, records, { queryTexts: [e.claim.text, ...e.extraQueries], mustHave: e.mustHave });
     const semanticFactChecks = pool.filter((c) => c.semanticFactCheck).map((c) => c.recordId);
     // Source first: records from the official channel of the institution named in the claim are always assessed.
     const officialPinned = pinOfficialRecords([], pool.map((c) => c.recordId), records);
+    const day = requestedEventDay(e.claim);
+    const subjectCandidates = subjectPools[i]!.filter(c => available(c.recordId));
+    const subjectPinned = lexicalRerank(subjectCandidates, records, {
+      queryTexts: [e.claim.text, ...e.extraQueries].map(q => q.replace(/\d+/gu, "")),
+      weights: { rank: 0.05 }, limit: 3,
+    }).map(c => c.recordId);
+    const dated = day ? lexicalRerank([...subjectCandidates, ...pool].filter(c => {
+      const r = records.get(c.recordId);
+      return r?.type === "pierwotne" && r.level === 1 && r.role === "tresc" && statedDays(r.text).includes(day);
+    }), records, { queryTexts: [e.claim.text, ...e.extraQueries], mustHave: e.mustHave, limit: 2 }).map(c => c.recordId) : [];
     // Who really holds the office: the best primary records of the name-free query come first.
     const rq = roleQueries[i];
     const rolePinned = rq
@@ -1210,9 +1409,9 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     recordIdsByClaim.set(
       e.claim.id,
       diversifyFragments(
-        ranked.map((c) => c.recordId),
+        [...new Set([...ranked.map((c) => c.recordId), ...subjectPinned])].filter(available),
         records,
-        { max: MAX_FRAGMENTS_PER_CLAIM, pinned: [...rolePinned, ...officialPinned, ...semanticFactChecks] },
+        { max: MAX_FRAGMENTS_PER_CLAIM, pinned: [...cited, ...ratePools[i]!, ...officeHistory[i]!, ...rolePinned, ...dated, ...subjectPinned, ...officialPinned, ...(recentPools[i]?.candidates ?? []).map(c => c.recordId), ...semanticFactChecks].filter(available) },
       ),
     );
   });
@@ -1236,6 +1435,20 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       const rawA = await runAssessment(llm, e.claim, prepared, { propose, signal });
       for (const p of sendable) run.assessedRecords.add(p.record.id);
       const checked = toAssessments(e.claim, prepared, rawA.out, detectInjection);
+      if (e.requiredSubjects?.length) {
+        const subjects = e.requiredSubjects;
+        checked.assessments = checked.assessments.map(a => {
+          if (!a.quoteVerified || a.excluded || a.relation === "BEZ_ZWIAZKU") return a;
+          const record = records.get(a.recordId);
+          const passage = record?.role === "stala_rola" ? record.claimReviewed ?? a.quote : a.quote;
+          const scope = record && isProfileField(record, passage) ? record.title + "\n" + passage : passage;
+          if (!coversSubjects(scope, subjects)) return { ...a, excluded: "subject_out_of_scope" };
+          if (a.relation === "WSPIERA" && isSingleDateClaim(e.claim.text) && quoteCorrectsSlot(e.claim.text, passage, "czas")) {
+            return { ...a, excluded: "different_year" };
+          }
+          return a;
+        });
+      }
       return {
         claimId: e.claim.id,
         assessments: checked.assessments,
@@ -1263,6 +1476,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   const candidates: VerifierCandidate[] = [];
   for (const e of factClaims) {
     const all = assessmentsByClaim.get(e.claim.id) ?? [];
+    const comparedIds = new Set(opposingReports(e.claim, all, records, true).flatMap(pair => [pair.supporting, pair.refuting]));
     for (const a of all) {
       const r = records.get(a.recordId);
       if (!r || !a.quoteVerified || a.excluded) continue;
@@ -1273,18 +1487,18 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       if (!relevant) continue;
       let decisive = false;
       try {
-        decisive = isDecisive(a, r, all, records);
+        decisive = isDecisive(a, r, all, records, true);
       } catch {
         decisive = true;
       }
-      if (decisive) candidates.push({ claim: e.claim, assessment: a, record: r });
+      if (decisive || comparedIds.has(a.recordId)) candidates.push({ claim: e.claim, assessment: a, record: r });
     }
   }
   if (candidates.length > 0) {
-    run.verifierUsed = true;
     try {
       run.stage("checking_quotes");
-      const { votes, usage } = await runVerifier(verifier, interleaveByClaim(candidates), signal);
+      const { votes, usage } = await runVerifier(verifier, interleaveByClaim(candidates), signal, receivedAt);
+      run.verifierUsed = true;
       run.models.push(usage);
       for (const [c, vote] of votes) {
         const list = assessmentsByClaim.get(c.claim.id) ?? [];
@@ -1293,6 +1507,7 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       }
     } catch (err) {
       if (!(err instanceof LlmUnavailableError)) throw err;
+      run.verifierUnavailable = true;
       // Verifier unavailable: evidence stays, strength lowered via "niepewne".
       for (const c of candidates) {
         const list = assessmentsByClaim.get(c.claim.id) ?? [];
@@ -1303,7 +1518,11 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     }
   }
   run.timings.verifier = Math.round(performance.now() - t);
-  if (deps.singleKey) run.warn("single_key_verifier", WARNING_PL.singleKey);
+  const checkPolarity = run.inputMode === "question_yesno" && needsPolarityCheck(normalized.textResolvedDates);
+  if (checkPolarity && run.verifierUnavailable) {
+    return run.stop("NIEPELNE", "Nie udało się sprawdzić, czy cytat odpowiada na pytanie z przeczeniem. Spróbuj ponownie za chwilę.");
+  }
+  if (deps.singleKey && run.verifierUsed) run.warn("single_key_verifier", WARNING_PL.singleKey);
 
   deps.debug?.("assessments", { claims: factClaims.map((e) => e.claim), byClaim: Object.fromEntries(assessmentsByClaim), extraQueries: factClaims.map((e) => e.extraQueries) });
 
@@ -1312,8 +1531,13 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   const now = deps.now();
   const decisions = new Map<string, { decision: DecisionLike; strength: StrengthCard }>();
   for (const e of units) {
-    const assessments = assessmentsByClaim.get(e.claim.id) ?? [];
+    let assessments = assessmentsByClaim.get(e.claim.id) ?? [];
+    if (checkPolarity) {
+      assessments = assessments.map(a => a.quoteVerified && !a.excluded && a.verifier !== "zgoda"
+        ? { ...a, excluded: "unconfirmed_polarity" } : a);
+    }
     const d = decideVerdict({ claim: e.claim, assessments, records, now, singleKeyVerifier: deps.singleKey });
+    let strength = d.strength ?? emptyStrength();
     let decision: DecisionLike = {
       verdict: d.verdict,
       ruleApplied: d.ruleApplied,
@@ -1328,13 +1552,16 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       // independence and correction checks of the deterministic verdict.
       if (!g.gated && g.verdict === "BRAK_DOWODOW" && d.verdict !== "BRAK_DOWODOW") {
         decision = { verdict: "BRAK_DOWODOW", ruleApplied: 2, decisiveRecordIds: [], archival: false };
+        strength = { ...emptyStrength(), score: null, factors: [], notes: ["Ocena materiałów pozostawiła wątpliwości co do tego twierdzenia."] };
       }
     }
     assessmentsByClaim.set(
       e.claim.id,
-      assessments.map((a) => ({ ...a, decisive: decision.decisiveRecordIds.includes(a.recordId) && !a.excluded })),
+      assessments.map((a) => d.priorEventRecordIds?.includes(a.recordId)
+        ? { ...a, relation: "CZESCIOWO", partialMeaning: "coverage", decisive: false }
+        : { ...a, decisive: decision.decisiveRecordIds.includes(a.recordId) && !a.excluded }),
     );
-    decisions.set(e.claim.id, { decision, strength: d.strength ?? emptyStrength() });
+    decisions.set(e.claim.id, { decision, strength });
     if (decision.archival) run.warn("archival_material", WARNING_PL.archival);
   }
   run.timings.verdict = Math.round(performance.now() - t);
@@ -1371,11 +1598,12 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       if (s.usage) run.models.push(s.usage);
       reasonPl = s.text;
     }
-    const evidence = assessments
+    const ranked = assessments
       .filter((a) => a.quoteVerified && !a.excluded && a.relation !== "BEZ_ZWIAZKU" && records.has(a.recordId))
-      .sort((x, y) => Number(y.decisive) - Number(x.decisive) || records.get(x.recordId)!.level - records.get(y.recordId)!.level)
+      .sort((x, y) => Number(y.decisive) - Number(x.decisive) || records.get(x.recordId)!.level - records.get(y.recordId)!.level);
+    const evidence = prioritizeConflictEvidence(ranked, decision.conflicting)
       .slice(0, 8)
-      .map((a) => toEvidenceItem(a, records.get(a.recordId)!));
+      .map(a => ({ ...toEvidenceItem(a, records.get(a.recordId)!), usedForVerdict: decision.decisiveRecordIds.includes(a.recordId) }));
     return {
       claimId: e.claim.id,
       verdict: decision.verdict,
@@ -1408,25 +1636,31 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
     const seenRecords = new Set<string>();
     // Round-robin over parts (each part's best evidence first), one item per record.
     const evidence: ClaimVerdict["evidence"] = [];
-    for (let i = 0; i < 8 && evidence.length < 8; i++) {
+    const unclear = partVerdicts.find(v => v.verdict === "BRAK_DOWODOW" && v.conflicting)
+      ?? partVerdicts.find(v => v.verdict === "BRAK_DOWODOW");
+    for (let i = 0; i < 8; i++) {
       for (const v of partVerdicts) {
         const ev = v.evidence[i];
-        if (ev && !seenRecords.has(ev.recordId) && evidence.length < 8) {
+        if (ev && !seenRecords.has(ev.recordId)) {
           seenRecords.add(ev.recordId);
           evidence.push(ev);
         }
       }
     }
-    const unclear = partVerdicts.find((v) => v.verdict === "BRAK_DOWODOW");
+    const conflict = agg.verdict === "BRAK_DOWODOW" ? unclear?.conflicting : undefined;
     verdicts.push({
       claimId: e.claim.id,
       verdict: agg.verdict,
-      ruleApplied: agg.ruleApplied,
+      ruleApplied: conflict ? 5 : agg.ruleApplied,
+      parts: partVerdicts.map((part, i) => ({
+        text: e.parts[i]!.claim.text, verdict: part.verdict, ruleApplied: part.ruleApplied,
+        reasonPl: part.reasonPl, evidence: part.evidence,
+      })),
       strength: agg.strength,
       reasonPl: buildCompoundReasonPl(agg.verdict, outcomes),
       ...(agg.verdict === "BRAK_DOWODOW" && unclear?.triedPl ? { triedPl: unclear.triedPl } : {}),
-      ...(agg.verdict === "BRAK_DOWODOW" && unclear?.conflicting ? { conflicting: unclear.conflicting } : {}),
-      evidence,
+      ...(conflict ? { conflicting: conflict } : {}),
+      evidence: prioritizeConflictEvidence(evidence, conflict).slice(0, 8),
     });
   }
   run.timings.justify = Math.round(performance.now() - t);
@@ -1440,15 +1674,6 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
       caseLinks,
     );
   }
-  try {
-    const target = normalized.submittedUrl ?? (/(https?:\/\/|www\.)\S+/i.test(normalized.text) ? normalized.text : undefined);
-    if (target) {
-      const incidents = matchIncidentDomains(target, deps.db);
-      if (incidents.length > 0) run.warn("incident_domain", incidentPl(incidents.map((i) => i.title)));
-    }
-  } catch {
-    /* warning only — never blocks the report */
-  }
   const mainClaim = extracted.find((e) => e.claim.isMain) ?? extracted[0]!;
   const mainVerdict = verdicts.find((v) => v.claimId === mainClaim.claim.id);
   let summaryPl = buildSummaryPl(mainVerdict, verdicts.length - 1, {
@@ -1457,8 +1682,12 @@ async function pipeline(run: Run, opts: VerifyOptions): Promise<VerdictReport> {
   });
   if (run.inputMode === "question_yesno" && mainVerdict) {
     const lead = mainVerdict.verdict === "POTWIERDZONE" ? "Tak. " : mainVerdict.verdict === "FALSZYWE" ? "Nie. " : "";
-    summaryPl = neededEvidencePl && mainVerdict.verdict === "BRAK_DOWODOW" && !mainVerdict.conflicting
-      ? unresolvedQuestion(mainClaim.claim, [], neededEvidencePl).summaryPl : lead + mainVerdict.reasonPl;
+    if (neededEvidencePl && mainVerdict.verdict === "BRAK_DOWODOW" && !mainVerdict.conflicting) {
+      mainVerdict.missingContext ??= neededEvidencePl;
+      summaryPl = unresolvedQuestion(mainClaim.claim, [], neededEvidencePl).summaryPl;
+    } else {
+      summaryPl = lead + mainVerdict.reasonPl;
+    }
   }
   if (normalized.warnings.includes("truncated")) summaryPl += ` ${WARNING_PL.truncated}`;
   return run.report({ status: "OK", verdicts, mainVerdict: mainVerdict?.verdict ?? null, summaryPl });

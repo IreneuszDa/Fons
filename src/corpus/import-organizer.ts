@@ -33,15 +33,16 @@
  *
  * Użycie: tsx src/corpus/import-organizer.ts --sources <plik> --incidents <plik> [--mapping m.json] [--data-dir dir]
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { CorpusRecord, CatalogSource, type SourceLevel, type SourceType } from "../shared/contracts";
-import { catalogSourceForHost, clearCatalogCache, loadCatalog, normalizeHost } from "./catalog";
+import { clearCatalogCache, loadCatalog, normalizeHost, sourceAtUrl } from "./catalog";
 import { guessLang, recordId, squash, writeJsonl } from "./ingest/common";
 import { paths } from "./paths";
 import { mapRating } from "./ratings";
 import { IncidentRecord } from "./types";
+import { outletChannel, outletHost } from "./incident-outlets";
 
 // ───────────────────────────── Wczytywanie tabel ─────────────────────────────
 
@@ -124,6 +125,7 @@ export const INCIDENT_ALIASES: FieldAliases = {
   date: ["date", "published", "published_at", "publishedAt", "data", "datePublished"],
   rating: ["rating", "verdict", "label", "ocena", "werdykt", "textualRating"],
   domains: ["domains", "outlets", "sites", "domeny", "spread_by"],
+  channels: ["channels", "channel_urls", "kanały", "kanaly"],
   id: ["id", "uuid"],
   lang: ["lang", "language", "jezyk"],
 };
@@ -302,7 +304,7 @@ export function importIncidentBase(rows: Row[], mapping: ImportMapping, opts: In
     return { row, idx, url, claim };
   });
   for (const p of parsed) {
-    if (!p.url) continue;
+    if (!p.url || !p.claim || !/^https?:\/\//iu.test(p.url)) continue;
     const h = hostOf(p.url);
     if (h && !findSource(h)) unknownHosts.add(h);
   }
@@ -347,8 +349,11 @@ export function importIncidentBase(rows: Row[], mapping: ImportMapping, opts: In
       skipped.push({ row: idx + 1, reason: "nieprawidłowy URL" });
       continue;
     }
-    const host = hostOf(url)!;
-    const src = findSource(host)!;
+    const src = sourceAtUrl(catalog, url);
+    if (!src) {
+      skipped.push({ row: idx + 1, reason: "adres poza dozwolonym zakresem źródła" });
+      continue;
+    }
     const summary = str(pick(row, alias.summary!));
     const ratingRaw = str(pick(row, alias.rating!));
     const given = str(pick(row, alias.id!));
@@ -360,7 +365,7 @@ export function importIncidentBase(rows: Row[], mapping: ImportMapping, opts: In
     }
     seen.add(id);
     const text = summary && summary !== claim ? `${claim}\n${summary}`.slice(0, 1500) : claim;
-    const isFixed = src.role === "stala_rola" && !!ratingRaw;
+    const isFixed = src.role === "stala_rola";
     const rec: CorpusRecord = CorpusRecord.parse({
       id,
       sourceId: src.id,
@@ -371,13 +376,13 @@ export function importIncidentBase(rows: Row[], mapping: ImportMapping, opts: In
       fetchedAt: opts.importedAt,
       lang: str(pick(row, alias.lang!)) ?? guessLang(claim),
       text,
-      role: isFixed ? "stala_rola" : "tresc",
+      role: src.role,
       type: src.type,
       level: src.level,
       independenceGroup: src.independenceGroup,
       licence: src.licence,
       claimReviewed: isFixed ? claim : undefined,
-      rating: isFixed ? mapRating(src.id, ratingRaw!, opts.dataDir) : undefined,
+      rating: isFixed && ratingRaw ? mapRating(src.id, ratingRaw, opts.dataDir) : undefined,
       topics: ["pakiet-organizatora"],
       origin: "organizer",
     });
@@ -388,7 +393,8 @@ export function importIncidentBase(rows: Row[], mapping: ImportMapping, opts: In
         title: claim.slice(0, 300),
         summary: summary ?? `Pozycja z bazy organizatora${ratingRaw ? ` (ocena: ${ratingRaw})` : ""}.`,
         url,
-        domains: list(pick(row, alias.domains!)).map((d) => hostOf(d) ?? d.toLowerCase()).map((d) => d.replace(/^www\./, "")),
+        domains: list(pick(row, alias.domains!)).flatMap(value => outletHost(value) ?? []),
+        channels: list(pick(row, alias.channels!)).flatMap(value => outletChannel(value, true) ?? []),
         publishedAt: rec.publishedAt,
         recordId: rec.id,
       }),
@@ -415,10 +421,8 @@ export function runImport(args: ImportCliArgs, log: (m: string) => void = consol
   };
   const organizerYaml = paths.organizerSourcesYaml(dataDir);
   let organizerSources: CatalogSource[] = [];
-  try {
+  if (existsSync(organizerYaml)) {
     organizerSources = CatalogSource.array().parse(parseYaml(readFileSync(organizerYaml, "utf8")) ?? []);
-  } catch {
-    /* brak pliku — pierwszy import */
   }
   clearCatalogCache();
 
@@ -440,8 +444,18 @@ export function runImport(args: ImportCliArgs, log: (m: string) => void = consol
     // Rekordy organizatora trafiają do osobnych plików, więc ponowny import je zastępuje (idempotentnie).
     const byFile = new Map<string, CorpusRecord[]>();
     for (const r of res.records) byFile.set(`organizer-${r.sourceId.replace(/^organizer-/, "")}`, [...(byFile.get(`organizer-${r.sourceId.replace(/^organizer-/, "")}`) ?? []), r]);
+    const incidentFile = resolve(paths.incidentsDir(dataDir), "organizer.jsonl");
+    // Reset also the per-source files owned by the previous edition of this pack.
+    if (existsSync(incidentFile)) {
+      for (const line of readFileSync(incidentFile, "utf8").split("\n").filter(Boolean)) {
+        const sourceId = IncidentRecord.parse(JSON.parse(line)).recordId?.split(":")[0];
+        if (!sourceId || !/^[\w.-]+$/.test(sourceId)) continue;
+        const previous = `organizer-${sourceId.replace(/^organizer-/, "")}`;
+        if (!byFile.has(previous)) byFile.set(previous, []);
+      }
+    }
     for (const [name, recs] of byFile) writeJsonl(resolve(paths.corpusDir(dataDir), `${name}.jsonl`), recs.sort((a, b) => (a.id < b.id ? -1 : 1)));
-    writeJsonl(resolve(paths.incidentsDir(dataDir), "organizer.jsonl"), res.incidents.sort((a, b) => (a.id < b.id ? -1 : 1)));
+    writeJsonl(incidentFile, res.incidents.sort((a, b) => (a.id < b.id ? -1 : 1)));
     log(`Incydenty: ${res.records.length} rekordów, pominięto ${res.skipped.length}; nowe źródła w katalogu: ${res.newSources.map((s) => s.id).join(", ") || "brak"}`);
     for (const s of res.skipped.slice(0, 20)) log(`  wiersz ${s.row}: ${s.reason}`);
   }

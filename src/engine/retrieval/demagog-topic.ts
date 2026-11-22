@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { LlmProvider, ModelUsage } from "../../shared/contracts";
 import { fence, UNTRUSTED_DATA_RULES } from "../llm/fence";
 import { catalogSourceForUrl } from "../../corpus/catalog";
+import { publicationLinks, includePublishedExcerpts } from "../../corpus/publication-links";
+import { fixedRoleRelation } from "../reviewed-verdict";
 import { baseFromCatalog } from "../../corpus/ingest/common";
 import { isForeignSection, toDemagogRecord, type FactCheckReview } from "../../corpus/ingest/demagog";
 import { detectInjection } from "../../security/detector";
@@ -70,15 +72,15 @@ function published(review: FactCheckReview, fetchedAt: Date, match: "claim" | "t
   const answerPl = match === "claim" ? `Tak. Demagog sprawdził tę tezę i podał ocenę „${raw}”.`
     : match === "title" ? `Tak, znalazłem publikację Demagoga o tym tytule. W indeksie ocena „${raw}” dotyczy tezy „${excerpt}”.`
     : `Znalazłem publikację Demagoga na podobny temat. Sprawdzana w niej teza brzmi „${excerpt}”. Czy chodzi Ci o tę tezę?`;
-  const evidence = answerEvidenceItem(record, quote);
-  evidence.ratingRaw = raw;
-  evidence.relation = "INNY_KONTEKST";
-  evidence.group = "kontekst";
-  if (match === "claim" && record.rating.mapped === "FALSZYWE") { evidence.relation = "OBALA"; evidence.group = "obalajace"; }
-  if (match === "claim" && record.rating.mapped === "POTWIERDZONE") { evidence.relation = "WSPIERA"; evidence.group = "wspierajace"; }
-  if (match === "claim" && record.rating.mapped === "WPROWADZAJACE") evidence.relation = "CZESCIOWO";
-  return { answerPl, evidence: [evidence],
-    ...(match === "claim" && record.rating.mapped && { verdict: record.rating.mapped, claimPl: record.claimReviewed }) };
+  const link = publicationLinks().find(p => p.publicationId === record.id && p.url === record.url);
+  const cited = includePublishedExcerpts(record, link);
+  const findings = match === "claim" ? link?.excerpts ?? [] : [];
+  const relation = fixedRoleRelation("ta_sama", record.rating, record.claimReviewed);
+  const evidence = findings.filter(text => cited.text.includes(text) && !detectInjection(text, "quote", record.id).length)
+    .map(text => answerEvidenceItem(cited, text, relation));
+  evidence.push(answerEvidenceItem(cited, quote, "INNY_KONTEKST"));
+  return { answerPl, evidence,
+    ...(match === "claim" && record.rating.mapped && { verdict: record.rating.mapped, claimPl: record.claimReviewed, reviewRecordId: record.id }) };
 }
 
 const Decision = z.object({

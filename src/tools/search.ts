@@ -172,7 +172,8 @@ export function filterProposedUrls(items: SearchResultItem[], allowedHosts: read
 
 const SEARCH_SYSTEM =
   "Jesteś wyszukiwarką stron. Zadanie: wyszukaj w dozwolonych serwisach strony, na których można sprawdzić podane twierdzenie " +
-  "(akty prawne, komunikaty urzędowe, dane, fact-checki). Szukaj po polsku, a w razie potrzeby także po angielsku. " +
+  "(akty prawne, komunikaty urzędowe, dane, fact-checki). Szukaj również w języku miejsca zdarzenia. " +
+  "Jeżeli pytanie dotyczy przebiegu lub wyniku wydarzenia, szukaj relacji sporządzonych w trakcie lub po nim. Zapowiedź potwierdza wyłącznie plan. " +
   "Nie oceniaj twierdzenia i nie odpowiadaj na nie z własnej wiedzy — wypisz tylko znalezione adresy stron z tytułami. " +
   "Najpierw szukaj: (1) fact-checków tego twierdzenia, (2) oficjalnej strony instytucji, której twierdzenie dotyczy " +
   "(np. lista członków, biografia osoby na urzędzie, komunikat, akt prawny), (3) strony z aktualnym stanem rzeczy, gdy twierdzenie " +

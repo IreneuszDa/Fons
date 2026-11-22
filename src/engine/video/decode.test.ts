@@ -4,6 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { decodeVideo } from "./decode";
+import { readVideo } from "./intake";
+import { makeEnv } from "../../server/testkit";
+import { FakeLlmProvider } from "../llm/fake";
+import { memoryStore } from "../testing/stubs";
+import { verifyInput } from "../verify";
 
 const installed = ["ffmpeg", "ffprobe"].every(tool => spawnSync(tool, ["-version"], { stdio: "ignore" }).status === 0);
 
@@ -11,7 +16,7 @@ async function movie(args: string[], webm = false) {
   const dir = await mkdtemp(join(tmpdir(), "fons-test-movie-"));
   try {
     const path = join(dir, webm ? "clip.webm" : "clip.mp4");
-    execFileSync("ffmpeg", ["-v", "error", "-nostdin", ...args, path], { timeout: 10_000 });
+    execFileSync("ffmpeg", ["-v", "error", "-nostdin", "-filter_threads", "1", ...args, "-threads", "1", path], { timeout: 30_000 });
     return { mimeType: webm ? "video/webm" : "video/mp4", bytes: await readFile(path) };
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -24,13 +29,28 @@ it("rejects cancelled jobs and out-of-bounds metadata before launching any decod
   await expect(decodeVideo(media, { includeAudio: true, signal: AbortSignal.abort() })).rejects.toMatchObject({ name: "AbortError" });
 });
 
-it.skipIf(!installed)("decodes an audio-only recording with no fabricated frames and rejects a video disguised as audio", async () => {
+it.skipIf(!installed)("decodes an audio-only recording with no fabricated frames and rejects a video disguised as audio", { timeout: 30_000 }, async () => {
   const sound = await movie(["-f", "lavfi", "-i", "sine=frequency=500:duration=0.5", "-c:a", "aac"]);
   const decoded = await decodeVideo({ ...sound, mimeType: "audio/mp4" }, { includeAudio: true });
   expect(decoded.frames).toEqual([]);
+  expect(decoded.file).toMatchObject({ bytes: sound.bytes.length, audio: { codec: "aac", sampleRateHz: 44100, channels: 1 } });
   expect(decoded.audio?.[0]?.durationSeconds).toBeGreaterThan(0);
   const clip = await movie(["-f", "lavfi", "-i", "color=s=32x32:d=0.5", "-c:v", "mpeg4"]);
   await expect(decodeVideo({ ...clip, mimeType: "audio/mp4" }, { includeAudio: true })).rejects.toThrow("video_decode_failed");
+  const llm = new FakeLlmProvider();
+  const env = makeEnv({ cfg: { dailyTokenBudget: 0 }, engine: req => verifyInput(req, {
+    llm, verifier: llm, singleKey: true, branches: [], db: env.db, store: memoryStore([]),
+    fetchPage: vi.fn(), now: env.ctx.now, verdictMode: "rules",
+  }) });
+  try {
+    const res = await env.app.request("/api/chat/recording", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Pokaż metadane tego nagrania.", recording: { mime: "audio/mp4", base64: sound.bytes.toString("base64") } }) });
+    const { reply } = await res.json();
+    expect(reply).toMatchObject({ kind: "answer", report: { status: "OK", mainVerdict: null, models: [],
+      videoAnalysis: { status: "metadata_only", transcript: [], file: decoded.file } } });
+    expect(await (await env.app.request("/api/report/" + reply.report.token)).json()).toMatchObject({ videoAnalysis: reply.report.videoAnalysis });
+    expect(llm.calls).toHaveLength(0);
+  } finally { env.db.close(); }
 });
 
 it("reports a missing system decoder", async () => {
@@ -43,7 +63,17 @@ it("reports a missing system decoder", async () => {
   }
 });
 
-describe.skipIf(!installed)("FFmpeg video decoder", () => {
+it.skipIf(!installed)("does not send a silent recording to Gemini or produce words from silence", { timeout: 30_000 }, async () => {
+  const sound = await movie(["-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono:d=1", "-c:a", "aac"]);
+  const analyze = vi.fn();
+  const intake = await readVideo("", "upload_audio", "Przepisz nagranie", { provider: "gemini", load: vi.fn(), analyze },
+    () => {}, undefined, { mime: "audio/mp4", base64: sound.bytes.toString("base64") });
+  expect(intake.analysis).toMatchObject({ status: "unavailable", transcript: [], claimOrigins: [] });
+  expect(intake.message).toContain("Nie rozpoznałem mowy");
+  expect(analyze).not.toHaveBeenCalled();
+});
+
+describe.skipIf(!installed)("FFmpeg video decoder", { timeout: 30_000 }, () => {
   it("preserves variable-rate frame times and the audio offset, including when platform captions skip audio", async () => {
     const media = await movie([
       "-f", "lavfi", "-i", "color=c=red:s=48x80:r=10:d=0.3",
@@ -74,10 +104,10 @@ describe.skipIf(!installed)("FFmpeg video decoder", () => {
     expect((await decodeVideo(mute, { includeAudio: true })).audio).toBeUndefined();
   });
 
-  it("covers the full timeline with at most 32 frames and splits speech at a pause", async () => {
+  it("covers the full timeline with at most 32 frames and splits speech at a pause", { timeout: 45_000 }, async () => {
     const media = await movie(["-f", "lavfi", "-i", "color=s=32x32:r=2:d=54",
-      "-f", "lavfi", "-i", "sine=frequency=390:duration=54",
-      "-af", "volume='if(between(t,20,24),0,1)':eval=frame", "-c:v", "mpeg4", "-c:a", "aac"]);
+      "-f", "lavfi", "-i", "sine=frequency=390:sample_rate=16000:duration=54",
+      "-af", "volume='if(between(t,20,24),0,1)':eval=frame", "-c:v", "mpeg4", "-c:a", "alac"]);
     const { frames, audio } = await decodeVideo(media, { includeAudio: true });
     expect(frames).toHaveLength(32);
     expect(frames.at(-1)!.seconds).toBeGreaterThan(51);

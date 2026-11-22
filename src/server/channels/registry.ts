@@ -1,4 +1,4 @@
-import type { ChannelAdapter } from "../../shared/contracts";
+import { ChannelId, type ChannelAdapter } from "../../shared/contracts";
 import { cliAdapter } from "./cli";
 import { webAdapter } from "./web";
 
@@ -15,6 +15,7 @@ export function createChannelRegistry(): ChannelRegistry {
   const adapters = new Map<string, { adapter: ChannelAdapter; webhook: boolean }>();
   const registry: ChannelRegistry = {
     register(adapter, opts) {
+      ChannelId.parse(adapter.id);
       adapters.set(adapter.id, { adapter, webhook: opts?.webhook ?? false });
     },
     get: (id) => adapters.get(id)?.adapter,

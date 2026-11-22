@@ -4,6 +4,8 @@ Ten dokument opisuje, **jak kod (nie model językowy) wyznacza werdykt** dla ka�
 
 Model językowy robi tylko dwie rzeczy: czyta fragment źródła i mówi, czy on **wspiera**, **obala**, **częściowo wspiera**, **opisuje inny kontekst** albo **nie ma związku** z twierdzeniem, i którego aspektu dotyczy (sedno, czas, miejsce, liczba, autorstwo, zakres). Drugi model sprawdza sam cytat. Werdykt liczy kod według poniższych reguł.
 
+W bezpośrednim polskim pytaniu „Czy…?” silnik zachowuje brzmienie sprawdzanej tezy wraz z przeczeniem. Przy pytaniu przeczącym odpowiedź rozstrzygająca wymaga drugiego odczytu, który potwierdzi związek cytatu z całą tezą. Jeżeli dwa osobno nazwane podmioty łączy wspólna teza, każda sprawdzana część potrzebuje własnego pokrycia w cytacie. Gdy model pomija jeden z podmiotów, silnik zachowuje oryginalną tezę i sprawdza jej pełny zakres.
+
 ## 1. Które dowody w ogóle się liczą
 
 Dowód **nie liczy się wcale**, gdy:
@@ -27,7 +29,7 @@ Doprecyzowania (wszystkie zachowawcze):
 
 - **Weryfikator „sprzeciw”** — dowód przestaje być rozstrzygający (zostaje „poniżej progu”). **Weryfikator „niepewne”** — dowód nadal rozstrzyga, ale siła spada o jeden stopień.
 - **Ta sama grupa niezależności = jedno źródło.** Dwa teksty agencji i portalu, który ją przedrukował, nie tworzą pary. Silnik rozpoznaje również identyczne rekordy treści o długości co najmniej 24 słów, nawet gdy wydawcy należą do różnych grup.
-- **Dwa źródła wtórne, które się nie zgadzają** (jedno wspiera, drugie obala) albo mówią o różnych aspektach, nie tworzą dowodu rozstrzygającego.
+- **Dwa źródła wtórne, które się nie zgadzają**, mogą udokumentować rozbieżność w regule 5. Ustalenie prawdziwości na podstawie źródeł wtórnych wymaga dwóch niezależnych relacji zgodnych co do kierunku i aspektu.
 - **Analiza poziomu 2 będąca rekordem treści** (np. analiza instytucji UE) jest źródłem wtórnym: sama nie rozstrzyga, potrzebuje drugiego, niezależnego.
 - **Rekord o stałej roli spoza IFCN/EFCSN i spoza bazy organizatora** nie rozstrzyga i nie liczy się jako źródło wtórne. `CorpusRecord` nie ma pola „sygnatariusz IFCN”, dlatego rozpoznajemy go po poziomie przypisanym w katalogu (poziom 2 to właśnie fact-checki sygnatariuszy).
 - Pole `decisive` przychodzące z wcześniejszych kroków jest ignorowane — kod liczy je sam.
@@ -48,6 +50,10 @@ Pierwsza pasująca reguła wygrywa. Od reguły 3 w górę kod patrzy **wyłączn
 | 8 | obala sedno; albo twierdzenie sprowadza się do obalonej daty lub liczby | FAŁSZYWE | „W 2024 r. inflacja wyniosła 15%”, a GUS podaje inną liczbę; „Polska wstąpiła do NATO w 2004 roku”, a NATO podaje 1999 |
 | 9 | Źródło wykazuje błąd w szczególe, zniekształcony wniosek lub przeniesienie materiału w inny kontekst. | WPROWADZAJĄCE W BŁĄD + brakujący kontekst | Prawdziwe zdjęcie powodzi z 2019 r. przedstawiono jako relację z wczoraj. |
 
+Przy ocenie bieżącego stanu silnik sprawdza datę publikacji recenzji redakcyjnej. Recenzja opublikowana ponad 24 miesiące wcześniej, bez daty lub datowana na przyszłość może dostarczyć kontekstu. Do rozstrzygnięcia o obecnym stanie potrzeba wówczas odrębnej podstawy. Data ponownego pobrania strony służy do audytu. Jeśli starsza pozytywna ocena dokumentuje dawny stan i aktualniejsze dane urzędowe go obalają, oba materiały mogą uzasadnić informację o zmianie. Osobne pytanie o stan w oznaczonym okresie ocenia się względem tego okresu. Okno 24 miesięcy jest założeniem projektu. Rozpoznanie okresu sprawdzanego twierdzenia wpływa na działanie tej reguły.
+
+Dla zdań takich jak „Sejm liczy 460 posłów” kod porównuje nazwę instytucji, jednostkę i liczbę w zweryfikowanym fragmencie. Rozstrzygnięcie wymaga zgodnego odczytu weryfikatora i źródła pierwotnego lub dwóch niezależnych źródeł wtórnych. Negacja odwraca kierunek porównania. Wykaz testów obejmuje też niezgodny organ i tę samą liczbę podaną dla innej jednostki. [Odtworzenie na rzeczywistych cytatach z przepisów i recenzji](../eval/results/liczebnosc-i-aktualnosc-2026-11-22.json)
+
 Czytelnik rozróżnia cytat potwierdzający fragment tezy (`CZESCIOWO`, w raporcie `partialMeaning=coverage`) od cytatu wykazującego istotny błąd (`KORYGUJE_CZESC`, w raporcie `partialMeaning=correction`). Korekta wymaga zgody weryfikatora. Profil jednej stacji badawczej może uzupełnić pełny wykaz stacji. Sama informacja o tej jednej stacji pozostawia pytanie o pozostałe otwarte. Kiedy starsza ocena łączyła oba znaczenia, kod uznaje korektę jedynie przy zgodzie weryfikatora i odmiennej dacie lub liczbie w odpowiednim polu.
 
 Jeśli po regułach 3–9 zostały tylko dowody na szczegóły (np. sam czas), a nic o sednie — werdykt to BRAK DOWODÓW z numerem reguły 2 („brak dowodu rozstrzygającego dla sedna”). Pole `ruleApplied` jest zawsze ustawione (1–9).
@@ -56,14 +62,19 @@ Jeśli po regułach 3–9 zostały tylko dowody na szczegóły (np. sam czas), a
 
 Stan opisany w datowanym artykule zachowuje swoją datę odniesienia (`temporal.asOf`). Rozstrzygają źródła obejmujące ten okres. Raport odróżnia datę publikacji z metadanych od daty wyświetlonej przy nagłówku. Data materiału może określać perspektywę autora opisującego ówczesny stan. Do ustalenia daty zdarzenia potrzebna jest treść twierdzenia.
 
+Przy pytaniu o „stan publikacji na” konkretny dzień silnik przechowuje tę datę w `temporal.publishedBy`. Do porównania dopuszcza materiały, których publikację lub wcześniejsze pobranie można potwierdzić najpóźniej w tym dniu. Okres danych pozostaje osobnym polem. Udokumentowana rewizja wydawcy (`supersededAt`) zamyka okres wykorzystania poprzedniego oszacowania. Zachowuje ono znaczenie w pytaniach o wcześniejszy stan publikacji.
+
+Twierdzenie o dokładnym dniu zdarzenia lub początku członkostwa wymaga potwierdzenia pełnej daty. Silnik wyszukuje także precyzyjniejsze fragmenty oficjalnych dokumentów i zachowuje tekst lub pole źródłowe z datą. Skrót zawierający tylko rok nie wystarcza. W pytaniach o wcześniejsze członkostwo państwa silnik może odrzucić tezę na podstawie późniejszego dnia przyjęcia, gdy weryfikator potwierdzi odczyt z urzędowego rejestru akcesji dla tego samego państwa i organizacji. Data złożenia wniosku i data przyznania statusu kandydata pozostają odrębnymi zdarzeniami.
+
 - **Okres dowodu** = okres podany przez czytelnika dla fragmentu → okres rekordu w bazie → rok publikacji. Rozumiemy: rok, półrocze (`2024-H1`), kwartał (`2024-Q2`), miesiąc, dzień, zakresy (`2023-2024`, `2024-01-01/2024-06-30`).
 - **Nieznany okres nakłada się z każdym innym** i nigdy nie jest „nowszy”. Lepiej pokazać sprzeczność, niż ją ukryć.
-- **Reguła 3:** zdarzenie jest „nowsze”, gdy jego najwcześniejszy możliwy dzień przypada po najpóźniejszym możliwym dniu publikacji **każdego** dowodu rozstrzygającego (data publikacji, a gdy jej brak — data pobrania, bo rekord na pewno istniał, zanim go pobraliśmy). Gdy żaden z tych dni nie jest znany, reguła 3 nie działa.
+- **Reguła 3** porównuje najwcześniejszy możliwy dzień zdarzenia z datą publikacji każdego dokumentu. Przy braku daty publikacji używa daty pobrania jako górnej granicy. Wcześniejsza zapowiedź dostaje rolę kontekstu. Silnik ponownie sprawdza, czy w pozostałych materiałach znajduje się źródło pierwotne, kwalifikowany fact-check albo para niezależnych relacji wtórnych. Gdy ich brakuje, wstrzymuje werdykt.
 - **Reguła 4 i zastępowanie nieaktualnych danych** (tylko twierdzenia o stanie „teraz”): dowód jest **zastąpiony**, gdy na ten sam aspekt istnieje rozstrzygający dowód urzędowy (poziom 1) o przeciwnym kierunku, którego okres jest **w całości późniejszy**, a data publikacji nie jest wcześniejsza.
   - Zastąpione „wspiera” + nowsze urzędowe „obala”, i nie zostaje żadne aktualne „wspiera” → reguła 4.
   - Zastąpione „obala” + nowsze urzędowe „wspiera” → stara ocena wypada, liczymy dalej (np. reguła 7: twierdzenie jest prawdziwe **dziś**). Raport ma notkę „starsze źródło mówiło inaczej”.
-  - Tylko dowód **urzędowy** może zastąpić inny. Nowsze źródło wtórne kontra starsze urzędowe = sprzeczność (reguła 5).
-- **Reguła 5 — rozszerzenie zachowawcze:** sprzeczność na ten sam aspekt daje BRAK DOWODÓW także wtedy, gdy okresy się nie nakładają, a reguła 4 tej różnicy nie wyjaśniła. Kod nigdy nie wybiera zwycięzcy między źródłami mówiącymi o tym samym aspekcie. Notka w raporcie zaznacza, że źródła mogą dotyczyć różnych okresów.
+  - Tylko dowód **urzędowy** może zastąpić inny w tej regule. Dwie publikacje opisujące odmienne okresy mogą uzasadniać wstrzymanie werdyktu.
+- **Reguła 5.** Blok sprzeczności wskazuje publikacje z niezależnych grup. Zapisy tej samej strony i przedruki oznaczone wspólną grupą lub rozpoznane po identycznej treści odpadają. Dla dwóch dowodów rozstrzygających sprawdzane jest nakładanie się jawnych okresów danych. Data publikacji służy osobno ocenie aktualności.
+- Gdy raport wtórny stanowi jedyny materiał w swoim kierunku, do wykazania rozbieżności potrzebny jest niezależny cytat o przeciwnej wymowie. Oba muszą dotyczyć tego samego aspektu, mieć ten sam jawny okres danych i otrzymać zgodę weryfikatora. W tezie sprowadzającej się do jednej liczby odczyty aspektów „sedno” i „liczba” mogą odnosić się do tej samej wartości. Werdykt dla udokumentowanego sporu to **BRAK DOWODÓW**, z dwoma stronami do sprawdzenia.
 - **Różne aspekty to nie sprzeczność.** Sedno potwierdzone + data obalona → reguła 9 (WPROWADZAJĄCE), nie reguła 5.
 - **Rekord o stałej roli kontra źródła wtórne** to nie sprzeczność — zgodnie z regułą 6 fact-check ma pierwszeństwo przed oceną czytelnika dla źródeł wtórnych. Fact-check kontra źródło **pierwotne**, i dwa fact-checki o przeciwnych ocenach, to sprzeczność.
 
@@ -206,7 +217,7 @@ Ewaluacja: przypadki z `expected.minStrength` (np. `ST01` „Czy Jakub Siuda to 
 
 ## 6. Znane ograniczenia
 
-- **Reguła 3 a zapowiedzi.** Dowód opublikowany przed datą zdarzenia (np. ustawa ogłoszona w grudniu, wchodzi w życie w styczniu) daje dla twierdzenia jednorazowego z datą BRAK DOWODÓW — tak brzmi reguła. Kod nie odróżnia zapowiedzi od relacji. Ekstrakcja twierdzeń powinna oznaczać takie przypadki jako „stan”.
+- **Decyzja o okresie obowiązywania** może dokumentować stan po dniu swojej publikacji. Silnik akceptuje ten wyjątek w źródle pierwotnym, gdy weryfikator potwierdził relację z tezą i cytat podaje okres obowiązywania sięgający dnia zdarzenia. Rozpoznawane zapisy dat i okresów są w `src/engine/verdict/periods.ts`.
 - **Reguła 8b jest przybliżeniem.** Jeśli czytelnik oznaczy tylko „obala czas” dla krótkiego twierdzenia o prawdziwym zdarzeniu z inną datą (zamiast „częściowo”, „inny kontekst” albo „wspiera sedno”), wynik będzie FAŁSZYWE zamiast WPROWADZAJĄCE. Odwrotnie: gdy czytelnik da „częściowo” dla daty, która jest po prostu błędna (A03 w ewaluacji z 21.11.2026), wynik to WPROWADZAJĄCE zamiast FAŁSZYWE — poprawka należy do instrukcji czytelnika, nie do reguł (patrz „Szczegóły reguły 8”).
 - **Twierdzenie „jednej daty” rozpoznajemy po kształcie tekstu** (przecinek, spójniki, liczba słów, nazwy własne), nie po znaczeniu. Lata rozpoznajemy w zakresie 1000–2099, więc liczba w tym zakresie bez jednostki (np. „1500 szpitali”) też liczy się jako rok — skutek jest zachowawczy (brak reguły 8b dla czasu).
 - **IFCN/EFCSN po poziomie.** Kwalifikację fact-checkera wnioskujemy z poziomu 2 przypisanego w katalogu, bo rekord korpusu nie ma pola `ifcnEfcsn`. Błąd poziomu w katalogu przenosi się na regułę 6.
@@ -229,5 +240,18 @@ Zdanie, które przypisuje ten sam fakt kilku podmiotom („Polska i Litwa wstąp
 | pozostałe (BRAK DOWODÓW bez FAŁSZYWE) | BRAK DOWODÓW | reguła tej części |
 | części NIE PODLEGA są pomijane; same NIE PODLEGA | NIE PODLEGA | 1 |
 
-Siła całości to siła najsłabiej udokumentowanej części, która ustala werdykt (punktacja = minimum) — całość nie może być pewniejsza niż jej najsłabszy element; karta dostaje czynnik „Twierdzenie dotyczy N podmiotów — każdy sprawdziliśmy osobno”. Raport pokazuje jedno twierdzenie (całość) z dowodami wszystkich części; części są wewnętrzne. Na zapytanie przypada najwyżej 8 jednostek (twierdzeń i części) — gdy części się nie mieszczą, twierdzenie jest sprawdzane w całości.
+Siła całości odpowiada najsłabiej udokumentowanej części, która przesądza o werdykcie. Raport pokazuje wspólne twierdzenie, wynik każdej składowej i wykorzystane źródła. Jedno zgłoszenie może obejmować do ośmiu osobnych sprawdzeń. Po wyczerpaniu tego limitu silnik sprawdza twierdzenie w całości i wymaga pokrycia wszystkich rozpoznanych podmiotów.
+
+Przy wyliczeniu nazw na początku zdania silnik zachowuje wspólne daty i liczby w każdej składowej. Szuka również źródeł pierwotnych po samym podmiocie, pomijając sugerowany rok. Nazwy krajów pochodzą z rejestru państw i lokalizacji ISO udostępnianych przez środowisko uruchomieniowe. Sugestia tłumaczenia od modelu może pomóc znaleźć stronę. Uznanie cytatu za dowód wymaga identyfikacji podmiotu w tekście lub, dla pola urzędowego profilu kraju, w tytule profilu. Rozpoznawanie list nazw obejmuje proste polskie i angielskie konstrukcje. Dłuższe wypowiedzi i inne języki w większym stopniu zależą od jakości ekstrakcji.
+
+### Próba wielojęzyczna z 22 listopada 2026
+
+Przed próbą wybrano dwa angielskie zdania, w których wspólna data pasuje tylko do jednego kraju. Wersja 24 wstrzymała się w obu przypadkach. Po zmianie wyszukiwania wersja 25 prawidłowo oznaczyła oba zdania jako wprowadzające w błąd. Powtórzenie ujawniło niedokładność w ocenie części. Data sprzeczna z cytatem czasem otrzymywała etykietę „wprowadzające w błąd”, gdy model przenosił aspekt wspólnej tezy na składowe. Po usunięciu tego dziedziczenia końcowa próba dała następujące wyniki.
+
+| Wspólne twierdzenie | Wynik poszczególnych sprawdzeń |
+|---|---|
+| Chorwacja i Słowenia weszły do UE w 2013 roku | Chorwacja – potwierdzone, 2013. Słowenia – fałszywe, 2004. |
+| Finlandia, Szwecja i Estonia weszły do NATO w 2024 roku | Finlandia – fałszywe, 2023. Szwecja – potwierdzone, 2024. Estonia – fałszywe, 2004. |
+
+Oba sprawdzenia wykonały rzeczywiste modele na lokalnym korpusie, z wyłączonym pobieraniem stron na żywo. Każde twierdzenie miało jednego niezależnego wydawcę, odpowiednio portal UE i NATO. Wszystkie dziesięć wykorzystanych fragmentów sprawdzono dosłownie w zapisanych rekordach. Są to dwa celowe przypadki diagnostyczne. [Ślad kolejnych prób, cytaty, adresy i identyfikatory modeli](../eval/results/subject-scope-2026-11-22.json)
 

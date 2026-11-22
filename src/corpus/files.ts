@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CorpusRecord } from "../shared/contracts";
+import { loadCatalog, sourceAtUrl } from "./catalog";
 import { paths } from "./paths";
 import { includePublishedExcerpts, publicationLinks } from "./publication-links";
 import { IncidentRecord } from "./types";
@@ -42,7 +43,7 @@ export interface LoadedCorpus {
 }
 
 /** Parsuje i waliduje wszystkie linie; błędne linie trafiają do `errors` (nie są ładowane). */
-export function readCorpus(dataDir?: string): LoadedCorpus {
+export function readCorpus(dataDir?: string, catalog = loadCatalog(dataDir)): LoadedCorpus {
   const records: CorpusRecord[] = [];
   const incidents: IncidentRecord[] = [];
   const errors: string[] = [];
@@ -52,12 +53,21 @@ export function readCorpus(dataDir?: string): LoadedCorpus {
     f.lines.forEach((line, i) => {
       try {
         const r = CorpusRecord.parse(JSON.parse(line));
+        const source = sourceAtUrl(catalog, r.url);
+        // Older organizer packs stored a reviewed statement without an assigned rating as ordinary content.
+        const unratedReview = source?.role === "stala_rola" && r.role === "tresc" && r.origin === "organizer";
+        if (source?.id !== r.sourceId || (source.role !== r.role && !unratedReview)) {
+          errors.push(`${f.name}:${i + 1}: adres lub rola rekordu poza zakresem źródła ${r.sourceId}`);
+          return;
+        }
         if (seen.has(r.id)) {
           errors.push(`${f.name}:${i + 1}: zduplikowany id ${r.id}`);
           return;
         }
         seen.add(r.id);
-        records.push(includePublishedExcerpts(r, links.get(r.id)));
+        const qualified = { ...r, role: source.role, type: source.type, level: source.level,
+          independenceGroup: source.independenceGroup, licence: source.licence, ...(unratedReview && { rating: undefined }) };
+        records.push(includePublishedExcerpts(qualified, links.get(r.id)));
       } catch (e) {
         errors.push(`${f.name}:${i + 1}: ${(e as Error).message.slice(0, 200)}`);
       }
@@ -68,6 +78,10 @@ export function readCorpus(dataDir?: string): LoadedCorpus {
     f.lines.forEach((line, i) => {
       try {
         const r = IncidentRecord.parse(JSON.parse(line));
+        if (!sourceAtUrl(catalog, r.url) || (r.recordId && !seen.has(r.recordId))) {
+          errors.push(`${f.name}:${i + 1}: incydent poza katalogiem lub bez zakwalifikowanego rekordu ${r.recordId ?? ""}`);
+          return;
+        }
         if (incSeen.has(r.id)) {
           errors.push(`${f.name}:${i + 1}: zduplikowany id incydentu ${r.id}`);
           return;

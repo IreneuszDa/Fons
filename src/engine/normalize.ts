@@ -272,7 +272,21 @@ async function normalizeUrl(req: NormalizeRequest, ctx: NormalizeContext): Promi
 const HTML_ELEMENT_TAG = /<\/?\s*(?:article|data|source|text|input|content)\b[^<>]*>/giu;
 
 export function neutralizeMarkupTags(rawHtml: string): string {
-  return rawHtml.replace(HTML_ELEMENT_TAG, " ");
+  // These raw-text elements never enter article text. JSON-LD claim reviews that
+  // are used as evidence undergo their own field-level detector in retrieval.
+  const opening = /<(script|style)(?=[\s/>])/giu;
+  const endings = { script: /<\/script\s*>/giu, style: /<\/style\s*>/giu };
+  const parts: string[] = [];
+  let cursor = 0;
+  for (let tag = opening.exec(rawHtml); tag; tag = opening.exec(rawHtml)) {
+    parts.push(rawHtml.slice(cursor, tag.index));
+    const end = tag[1]!.toLowerCase() === "script" ? endings.script : endings.style;
+    end.lastIndex = opening.lastIndex;
+    cursor = end.exec(rawHtml) ? end.lastIndex : rawHtml.length;
+    opening.lastIndex = cursor;
+  }
+  parts.push(rawHtml.slice(cursor));
+  return parts.join(" ").replace(HTML_ELEMENT_TAG, " ");
 }
 
 async function normalizeImage(req: NormalizeRequest, ctx: NormalizeContext): Promise<NormalizeOutcome> {
