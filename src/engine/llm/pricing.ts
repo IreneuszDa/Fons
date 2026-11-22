@@ -42,8 +42,14 @@ const FALLBACK_BY_PROVIDER: Record<string, Price> = {
   fake: { inputPerMTok: 0, outputPerMTok: 0, estimate: false },
 };
 
+/** Drops a gateway vendor prefix ("openai/gpt-6.2-sol" on OpenRouter → "gpt-6.2-sol"). */
+export function baseModelId(model: string): string {
+  return model.toLowerCase().replace(/^[a-z0-9][a-z0-9._-]*\//, "");
+}
+
 export function priceFor(model: string, provider: string): Price {
-  const m = model.toLowerCase();
+  // Gateway ids are priced like the vendor's own model (OpenRouter passes through list prices; its fees are not included).
+  const m = baseModelId(model);
   // Standard list price, including thinking tokens. Google scheduled the promotion to end on 2026-12-31.
   // https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash
   if (provider === "gemini" && /^gemini-3\.8-flash(?:$|-\d)/.test(m)) {

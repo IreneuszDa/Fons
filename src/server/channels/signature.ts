@@ -20,3 +20,13 @@ export function withinWindow(timestamp: string | undefined, nowMs: number, windo
   const ms = n < 1e12 ? n * 1000 : n;
   return Math.abs(nowMs - ms) <= windowMs;
 }
+
+/**
+ * ChatLoom request check shared by the webhook and the outbox: `X-ChatLoom-Timestamp` in Unix seconds within the window
+ * and `X-ChatLoom-Signature` = hex HMAC-SHA256 of `timestamp + "." + rawBody` (empty string for a GET).
+ */
+export function verifyChatLoomRequest(secret: string, timestamp: string | undefined, signature: string | undefined,
+  rawBody: string, nowMs: number): boolean {
+  return !!timestamp && /^\d{1,10}$/.test(timestamp) && withinWindow(timestamp, nowMs) &&
+    verifyHmacSha256(secret, timestamp + "." + rawBody, signature);
+}

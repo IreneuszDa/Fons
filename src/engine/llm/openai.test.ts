@@ -3,7 +3,8 @@ import { z } from "zod";
 import { LlmUnavailableError } from "../../shared/contracts";
 import { defaultModelsFor, loadConfig, type AppConfig } from "../../server/config";
 import { createLlmProviders } from "./index";
-import { OpenAiProvider, openAiBaseUrl, type FetchLike } from "./openai";
+import { OpenAiProvider, openAiBaseUrl, openAiHost, type FetchLike } from "./openai";
+import { baseModelId, priceFor } from "./pricing";
 import { processingRegion } from "./types";
 
 const Schema = z.object({ answer: z.string(), n: z.number().nullable() });
@@ -58,6 +59,29 @@ describe("OpenAiProvider", () => {
     expect(openAiBaseUrl(undefined)).toBe("https://api.openai.com/v1");
     expect(processingRegion(new OpenAiProvider({ apiKey: "k", models, dataResidency: "eu" }))).toBe("eea");
     expect(processingRegion(new OpenAiProvider({ apiKey: "k", models }))).toBe("us");
+  });
+
+  it("OPENAI_BASE_URL overrides the endpoint and residency, and is reported as USA processing", async () => {
+    expect(openAiBaseUrl("eu", "https://openrouter.ai/api/v1/")).toBe("https://openrouter.ai/api/v1");
+    expect(openAiBaseUrl("eu", "  ")).toBe("https://eu.api.openai.com/v1");
+    expect(openAiHost(undefined, "https://openrouter.ai/api/v1")).toBe("openrouter.ai");
+    expect(openAiHost("eu")).toBe("eu.api.openai.com");
+    const s = stub([json({ ...completion('{"answer":"ok","n":1}'), model: "openai/gpt-6.2-sol", usage: { prompt_tokens: 1_000_000, completion_tokens: 100_000 } })]);
+    const p = new OpenAiProvider({ apiKey: "k", models: { main: "openai/gpt-6.2-sol", fast: "openai/gpt-6-luna" },
+      dataResidency: "eu", baseUrl: "https://openrouter.ai/api/v1", fetchImpl: s.fetchImpl });
+    expect(processingRegion(p)).toBe("us");
+    const r = await p.complete(req);
+    expect(s.calls[0]!.url).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(s.calls[0]!.body.model).toBe("openai/gpt-6.2-sol");
+    expect(r.usage.costUsd).toBe(3); // priced like gpt-6.2-sol
+  });
+
+  it("strips a gateway vendor prefix before price lookup", () => {
+    expect(baseModelId("openai/gpt-6-luna")).toBe("gpt-6-luna");
+    expect(baseModelId("gpt-6-luna")).toBe("gpt-6-luna");
+    expect(priceFor("openai/gpt-6-luna", "openai")).toEqual(priceFor("gpt-6-luna", "openai"));
+    expect(priceFor("openai/gpt-6.2-sol", "openai")).toMatchObject({ inputPerMTok: 2, outputPerMTok: 10, estimate: false });
+    expect(priceFor("anthropic/claude-opus-5-5", "openai")).toEqual(priceFor("claude-opus-5-5", "anthropic"));
   });
 
   it("no key → no_key without any request", async () => {
@@ -176,6 +200,24 @@ describe("OpenAI in config and factory", () => {
     expect(verifier.family).toBe("openai");
     expect(singleKey).toBe(true);
     vi.unstubAllEnvs();
+  });
+
+  it("reads and validates OPENAI_BASE_URL", () => {
+    try {
+      vi.stubEnv("OPENAI_API_KEY", "sk-test");
+      vi.stubEnv("ADMIN_PASSWORD", "x");
+      vi.stubEnv("USER_ID_PEPPER", "p");
+      vi.stubEnv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1/");
+      expect(loadConfig({ dbPath: ":memory:" }).openaiBaseUrl).toBe("https://openrouter.ai/api/v1");
+      vi.stubEnv("OPENAI_BASE_URL", "");
+      expect(loadConfig({ dbPath: ":memory:" }).openaiBaseUrl).toBeUndefined();
+      for (const bad of ["openrouter.ai/api/v1", "http://openrouter.ai/api/v1", "https://user:pw@openrouter.ai/api/v1"]) {
+        vi.stubEnv("OPENAI_BASE_URL", bad);
+        expect(() => loadConfig({ dbPath: ":memory:" })).toThrow(/OPENAI_BASE_URL/);
+      }
+      vi.stubEnv("OPENAI_BASE_URL", "http://localhost:4000/v1");
+      expect(loadConfig({ dbPath: ":memory:" }).openaiBaseUrl).toBe("http://localhost:4000/v1");
+    } finally { vi.unstubAllEnvs(); }
   });
 
   it("a keyed provider is chosen when the requested one has no key", () => {

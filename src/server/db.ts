@@ -6,6 +6,8 @@ import { dayKey } from "./util";
 
 export const RUN_RETENTION_DAYS = 30;
 export const SESSION_RETENTION_DAYS = 7;
+/** WhatsApp signup rows live this long after their last change (this also blocks a repeated welcome to the same number). */
+export const WHATSAPP_SIGNUP_RETENTION_DAYS = 30;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sessions (
@@ -187,6 +189,23 @@ CREATE TABLE IF NOT EXISTS api_tokens (
   last_used_at TEXT
 );
 
+-- WhatsApp signups from the landing page. The number is personal data used only to send the operator's welcome
+-- message; the row is removed after WHATSAPP_SIGNUP_RETENTION_DAYS or on "usuń moje dane".
+-- lease_until (ms) hides a row handed to the operator relay so concurrent polls do not send it twice.
+CREATE TABLE IF NOT EXISTS whatsapp_signups (
+  id TEXT PRIMARY KEY,
+  phone TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'sent', 'failed')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  sent_at TEXT,
+  error TEXT,
+  ip_hash TEXT,
+  lease_until INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_signups_outbox ON whatsapp_signups(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_signups_updated ON whatsapp_signups(updated_at);
+
 -- Dziennik działań administratorów (append-only, łańcuch SHA-256 jak w runs). Bez treści wiadomości i danych osobowych.
 CREATE TABLE IF NOT EXISTS admin_audit (
   seq INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -251,6 +270,8 @@ export function purgeRetention(db: Db, now: Date): PurgeResult {
     const sessions = db.prepare("DELETE FROM sessions WHERE last_seen < ?").run(sessCut).changes;
     db.prepare("DELETE FROM chatloom_replies WHERE created_at < ?").run(sessCut);
     db.prepare("DELETE FROM chatloom_reactions WHERE created_at < ?").run(sessCut);
+    const signupCut = new Date(now.getTime() - WHATSAPP_SIGNUP_RETENTION_DAYS * 86_400_000).toISOString();
+    db.prepare("DELETE FROM whatsapp_signups WHERE updated_at < ?").run(signupCut);
     const reports = db.prepare("DELETE FROM reports WHERE expires_at < ?").run(iso).changes;
     const cache = db.prepare("DELETE FROM computation_cache WHERE expires_at < ?").run(iso).changes;
     db.prepare("DELETE FROM cache_tombstones WHERE until < ?").run(iso);

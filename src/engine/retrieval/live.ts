@@ -254,7 +254,7 @@ export function createLiveBranch(first?: LiveSearchProvider | Database, opts: Li
  */
 export function createLiveBranchFromConfig(
   db: Database,
-  cfg: Pick<AppConfig, "openaiApiKey" | "openaiDataResidency" | "openaiSearchModel" | "modelFast" | "webSearchDailyCap">,
+  cfg: Pick<AppConfig, "openaiApiKey" | "openaiDataResidency" | "openaiBaseUrl" | "openaiSearchModel" | "modelFast" | "webSearchDailyCap">,
   opts: LiveBranchOptions = {},
 ): LiveBranch {
   // onUsage: koszt każdego wyszukiwania trafia do zakresu przebiegu (live-usage.ts) → report.models / costUsd.

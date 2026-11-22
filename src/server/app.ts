@@ -24,6 +24,7 @@ import { TOKEN_RE, getReportByToken } from "./reports";
 import { eraseSender, findSession, inTurnOrder } from "./sessions";
 import { chatSummary, createWebChat, listWebChats, newChatOwner, readChatOwner, readWebChat, recordWebTurn } from "./web-chats";
 import { createStaticHandler } from "./static";
+import { registerWhatsAppSignup } from "./whatsapp-signup";
 
 export const SESSION_COOKIE = "pw_sid";
 const SESSION_COOKIE_MAX_AGE = 7 * 86_400;
@@ -310,7 +311,8 @@ export function createApp(ctx: ServerContext): Hono {
       if (budgetExceeded(ctx.db, ctx.cfg, ctx.now()) || clientBudgetExceeded(ctx.clientUsage, ctx.cfg, ip, ctx.now())) {
         return c.json({ messagePl: "Wyczerpano dzisiejszy limit transkrypcji." }, 429);
       }
-      const analyze = createOpenAiVideoAnalyzer({ apiKey: ctx.cfg.openaiApiKey, fetchImpl: ctx.fetch, dataResidency: ctx.cfg.openaiDataResidency });
+      const analyze = createOpenAiVideoAnalyzer({ apiKey: ctx.cfg.openaiApiKey, fetchImpl: ctx.fetch, dataResidency: ctx.cfg.openaiDataResidency,
+        baseUrl: ctx.cfg.openaiBaseUrl });
       let tokens = 0;
       try {
         const result = await analyze({ bytes: Buffer.from(base64, "base64"), mimeType: mime }, c.req.raw.signal);
@@ -468,6 +470,8 @@ export function createApp(ctx: ServerContext): Hono {
 
   // ───────── kanały wiadomości (webhook) ─────────
   app.post("/api/channels/chatloom/webhook", createChatLoomWebhook(ctx));
+  // Public WhatsApp signup plus the signed outbox for the operator relay.
+  registerWhatsAppSignup(app, ctx);
   app.post("/api/channels/:id/webhook", async (c) => {
     const adapter = ctx.channels.getWebhook(c.req.param("id"));
     if (!adapter) return c.json({ error: "not_configured", messagePl: "Ten kanał nie jest skonfigurowany." }, 501);

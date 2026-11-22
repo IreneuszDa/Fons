@@ -30,4 +30,15 @@ Dla każdej sieci odczytaj ze stanu pokoju operatora identyfikator Matrix bota (
 
 Klient musi działać i synchronizować się, by odbierać wiadomości. Konektor nasłuchuje nowych zdarzeń od momentu uruchomienia, w tym wiadomości, dla których klucz odszyfrowania dotarł później. Pomija historię, grupy, własne wiadomości oraz zdarzenia osób innych niż rozpoznany rozmówca. Kolejka i ponowienia działają w pamięci uruchomionego klienta. Chwilowe błędy transportu ponawia przez maksymalnie około 10 minut, z tymi samymi identyfikatorami transakcji Matrix. Dla dłuższej niedostępności wywołuje `onFailure`. Po zatrzymaniu klienta nie odtwarza kolejki z dysku. Gdy most nie obsługuje proponowanej reakcji, użytkownik nadal dostaje odpowiedź tekstową.
 
-Ekran `/telefon` w Fons zapisuje demonstracyjny profil lokalnie w przeglądarce. Konfiguracja numeru operatora i weryfikacja użytkowników należą do właściwego wdrożenia ChatLoom.
+## Zapis na WhatsAppie i skrzynka powitań
+
+Publiczny formularz zapisu działa na osobnej stronie (https://fons.siuda.dev). Ekran `/telefon` w Fons tylko do niej kieruje i nie przechowuje numeru. Formularz wysyła `POST /api/signup/whatsapp` z JSON `{ "phone": "500 000 000", "consent": true }`. Fons przyjmuje 9 cyfr polskiego numeru albo pełny numer z `+` lub `00`, zapisuje go w E.164 i odpowiada `{ "ok": true, "status": "pending" | "sent" }`. Brak zgody daje `400 consent_required`, zły numer `400 invalid_phone`, a więcej niż 5 prób na minutę z jednego IP daje `429`. Żądanie wymaga `Content-Type: application/json`. Nagłówki `Origin` i `Sec-Fetch-Site`, jeśli są, muszą wskazywać host Fons lub `PUBLIC_BASE_URL`. Formularz z innej domeny musi więc wysyłać zapis z własnego backendu. Ponowny zapis tego samego numeru zwraca bieżący status i nie tworzy nowego powitania. Wyjątkiem jest wcześniejsza nieudana wysyłka. Numer znika po 30 dniach od ostatniej zmiany albo po „usuń moje dane” wysłanym z tego numeru. Logi zawierają tylko zamaskowany numer.
+
+Przekaźnik operatora podpisuje oba żądania jak webhook: `X-ChatLoom-Timestamp` (sekundy Unix, okno 5 minut) i `X-ChatLoom-Signature` = hex HMAC-SHA256 z `timestamp + "." + surowe ciało`, z tym samym `CHATLOOM_WEBHOOK_SECRET`. Dla `GET` ciało jest pustym napisem. Bez sekretu oba adresy zwracają `501`, a przy złym podpisie `403`.
+
+- `GET /api/channels/chatloom/outbox` zwraca `{ "items": [{ "id": "…", "phone": "+48500000000", "text": "…" }] }`. Lista zawiera najstarsze oczekujące powitania, maksymalnie 20. Wydane pozycje są zablokowane na 5 minut. Bez potwierdzenia wracają w kolejnym odpytaniu.
+- `POST /api/channels/chatloom/outbox/:id` z `{ "status": "sent" }` albo `{ "status": "failed", "error": "…" }` zwraca `{ "ok": true }`. Powtórzone potwierdzenie niczego nie zmienia. Nieznany `id` daje `404`. Próba oznaczenia wysłanej pozycji jako nieudanej daje `409`. Fons zastępuje ciągi cyfr w `error` znacznikiem `[numer]`.
+
+Odpowiedzi z WhatsAppa przekaźnik przesyła na `/api/channels/chatloom/webhook` jak zwykłe zdarzenia Matrix. Polecenie „usuń moje dane” usuwa też zapis numeru, jeśli część lokalna `sender` zawiera numer w postaci cyfr E.164, np. `@whatsapp_48500000000:relay`.
+
+Konfiguracja numeru operatora i weryfikacja użytkowników należą do właściwego wdrożenia ChatLoom.

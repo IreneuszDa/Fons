@@ -16,9 +16,11 @@ describe("cache obliczeń", () => {
     expect((await chat(env, input)).json.reply.report.cacheHit).toBe(true);
     env.ctx.cfg.openaiVideoModel = "model-b";
     expect((await chat(env, input)).json.reply.report.cacheHit).toBe(false);
+    env.ctx.cfg.openaiBaseUrl = "https://openrouter.ai/api/v1";
+    expect((await chat(env, input)).json.reply.report.cacheHit).toBe(false);
     env.ctx.cfg.videoProvider = "off";
     expect((await chat(env, input)).json.reply.report.cacheHit).toBe(false);
-    expect(env.calls).toHaveLength(3);
+    expect(env.calls).toHaveLength(4);
   });
 
   it("ponawia próbę odczytu obrazu po raporcie z samą transkrypcją", async () => {

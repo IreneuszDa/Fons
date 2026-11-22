@@ -18,7 +18,7 @@
  * model can do is change WHICH allow-listed pages get fetched (they still pass the detector).
  */
 import { fence, UNTRUSTED_DATA_RULES } from "../engine/llm/fence";
-import { openAiBaseUrl } from "../engine/llm/openai";
+import { openAiBaseUrl, openAiProcessingRegion } from "../engine/llm/openai";
 import { costUsd } from "../engine/llm/pricing";
 
 export interface SearchResultItem {
@@ -271,14 +271,14 @@ export class OpenAiSearchProvider implements SearchProvider {
   constructor(opts: OpenAiSearchProviderOptions) {
     this.apiKey = opts.apiKey;
     this.model = opts.model;
-    this.baseUrl = opts.baseUrl ?? openAiBaseUrl(opts.dataResidency);
+    this.baseUrl = openAiBaseUrl(opts.dataResidency, opts.baseUrl);
     this.fetchImpl = opts.fetchImpl ?? ((url, init) => fetch(url, init));
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_SEARCH_TIMEOUT_MS;
     this.maxResults = opts.maxResults ?? DEFAULT_MAX_PROPOSALS;
     this.onUsage = opts.onUsage;
     this.reserveRequest = opts.reserveRequest;
     this.effort = opts.effort ?? "low";
-    this.processingRegion = opts.dataResidency?.trim().toLowerCase() === "eu" ? "eea" : "us";
+    this.processingRegion = openAiProcessingRegion(opts.dataResidency, opts.baseUrl);
   }
 
   get available(): boolean {
@@ -379,6 +379,8 @@ export class OpenAiSearchProvider implements SearchProvider {
 export interface SearchProviderConfig {
   openaiApiKey?: string;
   openaiDataResidency?: string;
+  /** OPENAI_BASE_URL: OpenAI-compatible endpoint (e.g. OpenRouter) used for /responses. */
+  openaiBaseUrl?: string;
   openaiSearchModel?: string;
   modelFast: string;
 }
@@ -392,6 +394,7 @@ export function createOpenAiSearchProvider(
     apiKey: cfg.openaiApiKey,
     model: cfg.openaiSearchModel ?? cfg.modelFast,
     dataResidency: cfg.openaiDataResidency,
+    baseUrl: cfg.openaiBaseUrl,
     ...extra,
   });
 }

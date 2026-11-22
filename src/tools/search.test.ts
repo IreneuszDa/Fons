@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSearchRequestBody,
+  createOpenAiSearchProvider,
   extractProposals,
   filterProposedUrls,
   isSearchResultsUrl,
@@ -195,6 +196,20 @@ describe("OpenAiSearchProvider", () => {
     await p.search("x", HOSTS);
     expect(seenUrl).toBe("https://eu.api.openai.com/v1/responses");
     expect(p.processingRegion).toBe("eea");
+  });
+
+  it("OPENAI_BASE_URL kieruje /responses do bramki zgodnej z OpenAI", async () => {
+    let seenUrl = "";
+    const p = createOpenAiSearchProvider({ openaiApiKey: "k", openaiDataResidency: "eu", openaiBaseUrl: "https://openrouter.ai/api/v1",
+      openaiSearchModel: "openai/gpt-6-luna", modelFast: "x" }, {
+      fetchImpl: async (url) => {
+        seenUrl = url;
+        return jsonRes(OK_BODY);
+      },
+    });
+    await p.search("x", HOSTS);
+    expect(seenUrl).toBe("https://openrouter.ai/api/v1/responses");
+    expect(p.processingRegion).toBe("us");
   });
 
   it("bez klucza rzuca SearchUnavailableError(no_key) bez wywołania sieci", async () => {

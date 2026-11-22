@@ -67,7 +67,8 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest, article?
       const model = provider === "openai" ? ctx.cfg.openaiVideoModel : ctx.cfg.geminiVideoModel;
       const enabled = provider === "openai" ? !!ctx.cfg.openaiApiKey : provider === "gemini" && !!ctx.cfg.geminiApiKey;
       normalized = JSON.stringify([publicPostUrl(req.url), provider, model ?? "default", enabled,
-        provider === "openai" ? ctx.cfg.openaiDataResidency : undefined, !!ctx.cfg.socialKitApiKey]);
+        provider === "openai" ? ctx.cfg.openaiDataResidency : undefined, !!ctx.cfg.socialKitApiKey,
+        provider === "openai" ? ctx.cfg.openaiBaseUrl : undefined]);
     }
     // The same article can be submitted for different claims.
     if (req.text?.trim()) {
@@ -82,7 +83,7 @@ export function computeCacheKey(ctx: ServerContext, req: EngineRequest, article?
     const mediaHash = createHash("sha256").update(req.recording.base64, "base64").digest("hex");
     const note = normalizeText(ctx.security.maskPii(req.text ?? "").text);
     normalized = JSON.stringify([mediaHash, req.recording.mime, note, selectedVideoProvider(ctx.cfg),
-      ctx.cfg.openaiVideoModel, ctx.cfg.geminiVideoModel, ctx.cfg.openaiDataResidency]);
+      ctx.cfg.openaiVideoModel, ctx.cfg.geminiVideoModel, ctx.cfg.openaiDataResidency, ctx.cfg.openaiBaseUrl]);
   } else if (req.kind === "image") {
     const h = createHash("sha256");
     for (const img of req.images ?? []) h.update(img.mime).update(img.base64);

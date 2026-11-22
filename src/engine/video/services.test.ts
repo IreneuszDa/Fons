@@ -11,6 +11,11 @@ describe("production video provider selection", () => {
     expect(services).toMatchObject({ provider: "openai", processingRegion: "eea", analyze: expect.any(Function) });
   });
 
+  it("reports USA processing for a custom OpenAI-compatible endpoint even with EU residency", () => {
+    const services = createVideoServices(makeTestConfig({ ...keys, openaiDataResidency: "eu", openaiBaseUrl: "https://openrouter.ai/api/v1" }));
+    expect(services).toMatchObject({ provider: "openai", processingRegion: "us" });
+  });
+
   it("uses Gemini when explicitly selected", () => {
     const services = createVideoServices(makeTestConfig({ ...keys, videoProvider: "gemini" }));
     expect(services).toMatchObject({ provider: "gemini", analyze: expect.any(Function) });

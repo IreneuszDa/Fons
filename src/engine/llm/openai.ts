@@ -5,6 +5,8 @@
  * with the same strict JSON schema as the Mistral provider, validated again with zod on our side.
  *  - OPENAI_DATA_RESIDENCY=eu → https://eu.api.openai.com (only for projects created with EU data
  *    residency); otherwise https://api.openai.com and processing in the USA (reported to the user).
+ *  - OPENAI_BASE_URL (e.g. https://openrouter.ai/api/v1) overrides both for any OpenAI-compatible gateway;
+ *    processing is then reported as USA, since EU residency cannot be assumed for a third-party endpoint.
  *  - finish_reason "length" → one retry with more tokens, then LlmUnavailableError("schema").
  *  - message.refusal → LlmUnavailableError("refusal").
  *  - reasoning_effort is sent (fast → low, main → medium); if the model rejects the parameter (400),
@@ -37,6 +39,7 @@ export interface OpenAiProviderOptions {
   dataResidency?: string;
   /** Injected for tests. */
   fetchImpl?: FetchLike;
+  /** OpenAI-compatible endpoint (OPENAI_BASE_URL); overrides dataResidency. */
   baseUrl?: string;
   /** Capture billed attempts even if local validation later rejects the result. */
   onUsage?: (usage: ModelUsage) => void;
@@ -48,8 +51,21 @@ interface ChatCompletionLike {
   choices?: { finish_reason?: string; message?: { content?: string | null; refusal?: string | null } }[];
 }
 
-export function openAiBaseUrl(dataResidency: string | undefined): string {
+/** API root without a trailing slash. A custom OpenAI-compatible base URL (OPENAI_BASE_URL) wins over data residency. */
+export function openAiBaseUrl(dataResidency: string | undefined, override?: string): string {
+  const custom = override?.trim().replace(/\/+$/, "");
+  if (custom) return custom;
   return dataResidency?.trim().toLowerCase() === "eu" ? "https://eu.api.openai.com/v1" : "https://api.openai.com/v1";
+}
+
+/** EEA only for the official EU endpoint; a custom gateway is reported as USA processing. */
+export function openAiProcessingRegion(dataResidency: string | undefined, override?: string): "eea" | "us" {
+  return !override?.trim() && dataResidency?.trim().toLowerCase() === "eu" ? "eea" : "us";
+}
+
+/** Host shown to operators (e.g. "api.openai.com", "openrouter.ai"). */
+export function openAiHost(dataResidency: string | undefined, override?: string): string {
+  return new URL(openAiBaseUrl(dataResidency, override)).host;
 }
 
 export class OpenAiProvider implements EngineLlmProvider {
@@ -74,9 +90,9 @@ export class OpenAiProvider implements EngineLlmProvider {
     this.apiKey = opts.apiKey;
     this.available = !!opts.apiKey;
     this.fetchImpl = opts.fetchImpl ?? ((url, init) => fetch(url, init));
-    this.baseUrl = opts.baseUrl ?? openAiBaseUrl(opts.dataResidency);
+    this.baseUrl = openAiBaseUrl(opts.dataResidency, opts.baseUrl);
     this.onUsage = opts.onUsage;
-    this.processingRegion = opts.dataResidency?.trim().toLowerCase() === "eu" ? "eea" : "us";
+    this.processingRegion = openAiProcessingRegion(opts.dataResidency, opts.baseUrl);
   }
 
   async complete<T>(req: EngineLlmRequest<T>): Promise<LlmResponse<T>> {

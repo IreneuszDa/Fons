@@ -10,6 +10,7 @@ import { getLiveSnapshot, reserveLiveRequest } from "../engine/retrieval/live-st
 import { loadConfig } from "../server/config";
 import { fetchPage } from "../security/fetch";
 import type { Claim } from "../shared/contracts";
+import { openAiHost } from "../engine/llm/openai";
 import { createOpenAiSearchProvider, DEFAULT_SEARCH_TIMEOUT_MS, type SearchUsage } from "./search";
 
 async function main() {
@@ -20,7 +21,9 @@ async function main() {
     console.error("Brak OPENAI_API_KEY — nie ma czym wyszukiwać.");
     process.exit(1);
   }
-  console.log(`przetwarzanie: ${cfg.openaiDataResidency?.toLowerCase() === "eu" ? "UE (eu.api.openai.com)" : "USA (api.openai.com)"}; model: ${cfg.openaiSearchModel ?? cfg.modelFast}`);
+  const host = openAiHost(cfg.openaiDataResidency, cfg.openaiBaseUrl);
+  const region = !cfg.openaiBaseUrl && cfg.openaiDataResidency?.toLowerCase() === "eu" ? "UE" : "USA";
+  console.log(`przetwarzanie: ${region} (${host}); model: ${cfg.openaiSearchModel ?? cfg.modelFast}`);
   const usage: SearchUsage[] = [];
   const db = openDatabase(":memory:");
   ensureCorpusLoaded(db);

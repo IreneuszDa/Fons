@@ -48,13 +48,13 @@ const transcriptionReply = z.object({
 });
 
 async function transcribeChunk(
-  chunk: AudioChunk, apiKey: string, dataResidency: string | undefined, fetchImpl: FetchLike, signal: AbortSignal, usages: ModelUsage[],
+  chunk: AudioChunk, apiKey: string, baseUrl: string, fetchImpl: FetchLike, signal: AbortSignal, usages: ModelUsage[],
 ): Promise<SubtitleSegment> {
   const started = Date.now();
   const form = new FormData();
   form.set("model", OPENAI_TRANSCRIPTION_MODEL);
   form.set("file", new Blob([new Uint8Array(chunk.bytes)], { type: "audio/wav" }), "audio.wav");
-  const response = await fetchImpl(openAiBaseUrl(dataResidency) + "/audio/transcriptions", {
+  const response = await fetchImpl(baseUrl + "/audio/transcriptions", {
     method: "POST", headers: { authorization: `Bearer ${apiKey}` }, body: form, signal, redirect: "error",
   });
   if (!response.ok) {
@@ -109,6 +109,8 @@ function groundResult(
 
 export function createOpenAiVideoAnalyzer(options: {
   apiKey?: string; model?: string; dataResidency?: string; fetchImpl?: FetchLike; decode?: typeof decodeVideo;
+  /** OPENAI_BASE_URL: OpenAI-compatible endpoint for both transcription and vision; overrides dataResidency. */
+  baseUrl?: string;
 }): VideoAnalyzer {
   const model = options.model ?? DEFAULT_OPENAI_VIDEO_MODEL;
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -139,7 +141,7 @@ export function createOpenAiVideoAnalyzer(options: {
         for (let i = 0; i < audio.length; i += 2) {
           deadline.throwIfAborted();
           const pair = await Promise.allSettled(audio.slice(i, i + 2).map(chunk =>
-            transcribeChunk(chunk, apiKey, options.dataResidency, fetchImpl, deadline, transcriptions)));
+            transcribeChunk(chunk, apiKey, openAiBaseUrl(options.dataResidency, options.baseUrl), fetchImpl, deadline, transcriptions)));
           for (const item of pair) {
             if (item.status === "rejected") throw item.reason;
             if (item.value.text) transcript.push(item.value);
@@ -156,7 +158,7 @@ export function createOpenAiVideoAnalyzer(options: {
       const caption = sanitizeVideoText(video.caption?.slice(0, 8000) ?? "", "fetched_page");
       const focus = sanitizeVideoText(video.focus?.slice(0, 1000) ?? "", "user_message");
       const vision = new OpenAiProvider({
-        apiKey, models: { fast: model, main: model }, dataResidency: options.dataResidency, fetchImpl,
+        apiKey, models: { fast: model, main: model }, dataResidency: options.dataResidency, baseUrl: options.baseUrl, fetchImpl,
         onUsage: usage => visionAttempts.push(usage),
       });
       const response = await vision.complete({

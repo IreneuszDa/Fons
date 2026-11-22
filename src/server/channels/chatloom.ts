@@ -5,7 +5,8 @@ import type { ServerContext } from "../context";
 import { handleInbound } from "../conversation";
 import { SESSION_RETENTION_DAYS } from "../db";
 import { renderReplyText } from "./render";
-import { verifyHmacSha256, withinWindow } from "./signature";
+import { verifyChatLoomRequest } from "./signature";
+import { eraseSignupForSender } from "../whatsapp-signup";
 
 const eventId = z.string().startsWith("$").min(2).max(1024);
 const matrixEvent = z.object({
@@ -34,6 +35,14 @@ interface Receipt {
 }
 
 const LEASE_MS = 120_000;
+
+/** Drops lines that point at the result page, for deployments where the web app is private. */
+export function stripResultLinks(text: string, publicBaseUrl: string): string {
+  const base = publicBaseUrl.replace(/\/+$/, "");
+  return text.split("\n")
+    .filter(line => !line.includes(`${base}/w/`) && line.trim() !== "Pełna lista jest na stronie wyniku.")
+    .join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
 const MAX_EVENT_AGE = SESSION_RETENTION_DAYS * 86_400_000;
 
 function actions(receipt: Receipt, key: string, target: string) {
@@ -60,10 +69,8 @@ export function createChatLoomWebhook(ctx: ServerContext): Handler {
 
   return async c => {
     const raw = await c.req.text();
-    const ts = c.req.header("x-chatloom-timestamp");
     const now = ctx.now();
-    if (!ts || !/^\d{1,10}$/.test(ts) || !withinWindow(ts, now.getTime()) ||
-        !verifyHmacSha256(secret, ts + "." + raw, c.req.header("x-chatloom-signature"))) {
+    if (!verifyChatLoomRequest(secret, c.req.header("x-chatloom-timestamp"), c.req.header("x-chatloom-signature"), raw, now.getTime())) {
       return c.json({ error: "forbidden" }, 403);
     }
 
@@ -131,7 +138,10 @@ export function createChatLoomWebhook(ctx: ServerContext): Handler {
         channel: "chatloom", senderId: sender, sessionId: session, messageId: delivery,
         receivedAt: new Date(event.origin_server_ts).toISOString(), text, images: [],
       }, ctx);
-      const rendered = renderReplyText(reply, { buttons: false });
+      // "usuń moje dane" also removes a pending or past WhatsApp signup for the sender's number.
+      if (reply.kind === "deleted") eraseSignupForSender(ctx, event.sender);
+      const full = renderReplyText(reply, { buttons: false });
+      const rendered = ctx.cfg.chatloomResultLinks !== false ? full : stripResultLinks(full, ctx.cfg.publicBaseUrl);
       const emoji = reactionFor(reply).emoji;
       const saved = db.prepare(`UPDATE chatloom_replies SET reply = ?, emoji = ?, lease_until = 0
         WHERE event_key = ? AND lease_until = ? AND (reply IS NULL OR ? = 'deleted')`)

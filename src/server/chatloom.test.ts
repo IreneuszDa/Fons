@@ -197,3 +197,11 @@ describe("konektor ChatLoom", () => {
     expect(env.calls).toHaveLength(0);
   });
 });
+
+describe("stripResultLinks", () => {
+  it("drops result-page lines and keeps source links", async () => {
+    const { stripResultLinks } = await import("./channels/chatloom");
+    const text = "Tak.\nŹródło: https://www.nato.int/x\n\nPełny wynik ze źródłami: https://fons.example/w/abc_123\n\nMożesz odpowiedzieć: Źródła";
+    expect(stripResultLinks(text, "https://fons.example/")).toBe("Tak.\nŹródło: https://www.nato.int/x\n\nMożesz odpowiedzieć: Źródła");
+  });
+});

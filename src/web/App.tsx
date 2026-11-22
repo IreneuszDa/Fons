@@ -27,7 +27,7 @@ export const TITLES: Record<Route["name"], string> = {
   chat: `${BRAND} — ${TAGLINE.toLowerCase()}`,
   result: `Wynik sprawdzenia — ${BRAND}`,
   sources: `Źródła i metoda — ${BRAND}`,
-  phone: `Profil telefoniczny — ${BRAND}`,
+  phone: `Fons na WhatsAppie — ${BRAND}`,
   admin: `Panel zespołu — ${BRAND}`,
   notfound: `Nie ma takiej strony — ${BRAND}`,
 };

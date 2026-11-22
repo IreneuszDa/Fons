@@ -71,6 +71,16 @@ export async function transcribeDictation(recording: ChatRecording, signal: Abor
   return result.text;
 }
 
+export type WhatsAppSignupStatus = "pending" | "sent";
+
+/** Asks Fons to write to this number on WhatsApp (again, if it was saved before). */
+export async function requestWhatsApp(phone: string): Promise<WhatsAppSignupStatus> {
+  const result = await chatResource<{ status: WhatsAppSignupStatus }>("/api/signup/whatsapp", "Nie udało się zapisać numeru.", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, consent: true }),
+  });
+  return result.status;
+}
+
 export async function listChats(): Promise<ChatSummary[]> {
   const { chats } = await chatResource<{ chats: ChatSummary[] }>("/api/chats", "Nie udało się wczytać historii czatów.");
   return chats;

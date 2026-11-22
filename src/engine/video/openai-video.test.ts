@@ -22,6 +22,19 @@ function setup() {
 }
 
 describe("OpenAI frame analysis", () => {
+  it("sends transcription and vision requests to OPENAI_BASE_URL when set", async () => {
+    const decode = vi.fn(async () => ({ durationSeconds: 45, frames, audio }));
+    const fetchImpl = vi.fn<(url: string, init: RequestInit) => Promise<Response>>();
+    const analyze = createOpenAiVideoAnalyzer({ apiKey: "test-key", fetchImpl, decode, dataResidency: "eu", baseUrl: "https://openrouter.ai/api/v1" });
+    fetchImpl.mockResolvedValueOnce(Response.json({ text: "Polska jest" }))
+      .mockResolvedValueOnce(Response.json({ text: "w NATO." }))
+      .mockResolvedValueOnce(complete({ observations: [], claims: [speech] }));
+    await analyze(media);
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      "https://openrouter.ai/api/v1/audio/transcriptions", "https://openrouter.ai/api/v1/audio/transcriptions", "https://openrouter.ai/api/v1/chat/completions",
+    ]);
+  });
+
   it("transcribes a voice note with timestamped segments without making a vision request", async () => {
     const { analyze, decode, fetchImpl } = setup();
     decode.mockResolvedValueOnce({ durationSeconds: 25, frames: [], audio: [audio[0]!] });

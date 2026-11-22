@@ -1,10 +1,19 @@
 import type { Context } from "hono";
 import { getConnInfo } from "@hono/node-server/conninfo";
+import { timingSafeEqual } from "node:crypto";
 import ipaddr from "ipaddr.js";
 import type { ServerContext } from "./context";
 
 /** Adres klienta: za zaufanym proxy (TRUST_PROXY=on) ostatni wpis X-Forwarded-For, inaczej adres połączenia. */
 export function clientIp(c: Context, ctx: ServerContext): string {
+  // A front proxy that proves itself with PROXY_SECRET (e.g. Vercel middleware) reports the visitor's address.
+  const proxySecret = ctx.cfg.proxySecret;
+  const claimed = c.req.header("x-fons-proxy-secret");
+  if (proxySecret && claimed) {
+    const a = Buffer.from(claimed), b = Buffer.from(proxySecret);
+    const ip = c.req.header("x-fons-client-ip")?.trim();
+    if (a.length === b.length && timingSafeEqual(a, b) && ip && ipaddr.isValid(ip)) return ip;
+  }
   if (ctx.cfg.trustProxy) {
     const xff = c.req.header("x-forwarded-for");
     if (xff) {

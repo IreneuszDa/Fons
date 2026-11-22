@@ -36,7 +36,8 @@ async function main(): Promise<void> {
   const timer = setInterval(purge, 3_600_000);
   timer.unref();
 
-  const server = serve({ fetch: app.fetch, port: cfg.port }, (info) => {
+  // HOST lets a private deployment bind to one interface (e.g. a Tailscale address).
+  const server = serve({ fetch: app.fetch, port: cfg.port, hostname: process.env.HOST?.trim() || undefined }, (info) => {
     ctx.log.info({ event: "listening", port: info.port, env: cfg.env, llm: ctx.engine.llm.provider });
   });
 

@@ -28,6 +28,8 @@ export interface AppConfig {
   socialKitApiKey?: string;
   /** "eu" = eu.api.openai.com (projekt OpenAI z rezydencją danych w UE); puste = przetwarzanie w USA. */
   openaiDataResidency?: string;
+  /** OPENAI_BASE_URL: OpenAI-compatible endpoint (e.g. https://openrouter.ai/api/v1); overrides openaiDataResidency. */
+  openaiBaseUrl?: string;
   /** Model główny (ocena dowodów). */
   modelMain: string;
   /** Model szybki (ekstrakcja twierdzeń, weryfikator, rozmowa z użytkownikiem). */
@@ -39,6 +41,8 @@ export interface AppConfig {
   adminPasswordGenerated: boolean;
   userIdPepper: string;
   chatloomWebhookSecret?: string;
+  /** false = ChatLoom replies omit links to /w/:token (the web app is not publicly reachable). */
+  chatloomResultLinks?: boolean;
   dailyTokenBudget: number;
   /**
    * Część dobowego budżetu, jaką może zużyć jeden adres klienta (IPv4 albo sieć IPv6 /64), 0–1 (IP_DAILY_TOKEN_SHARE,
@@ -57,6 +61,8 @@ export interface AppConfig {
   verdictMode: "rules" | "model_proposed";
   /** Serwer stoi za zaufanym reverse proxy: adres klienta z ostatniego wpisu X-Forwarded-For (TRUST_PROXY=on). */
   trustProxy?: boolean;
+  /** Shared secret of a front proxy allowed to report the client address in X-Fons-Client-IP. */
+  proxySecret?: string;
   /** Plik użytkowników panelu (USERS_PATH, domyślnie var/users.json). Brak = użytkownicy tylko w pamięci (testy). */
   usersPath?: string;
   /** Statyczny token do GET /metrics (METRICS_TOKEN); obok niego działają tokeny API analityka. */
@@ -101,6 +107,26 @@ function readVideoProvider(raw: string | undefined): AppConfig["videoProvider"] 
 
 export function selectedVideoProvider(cfg: Pick<AppConfig, "videoProvider" | "openaiApiKey" | "geminiApiKey">) {
   return cfg.videoProvider ?? (cfg.openaiApiKey ? "openai" : cfg.geminiApiKey ? "gemini" : "off");
+}
+
+/** OPENAI_BASE_URL must be an absolute http(s) URL; https is required except for localhost. */
+function readBaseUrl(value: string | undefined): string | undefined {
+  const raw = nonEmpty(value);
+  if (!raw) return undefined;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("OPENAI_BASE_URL musi być pełnym adresem, np. https://openrouter.ai/api/v1.");
+  }
+  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
+  if (url.protocol !== "https:" && !(url.protocol === "http:" && local)) {
+    throw new Error("OPENAI_BASE_URL musi używać https (http tylko dla localhost).");
+  }
+  if (url.username || url.password || url.search || url.hash) {
+    throw new Error("OPENAI_BASE_URL nie może zawierać danych logowania, parametrów ani fragmentu.");
+  }
+  return url.toString().replace(/\/+$/, "");
 }
 
 let cached: AppConfig | undefined;
@@ -151,6 +177,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     geminiVideoModel: nonEmpty(e.GEMINI_VIDEO_MODEL),
     socialKitApiKey: nonEmpty(e.SOCIALKIT_API_KEY),
     openaiDataResidency: nonEmpty(e.OPENAI_DATA_RESIDENCY),
+    openaiBaseUrl: readBaseUrl(e.OPENAI_BASE_URL),
     modelMain: nonEmpty(e.MODEL_MAIN) ?? DEFAULT_MODELS[llmProvider].main,
     modelFast,
     openaiSearchModel: nonEmpty(e.OPENAI_SEARCH_MODEL) ?? (llmProvider === "openai" ? modelFast : DEFAULT_MODELS.openai.fast),
@@ -159,6 +186,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     adminPasswordGenerated: !adminFromEnv,
     userIdPepper: nonEmpty(e.USER_ID_PEPPER) ?? readOrCreateSecret(`${varDir}/user-id-pepper`),
     chatloomWebhookSecret: nonEmpty(e.CHATLOOM_WEBHOOK_SECRET),
+    chatloomResultLinks: e.CHATLOOM_RESULT_LINKS?.trim().toLowerCase() !== "off",
     dailyTokenBudget: Number(e.DAILY_TOKEN_BUDGET ?? 3_000_000),
     ipDailyTokenShare: e.IP_DAILY_TOKEN_SHARE !== undefined ? Number(e.IP_DAILY_TOKEN_SHARE) : undefined,
     rateLimitPerMinute: Number(e.RATE_LIMIT_PER_MINUTE ?? 10),
@@ -171,6 +199,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     alertWebhookUrl: nonEmpty(e.ALERT_WEBHOOK_URL),
     verdictMode: e.VERDICT_MODE === "model_proposed" ? "model_proposed" : "rules",
     trustProxy: e.TRUST_PROXY === "on",
+    proxySecret: nonEmpty(e.PROXY_SECRET),
     usersPath: resolveUsersPath(e),
     metricsToken: nonEmpty(e.METRICS_TOKEN),
     ...overrides,

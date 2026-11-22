@@ -1,6 +1,7 @@
 import { selectedVideoProvider, type AppConfig } from "../../server/config";
 import { createGeminiVideoAnalyzer } from "./gemini";
 import type { VideoServices } from "./intake";
+import { openAiProcessingRegion } from "../llm/openai";
 import { createOpenAiVideoAnalyzer } from "./openai-video";
 import { createVideoLoader, loadVideoCaption } from "./platforms";
 
@@ -8,9 +9,11 @@ export function createVideoServices(cfg: AppConfig): VideoServices {
   const provider = selectedVideoProvider(cfg);
   if (provider === "openai" && cfg.openaiApiKey) {
     return {
-      provider, processingRegion: cfg.openaiDataResidency === "eu" ? "eea" : "us",
+      provider, processingRegion: openAiProcessingRegion(cfg.openaiDataResidency, cfg.openaiBaseUrl),
       load: createVideoLoader(cfg.socialKitApiKey, provider),
-      analyze: createOpenAiVideoAnalyzer({ apiKey: cfg.openaiApiKey, model: cfg.openaiVideoModel, dataResidency: cfg.openaiDataResidency }),
+      analyze: createOpenAiVideoAnalyzer({
+        apiKey: cfg.openaiApiKey, model: cfg.openaiVideoModel, dataResidency: cfg.openaiDataResidency, baseUrl: cfg.openaiBaseUrl,
+      }),
     };
   }
   if (provider === "gemini" && cfg.geminiApiKey) {

@@ -48,7 +48,7 @@ function makeProvider(cfg: AppConfig, provider: ProviderName, models: ProviderMo
   }
   if (provider === "openai") {
     return cfg.openaiApiKey
-      ? new OpenAiProvider({ apiKey: cfg.openaiApiKey, models, defaultTier, dataResidency: cfg.openaiDataResidency })
+      ? new OpenAiProvider({ apiKey: cfg.openaiApiKey, models, defaultTier, dataResidency: cfg.openaiDataResidency, baseUrl: cfg.openaiBaseUrl })
       : new UnavailableLlmProvider("openai", "openai", models);
   }
   return cfg.mistralApiKey
