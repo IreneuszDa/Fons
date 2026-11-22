@@ -18,7 +18,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VisuallyHidden } from "@astryxdesign/core/VisuallyHidden";
 import type { ConversationReply } from "../../shared/contracts";
 import type { VerificationStage } from "../../shared/chat";
-import { MessageReaction, failed, reactionFor, reactionStyles, reading, type Reaction } from "../../web/components/MessageReaction";
+import { AnswerReaction, MessageReaction, failed, reactionFor, reactionStyles, reading, type Reaction } from "../../web/components/MessageReaction";
 import { QuickReplies, ReplyContent } from "../../web/components/ReplyContent";
 import { StatusNotice } from "../../web/components/StatusNotice";
 import { replyView } from "../../web/lib/report";
@@ -29,7 +29,7 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { PaperClipIcon } from "@heroicons/react/24/outline";
 
 export type ChatEntry =
-  | { id: string; role: "user"; text: string; fileName?: string; imageSrc?: string }
+  | { id: string; role: "user"; text: string; fileName?: string; imageSrc?: string; sentAt?: number; attemptAt?: number }
   | { id: string; role: "assistant"; replyTo?: string; reply: ConversationReply }
   | { id: string; role: "error"; replyTo?: string; text: string; retry?: () => void };
 
@@ -47,12 +47,12 @@ export const progressLabels = {
 
 const replyAnchorId = (entryId: string | undefined) => `odpowiedz-${entryId ?? ""}`;
 
-function SentImage({ src, name, reaction }: { src: string; name?: string; reaction?: Reaction }) {
+function SentImage({ src, name, reaction, attemptAt }: { src: string; name?: string; reaction?: Reaction; attemptAt?: number }) {
   const [failed, setFailed] = useState(false);
   const alt = name ? `Przesłane zdjęcie: ${name}` : "Przesłane zdjęcie";
   const lightbox = useLightbox({ media: { src, alt }, hasZoom: true });
   return <VStack className="fons-reaction-anchor" style={{ maxWidth: "min(82%, 20rem)" }}>
-    <MessageReaction reaction={reaction} />
+    <MessageReaction attemptAt={attemptAt} reaction={reaction} />
     {failed ? <Text type="supporting">{name ?? "Zdjęcie"} · podgląd niedostępny</Text> : (
     <img src={src} alt={alt} {...lightbox.triggerProps}
       aria-label={name ? `Powiększ zdjęcie ${name}` : "Powiększ zdjęcie"}
@@ -124,10 +124,10 @@ export default function ChatConversation({
                   {entries.map((e) => {
                     if (e.role === "user") {
                       return (
-                        <ChatMessage key={e.id} sender="user" name={<VisuallyHidden>Twoja wiadomość</VisuallyHidden>}>
-                          {e.imageSrc && <SentImage src={e.imageSrc} name={e.fileName} reaction={reactions.get(e.id)} />}
+                        <ChatMessage key={e.id} sender="user" className={e.sentAt && Date.now() - e.sentAt < 300 ? "fons-message-sent" : undefined} name={<VisuallyHidden>Twoja wiadomość</VisuallyHidden>}>
+                          {e.imageSrc && <SentImage src={e.imageSrc} name={e.fileName} attemptAt={e.attemptAt} reaction={reactions.get(e.id)} />}
                           {(e.text || (!e.imageSrc && e.fileName)) && <ChatMessageBubble className={e.imageSrc ? undefined : "fons-reaction-anchor"}>
-                            {!e.imageSrc && <MessageReaction reaction={reactions.get(e.id)} />}
+                            {!e.imageSrc && <MessageReaction attemptAt={e.attemptAt} reaction={reactions.get(e.id)} />}
                             <VStack gap={1}>
                               {!e.imageSrc && e.fileName && <Token label={e.fileName} icon={<Icon icon={PaperClipIcon} size="sm" />} />}
                               {e.text && <Text type="large" weight="normal">{e.text}</Text>}
@@ -156,6 +156,7 @@ export default function ChatConversation({
                       <ChatMessage key={e.id} sender="assistant" name={<VisuallyHidden>Fons</VisuallyHidden>}>
                         <ChatMessageBubble variant="ghost" width="100%">
                           <VStack gap={3}>
+                            <AnswerReaction reaction={reactionFor(reply)} live={!!e.replyTo && e === entries.at(-1)} />
                             <ReplyContent reply={reply} anchorId={replyAnchorId(e.id)} animateText={!pending && e === entries.at(-1)} />
                             {resultPath ? <Link href={resultPath}>Pełny wynik</Link> : null}
                             {e.id === lastAssistantId ? <QuickReplies reply={reply} onAction={onAction} isDisabled={isPending} /> : null}

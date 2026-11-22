@@ -153,11 +153,15 @@ export default function ChatPage() {
     void refreshList();
   }
 
-  async function run(key: string, input: ChatInput, user: ChatEntry, retryId?: string) {
+  async function run(key: string, input: ChatInput, user: Extract<ChatEntry, { role: "user" }>, retryId?: string) {
     if (sending.current.has(key) || removed.current.has(key)) return;
     sending.current.add(key);
+    const startedAt = Date.now();
+    const outgoing = { ...user, sentAt: user.sentAt ?? startedAt, attemptAt: startedAt };
     update(key, thread => ({
-      entries: retryId ? thread.entries.filter(entry => entry.id !== retryId) : [...thread.entries, user],
+      entries: retryId
+        ? thread.entries.filter(entry => entry.id !== retryId).map(entry => entry.id === user.id ? outgoing : entry)
+        : [...thread.entries, outgoing],
       pending: "responding",
       pendingUserId: user.id,
     }));
@@ -194,7 +198,7 @@ export default function ChatPage() {
       const text = messageFor(error);
       const errorId = nextId();
       update(id, thread => ({ entries: [...thread.entries, { id: errorId, role: "error", replyTo: user.id, text,
-        retry: () => void run(id, input, user, errorId) }], pending: null }));
+        retry: () => void run(id, input, outgoing, errorId) }], pending: null }));
       if (selected.current === id) announce(text, "assertive");
     } finally {
       sending.current.delete(id);
@@ -225,7 +229,7 @@ export default function ChatPage() {
         <Center height="100%"><VStack gap={3}><Text role="alert">{thread.loadError}</Text>
           <Button label="Spróbuj ponownie" onClick={() => void load(active)} /></VStack></Center>
       ) : thread.entries.length || thread.pending ? (
-        <ChatConversation key={active} entries={thread.entries} pending={thread.pending} pendingUserId={thread.pendingUserId} onSubmit={submit}
+        <ChatConversation key={thread.entries[0]?.id.startsWith("local-") ? thread.entries[0].id : active} entries={thread.entries} pending={thread.pending} pendingUserId={thread.pendingUserId} onSubmit={submit}
           onAction={(action, label) => void run(active, { action }, { id: nextId(), role: "user", text: label })} />
       ) : <ChatLanding key={`${active}-${draftVersion}`} onSubmit={submit} editorRef={draftEditor} />}
     </ChatHistory>

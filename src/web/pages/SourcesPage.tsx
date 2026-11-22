@@ -6,7 +6,7 @@ import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { HStack } from "@astryxdesign/core/HStack";
 import { useMediaQuery } from "@astryxdesign/core/hooks";
 import { List, ListItem } from "@astryxdesign/core/List";
-import { Layout, LayoutContent, LayoutHeader, VStack } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/Layout";
 import { Link } from "@astryxdesign/core/Link";
 import { MetadataList, MetadataListItem } from "@astryxdesign/core/MetadataList";
 import { Spinner } from "@astryxdesign/core/Spinner";
@@ -68,7 +68,7 @@ export default function SourcesPage() {
 
   const rows = useMemo(() => (data ? sourceRows(data) : []), [data]);
   // Below tablet width six columns do not fit: the same facts render as list rows instead.
-  const isNarrow = useMediaQuery("(max-width: 767px)");
+  const isNarrow = useMediaQuery("(max-width: 59.99rem)");
   const total = rows.reduce((a, r) => a + r.records, 0);
 
   const columns: TableColumn<Row>[] = [
@@ -94,18 +94,34 @@ export default function SourcesPage() {
   ];
 
   return (
-    <Layout
-      height="auto"
-      contentWidth={1200}
-      padding={6}
-      header={
-        <LayoutHeader hasDivider padding={4}>
-          <VStack gap={2}>
-            <Heading level={1}>Źródła i metoda</Heading>
-            <Text as="p">
-              Z przesłanego materiału Fons wyodrębnia tezy. Dla każdej szuka dowodów w katalogu wydawców.
-              W raporcie możesz otworzyć publikacje, przeczytać cytaty i sprawdzić, jakich danych zabrakło.
-            </Text>
+    <VStack className="fons-sources" width="100%" hAlign="center" paddingInline={4} paddingBlockEnd={10}>
+      <style>{`
+        .fons-sources { background: var(--color-background-surface); }
+        .fons-sources .sources-nav { position: relative; min-height: 3.5rem; }
+        .fons-sources .sources-brand, .fons-sources .sources-title {
+          font-family: "Iowan Old Style", Georgia, serif; font-weight: 500; letter-spacing: -.045em;
+        }
+        .fons-sources .sources-brand { position: absolute; left: 50%; transform: translateX(-50%); font-size: 1.55rem; }
+        .fons-sources .sources-title { font-size: clamp(2.7rem, 6vw, 4.4rem); line-height: 1.06; }
+        .fons-sources .sources-intro { text-align: center; text-wrap: pretty; line-height: 1.6; }
+        .fons-sources .sources-method > * + * { border-block-start: thin solid var(--color-border); }
+        .fons-sources .sources-method > * { padding-block: var(--spacing-2); }
+        .fons-sources .sources-catalog { border-block-start: thin solid var(--color-border); }
+        .fons-sources .sources-catalog { overflow-wrap: anywhere; }
+      `}</style>
+      <HStack as="nav" aria-label="Nawigacja główna" className="sources-nav" width="100%" vAlign="center">
+        <Link href="/" type="supporting">← Wróć do czatu</Link>
+        <Text className="sources-brand">Fons</Text>
+      </HStack>
+      <VStack width="100%" maxWidth="44rem" gap={5} paddingBlock={8}>
+        <VStack hAlign="center" gap={3} paddingBlock={5}>
+          <Heading className="sources-title" level={1}>Źródła i metoda</Heading>
+          <Text as="p" className="sources-intro" type="large" weight="normal" color="secondary">
+            Z przesłanego materiału Fons wyodrębnia tezy. Dla każdej szuka dowodów w katalogu wydawców.
+            W raporcie możesz otworzyć publikacje, przeczytać cytaty i sprawdzić, jakich danych zabrakło.
+          </Text>
+        </VStack>
+        <VStack className="sources-method" width="100%">
             <Collapsible defaultIsOpen={false} chevronPosition="start" trigger="Jak dobieramy i porównujemy dowody">
               <VStack gap={2} paddingBlock={2}>
                 <Text as="p">Wyszukiwanie porównuje słowa oraz znaczenie pytania z dokumentami w bazie.
@@ -127,8 +143,8 @@ export default function SourcesPage() {
                 <Link href="https://oad.nask.pl/aktualnosci/jak-obywatele-moga-pomoc-w-zwalczaniu-dezinformacji" isExternalLink rel="noopener noreferrer">Wskazówki Ośrodka Analizy Dezinformacji NASK</Link>
               </VStack>
             </Collapsible>
-            <VStack as="section" gap={1}>
-              <Heading level={2}>Sprawdzenia fact-checkerów</Heading>
+            <Collapsible defaultIsOpen={false} chevronPosition="start" trigger="Sprawdzenia fact-checkerów">
+              <VStack gap={2} paddingBlock={2}>
               <Text as="p">
                 Fons indeksuje sprawdzenia Stowarzyszenia Demagog. Kiedy pytasz o konkretną analizę tej redakcji,
                 przeszukuje też Google Fact Check Tools na żywo i porównuje znalezioną tezę z Twoim pytaniem.
@@ -153,9 +169,10 @@ export default function SourcesPage() {
                   Google Fact Check Explorer
                 </Link>
               </HStack>
-            </VStack>
-            <VStack as="section" gap={1}>
-              <Heading level={2}>Podobne narracje w EUvsDisinfo</Heading>
+              </VStack>
+            </Collapsible>
+            <Collapsible defaultIsOpen={false} chevronPosition="start" trigger="Podobne narracje w EUvsDisinfo">
+              <VStack gap={2} paddingBlock={2}>
               <Text as="p">
                 Fons porównuje twierdzenia z przypadkami opisanymi przez EUvsDisinfo, korzystając także z angielskich
                 wariantów zapytania. W wynikach pokazuje możliwe podobieństwa i odnośniki do przypadków. Do ustalenia,
@@ -169,8 +186,13 @@ export default function SourcesPage() {
               >
                 Baza przypadków EUvsDisinfo
               </Link>
-            </VStack>
-            {data ? (
+              </VStack>
+            </Collapsible>
+        </VStack>
+      </VStack>
+      <VStack as="section" className="sources-catalog" width="100%" maxWidth="72rem" gap={4} paddingBlockStart={6}>
+        <Heading level={2}>Katalog wydawców</Heading>
+        {data ? (
               <MetadataList orientation="horizontal" columns="multi">
                 <MetadataListItem label="Wersja bazy źródeł">
                   <Text type="code">{data.snapshotId}</Text>
@@ -179,11 +201,6 @@ export default function SourcesPage() {
                 <MetadataListItem label="Rekordy razem">{total.toLocaleString("pl-PL")}</MetadataListItem>
               </MetadataList>
             ) : null}
-          </VStack>
-        </LayoutHeader>
-      }
-      content={
-        <LayoutContent isScrollable={false} padding={4}>
           {error ? (
             <StatusNotice
               headingLevel={2}
@@ -219,8 +236,7 @@ export default function SourcesPage() {
               <Table<Row> data={rows} columns={columns} idKey="id" verticalAlign="top" />
             )
           )}
-        </LayoutContent>
-      }
-    />
+      </VStack>
+    </VStack>
   );
 }
